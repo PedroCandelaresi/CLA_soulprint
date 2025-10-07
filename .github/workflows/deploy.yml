@@ -10,10 +10,11 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux, x64]  # que coincida con los labels de tu runner
 
     env:
       COMPOSE_PROJECT_NAME: next_frontend
+      BASE_DIR: /home/cla
 
     steps:
       - name: Checkout
@@ -27,13 +28,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Copia el .env.production que guardaste en el VPS (ajustá la ruta si usás otro usuario)
       - name: Copiar .env.production del VPS
         run: |
-          if [ -f /home/nixx/env/front/.env.production ]; then
-            cp /home/nixx/env/front/.env.production .env.production
+          if [ -f "$BASE_DIR/env/front/.env.production" ]; then
+            cp "$BASE_DIR/env/front/.env.production" .env.production
           else
-            echo "No se encontró /home/nixx/env/front/.env.production"; exit 1
+            echo "No se encontró $BASE_DIR/env/front/.env.production"; exit 1
           fi
 
       - name: Build & Deploy (puerto 3200)
