@@ -1,0 +1,46 @@
+name: Deploy Frontend (Next.js)
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    env:
+      COMPOSE_PROJECT_NAME: next_frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker versions
+        run: |
+          docker version
+          docker compose version
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Copia el .env.production que guardaste en el VPS (ajustá la ruta si usás otro usuario)
+      - name: Copiar .env.production del VPS
+        run: |
+          if [ -f /home/nixx/env/front/.env.production ]; then
+            cp /home/nixx/env/front/.env.production .env.production
+          else
+            echo "No se encontró /home/nixx/env/front/.env.production"; exit 1
+          fi
+
+      - name: Build & Deploy (puerto 3200)
+        run: |
+          docker compose down --remove-orphans || true
+          docker compose build --no-cache
+          docker compose up -d
+
+      - name: Limpiar imágenes viejas
+        run: docker image prune -f
