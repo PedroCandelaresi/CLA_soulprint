@@ -18,7 +18,7 @@ const diapositivas = [
   },
   {
     id: "coleccion-mascotas",
-    titulo: "Mascotas con estilo",
+    titulo: "Mascotas con estilo.",
     descripcion: "Collares y dijes diseñados para tus compañeras peludas, seguros y cómodos.",
     imagen: "/images/products/s9.jpg",
     enlace: "/colecciones/mascotas",
