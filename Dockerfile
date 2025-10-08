@@ -24,8 +24,9 @@ RUN apk add --no-cache \
     python3
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Reinstalar sharp para el entorno Alpine
-RUN npm rebuild sharp
+# Reinstalar sharp para el entorno Alpine con dependencias específicas
+RUN rm -rf node_modules/sharp && \
+    npm install --os=linux --libc=musl --cpu=x64 sharp
 # Si usás NEXT_PUBLIC_* o variables de build, cargalas por .env.production
 RUN npm run build
 
