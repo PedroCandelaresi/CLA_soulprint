@@ -3,7 +3,12 @@
 # ---- Dependencias (maneja npm/yarn/pnpm) ----
 FROM node:20-alpine AS deps
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
+# Instalar dependencias de compilación para sharp y otros paquetes nativos
+RUN apk add --no-cache \
+    libc6-compat \
+    vips-dev \
+    build-base \
+    python3
 COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
 RUN \
   if [ -f pnpm-lock.yaml ]; then npm i -g pnpm@9 && pnpm i --frozen-lockfile; \
@@ -16,17 +21,9 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-# Instalar dependencias para sharp en Alpine
-RUN apk add --no-cache \
-    libc6-compat \
-    vips-dev \
-    build-base \
-    python3
+# Copiar node_modules ya compilado con sharp correcto
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Reinstalar sharp para el entorno Alpine con dependencias específicas
-RUN rm -rf node_modules/sharp && \
-    npm install --os=linux --libc=musl --cpu=x64 sharp
 # Si usás NEXT_PUBLIC_* o variables de build, cargalas por .env.production
 RUN npm run build
 
