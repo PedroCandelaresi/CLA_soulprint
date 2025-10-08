@@ -11,7 +11,7 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
-import { useTreeViewApiRef } from '@mui/x-tree-view/hooks/useTreeViewApiRef';
+import { useTreeViewApiRef } from '@mui/x-tree-view';
 
 const BCrumb = [
 {
