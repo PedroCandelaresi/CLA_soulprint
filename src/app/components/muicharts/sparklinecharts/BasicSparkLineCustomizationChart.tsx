@@ -63,7 +63,7 @@ export default function BasicSparkLineCustomizationChart() {
                             height={100}
                             showHighlight={showHighlight}
                             showTooltip={showTooltip}
-                            colors={[primary]}
+                            color={primary}
                         />
                     </Box>
                     <Box sx={{ flexGrow: 1 }}>
@@ -73,7 +73,7 @@ export default function BasicSparkLineCustomizationChart() {
                             height={100}
                             showHighlight={showHighlight}
                             showTooltip={showTooltip}
-                            colors={[primary]}
+                            color={primary}
                         />
                     </Box>
                 </Stack>

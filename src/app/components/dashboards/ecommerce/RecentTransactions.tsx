@@ -19,9 +19,6 @@ const RecentTransactions = () => {
       <>
         <Timeline
           className="theme-timeline"
-          nonce={undefined}
-          onResize={undefined}
-          onResizeCapture={undefined}
           sx={{
             p: 0,
             mb: '-40px',

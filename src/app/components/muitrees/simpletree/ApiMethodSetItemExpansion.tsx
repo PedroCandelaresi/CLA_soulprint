@@ -12,12 +12,12 @@ import ParentCard from '../../shared/ParentCard';
 export default function ApiMethodSetItemExpansion() {
     const apiRef = useTreeViewApiRef();
 
-    const handleExpandClick = (event: React.SyntheticEvent<Element, Event>) => {
-        apiRef.current?.setItemExpansion(event, 'grid', true);
+    const handleExpandClick = () => {
+        apiRef.current?.setItemExpansion({ itemId: 'grid', shouldBeExpanded: true });
     };
 
-    const handleCollapseClick = (event: React.SyntheticEvent<Element, Event>) => {
-        apiRef.current?.setItemExpansion(event, 'grid', false);
+    const handleCollapseClick = () => {
+        apiRef.current?.setItemExpansion({ itemId: 'grid', shouldBeExpanded: false });
     };
 
 

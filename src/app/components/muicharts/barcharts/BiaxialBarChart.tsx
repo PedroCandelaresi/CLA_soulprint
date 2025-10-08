@@ -42,11 +42,7 @@ function BiaxialBarChart() {
                     data: xLabels, scaleType: "band", categoryGapRatio: 0.8,
                     barGapRatio: 0.8
                 } as any]}
-                yAxis={[{ id: "leftAxisId" }, { id: "rightAxisId" },
-
-                ]}
-                rightAxis="rightAxisId"
-
+                yAxis={[{ id: "leftAxisId" }, { id: "rightAxisId" }]}
             />
         </ParentCard>
     );

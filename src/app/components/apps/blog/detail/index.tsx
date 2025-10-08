@@ -101,7 +101,14 @@ const BlogDetail = () => {
                 variant="rectangular"
                 width="100%"
                 height={440}
-                sx={{ borderRadius: (theme) => theme.shape.borderRadius / 5 }}
+                sx={{ 
+                  borderRadius: (theme) => {
+                    const radius = typeof theme.shape.borderRadius === 'number'
+                      ? theme.shape.borderRadius
+                      : parseFloat(theme.shape.borderRadius);
+                    return radius / 5;
+                  }
+                }}
               ></Skeleton>
             </>
           ) : (

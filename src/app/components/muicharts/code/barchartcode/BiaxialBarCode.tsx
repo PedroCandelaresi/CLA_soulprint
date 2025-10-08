@@ -58,7 +58,6 @@ function BiaxialBarChart() {
                 xAxis={[{ data: xLabels, scaleType: "band",categoryGapRatio: 0.8,
                     barGapRatio: 0.8 }]}
                 yAxis={[{ id: "leftAxisId" }, { id: "rightAxisId" }]}
-                rightAxis="rightAxisId"
             />
     );
 }

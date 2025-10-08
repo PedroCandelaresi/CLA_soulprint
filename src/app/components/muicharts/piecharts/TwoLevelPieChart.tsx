@@ -41,8 +41,8 @@ function TwoLevelPieChart() {
         ]}
         width={400}
         height={300}
-        slotProps={{
-          legend: { hidden: true },
+        slots={{
+          legend: () => null,
         }}
       />
     </ParentCard>

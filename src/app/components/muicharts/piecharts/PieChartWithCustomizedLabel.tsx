@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { DefaultizedPieValueType } from '@mui/x-charts/models';
 import { PieChart, pieArcLabelClasses } from '@mui/x-charts/PieChart';
 import PieChartWithCustomizedLabelCode from '@/app/components/muicharts/code/piechartcode/PieChartWithCustomizedLabelCode'
 import ParentCard from '../../shared/ParentCard';
@@ -15,7 +14,9 @@ const sizing = {
     margin: { right: 5 },
     width: 200,
     height: 200,
-    legend: { hidden: true },
+    slots: {
+        legend: () => null,
+    },
 };
 const TOTAL = data.map((item) => item.value).reduce((a, b) => a + b, 0);
 

@@ -11,7 +11,7 @@ import ParentCard from '../../shared/ParentCard';
 function ControlledSelectiontree() {
     const [selectedItems, setSelectedItems] = React.useState<string[]>([]);
 
-    const handleSelectedItemsChange = (event: React.SyntheticEvent, ids: string[]) => {
+    const handleSelectedItemsChange = (event: React.SyntheticEvent | null, ids: string[]) => {
         setSelectedItems(ids);
     };
 

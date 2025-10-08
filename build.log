@@ -1,0 +1,49 @@
+
+> modernize@10.0.0 build
+> next build
+
+   ▲ Next.js 15.5.4
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 39.8s
+   Linting and checking validity of types ...
+
+./src/app/components/apps/blog/detail/index.tsx
+90:6  Warning: React Hook useEffect has a missing dependency: 'setLoading'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/components/apps/ecommerce/productEdit/Thumbnail.tsx
+55:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/components/apps/email/EmailList.tsx
+26:6  Warning: React Hook useEffect has missing dependencies: 'selectedEmailId' and 'setSelectedEmail'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/components/apps/kanban/TaskData.tsx
+186:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/components/apps/kanban/TaskModal/AddNewTaskModal.tsx
+121:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/components/apps/kanban/TaskModal/EditTaskModal.tsx
+127:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/components/react-table/TableEmpty.tsx
+157:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/context/EmailContext/index.tsx
+62:6  Warning: React Hook useEffect has missing dependencies: 'emails?.length' and 'isEmailLoading'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+Failed to compile.
+
+./src/app/components/muicharts/linescharts/linechart/BiaxialLineChart.tsx:32:17
+Type error: Type '{ height: number; series: { data: number[]; label: string; yAxisId: string; color: string; }[]; xAxis: { scaleType: "point"; data: string[]; }[]; yAxis: { id: string; }[]; rightAxis: string; }' is not assignable to type 'IntrinsicAttributes & LineChartProps & RefAttributes<SVGSVGElement>'.
+  Property 'rightAxis' does not exist on type 'IntrinsicAttributes & LineChartProps & RefAttributes<SVGSVGElement>'.
+
+[0m [90m 30 |[39m                 xAxis[33m=[39m{[{ scaleType[33m:[39m [32m"point"[39m[33m,[39m data[33m:[39m xLabels }]}
+ [90m 31 |[39m                 yAxis[33m=[39m{[{ id[33m:[39m [32m"leftAxisId"[39m }[33m,[39m { id[33m:[39m [32m"rightAxisId"[39m }]}
+[31m[1m>[22m[39m[90m 32 |[39m                 rightAxis[33m=[39m[32m"rightAxisId"[39m
+ [90m    |[39m                 [31m[1m^[22m[39m
+ [90m 33 |[39m             [33m/[39m[33m>[39m
+ [90m 34 |[39m         [33m<[39m[33m/[39m[33mParentCard[39m[33m>[39m
+ [90m 35 |[39m     )[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

@@ -29,7 +29,6 @@ export default function BiaxialLineChart() {
                 ]}
                 xAxis={[{ scaleType: "point", data: xLabels }]}
                 yAxis={[{ id: "leftAxisId" }, { id: "rightAxisId" }]}
-                rightAxis="rightAxisId"
             />
         </ParentCard>
     );

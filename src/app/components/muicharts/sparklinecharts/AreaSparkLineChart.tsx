@@ -12,19 +12,18 @@ export default function AreaSparkLineChart() {
   return (
 
 
-
     <ParentCard title="AreaSparkLine Chart" codeModel={<AreaSparkLineCode />}>
 
       <Stack direction="row" sx={{ width: '100%' }}>
         <Box sx={{ flexGrow: 1 }}>
-          <SparkLineChart data={[3, -10, -2, 5, 7, -2, 4, 6]} height={100} area colors={[primary]} />
+          <SparkLineChart data={[3, -10, -2, 5, 7, -2, 4, 6]} height={100} area color={primary} />
         </Box>
         <Box sx={{ flexGrow: 1 }}>
           <SparkLineChart
             data={[3, -10, -2, 5, 7, -2, 4, 6]}
             height={100}
             curve="natural"
-            colors={[primary]}
+            color={primary}
             area
           />
         </Box>
