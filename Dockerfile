@@ -16,8 +16,16 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# Instalar dependencias para sharp en Alpine
+RUN apk add --no-cache \
+    libc6-compat \
+    vips-dev \
+    build-base \
+    python3
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Reinstalar sharp para el entorno Alpine
+RUN npm rebuild sharp
 # Si usás NEXT_PUBLIC_* o variables de build, cargalas por .env.production
 RUN npm run build
 
@@ -28,6 +36,9 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3200
 EXPOSE 3200
+
+# Instalar vips para sharp en runtime
+RUN apk add --no-cache vips-dev
 
 # Usuario sin privilegios
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
