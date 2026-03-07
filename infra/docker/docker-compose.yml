@@ -4,20 +4,20 @@ services:
     container_name: tienda_mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      MYSQL_DATABASE: ${DB_NAME:-vendure}
-      MYSQL_USER: ${DB_USER:-vendure}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-vendure}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "3307:3306"
+      - "127.0.0.1:4406:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - vendure_assets:/usr/src/app/apps/backend/static/assets
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
-      interval: 5s
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u${DB_USER} -p${DB_PASSWORD} || exit 1"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 20s
     networks:
       - tienda_net
 
@@ -31,64 +31,65 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      APP_ENV: dev
+      NODE_ENV: ${NODE_ENV}
+      APP_ENV: ${APP_ENV}
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_NAME: ${DB_NAME:-vendure}
-      DB_USER: ${DB_USER:-vendure}
-      DB_PASSWORD: ${DB_PASSWORD:-vendure}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       PORT: 3001
-      SUPERADMIN_USERNAME: superadmin
-      SUPERADMIN_PASSWORD: superadmin
-      COOKIE_SECRET: secret
+      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD}
+      COOKIE_SECRET: ${COOKIE_SECRET}
       ASSET_URL_PREFIX: /assets/
-      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-true}
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE}
     ports:
-      - "3001:3001"
+      - "127.0.0.1:4002:3001"
+      - "127.0.0.1:4001:3001"
     volumes:
       - vendure_assets:/usr/src/app/apps/backend/static/assets
     networks:
       - tienda_net
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3001/health" ]
-      interval: 10s
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
+      interval: 15s
       timeout: 5s
-      retries: 5
-      start_period: 30s
+      retries: 10
+      start_period: 40s
 
   storefront:
     build:
       context: ../../apps/storefront
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_VENDURE_API_URL: http://localhost:3001/shop-api
+        NEXT_PUBLIC_VENDURE_API_URL: ${NEXT_PUBLIC_VENDURE_API_URL}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
     container_name: tienda_storefront
     restart: always
     depends_on:
       backend:
         condition: service_healthy
     environment:
+      NODE_ENV: ${NODE_ENV}
       PORT: 3000
-      NEXT_PUBLIC_VENDURE_API_URL: http://localhost:3001/shop-api
+      NEXT_PUBLIC_VENDURE_API_URL: ${NEXT_PUBLIC_VENDURE_API_URL}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       VENDURE_INTERNAL_API_URL: http://backend:3001/shop-api
-      # Note: Client-side browser needs validation. 
-      # If SSR, backend:3001 works. 
-      # If client fetch, it needs localhost:3001 or public domain.
-      # For this demo we assume localhost access for browser.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:4000:3000"
     networks:
       - tienda_net
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
-      interval: 10s
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000 || exit 1"]
+      interval: 15s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
 
 volumes:
   mysql_data:
   vendure_assets:
-
 
 networks:
   tienda_net:
