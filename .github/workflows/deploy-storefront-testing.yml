@@ -1,0 +1,43 @@
+name: Deploy Storefront Testing
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'apps/storefront/**'
+      - 'infra/docker/docker-compose.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+
+concurrency:
+  group: deploy-storefront-testing
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, testing]
+
+    steps:
+      - name: Update repository
+        run: |
+          cd /opt/cla_soulprint-testing
+          git fetch origin
+          git checkout develop
+          git reset --hard origin/develop
+
+      - name: Build storefront
+        run: |
+          cd /opt/cla_soulprint-testing
+          docker compose -f infra/docker/docker-compose.yml build storefront
+
+      - name: Restart storefront
+        run: |
+          cd /opt/cla_soulprint-testing
+          docker compose -f infra/docker/docker-compose.yml up -d storefront
+
+      - name: Show status
+        run: |
+          cd /opt/cla_soulprint-testing
+          docker compose -f infra/docker/docker-compose.yml ps

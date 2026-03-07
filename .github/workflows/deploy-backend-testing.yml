@@ -1,0 +1,43 @@
+name: Deploy Backend Testing
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'apps/backend/**'
+      - 'infra/docker/docker-compose.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+
+concurrency:
+  group: deploy-backend-testing
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, testing]
+
+    steps:
+      - name: Update repository
+        run: |
+          cd /opt/cla_soulprint-testing
+          git fetch origin
+          git checkout develop
+          git reset --hard origin/develop
+
+      - name: Build backend
+        run: |
+          cd /opt/cla_soulprint-testing
+          docker compose -f infra/docker/docker-compose.yml build backend
+
+      - name: Restart backend
+        run: |
+          cd /opt/cla_soulprint-testing
+          docker compose -f infra/docker/docker-compose.yml up -d backend
+
+      - name: Show status
+        run: |
+          cd /opt/cla_soulprint-testing
+          docker compose -f infra/docker/docker-compose.yml ps
