@@ -1,0 +1,31 @@
+{
+    "name": "backend",
+    "version": "1.0.0",
+    "scripts": {
+        "start": "ts-node src/index.ts",
+        "start:server": "ts-node src/index.ts",
+        "start:prod": "node dist/index.js",
+        "build": "tsc",
+        "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+        "populate": "ts-node src/populate.ts",
+        "populate:prod": "node dist/populate.js"
+    },
+    "dependencies": {
+        "@vendure/core": "^2.2.0",
+        "@vendure/admin-ui-plugin": "^2.2.0",
+        "@vendure/asset-server-plugin": "^2.2.0",
+        "@vendure/email-plugin": "^2.2.0",
+        "mysql2": "^3.9.0",
+        "typeorm": "0.3.19",
+        "reflect-metadata": "^0.1.13",
+        "bcrypt": "^5.1.0",
+        "typescript": "^5.3.3",
+        "ts-node": "^10.9.2",
+        "dotenv": "^16.4.1"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.0",
+        "ts-node-dev": "^2.0.0",
+        "@vendure/ui-devkit": "^2.2.0"
+    }
+}

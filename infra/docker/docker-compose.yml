@@ -1,0 +1,95 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: tienda_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-vendure}
+      MYSQL_USER: ${DB_USER:-vendure}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-vendure}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - vendure_assets:/usr/src/app/apps/backend/static/assets
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tienda_net
+
+  backend:
+    build:
+      context: ../../
+      dockerfile: apps/backend/Dockerfile
+    container_name: tienda_backend
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      APP_ENV: dev
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-vendure}
+      DB_USER: ${DB_USER:-vendure}
+      DB_PASSWORD: ${DB_PASSWORD:-vendure}
+      PORT: 3001
+      SUPERADMIN_USERNAME: superadmin
+      SUPERADMIN_PASSWORD: superadmin
+      COOKIE_SECRET: secret
+      ASSET_URL_PREFIX: /assets/
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-true}
+    ports:
+      - "3001:3001"
+    volumes:
+      - vendure_assets:/usr/src/app/apps/backend/static/assets
+    networks:
+      - tienda_net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3001/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  storefront:
+    build:
+      context: ../../apps/storefront
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_VENDURE_API_URL: http://localhost:3001/shop-api
+    container_name: tienda_storefront
+    restart: always
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      NEXT_PUBLIC_VENDURE_API_URL: http://localhost:3001/shop-api
+      VENDURE_INTERNAL_API_URL: http://backend:3001/shop-api
+      # Note: Client-side browser needs validation. 
+      # If SSR, backend:3001 works. 
+      # If client fetch, it needs localhost:3001 or public domain.
+      # For this demo we assume localhost access for browser.
+    ports:
+      - "3000:3000"
+    networks:
+      - tienda_net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
+  vendure_assets:
+
+
+networks:
+  tienda_net:
+    driver: bridge
