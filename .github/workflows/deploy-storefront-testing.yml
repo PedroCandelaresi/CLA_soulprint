@@ -5,14 +5,10 @@ on:
     branches: [develop]
     paths:
       - 'apps/storefront/**'
-      - 'infra/docker/docker-compose.yml'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - 'turbo.json'
+      - 'apps/storefront/Dockerfile'
 
 concurrency:
-  group: deploy-storefront-testing
+  group: deploy-testing
   cancel-in-progress: true
 
 jobs:
@@ -37,29 +33,44 @@ jobs:
           cd /opt/cla_soulprint-testing
           pnpm install --frozen-lockfile
 
-      - name: Validate workspace
+      - name: Preflight deploy environment
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          pnpm validate
+          if [ ! -f infra/docker/.env ]; then
+            echo "Missing required deploy environment file: infra/docker/.env" >&2
+            exit 1
+          fi
+
+      - name: Lint storefront
+        run: |
+          set -euo pipefail
+          cd /opt/cla_soulprint-testing
+          pnpm --dir apps/storefront lint
+
+      - name: Build storefront app
+        run: |
+          set -euo pipefail
+          cd /opt/cla_soulprint-testing
+          pnpm --dir apps/storefront build
 
       - name: Validate Compose config
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          pnpm compose:config
+          docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml config
 
       - name: Build storefront
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          docker compose -f infra/docker/docker-compose.yml build storefront
+          docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml build storefront
 
       - name: Restart storefront
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          docker compose -f infra/docker/docker-compose.yml up -d storefront
+          docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml up -d storefront
 
       - name: Smoke test storefront
         run: |
@@ -77,4 +88,4 @@ jobs:
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          docker compose -f infra/docker/docker-compose.yml ps
+          docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml ps
