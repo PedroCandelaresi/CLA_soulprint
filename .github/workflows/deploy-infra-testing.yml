@@ -1,13 +1,17 @@
-name: Deploy Infra Testing
+name: Deploy Docker Stack Testing
 
 on:
   push:
     branches: [develop]
     paths:
-      - 'infra/docker/**'
+      - 'infra/docker/docker-compose.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
 
 concurrency:
-  group: deploy-infra-testing
+  group: deploy-testing
   cancel-in-progress: true
 
 jobs:
@@ -32,6 +36,15 @@ jobs:
           cd /opt/cla_soulprint-testing
           pnpm install --frozen-lockfile
 
+      - name: Preflight deploy environment
+        run: |
+          set -euo pipefail
+          cd /opt/cla_soulprint-testing
+          if [ ! -f infra/docker/.env ]; then
+            echo "Missing required deploy environment file: infra/docker/.env" >&2
+            exit 1
+          fi
+
       - name: Validate workspace
         run: |
           set -euo pipefail
@@ -42,13 +55,13 @@ jobs:
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          pnpm compose:config
+          docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml config
 
-      - name: Recreate testing stack
+      - name: Deploy testing Docker stack
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          docker compose -f infra/docker/docker-compose.yml up -d --build mysql backend storefront
+          docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml up -d --build mysql backend storefront
 
       - name: Smoke test testing stack
         run: |
@@ -59,11 +72,11 @@ jobs:
             fi
             sleep 3
           done
-          echo "Testing stack smoke tests failed after infra deploy" >&2
+          echo "Testing stack smoke tests failed after docker stack deploy" >&2
           exit 1
 
       - name: Show status
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          docker compose -f infra/docker/docker-compose.yml ps
+          docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml ps

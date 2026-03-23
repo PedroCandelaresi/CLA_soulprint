@@ -5,14 +5,10 @@ on:
     branches: [develop]
     paths:
       - 'apps/backend/**'
-      - 'infra/docker/docker-compose.yml'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - 'turbo.json'
+      - 'apps/backend/Dockerfile'
 
 concurrency:
-  group: deploy-backend-testing
+  group: deploy-testing
   cancel-in-progress: true
 
 jobs:
@@ -38,29 +34,38 @@ jobs:
           cd /opt/cla_soulprint-testing
           pnpm install --frozen-lockfile
 
-      - name: Validate workspace
+      - name: Preflight deploy environment
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          pnpm validate
+          if [ ! -f infra/docker/.env ]; then
+            echo "Missing required deploy environment file: infra/docker/.env" >&2
+            exit 1
+          fi
+
+      - name: Validate backend
+        run: |
+          set -euo pipefail
+          cd /opt/cla_soulprint-testing
+          pnpm --dir apps/backend build
 
       - name: Validate Compose config
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          pnpm compose:config
+          docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml config
 
       - name: Build backend
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          docker compose -f infra/docker/docker-compose.yml build backend
+          docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml build backend
 
       - name: Restart backend
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          docker compose -f infra/docker/docker-compose.yml up -d mysql backend
+          docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml up -d mysql backend
 
       - name: Smoke test backend
         run: |
@@ -78,4 +83,4 @@ jobs:
         run: |
           set -euo pipefail
           cd /opt/cla_soulprint-testing
-          docker compose -f infra/docker/docker-compose.yml ps
+          docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml ps

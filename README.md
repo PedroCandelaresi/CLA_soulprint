@@ -54,7 +54,7 @@ Flujo mínimo recomendado antes de reiniciar servicios en testing/production:
 pnpm install --frozen-lockfile
 pnpm lint
 pnpm build
-docker compose -f infra/docker/docker-compose.yml config
+docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml config
 ```
 
 Smoke tests mínimos según el alcance del deploy:
@@ -79,6 +79,40 @@ curl -fsSI http://127.0.0.1:4000
 ```
 
 Los workflows de `testing` siguen ese gate mínimo antes de considerar exitoso el deploy.
+
+## Deploy automático de testing
+
+El deploy automático de `testing` cubre solo los contenedores Docker del proyecto:
+
+- `backend`
+- `storefront`
+- stack Docker completo (`mysql`, `backend`, `storefront`)
+
+Queda fuera del deploy automático:
+
+- Nginx host-level
+- certificados
+- reload manual del proxy del host
+
+Alcance actual de los workflows:
+
+- `Deploy Backend Testing`: cambios en `apps/backend/**`
+- `Deploy Storefront Testing`: cambios en `apps/storefront/**`
+- `Deploy Docker Stack Testing`: cambios globales de Docker/monorepo:
+  - `infra/docker/docker-compose.yml`
+  - `package.json`
+  - `pnpm-lock.yaml`
+  - `pnpm-workspace.yaml`
+  - `turbo.json`
+
+`infra/docker/nginx/**` no dispara deploy automático porque el proxy principal se administra manualmente en el host.
+
+En todos los workflows de testing:
+
+- se exige que exista `infra/docker/.env`
+- `docker compose` se ejecuta siempre con `--env-file infra/docker/.env`
+- backend y storefront validan solo su propio alcance
+- el deploy global del stack mantiene la validación completa `pnpm validate`
 
 ## Reverse Proxy y networking
 
