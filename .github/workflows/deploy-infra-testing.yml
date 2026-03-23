@@ -16,13 +16,12 @@ jobs:
 
     steps:
 
-      - name: Trust repository path
-        run: |
-          git config --global --add safe.directory /opt/cla_soulprint-testing
-
       - name: Update repository
         run: |
-          cd /opt/cla_soulprint-testing
+          set -euo pipefail
+          REPO_PATH="$(realpath /opt/cla_soulprint-testing)"
+          git config --system --add safe.directory "$REPO_PATH"
+          cd "$REPO_PATH"
           git fetch origin
           git checkout develop
           git reset --hard origin/develop
