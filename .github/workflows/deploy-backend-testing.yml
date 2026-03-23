@@ -1,0 +1,81 @@
+name: Deploy Backend Testing
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'apps/backend/**'
+      - 'infra/docker/docker-compose.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+
+concurrency:
+  group: deploy-backend-testing
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, testing]
+
+    steps:
+
+      - name: Trust repository path
+        run: |
+          git config --global --add safe.directory /opt/cla_soulprint-testing
+
+      - name: Update repository
+        run: |
+          cd /opt/cla_soulprint-testing
+          git fetch origin
+          git checkout develop
+          git reset --hard origin/develop
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          cd /opt/cla_soulprint-testing
+          pnpm install --frozen-lockfile
+
+      - name: Validate workspace
+        run: |
+          set -euo pipefail
+          cd /opt/cla_soulprint-testing
+          pnpm validate
+
+      - name: Validate Compose config
+        run: |
+          set -euo pipefail
+          cd /opt/cla_soulprint-testing
+          pnpm compose:config
+
+      - name: Build backend
+        run: |
+          set -euo pipefail
+          cd /opt/cla_soulprint-testing
+          docker compose -f infra/docker/docker-compose.yml build backend
+
+      - name: Restart backend
+        run: |
+          set -euo pipefail
+          cd /opt/cla_soulprint-testing
+          docker compose -f infra/docker/docker-compose.yml up -d mysql backend
+
+      - name: Smoke test backend
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:4002/health > /dev/null; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Backend healthcheck failed after deploy" >&2
+          exit 1
+
+      - name: Show status
+        run: |
+          set -euo pipefail
+          cd /opt/cla_soulprint-testing
+          docker compose -f infra/docker/docker-compose.yml ps
