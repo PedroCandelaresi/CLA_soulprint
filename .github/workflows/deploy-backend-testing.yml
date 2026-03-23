@@ -27,9 +27,10 @@ jobs:
           REPO_PATH="$(realpath /opt/cla_soulprint-testing)"
           git config --system --add safe.directory "$REPO_PATH"
           cd "$REPO_PATH"
-          git fetch origin
+          git fetch --tags origin
           git checkout develop
           git reset --hard origin/develop
+          git clean -fd
 
       - name: Install dependencies
         run: |
