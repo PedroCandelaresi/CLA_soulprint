@@ -17,7 +17,7 @@ export default function JoyeriaContent() {
                     Lleva a tu mejor amigo siempre cerca del corazón
                 </Typography>
                 <Typography variant="h5" color="text.secondary" sx={{ maxWidth: '800px', mx: 'auto', lineHeight: 1.6 }}>
-                    Sabemos que no es "solo un perro". Es tu familia, tu compañero de aventuras y tu confidente silencioso.
+                    Sabemos que no es &quot;solo un perro&quot;. Es tu familia, tu compañero de aventuras y tu confidente silencioso.
                     En CLA creamos joyas que celebran ese vínculo inquebrantable.
                 </Typography>
             </Box>
@@ -43,7 +43,7 @@ export default function JoyeriaContent() {
                         </Box>
                         <Typography variant="body1" fontSize="1.1rem" color="text.secondary">
                             Imagina llevar un colgante con el rostro de tu peludo grabado con precisión artesanal, mientras él luce una medalla a juego con tu rostro.
-                            Es nuestra forma de decir "estamos juntos en esto", una conexión simbólica que trasciende las palabras.
+                            Es nuestra forma de decir &quot;estamos juntos en esto&quot;, una conexión simbólica que trasciende las palabras.
                         </Typography>
                         <Typography variant="body1" fontSize="1.1rem" color="text.secondary">
                             Cada pieza es pulida a mano y tratada para resistir las aventuras de tu mascota y acompañarte en tu día a día con elegancia.
@@ -58,7 +58,7 @@ export default function JoyeriaContent() {
             {/* Quote Section */}
             <Box sx={{ bgcolor: 'primary.light', p: 6, borderRadius: 4, textAlign: 'center' }}>
                 <Typography variant="h4" fontStyle="italic" color="primary.dark">
-                    "Porque el amor verdadero deja huella... y ahora también se puede llevar puesta."
+                    &quot;Porque el amor verdadero deja huella... y ahora también se puede llevar puesta.&quot;
                 </Typography>
             </Box>
         </Container>

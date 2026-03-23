@@ -10,21 +10,21 @@ const diapositivas = [
         titulo: "Colección humana",
         descripcion: "Joyería elegante para cada ocasión, hecha a mano con materiales hipoalergénicos.",
         imagen: "/images/carrousel/carrousel1.png",
-        enlace: "/colecciones/humanos",
+        enlace: "/productos",
     },
     {
         id: "coleccion-mascotas",
         titulo: "Mascotas con estilo.",
         descripcion: "Collares y dijes diseñados para tus compañeras peludas, seguros y cómodos.",
         imagen: "/images/carrousel/carrousel2.png",
-        enlace: "/colecciones/mascotas",
+        enlace: "/productos",
     },
     {
         id: "combos",
         titulo: "Combos combinados",
         descripcion: "Sets coordinados para compartir estilo con tus mascotas favoritas.",
         imagen: "/images/carrousel/carrousel3.png",
-        enlace: "/colecciones/combos",
+        enlace: "/productos",
     },
 ];
 

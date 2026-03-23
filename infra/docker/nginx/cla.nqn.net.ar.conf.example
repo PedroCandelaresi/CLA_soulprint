@@ -1,3 +1,5 @@
+# Primary recommended reverse proxy model for this repository:
+# host-level Nginx on Debian/Ubuntu proxying to Docker Compose loopback ports.
 server {
     listen 80;
     server_name cla.nqn.net.ar;
@@ -15,13 +17,26 @@ server {
         proxy_set_header Connection "upgrade";
     }
 
-    location /shop-api/ {
-        proxy_pass http://127.0.0.1:4001/shop-api/;
+    location = /shop-api {
+        proxy_pass http://127.0.0.1:4002/shop-api;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /shop-api/ {
+        proxy_pass http://127.0.0.1:4002/shop-api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /admin {
+        return 301 /admin/;
     }
 
     location /admin/ {
@@ -31,6 +46,19 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /admin-api/ {
+        proxy_pass http://127.0.0.1:4002/admin-api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /assets {
+        return 301 /assets/;
     }
 
     location /assets/ {

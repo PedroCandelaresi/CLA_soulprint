@@ -1,8 +1,9 @@
 import { Container, Grid, Typography, Box, Paper } from '@mui/material';
-import { fetchVendure, GET_COLLECTIONS_QUERY, SEARCH_PRODUCTS_QUERY, GET_PRODUCTS_QUERY, GET_PRODUCTS_BY_COLLECTION_QUERY } from '@/lib/vendure';
+import { listCollections, listProducts, listProductsByCollection } from '@/lib/vendure';
+import type { CollectionItem } from '@/lib/vendure';
 import ProductList from '@/components/products/ProductList';
 import ProductFilter from '@/components/products/ProductFilter';
-import { Product } from '@/types/product';
+import type { Product } from '@/types/product';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,15 +11,6 @@ export const metadata = {
     title: 'Tienda | CLA',
     description: 'Explora nuestra colección de joyería personalizada.',
 };
-
-interface SearchResult {
-    items: any[];
-    totalItems: number;
-}
-
-interface CollectionResult {
-    items: any[];
-}
 
 export default async function ProductosPage({
     searchParams,
@@ -28,10 +20,9 @@ export default async function ProductosPage({
     const collectionSlug = typeof searchParams.collection === 'string' ? searchParams.collection : undefined;
 
     // Fetch Collections
-    let collections = [];
+    let collections: CollectionItem[] = [];
     try {
-        const collectionsData = await fetchVendure<{ collections: CollectionResult }>(GET_COLLECTIONS_QUERY);
-        collections = collectionsData.collections.items;
+        collections = await listCollections();
     } catch (error) {
         console.error("Error fetching collections:", error);
     }
@@ -40,36 +31,9 @@ export default async function ProductosPage({
     let products: Product[] = [];
     try {
         if (collectionSlug) {
-            // Prefiere products() para resultados instantáneos; fallback a search si falla
-            try {
-                const data = await fetchVendure<{ products: { items: Product[] } }>(GET_PRODUCTS_BY_COLLECTION_QUERY, {
-                    collectionSlug,
-                    take: 24,
-                    skip: 0,
-                });
-                products = data.products.items;
-            } catch (err) {
-                console.warn('Fallback to search API for collection', err);
-                const input: any = { take: 24, skip: 0, groupByProduct: true, collectionSlug };
-                const searchData = await fetchVendure<{ search: SearchResult }>(SEARCH_PRODUCTS_QUERY, { input });
-
-                products = searchData.search.items.map(p => ({
-                    id: p.productId,
-                    name: p.productName,
-                    slug: p.slug,
-                    description: p.description,
-                    featuredAsset: p.productAsset,
-                    variants: [{
-                        price: p.price.value || p.price.min,
-                        currencyCode: 'ARS'
-                    }]
-                }));
-            }
+            products = await listProductsByCollection(collectionSlug, { take: 24, skip: 0 });
         } else {
-            // No filter: Fetch DIRECTLY from DB (bypass Search Index)
-            // This ensures new products appear immediately.
-            const data = await fetchVendure<{ products: { items: Product[] } }>(GET_PRODUCTS_QUERY, { take: 24, skip: 0 }); // Import GET_PRODUCTS_QUERY if needed, it is already imported? No, check imports.
-            products = data.products.items;
+            products = await listProducts({ take: 24, skip: 0 });
         }
 
     } catch (error) {

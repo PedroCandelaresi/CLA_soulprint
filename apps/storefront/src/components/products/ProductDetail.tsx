@@ -1,7 +1,6 @@
 'use client';
 import React from 'react';
-import { Box, Grid, Typography, Button, Rating, Stack, Divider, Chip } from '@mui/material';
-import { IconShoppingCart, IconCheck } from '@tabler/icons-react';
+import { Grid, Typography, Stack, Divider, Chip } from '@mui/material';
 import type { Product } from '@/types/product';
 import ProductCarousel from './ProductCarousel';
 
@@ -10,16 +9,30 @@ interface ProductDetailProps {
 }
 
 const ProductDetail = ({ product }: ProductDetailProps) => {
-    const price = product?.variants?.[0]?.price ? (product.variants[0].price / 100).toFixed(2) : '0.00';
-    const currency = product?.variants?.[0]?.currencyCode || 'USD';
+    const amount = product?.variants?.[0]?.price ?? 0;
+    const currency = product?.variants?.[0]?.currencyCode || 'ARS';
+    const price = new Intl.NumberFormat('es-AR', {
+        style: 'currency',
+        currency,
+    }).format(amount / 100);
+    const stockLevel = product?.variants?.[0]?.stockLevel;
+    const description = (product.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const stockChip =
+        stockLevel === 'IN_STOCK'
+            ? { label: 'En stock', color: 'success' as const }
+            : stockLevel === 'LOW_STOCK'
+                ? { label: 'Stock bajo', color: 'warning' as const }
+                : stockLevel === 'OUT_OF_STOCK'
+                    ? { label: 'Sin stock', color: 'default' as const }
+                    : { label: 'Disponibilidad a confirmar', color: 'default' as const };
 
     // Aggregate all assets
-    const images = [];
+    const images: string[] = [];
     if (product.featuredAsset) images.push(product.featuredAsset.preview);
     if (product.assets) images.push(...product.assets.map(a => a.preview));
 
     // Deduplicate and Fix URLs
-    let uniqueImages = [...new Set(images)];
+    const uniqueImages = [...new Set(images)];
     if (uniqueImages.length === 0) uniqueImages.push('/images/backgrounds/errorimg.svg');
 
     // We rely on next.config.ts rewrite to handle /assets/ paths
@@ -42,37 +55,23 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
                 <Stack spacing={2}>
                     <Typography variant="h3" fontWeight="bold">{product.name}</Typography>
 
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                        <Rating value={4.5} readOnly precision={0.5} />
-                        <Typography variant="body2" color="text.secondary">(24 reviews)</Typography>
-                    </Stack>
-
                     <Typography variant="h4" color="primary.main" fontWeight="bold">
-                        ${price}
+                        {price}
                     </Typography>
 
                     <Stack direction="row" alignItems="center" spacing={1}>
-                        <Chip icon={<IconCheck size={18} />} label="En Stock" color="success" size="small" variant="outlined" />
-                        <Chip label="Envío Gratis" color="primary" size="small" variant="outlined" />
+                        <Chip label={stockChip.label} color={stockChip.color} size="small" variant="outlined" />
                     </Stack>
 
                     <Typography variant="body1" color="text.secondary" sx={{ py: 2 }}>
-                        {product.description || "Descripción no disponible para este producto."}
+                        {description || "Descripción no disponible para este producto."}
                     </Typography>
 
                     <Divider />
 
-                    <Box sx={{ py: 2 }}>
-                        <Button
-                            variant="contained"
-                            size="large"
-                            startIcon={<IconShoppingCart />}
-                            fullWidth
-                            sx={{ py: 1.5, fontSize: '1.1rem' }}
-                        >
-                            Agregar al carrito
-                        </Button>
-                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                        La compra online y el carrito de clientes siguen en preparación.
+                    </Typography>
                 </Stack>
             </Grid>
         </Grid>

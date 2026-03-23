@@ -8,9 +8,7 @@ import {
     AppBar,
     Box,
     Toolbar,
-    Typography,
     IconButton,
-    Badge,
     Button,
     Drawer,
     List,
@@ -18,13 +16,10 @@ import {
     ListItemButton,
     ListItemText,
     Stack,
-    InputBase,
     Container
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
-import SearchIcon from "@mui/icons-material/Search";
-import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 
 type OpcionMenu = {
     etiqueta: string;
@@ -74,7 +69,7 @@ const Header = () => {
             elevation={0}
             sx={{
                 backdropFilter: "blur(8px)",
-                borderBottom: (tema) => `1px solid ${alpha(colorPrincipal, 0.4)}`,
+                borderBottom: `1px solid ${alpha(colorPrincipal, 0.4)}`,
                 backgroundColor: colorPrincipal,
                 color: "common.white",
             }}
@@ -102,32 +97,6 @@ const Header = () => {
                         {renderOpciones()}
                     </Box>
 
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-
-
-                        <IconButton color="inherit" aria-label="ver carrito">
-                            <Badge badgeContent={2} color="secondary">
-                                <ShoppingBagIcon />
-                            </Badge>
-                        </IconButton>
-
-                        <Button
-                            variant="contained"
-                            component={Link}
-                            href="/auth/login"
-                            sx={{
-                                bgcolor: "common.white",
-                                color: colorPrincipal,
-                                fontWeight: 600,
-                                "&:hover": {
-                                    bgcolor: alpha("#FFFFFF", 0.85),
-                                },
-                                display: { xs: 'none', sm: 'flex' }
-                            }}
-                        >
-                            Ingresar
-                        </Button>
-                    </Stack>
                 </Toolbar>
             </Container>
 

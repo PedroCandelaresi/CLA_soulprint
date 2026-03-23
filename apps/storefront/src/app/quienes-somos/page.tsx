@@ -1,4 +1,4 @@
-import { Container, Typography, Box } from '@mui/material';
+import { Container, Typography } from '@mui/material';
 
 export const metadata = {
     title: 'Quiénes Somos | CLA',

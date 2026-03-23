@@ -1,18 +1,14 @@
 'use client';
-import React from "react";
 import {
     Box,
     Grid,
     Typography,
     Container,
-    Divider,
     Stack,
     IconButton,
 } from "@mui/material";
-import Image from "next/image";
 import Link from "next/link";
-import Logo from "@/components/ui/Logo";
-import { IconBrandFacebook, IconBrandTwitter, IconBrandInstagram } from "@tabler/icons-react";
+import { IconBrandFacebook, IconBrandInstagram } from "@tabler/icons-react";
 
 const Footer = () => {
     return (

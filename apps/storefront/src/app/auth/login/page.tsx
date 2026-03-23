@@ -1,21 +1,9 @@
 'use client';
 
-import { Container, Box, Typography, TextField, Button, Paper, Stack } from '@mui/material';
+import { Container, Box, Typography, Paper, Stack } from '@mui/material';
 import Image from 'next/image';
-import Link from 'next/link';
-import { useState } from 'react';
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        console.log('Login attempt:', { email, password });
-        // TODO: Implement Vendure Auth
-        alert('El inicio de sesión de clientes estará disponible pronto. Por favor, usa el panel de administración para gestionar la tienda.');
-    };
-
     return (
         <Box
             sx={{
@@ -43,50 +31,28 @@ export default function LoginPage() {
                     </Box>
 
                     <Typography variant="h4" fontWeight="bold" gutterBottom color="primary">
-                        Bienvenido de nuevo
+                        Acceso de clientes no disponible
                     </Typography>
                     <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                        Ingresa a tu cuenta para ver tus pedidos
+                        La autenticación de clientes todavía no está habilitada en esta tienda.
                     </Typography>
 
-                    <form onSubmit={handleSubmit}>
-                        <Stack spacing={3}>
-                            <TextField
-                                label="Correo Electrónico"
-                                type="email"
-                                fullWidth
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                            <TextField
-                                label="Contraseña"
-                                type="password"
-                                fullWidth
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                size="large"
-                                fullWidth
-                                sx={{ py: 1.5, fontSize: '1.1rem' }}
-                            >
-                                Ingresar
-                            </Button>
-                        </Stack>
-                    </form>
+                    <Stack spacing={2} sx={{ mt: 4 }}>
+                        <Typography variant="body2" color="text.secondary">
+                            El historial de pedidos, el acceso con email y el registro de clientes siguen en desarrollo.
+                        </Typography>
+                        <Typography variant="caption" color="text.disabled">
+                            Cuando estas funciones estén disponibles, se publicarán nuevamente desde el encabezado principal.
+                        </Typography>
+                    </Stack>
 
                     <Box sx={{ mt: 4 }}>
                         <Typography variant="body2" color="text.secondary">
-                            ¿No tienes cuenta? <Link href="/auth/register" style={{ color: '#004825', fontWeight: 'bold' }}>Regístrate</Link>
+                            Por ahora, esta tienda funciona como catálogo público.
                         </Typography>
                         <Box mt={2}>
                             <Typography variant="caption" color="text.disabled">
-                                (Funcionalidad Clientes en desarrollo)
+                                (Autenticación y compra online en desarrollo)
                             </Typography>
                         </Box>
                     </Box>

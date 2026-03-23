@@ -1,6 +1,6 @@
 # Tienda - Storefront
 
-Storefront moderno construido con Next.js 15, MUI v7 y TypeScript. Diseñado para ser liviano y rápido.
+Storefront moderno construido con Next.js 16, MUI v7 y TypeScript. Diseñado para ser liviano y rápido.
 
 ## Estructura
 
@@ -35,5 +35,5 @@ Storefront moderno construido con Next.js 15, MUI v7 y TypeScript. Diseñado par
 ## Integración con Backend
 
 El storefront se conecta a Vendure vía GraphQL.
-- Server-side calls usan `VENDURE_API_URL` (http://backend:3001/shop-api)
-- Client-side calls usan `NEXT_PUBLIC_VENDURE_API_URL` (http://localhost:3001/shop-api)
+- Server-side calls usan `VENDURE_INTERNAL_API_URL` (http://backend:3001/shop-api)
+- Client-side calls usan `NEXT_PUBLIC_VENDURE_API_URL` (http://localhost:4001/shop-api)

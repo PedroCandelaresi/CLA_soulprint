@@ -42,10 +42,24 @@ services:
       SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME}
       SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD}
       COOKIE_SECRET: ${COOKIE_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
+      COOKIE_SECURE_PROXY: ${COOKIE_SECURE_PROXY:-}
       ASSET_URL_PREFIX: /assets/
       DB_SYNCHRONIZE: ${DB_SYNCHRONIZE}
+      SHOP_PUBLIC_URL: ${SHOP_PUBLIC_URL:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
     ports:
+      # Primary backend loopback upstream for the recommended host-level Nginx.
       - "127.0.0.1:4002:3001"
+      # Direct/debug access to the Shop API. Not the primary public entrypoint.
       - "127.0.0.1:4001:3001"
     volumes:
       - vendure_assets:/usr/src/app/apps/backend/static/assets
@@ -77,6 +91,7 @@ services:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       VENDURE_INTERNAL_API_URL: http://backend:3001/shop-api
     ports:
+      # Loopback upstream for the recommended host-level Nginx root route.
       - "127.0.0.1:4000:3000"
     networks:
       - tienda_net

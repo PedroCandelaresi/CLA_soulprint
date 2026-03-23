@@ -19,6 +19,10 @@ RUN \
 # Stage 3: Builder
 FROM base AS builder
 WORKDIR /app
+ARG NEXT_PUBLIC_VENDURE_API_URL
+ARG NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_VENDURE_API_URL=$NEXT_PUBLIC_VENDURE_API_URL
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -35,6 +39,7 @@ RUN \
 # Stage 4: Runner
 FROM base AS runner
 WORKDIR /app
+RUN apk add --no-cache curl
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

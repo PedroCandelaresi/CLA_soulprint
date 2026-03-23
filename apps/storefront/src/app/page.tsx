@@ -1,5 +1,5 @@
-import { fetchVendure, GET_PRODUCTS_QUERY } from '@/lib/vendure';
-import { Product } from '@/types/product';
+import { listProducts } from '@/lib/vendure';
+import type { Product } from '@/types/product';
 import ProductCard from '@/components/products/ProductCard';
 import { Grid, Container, Typography, Box } from '@mui/material';
 import CarruselDestacado from '@/components/home/CarruselDestacado';
@@ -9,12 +9,7 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
   let products: Product[] = [];
   try {
-    const data = await fetchVendure<{ products: { items: Product[] } }>(GET_PRODUCTS_QUERY, { take: 24, skip: 0 });
-    products = data.products.items;
-    console.log("Homepage products fetched:", products.length);
-    if (products.length > 0) {
-      console.log("First product sample:", JSON.stringify(products[0], null, 2));
-    }
+    products = await listProducts({ take: 24, skip: 0 });
   } catch (error) {
     console.error("Error fetching homepage products", error);
   }

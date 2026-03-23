@@ -1,5 +1,5 @@
-import { fetchVendure, GET_PRODUCT_QUERY } from '@/lib/vendure';
-import { Product } from '@/types/product';
+import { getProductBySlug } from '@/lib/vendure';
+import type { Product } from '@/types/product';
 import ProductDetail from '@/components/products/ProductDetail';
 import { Container } from '@mui/material';
 import { notFound } from 'next/navigation';
@@ -20,8 +20,7 @@ export default async function ProductPage({ params }: PageProps) {
     let product: Product | null = null;
 
     try {
-        const data = await fetchVendure<{ product: Product }>(GET_PRODUCT_QUERY, { slug });
-        product = data.product;
+        product = await getProductBySlug(slug);
     } catch (error) {
         console.error('Error fetching product', error);
     }

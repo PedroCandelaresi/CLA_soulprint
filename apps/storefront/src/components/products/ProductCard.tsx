@@ -1,9 +1,8 @@
 'use client';
-import { Card, CardContent, Typography, Stack, Tooltip, Fab, Box } from '@mui/material';
+import { Card, CardContent, Typography, Stack, Box } from '@mui/material';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { IconBasket } from '@tabler/icons-react';
 import type { Product } from '@/types/product';
 
 interface ProductCardProps {
@@ -12,9 +11,13 @@ interface ProductCardProps {
 
 const ProductCard = ({ product }: ProductCardProps) => {
     // console.log(`Rendering card for: ${product.name}`, product);
-    const price = product?.variants?.[0]?.price ? (product.variants[0].price / 100).toFixed(2) : '0.00';
-    const currency = product?.variants?.[0]?.currencyCode || 'USD';
-    let image = product?.featuredAsset?.preview ||
+    const amount = product?.variants?.[0]?.price ?? 0;
+    const currency = product?.variants?.[0]?.currencyCode || 'ARS';
+    const price = new Intl.NumberFormat('es-AR', {
+        style: 'currency',
+        currency,
+    }).format(amount / 100);
+    const image = product?.featuredAsset?.preview ||
         product?.assets?.[0]?.preview ||
         '/images/backgrounds/errorimg.svg';
     const productHref = product.slug ? `/productos/${product.slug}` : '/productos';
@@ -66,21 +69,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 />
             </Box>
 
-            {/* Add To Cart Button Positioned absolutely */}
-            <Tooltip title="Agregar al carrito">
-                <Fab
-                    size="small"
-                    color="primary"
-                    sx={{
-                        bottom: "75px",
-                        right: "15px",
-                        position: "absolute",
-                    }}
-                >
-                    <IconBasket size="20" />
-                </Fab>
-            </Tooltip>
-
             <CardContent sx={{ p: 3, pt: 2 }}>
                 <Typography
                     variant="h6"
@@ -98,7 +86,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     mt={1}
                 >
                     <Stack direction="row" alignItems="center">
-                        <Typography variant="h6" fontWeight="bold">${price}</Typography>
+                        <Typography variant="h6" fontWeight="bold">{price}</Typography>
                         {/* Discount could go here */}
                     </Stack>
                 </Stack>
