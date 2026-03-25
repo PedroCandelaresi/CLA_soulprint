@@ -61,8 +61,11 @@ const GET_PRODUCTS_QUERY = `
           preview
         }
         variants {
+          id
+          name
           price
           currencyCode
+          stockLevel
         }
       }
     }
@@ -80,7 +83,13 @@ const GET_PRODUCTS_BY_COLLECTION_QUERY = `
         description
         featuredAsset { preview }
         assets { preview }
-        variants { price currencyCode }
+        variants {
+          id
+          name
+          price
+          currencyCode
+          stockLevel
+        }
       }
     }
   }
@@ -162,8 +171,11 @@ function mapSearchProduct(item: SearchProductItem): Product {
         description: item.description,
         featuredAsset: item.productAsset,
         variants: [{
+            id: undefined,
+            name: undefined,
             price: 'value' in item.price ? item.price.value : item.price.min,
             currencyCode: 'ARS',
+            stockLevel: undefined,
         }],
     };
 }

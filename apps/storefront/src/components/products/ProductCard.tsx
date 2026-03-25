@@ -1,18 +1,20 @@
 'use client';
-import { Card, CardContent, Typography, Stack, Box } from '@mui/material';
+import { Alert, Button, Card, CardContent, Typography, Stack, Box } from '@mui/material';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Product } from '@/types/product';
+import { useCart } from '@/components/cart/CartProvider';
 
 interface ProductCardProps {
     product: Product;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-    // console.log(`Rendering card for: ${product.name}`, product);
     const amount = product?.variants?.[0]?.price ?? 0;
     const currency = product?.variants?.[0]?.currencyCode || 'ARS';
+    const variantId = product?.variants?.[0]?.id;
+    const stockLevel = product?.variants?.[0]?.stockLevel;
     const price = new Intl.NumberFormat('es-AR', {
         style: 'currency',
         currency,
@@ -22,26 +24,35 @@ const ProductCard = ({ product }: ProductCardProps) => {
         '/images/backgrounds/errorimg.svg';
     const productHref = product.slug ? `/productos/${product.slug}` : '/productos';
 
-    // Debug log to see what we are getting
-    // console.log(`Product Image for ${product.name}:`, image);
-
-    // If image is a relative path (starts with /assets/), we allow proper handling via rewrite or relative fetch
-    // No need to prepend host if we have a rewrite rule in next.config.ts
-    // or if we decide to use a custom loader.
-    // However, keeping it simple: use relative path.
-    // But next/image requires absolute or static.
-    // Exception: if defined in remotePatterns (we have localhost implicit?), relative paths work if they resolve?
-    // Let's stick to absolute for safety? No, rewrite is better.
-    // If we use relative, <Image src="/assets/..." />
-    // Next.js will fetch http://localhost:3000/assets/... -> Rewrite -> http://backend:3001/assets/...
-
-    // So we just leave it alone.
-
     const [imgSrc, setImgSrc] = useState(image);
+    const [feedback, setFeedback] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { addItem } = useCart();
 
     useEffect(() => {
         setImgSrc(image);
     }, [image]);
+
+    async function handleAddToCart() {
+        if (!variantId) {
+            setFeedback('Este producto no tiene una variante disponible para agregar.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setFeedback(null);
+        try {
+            await addItem(variantId, 1);
+            setFeedback('Producto agregado al carrito.');
+        } catch (error) {
+            setFeedback(error instanceof Error ? error.message : 'No se pudo agregar el producto al carrito.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    const canAddToCart = Boolean(variantId) && stockLevel !== 'OUT_OF_STOCK';
+    const addButtonLabel = stockLevel === 'OUT_OF_STOCK' ? 'Sin stock' : 'Agregar al carrito';
 
     return (
         <Card
@@ -85,11 +96,26 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     justifyContent="space-between"
                     mt={1}
                 >
-                    <Stack direction="row" alignItems="center">
+                    <Stack direction="row" alignItems="center" flex={1}>
                         <Typography variant="h6" fontWeight="bold">{price}</Typography>
-                        {/* Discount could go here */}
                     </Stack>
                 </Stack>
+
+                <Button
+                    variant="contained"
+                    fullWidth
+                    sx={{ mt: 2 }}
+                    onClick={() => void handleAddToCart()}
+                    disabled={!canAddToCart || isSubmitting}
+                >
+                    {isSubmitting ? 'Agregando...' : addButtonLabel}
+                </Button>
+
+                {feedback ? (
+                    <Alert severity={feedback.includes('agregado') ? 'success' : 'error'} sx={{ mt: 2 }}>
+                        {feedback}
+                    </Alert>
+                ) : null}
             </CardContent>
         </Card>
     );

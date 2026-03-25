@@ -1,5 +1,6 @@
 export interface ProductVariant {
     id?: string;
+    name?: string;
     price: number;
     currencyCode: string;
     stockLevel?: string;

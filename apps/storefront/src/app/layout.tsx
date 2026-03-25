@@ -5,6 +5,7 @@ import "./global.css";
 
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { CartProvider } from "@/components/cart/CartProvider";
 import { Box } from "@mui/material";
 import { plus } from "@/theme/typography";
 
@@ -23,13 +24,15 @@ export default function RootLayout({
       <body className={plus.className}>
 
         <ThemeRegistry>
-          <Box display="flex" flexDirection="column" minHeight="100vh">
-            <Header />
-            <Box component="main" flexGrow={1}>
-              {children}
+          <CartProvider>
+            <Box display="flex" flexDirection="column" minHeight="100vh">
+              <Header />
+              <Box component="main" flexGrow={1}>
+                {children}
+              </Box>
+              <Footer />
             </Box>
-            <Footer />
-          </Box>
+          </CartProvider>
         </ThemeRegistry>
       </body>
     </html>

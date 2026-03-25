@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
     AppBar,
+    Badge,
     Box,
     Toolbar,
     IconButton,
@@ -16,10 +17,12 @@ import {
     ListItemButton,
     ListItemText,
     Stack,
-    Container
+    Container,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
+import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import { useCart } from "@/components/cart/CartProvider";
 
 type OpcionMenu = {
     etiqueta: string;
@@ -39,6 +42,7 @@ const opcionesMenu: OpcionMenu[] = [
 const Header = () => {
     const [menuAbierto, setMenuAbierto] = useState(false);
     const pathname = usePathname();
+    const { totalQuantity } = useCart();
 
     const renderOpciones = () => (
         <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="center">
@@ -97,6 +101,17 @@ const Header = () => {
                         {renderOpciones()}
                     </Box>
 
+                    <IconButton
+                        component={Link}
+                        href="/carrito"
+                        aria-label="ir al carrito"
+                        color="inherit"
+                        sx={{ ml: "auto" }}
+                    >
+                        <Badge badgeContent={totalQuantity} color="secondary" invisible={totalQuantity === 0}>
+                            <ShoppingBagOutlinedIcon />
+                        </Badge>
+                    </IconButton>
                 </Toolbar>
             </Container>
 
@@ -111,6 +126,11 @@ const Header = () => {
                                 </ListItemButton>
                             </ListItem>
                         ))}
+                        <ListItem disablePadding>
+                            <ListItemButton component={Link} href="/carrito">
+                                <ListItemText primary={`Carrito${totalQuantity > 0 ? ` (${totalQuantity})` : ''}`} />
+                            </ListItemButton>
+                        </ListItem>
                     </List>
                 </Box>
             </Drawer>
