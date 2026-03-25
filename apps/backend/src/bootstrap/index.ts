@@ -1,5 +1,6 @@
 import { bootstrap, RequestContextService, SearchService } from '@vendure/core';
 import { config } from '../config/vendure-config';
+import { ensureArgentinaDefaults } from './argentina-defaults';
 
 // Populate on start if needed or use separate script.
 // For this setup we will assume populate is run separately or via seed.
@@ -7,6 +8,13 @@ import { config } from '../config/vendure-config';
 
 bootstrap(config)
     .then(async (app) => {
+        try {
+            await ensureArgentinaDefaults(app);
+            console.log('Argentina defaults ensured (country AR + currency ARS)');
+        } catch (err) {
+            console.warn('Argentina defaults setup failed (continuing):', err);
+        }
+
         // Reindex search to ensure colecciones/filtros reflejan cambios recientes
         try {
             const requestContextService = app.get(RequestContextService);

@@ -257,6 +257,179 @@ a {
   box-shadow: 0 10px 26px rgba(18, 41, 29, 0.06);
 }
 
+.page-header,
+.content-area,
+.content-main,
+.surface {
+  color: #173726;
+}
+
+.page-header h1,
+.content-area h1,
+.content-area h2,
+.content-area h3 {
+  color: #12291d !important;
+  letter-spacing: -0.01em;
+}
+
+.left-nav .nav-group-label,
+.left-nav .nav-text,
+.left-nav .nav-link {
+  color: rgba(246, 239, 227, 0.9) !important;
+}
+
+.left-nav .nav-group-content .nav-link,
+.left-nav .nav-group-trigger {
+  border-radius: 14px;
+  margin-block: 4px;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.left-nav .nav-group-content .nav-link:hover,
+.left-nav .nav-group-trigger:hover {
+  background: rgba(246, 239, 227, 0.14) !important;
+  color: #ffffff !important;
+}
+
+.left-nav .nav-group-content .nav-link.active,
+.left-nav .nav-group-content .nav-link.router-link-active,
+.left-nav .nav-group-trigger.active {
+  background: linear-gradient(135deg, rgba(246, 239, 227, 0.18), rgba(246, 239, 227, 0.1)) !important;
+  box-shadow: inset 0 0 0 1px rgba(246, 239, 227, 0.12);
+  color: #ffffff !important;
+}
+
+.btn.btn-outline,
+.btn.btn-secondary,
+button.btn.btn-secondary {
+  background: #fffaf4 !important;
+  border: 1px solid rgba(18, 41, 29, 0.14) !important;
+  border-radius: 999px !important;
+  color: #173726 !important;
+}
+
+.btn.btn-outline:hover,
+.btn.btn-secondary:hover,
+button.btn.btn-secondary:hover {
+  border-color: rgba(0, 72, 37, 0.32) !important;
+  color: #004825 !important;
+}
+
+.clr-form-control,
+.form-control,
+.clr-control-container {
+  margin-bottom: 18px !important;
+}
+
+input.clr-input,
+textarea.clr-textarea,
+select.clr-select,
+.clr-input,
+.clr-textarea,
+.clr-select,
+.form-control input,
+.form-control textarea,
+.form-control select {
+  background: #fffdfa !important;
+  border: 1px solid rgba(18, 41, 29, 0.12) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  color: #173726 !important;
+  min-height: 46px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+input.clr-input:focus,
+textarea.clr-textarea:focus,
+select.clr-select:focus,
+.clr-input:focus,
+.clr-textarea:focus,
+.clr-select:focus,
+.form-control input:focus,
+.form-control textarea:focus,
+.form-control select:focus {
+  border-color: #004825 !important;
+  box-shadow: 0 0 0 3px rgba(0, 72, 37, 0.1) !important;
+}
+
+.clr-control-label,
+label,
+.form-label {
+  color: #314031 !important;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.alert,
+.notification,
+.clr-alert {
+  border: 1px solid rgba(18, 41, 29, 0.08);
+  border-radius: 18px !important;
+  box-shadow: 0 14px 30px rgba(18, 41, 29, 0.08);
+}
+
+.badge,
+.label,
+.chip {
+  border-radius: 999px !important;
+}
+
+.datagrid,
+.datagrid-table,
+table.table,
+.table-wrapper {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-radius: 20px !important;
+  overflow: hidden;
+}
+
+.datagrid .datagrid-head,
+.datagrid thead,
+table.table thead {
+  background: linear-gradient(180deg, rgba(248, 244, 238, 0.96), rgba(240, 232, 221, 0.96)) !important;
+}
+
+.datagrid .datagrid-row:hover,
+table.table tbody tr:hover {
+  background: rgba(0, 72, 37, 0.04) !important;
+}
+
+.datagrid-cell,
+.datagrid-column,
+table.table td,
+table.table th {
+  border-color: rgba(18, 41, 29, 0.08) !important;
+}
+
+.tabs .nav,
+.nav-tabs {
+  background: rgba(255, 255, 255, 0.84);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(18, 41, 29, 0.08);
+  padding: 6px;
+}
+
+.tabs .nav-link,
+.nav-tabs .nav-link {
+  border-radius: 999px !important;
+  color: #314031 !important;
+}
+
+.tabs .nav-link.active,
+.nav-tabs .nav-link.active {
+  background: #004825 !important;
+  color: #fff !important;
+}
+
+.dropdown-menu,
+.popover,
+.context-menu {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(18, 41, 29, 0.08) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 22px 40px rgba(18, 41, 29, 0.14) !important;
+}
+
 .card,
 .clr-card,
 .page-block,
@@ -265,6 +438,22 @@ a {
   border: 1px solid rgba(18, 41, 29, 0.08);
   border-radius: 22px !important;
   box-shadow: 0 18px 40px rgba(18, 41, 29, 0.07);
+}
+
+.card .card-header,
+.clr-card .card-header,
+.page-block .page-block-header,
+.form-card .form-card-header {
+  background: linear-gradient(180deg, rgba(255, 250, 244, 0.98), rgba(249, 244, 236, 0.98));
+  border-bottom: 1px solid rgba(18, 41, 29, 0.08);
+  padding: 18px 22px !important;
+}
+
+.card .card-block,
+.clr-card .card-block,
+.page-block .page-block-body,
+.form-card .form-card-body {
+  padding: 22px !important;
 }
 
 vdr-welcome-widget .p5,

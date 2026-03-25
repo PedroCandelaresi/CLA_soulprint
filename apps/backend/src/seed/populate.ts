@@ -1,33 +1,24 @@
-import { bootstrap, LanguageCode, CurrencyCode } from '@vendure/core';
-import { ChannelService, ProductService, ProductVariantService, TaxCategoryService, RequestContextService, ZoneService, TaxRateService, CountryService } from '@vendure/core';
+import { bootstrap, LanguageCode } from '@vendure/core';
+import { ProductService, ProductVariantService, TaxCategoryService, RequestContextService, ZoneService, TaxRateService } from '@vendure/core';
 import { config } from '../config/vendure-config';
+import { ensureArgentinaDefaults } from '../bootstrap/argentina-defaults';
 
 async function seed() {
     const app = await bootstrap(config);
 
     // Services
-    const channelService = app.get(ChannelService);
     const productVariantService = app.get(ProductVariantService);
     const productService = app.get(ProductService);
     const taxCategoryService = app.get(TaxCategoryService);
     const requestContextService = app.get(RequestContextService);
 
     console.log('Creating request context...');
-    const channel = await channelService.getDefaultChannel();
     const ctx = await requestContextService.create({
         apiType: 'admin',
     });
 
-    // Update Channel to Argentina defaults
-    await channelService.update(ctx, {
-        id: channel.id,
-        defaultLanguageCode: LanguageCode.es,
-        availableLanguageCodes: [LanguageCode.es, LanguageCode.en],
-        currencyCode: CurrencyCode.ARS,
-        availableCurrencyCodes: [CurrencyCode.ARS, CurrencyCode.USD],
-        pricesIncludeTax: true,
-    });
-    console.log('Channel updated to ARS/ES');
+    await ensureArgentinaDefaults(app);
+    console.log('Channel updated to Argentina defaults');
 
     // Check if product exists
     const products = await productService.findAll(ctx, {});
@@ -35,30 +26,11 @@ async function seed() {
     // Ensure Zone and Tax Rate
     const zoneService = app.get(ZoneService);
     const taxRateService = app.get(TaxRateService);
-    const countryService = app.get(CountryService);
+    const zone = (await zoneService.findAll(ctx)).items.find(z => z.name === 'Argentina');
 
-    // Create 'Argentina' country if not exists
-    let country = (await countryService.findAll(ctx)).items.find(c => c.code === 'AR');
-    if (!country) {
-        country = await countryService.create(ctx, { code: 'AR', enabled: true, translations: [{ languageCode: LanguageCode.es, name: 'Argentina' }] });
-        console.log('Created Country: Argentina');
-    }
-
-    // Create 'Argentina' zone if not exists
-    let zone = (await zoneService.findAll(ctx)).items.find(z => z.name === 'Argentina');
     if (!zone) {
-        zone = await zoneService.create(ctx, { name: 'Argentina' });
-        await zoneService.addMembersToZone(ctx, { zoneId: zone.id, memberIds: [country.id] });
-        console.log('Created Zone: Argentina');
+        throw new Error('Argentina zone was not created during bootstrap defaults.');
     }
-
-    // Set Default Tax Zone for Channel
-    await channelService.update(ctx, {
-        id: channel.id,
-        defaultTaxZoneId: zone.id,
-        defaultShippingZoneId: zone.id,
-    });
-    console.log('Set Channel Default Tax Zone to Argentina');
 
     if (products.items.length === 0) {
         console.log('Seeding initial product...');
@@ -81,7 +53,7 @@ async function seed() {
         }
 
         const createdProduct = await productService.create(ctx, {
-            translations: [{ languageCode: channel.defaultLanguageCode, name: 'Demo Product', slug: 'demo-product', description: 'A great demo product' }],
+            translations: [{ languageCode: LanguageCode.es, name: 'Demo Product', slug: 'demo-product', description: 'A great demo product' }],
             enabled: true,
         });
 
