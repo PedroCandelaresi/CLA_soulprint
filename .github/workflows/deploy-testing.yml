@@ -1,0 +1,248 @@
+name: Deploy Testing
+
+on:
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: deploy-testing
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, testing]
+    env:
+      REPO_PATH: /opt/cla_soulprint-testing
+      COMPOSE_FILE: infra/docker/docker-compose.yml
+      ENV_FILE: infra/docker/.env
+      BEFORE_SHA: ${{ github.event.before }}
+
+    steps:
+      - name: Sync testing checkout to pushed SHA
+        run: |
+          set -euo pipefail
+          REPO_PATH="$(realpath "$REPO_PATH")"
+          if [ ! -d "$REPO_PATH/.git" ]; then
+            echo "Missing persistent git checkout at $REPO_PATH" >&2
+            exit 1
+          fi
+          git config --system --add safe.directory "$REPO_PATH"
+          cd "$REPO_PATH"
+          git fetch --prune --tags origin
+          git checkout -B develop origin/develop
+          git reset --hard "$GITHUB_SHA"
+          git clean -ffd
+
+      - name: Detect deploy scope
+        id: detect
+        run: |
+          set -euo pipefail
+          cd "$REPO_PATH"
+
+          before="$BEFORE_SHA"
+          after="$GITHUB_SHA"
+          scope="none"
+          reason="Only docs, manual Nginx references, or CI-only files changed."
+          diff_source="push-range"
+          changed_files=()
+
+          if [ -z "$before" ] || [[ "$before" =~ ^0+$ ]] || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+            scope="stack"
+            reason="Previous pushed SHA is unavailable in the VPS checkout; running a conservative stack/global deploy."
+            diff_source="fallback"
+            mapfile -t changed_files < <(git show --pretty='' --name-only "$after" | sed '/^$/d')
+          else
+            mapfile -t changed_files < <(git diff --name-only "$before" "$after" | sed '/^$/d')
+            backend=false
+            storefront=false
+            global=false
+
+            for path in "${changed_files[@]}"; do
+              case "$path" in
+                *.md|*.gitignore|*.env.example|infra/docker/nginx/*|.github/*)
+                  ;;
+                apps/backend/*)
+                  backend=true
+                  ;;
+                apps/storefront/*)
+                  storefront=true
+                  ;;
+                infra/docker/docker-compose.yml|package.json|pnpm-lock.yaml|pnpm-workspace.yaml|turbo.json)
+                  global=true
+                  ;;
+                *)
+                  global=true
+                  ;;
+              esac
+            done
+
+            if $global || { $backend && $storefront; }; then
+              scope="stack"
+              reason="Global runtime files changed, or backend and storefront changed together."
+            elif $backend; then
+              scope="backend"
+              reason="Only backend runtime files changed."
+            elif $storefront; then
+              scope="storefront"
+              reason="Only storefront runtime files changed."
+            else
+              scope="none"
+              reason="Only docs, manual Nginx references, or CI-only files changed."
+            fi
+          fi
+
+          if [ "${#changed_files[@]}" -eq 0 ]; then
+            scope="none"
+            reason="Push did not produce any file changes against the previous SHA."
+          fi
+
+          {
+            echo "scope=$scope"
+            echo "reason=$reason"
+            echo "diff_source=$diff_source"
+            echo "changed_files<<EOF"
+            if [ "${#changed_files[@]}" -eq 0 ]; then
+              echo "(none)"
+            else
+              printf '%s\n' "${changed_files[@]}"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Deploy scope"
+            echo "- Scope: \`$scope\`"
+            echo "- Reason: $reason"
+            echo "- Diff source: \`$diff_source\`"
+            echo "- Event SHA: \`$after\`"
+            echo "- Previous SHA: \`$before\`"
+            echo
+            echo "### Changed files"
+            if [ "${#changed_files[@]}" -eq 0 ]; then
+              echo "- (none)"
+            else
+              printf -- '- `%s`\n' "${changed_files[@]}"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Skip deploy when no runtime changes are detected
+        if: steps.detect.outputs.scope == 'none'
+        run: |
+          set -euo pipefail
+          echo "${{ steps.detect.outputs.reason }}"
+
+      - name: Install dependencies
+        if: steps.detect.outputs.scope != 'none'
+        run: |
+          set -euo pipefail
+          cd "$REPO_PATH"
+          pnpm install --frozen-lockfile
+
+      - name: Preflight deploy environment
+        if: steps.detect.outputs.scope != 'none'
+        run: |
+          set -euo pipefail
+          cd "$REPO_PATH"
+          if [ ! -f "$ENV_FILE" ]; then
+            echo "Missing required deploy environment file: $ENV_FILE" >&2
+            exit 1
+          fi
+
+      - name: Validate backend
+        if: steps.detect.outputs.scope == 'backend'
+        run: |
+          set -euo pipefail
+          cd "$REPO_PATH"
+          pnpm --dir apps/backend build
+
+      - name: Validate storefront
+        if: steps.detect.outputs.scope == 'storefront'
+        run: |
+          set -euo pipefail
+          cd "$REPO_PATH"
+          pnpm --dir apps/storefront lint
+          pnpm --dir apps/storefront build
+
+      - name: Validate workspace
+        if: steps.detect.outputs.scope == 'stack'
+        run: |
+          set -euo pipefail
+          cd "$REPO_PATH"
+          pnpm validate
+
+      - name: Validate Compose config
+        if: steps.detect.outputs.scope != 'none'
+        run: |
+          set -euo pipefail
+          cd "$REPO_PATH"
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" config
+
+      - name: Deploy backend
+        if: steps.detect.outputs.scope == 'backend'
+        run: |
+          set -euo pipefail
+          cd "$REPO_PATH"
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d mysql backend
+
+      - name: Deploy storefront
+        if: steps.detect.outputs.scope == 'storefront'
+        run: |
+          set -euo pipefail
+          cd "$REPO_PATH"
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build storefront
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d storefront
+
+      - name: Deploy stack
+        if: steps.detect.outputs.scope == 'stack'
+        run: |
+          set -euo pipefail
+          cd "$REPO_PATH"
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --build mysql backend storefront
+
+      - name: Smoke test backend
+        if: steps.detect.outputs.scope == 'backend'
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:4002/health > /dev/null; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Backend healthcheck failed after deploy" >&2
+          exit 1
+
+      - name: Smoke test storefront
+        if: steps.detect.outputs.scope == 'storefront'
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 20); do
+            if curl -fsSI http://127.0.0.1:4000 > /dev/null; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Storefront smoke test failed after deploy" >&2
+          exit 1
+
+      - name: Smoke test stack
+        if: steps.detect.outputs.scope == 'stack'
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:4002/health > /dev/null && curl -fsSI http://127.0.0.1:4000 > /dev/null; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Testing stack smoke tests failed after deploy" >&2
+          exit 1
+
+      - name: Show Docker status
+        if: always() && steps.detect.outputs.scope != 'none'
+        run: |
+          set -euo pipefail
+          cd "$REPO_PATH"
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps
