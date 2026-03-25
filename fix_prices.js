@@ -1,4 +1,5 @@
-// Node fetch removed, using native http module below.
+// Legacy helper for local price resets. Assumes the default channel is already ARS.
+// For channel/data cleanup use: `pnpm --filter backend currency:enforce-ars`.
 
 const ADMIN_API = 'http://localhost:3001/admin-api';
 
@@ -117,7 +118,7 @@ function post(body, token = null) {
             console.log(`Product ${p.name} (ID: ${p.id})`);
             p.variants.forEach(v => {
                 console.log(` - Variant ID: ${v.id}. Updating price...`);
-                variantsToUpdate.push({ id: v.id, price: 15000 }); // $150.00
+                variantsToUpdate.push({ id: v.id, price: 15000 }); // 150.00 ARS
             });
         });
 

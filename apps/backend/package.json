@@ -10,6 +10,7 @@
         "dev": "ts-node-dev --respawn --transpile-only src/bootstrap/index.ts",
         "populate": "ts-node src/seed/populate.ts",
         "populate:prod": "node dist/seed/populate.js",
+        "currency:enforce-ars": "ts-node src/scripts/enforce-ars-currency.ts",
         "migration:generate": "ts-node src/migrations/generate-migration.ts",
         "migration:run": "ts-node src/migrations/run-migrations.ts",
         "migration:run:prod": "node dist/migrations/run-migrations.js",

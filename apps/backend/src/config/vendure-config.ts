@@ -115,6 +115,7 @@ if (IS_USING_SMTP_BOOTSTRAP_FALLBACK) {
 }
 
 export const config: VendureConfig = {
+    defaultLanguageCode: LanguageCode.es,
     apiOptions: {
         port: 3001,
         adminApiPath: 'admin-api',
