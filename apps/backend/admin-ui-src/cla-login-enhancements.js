@@ -33,6 +33,13 @@
 
   function updateToggleState(button, input) {
     var showingPassword = input.type === 'text';
+    var nextState = showingPassword ? 'visible' : 'hidden';
+
+    if (button.dataset.passwordVisibility === nextState) {
+      return;
+    }
+
+    button.dataset.passwordVisibility = nextState;
     button.innerHTML = showingPassword ? eyeClosedIcon : eyeOpenIcon;
     button.setAttribute('aria-label', showingPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
     button.setAttribute('aria-pressed', showingPassword ? 'true' : 'false');
@@ -81,8 +88,17 @@
     initLoginEnhancements();
   }
 
+  var enhancementScheduled = false;
   var observer = new MutationObserver(function () {
-    enhancePasswordField();
+    if (enhancementScheduled) {
+      return;
+    }
+
+    enhancementScheduled = true;
+    window.requestAnimationFrame(function () {
+      enhancementScheduled = false;
+      enhancePasswordField();
+    });
   });
 
   observer.observe(document.documentElement, {
