@@ -13,5 +13,5 @@ export const adminUiConfig = {
     hideVersion: true,
     loginImageUrl: 'assets/cla-admin-login-hero.webp',
     defaultLanguage: LanguageCode.es,
-    defaultLocale: 'es-AR',
+    defaultLocale: 'AR',
 } as const;
