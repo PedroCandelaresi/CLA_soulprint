@@ -1,10 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import type { AdminUiPluginOptions } from '@vendure/admin-ui-plugin';
+import { adminUiConfig, adminUiRoute } from './admin-ui-options';
 
 type AdminUiApp = NonNullable<AdminUiPluginOptions['app']>;
 
-const ADMIN_ROUTE = 'admin';
+const ADMIN_ROUTE = adminUiRoute;
 const ADMIN_UI_OUTPUT_PATH = path.join(__dirname, '../../admin-ui');
 const ADMIN_UI_SOURCE_PATH = path.join(__dirname, '../../admin-ui-src');
 const DEFAULT_ADMIN_UI_PATH = path.join(path.dirname(require.resolve('@vendure/admin-ui-plugin/package.json')), 'lib/admin-ui');
@@ -63,6 +64,16 @@ function patchTranslationFile(
     fs.writeFileSync(translationFilePath, `${JSON.stringify(translations, null, 2)}\n`, 'utf8');
 }
 
+function patchVendureUiConfig(vendureUiConfigPath: string): void {
+    const currentConfig = JSON.parse(fs.readFileSync(vendureUiConfigPath, 'utf8')) as Record<string, unknown>;
+    const nextConfig = {
+        ...currentConfig,
+        ...adminUiConfig,
+    };
+
+    fs.writeFileSync(vendureUiConfigPath, `${JSON.stringify(nextConfig, null, 2)}\n`, 'utf8');
+}
+
 function copyBrandingAssets(): void {
     copyFile(
         path.join(ADMIN_UI_SOURCE_PATH, 'assets/cla-logo-top-source.webp'),
@@ -97,6 +108,7 @@ export async function buildAdminUi(): Promise<void> {
     );
     injectCustomStylesheet(path.join(ADMIN_UI_OUTPUT_PATH, 'index.html'));
     injectCustomScript(path.join(ADMIN_UI_OUTPUT_PATH, 'index.html'));
+    patchVendureUiConfig(path.join(ADMIN_UI_OUTPUT_PATH, 'vendure-ui-config.json'));
 
     patchTranslationFile(
         path.join(ADMIN_UI_OUTPUT_PATH, 'i18n-messages/es.json'),
