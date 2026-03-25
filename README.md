@@ -78,9 +78,15 @@ curl -fsS http://127.0.0.1:4002/health
 curl -fsSI http://127.0.0.1:4000
 ```
 
-Los workflows de `testing` siguen ese gate mínimo antes de considerar exitoso el deploy.
+El workflow de `testing` sigue ese gate mínimo antes de considerar exitoso el deploy.
 
 ## Deploy automático de testing
+
+Rama única de deploy de testing:
+
+- `develop` es la única rama que dispara deploy automático hacia `testing`.
+- `main` queda como rama estable y no despliega a `testing`.
+- Las ramas `feature/*` no disparan deploy automático.
 
 El deploy automático de `testing` cubre solo los contenedores Docker del proyecto:
 
@@ -94,30 +100,33 @@ Queda fuera del deploy automático:
 - certificados
 - reload manual del proxy del host
 
-Alcance actual de los workflows:
+Alcance actual del workflow `Deploy Testing`:
 
-- `Deploy Backend Testing`: cambios en `apps/backend/**`
-- `Deploy Storefront Testing`: cambios en `apps/storefront/**`
-- `Deploy Docker Stack Testing`: cambios globales de Docker/monorepo:
-  - `infra/docker/docker-compose.yml`
-  - `package.json`
-  - `pnpm-lock.yaml`
-  - `pnpm-workspace.yaml`
-  - `turbo.json`
-
-`infra/docker/nginx/**` no dispara deploy automático porque el proxy principal se administra manualmente en el host.
-
-En todos los workflows de testing:
-
-- se exige que exista `infra/docker/.env`
-- `docker compose` se ejecuta siempre con `--env-file infra/docker/.env`
-- backend y storefront validan solo su propio alcance
-- el deploy global del stack mantiene la validación completa `pnpm validate`
+- sincroniza `/opt/cla_soulprint-testing` al SHA exacto del evento con:
+  - `git fetch --prune --tags origin`
+  - `git checkout -B develop origin/develop`
+  - `git reset --hard $GITHUB_SHA`
+  - `git clean -ffd`
+- decide una sola acción por push:
+  - `backend`: cambios solo en `apps/backend/**`
+  - `storefront`: cambios solo en `apps/storefront/**`
+  - `stack`: cambios en ambos apps a la vez, o cambios globales en:
+    - `infra/docker/docker-compose.yml`
+    - `package.json`
+    - `pnpm-lock.yaml`
+    - `pnpm-workspace.yaml`
+    - `turbo.json`
+  - `none`: cambios solo en docs, ejemplos manuales de `infra/docker/nginx/**` o archivos de CI
+- exige que exista `infra/docker/.env`
+- ejecuta siempre `docker compose` con `--env-file infra/docker/.env`
+- no usa `git pull`
+- no toca Nginx host-level
+- evita carreras entre workflows porque el deploy de `testing` quedó unificado en un solo workflow
 
 ## Reverse Proxy y networking
 
 Modelo principal recomendado:
-- **Nginx host-level** en el servidor host, usando [cla.nqn.net.ar.conf.example](/home/candelaresi/Proyectos/Tienda/infra/docker/nginx/cla.nqn.net.ar.conf.example) como plantilla principal.
+- **Nginx host-level** en el servidor host, usando [cla.nqn.net.ar.conf.example](/home/candelaresi/Proyectos/CLA_soulprint/infra/docker/nginx/cla.nqn.net.ar.conf.example) como plantilla principal.
 - Docker Compose publica sólo puertos **loopback** (`127.0.0.1`) para que Nginx los consuma de forma privada.
 - Entradas públicas esperadas:
   - `/` → storefront
@@ -128,7 +137,7 @@ Modelo principal recomendado:
   - `/admin-api`
 
 Referencia operativa de infra:
-- Ver [infra/docker/README.md](/home/candelaresi/Proyectos/Tienda/infra/docker/README.md)
+- Ver [infra/docker/README.md](/home/candelaresi/Proyectos/CLA_soulprint/infra/docker/README.md)
 
 ## Accesos locales / debug
 
