@@ -18,6 +18,7 @@ Modelo operativo principal de reverse proxy y networking externo:
 - `/` → `http://127.0.0.1:4000`
 - `/admin` → `http://127.0.0.1:4002/admin`
 - `/admin-api` → `http://127.0.0.1:4002/admin-api`
+- `/health` → `http://127.0.0.1:4002/health`
 - `/shop-api` → `http://127.0.0.1:4002/shop-api`
 - `/assets` → `http://127.0.0.1:4002/assets`
 
