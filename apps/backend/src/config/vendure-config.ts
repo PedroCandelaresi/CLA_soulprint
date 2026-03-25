@@ -60,9 +60,21 @@ const COOKIE_SAME_SITE = parseSameSite(process.env.COOKIE_SAME_SITE);
 const COOKIE_SECURE = parseBooleanEnv('COOKIE_SECURE', !IS_DEV);
 const COOKIE_SECURE_PROXY = parseBooleanEnv('COOKIE_SECURE_PROXY', !IS_DEV);
 const SHOP_PUBLIC_URL = process.env.SHOP_PUBLIC_URL || (IS_DEV ? 'http://localhost:4000' : undefined);
-const SMTP_REQUIRED_ENV_VARS = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM'] as const;
-const HAS_ANY_SMTP_ENV = SMTP_REQUIRED_ENV_VARS.some(name => Boolean(process.env[name]));
-const HAS_COMPLETE_SMTP_CONFIG = SMTP_REQUIRED_ENV_VARS.every(name => Boolean(process.env[name]));
+const SMTP_BOOTSTRAP_FALLBACK = {
+    host: '127.0.0.1',
+    port: 1025,
+    user: 'cla-bootstrap-user',
+    password: 'cla-bootstrap-password',
+    from: 'CLA Testing <noreply@cla.local>',
+} as const;
+const SMTP_HOST = process.env.SMTP_HOST || SMTP_BOOTSTRAP_FALLBACK.host;
+const SMTP_PORT = Number(process.env.SMTP_PORT || SMTP_BOOTSTRAP_FALLBACK.port);
+const SMTP_USER = process.env.SMTP_USER || SMTP_BOOTSTRAP_FALLBACK.user;
+const SMTP_PASSWORD = process.env.SMTP_PASSWORD || SMTP_BOOTSTRAP_FALLBACK.password;
+const SMTP_FROM = process.env.SMTP_FROM || SMTP_BOOTSTRAP_FALLBACK.from;
+const IS_USING_SMTP_BOOTSTRAP_FALLBACK = !IS_DEV
+    && !IS_MIGRATION_COMMAND
+    && ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM'].some(name => !process.env[name]);
 const EMAIL_TEMPLATE_PATH = path.join(path.dirname(require.resolve('@vendure/email-plugin/package.json')), 'templates');
 const MIGRATIONS = [
     path.join(__dirname, '../migrations/history/*.js'),
@@ -90,12 +102,14 @@ if (IS_PERSISTENT_ENV && CORS_ORIGINS.some(origin => origin === '*')) {
 if (APP_ENV === 'production' && CORS_ORIGINS.some(origin => !origin.startsWith('https://'))) {
     throw new Error('Production CORS_ORIGINS must use https:// origins.');
 }
-if (HAS_ANY_SMTP_ENV && !HAS_COMPLETE_SMTP_CONFIG) {
-    const missing = SMTP_REQUIRED_ENV_VARS.filter(name => !process.env[name]);
-    throw new Error(`Incomplete SMTP configuration. Missing: ${missing.join(', ')}`);
+if (!Number.isFinite(SMTP_PORT) || SMTP_PORT <= 0) {
+    throw new Error('SMTP_PORT must be a positive number.');
 }
-if (HAS_COMPLETE_SMTP_CONFIG && !SHOP_PUBLIC_URL) {
-    throw new Error('SHOP_PUBLIC_URL is required when SMTP email is enabled.');
+if (!IS_DEV && !IS_MIGRATION_COMMAND && !SHOP_PUBLIC_URL) {
+    throw new Error('SHOP_PUBLIC_URL is required when email is enabled outside local/dev.');
+}
+if (IS_USING_SMTP_BOOTSTRAP_FALLBACK) {
+    console.warn('[email] Using temporary hardcoded SMTP bootstrap defaults. Replace SMTP_* env vars with real provider values when ready.');
 }
 
 export const config: VendureConfig = {
@@ -157,7 +171,7 @@ export const config: VendureConfig = {
                       handlers: defaultEmailHandlers,
                       templatePath: EMAIL_TEMPLATE_PATH,
                       globalTemplateVars: {
-                          fromAddress: process.env.SMTP_FROM || 'noreply@example.com',
+                          fromAddress: SMTP_FROM,
                           verifyEmailAddressUrl: `${SHOP_PUBLIC_URL}/verify`,
                           passwordResetUrl: `${SHOP_PUBLIC_URL}/password-reset`,
                           changeEmailAddressUrl: `${SHOP_PUBLIC_URL}/change-email-address`,
@@ -168,26 +182,26 @@ export const config: VendureConfig = {
                       },
                   }),
               ]
-            : !IS_MIGRATION_COMMAND && HAS_COMPLETE_SMTP_CONFIG && SHOP_PUBLIC_URL
+            : !IS_MIGRATION_COMMAND && SHOP_PUBLIC_URL
               ? [
                     EmailPlugin.init({
                         handlers: defaultEmailHandlers,
                         templatePath: EMAIL_TEMPLATE_PATH,
                         globalTemplateVars: {
-                            fromAddress: process.env.SMTP_FROM!,
+                            fromAddress: SMTP_FROM,
                             verifyEmailAddressUrl: `${SHOP_PUBLIC_URL}/verify`,
                             passwordResetUrl: `${SHOP_PUBLIC_URL}/password-reset`,
                             changeEmailAddressUrl: `${SHOP_PUBLIC_URL}/change-email-address`,
                         },
                         transport: {
                             type: 'smtp',
-                            host: process.env.SMTP_HOST!,
-                            port: Number(process.env.SMTP_PORT!),
+                            host: SMTP_HOST,
+                            port: SMTP_PORT,
                             auth: {
-                                user: process.env.SMTP_USER!,
-                                pass: process.env.SMTP_PASSWORD!,
+                                user: SMTP_USER,
+                                pass: SMTP_PASSWORD,
                             },
-                            secure: parseBooleanEnv('SMTP_SECURE', Number(process.env.SMTP_PORT!) === 465),
+                            secure: parseBooleanEnv('SMTP_SECURE', SMTP_PORT === 465),
                         },
                     }),
                 ]

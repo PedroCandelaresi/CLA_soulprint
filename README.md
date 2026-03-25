@@ -196,8 +196,9 @@ pnpm --dir apps/backend migration:revert
 - Correo:
   - `local/dev`: `EmailPlugin` usa transporte `file` y expone `/mailbox`
   - `testing/production`: `/mailbox` no se expone
-  - para habilitar correo real se deben definir `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` y `SHOP_PUBLIC_URL`
-  - si esos valores no están definidos, el backend no simula un proveedor real y no deben asumirse emails transaccionales activos
+  - en `testing/production`, si faltan `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD` o `SMTP_FROM`, el backend usa un fallback SMTP temporal hardcodeado para poder arrancar
+  - `SHOP_PUBLIC_URL` sigue siendo obligatorio fuera de `local/dev`
+  - ese fallback es solo bootstrap y debe reemplazarse por variables reales antes de depender de emails transaccionales
 - Bootstrap de superadmin:
   - no usar `superadmin/superadmin` fuera de `local/dev`
   - definir credenciales fuertes y temporales para el primer acceso

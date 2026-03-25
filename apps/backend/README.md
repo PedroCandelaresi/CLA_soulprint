@@ -61,5 +61,6 @@ pnpm --dir apps/backend start:prod
 ## Correo
 
 - `APP_ENV=local/dev`: el plugin usa transporte `file`, templates por defecto de Vendure y `/mailbox`.
-- `APP_ENV=testing/production`: el plugin sólo activa SMTP real si están definidos `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` y `SHOP_PUBLIC_URL`.
-- Si esas variables no están definidas, el backend arranca sin correo transaccional activo. Eso es deliberado: no se simula un proveedor productivo.
+- `APP_ENV=testing/production`: el backend ahora usa un fallback SMTP temporal hardcodeado si faltan `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD` o `SMTP_FROM`.
+- `SHOP_PUBLIC_URL` sigue siendo obligatorio fuera de `local/dev`, porque las URLs transaccionales se generan desde ahí.
+- Ese fallback es solo bootstrap para que el servicio arranque en VPS. Reemplázalo por variables reales antes de depender de envíos de correo.
