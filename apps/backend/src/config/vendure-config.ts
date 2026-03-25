@@ -210,7 +210,9 @@ export const config: VendureConfig = {
             route: 'admin',
             port: 3002, // Admin UI standalone mode port (internal)
             adminUiConfig: {
-                apiPort: 3001,
+                apiHost: 'auto',
+                apiPort: 'auto',
+                adminApiPath: 'admin-api',
                 defaultLanguage: LanguageCode.es,
                 defaultLocale: 'ES',
             },
