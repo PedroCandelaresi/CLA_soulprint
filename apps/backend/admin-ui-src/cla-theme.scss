@@ -21,8 +21,8 @@
   --color-surface-bg: #fbf8f4;
   --color-page-header: rgba(255, 255, 255, 0.92);
   --color-page-header-item-bg: rgba(255, 255, 255, 0.86);
-  --color-left-nav-bg: #062c1e;
-  --color-left-nav-text: #f6efe3;
+  --color-left-nav-bg: #004824;
+  --color-left-nav-text: #f8f4ee;
   --color-left-nav-text-hover: #ffffff;
   --color-channel-switcher-bg: rgba(246, 239, 227, 0.09);
   --color-channel-switcher-hover-bg: rgba(246, 239, 227, 0.16);
@@ -32,6 +32,13 @@
   --border-radius: 24px;
   --border-radius-lg: 18px;
   --space-unit: 8px;
+  --clr-sidenav-color: #f8f4ee;
+  --clr-sidenav-header-color: #eadfce;
+  --clr-nav-link-color: #f8f4ee;
+  --clr-nav-link-active-color: #004824;
+  --clr-sidenav-link-active-color: #004824;
+  --clr-sidenav-link-active-bg-color: rgba(248, 244, 238, 0.96);
+  --clr-nav-active-box-shadow-color: rgba(248, 244, 238, 0.92);
 }
 
 html,
@@ -221,13 +228,14 @@ a {
 }
 
 .left-nav {
-  background: linear-gradient(180deg, #062c1e 0%, #004825 100%) !important;
+  background: linear-gradient(180deg, #0b5a33 0%, #004824 100%) !important;
   border-inline-end: none !important;
+  box-shadow: inset -1px 0 0 rgba(248, 244, 238, 0.08);
 }
 
 .branding {
   align-items: center !important;
-  border-bottom: 1px solid rgba(246, 239, 227, 0.12);
+  border-bottom: 1px solid rgba(248, 244, 238, 0.12);
   padding-bottom: 20px !important;
 }
 
@@ -275,28 +283,71 @@ a {
 .left-nav .nav-group-label,
 .left-nav .nav-text,
 .left-nav .nav-link {
-  color: rgba(246, 239, 227, 0.9) !important;
+  color: #f8f4ee !important;
+}
+
+.left-nav .nav-group-label {
+  color: rgba(234, 223, 206, 0.9) !important;
+  letter-spacing: 0.08em;
+}
+
+.left-nav .btn.btn-link.nav-link,
+.left-nav .nav-link span,
+.left-nav .nav-link cds-icon,
+.left-nav .nav-link clr-icon,
+.left-nav .nav-group-trigger,
+.left-nav .nav-group-trigger span,
+.left-nav .nav-group-trigger cds-icon,
+.left-nav .nav-group-trigger clr-icon {
+  color: #f8f4ee !important;
+  fill: currentColor !important;
 }
 
 .left-nav .nav-group-content .nav-link,
 .left-nav .nav-group-trigger {
   border-radius: 14px;
   margin-block: 4px;
+  padding-inline: 10px !important;
   transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 
 .left-nav .nav-group-content .nav-link:hover,
 .left-nav .nav-group-trigger:hover {
-  background: rgba(246, 239, 227, 0.14) !important;
+  background: rgba(248, 244, 238, 0.14) !important;
   color: #ffffff !important;
 }
 
 .left-nav .nav-group-content .nav-link.active,
 .left-nav .nav-group-content .nav-link.router-link-active,
-.left-nav .nav-group-trigger.active {
-  background: linear-gradient(135deg, rgba(246, 239, 227, 0.18), rgba(246, 239, 227, 0.1)) !important;
-  box-shadow: inset 0 0 0 1px rgba(246, 239, 227, 0.12);
-  color: #ffffff !important;
+.left-nav .nav-group-content .nav-link[aria-current="page"],
+.left-nav .nav-group-trigger.active,
+.left-nav .active > .nav-link,
+.left-nav .active > .btn.btn-link.nav-link {
+  background: linear-gradient(135deg, rgba(248, 244, 238, 0.96), rgba(238, 229, 216, 0.96)) !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 72, 36, 0.08);
+  color: #004824 !important;
+}
+
+.left-nav .nav-group-content .nav-link.active span,
+.left-nav .nav-group-content .nav-link.router-link-active span,
+.left-nav .nav-group-content .nav-link[aria-current="page"] span,
+.left-nav .nav-group-trigger.active span,
+.left-nav .active > .nav-link span,
+.left-nav .active > .btn.btn-link.nav-link span,
+.left-nav .nav-group-content .nav-link.active cds-icon,
+.left-nav .nav-group-content .nav-link.router-link-active cds-icon,
+.left-nav .nav-group-content .nav-link[aria-current="page"] cds-icon,
+.left-nav .nav-group-trigger.active cds-icon,
+.left-nav .active > .nav-link cds-icon,
+.left-nav .active > .btn.btn-link.nav-link cds-icon,
+.left-nav .nav-group-content .nav-link.active clr-icon,
+.left-nav .nav-group-content .nav-link.router-link-active clr-icon,
+.left-nav .nav-group-content .nav-link[aria-current="page"] clr-icon,
+.left-nav .nav-group-trigger.active clr-icon,
+.left-nav .active > .nav-link clr-icon,
+.left-nav .active > .btn.btn-link.nav-link clr-icon {
+  color: #004824 !important;
+  fill: currentColor !important;
 }
 
 .btn.btn-outline,

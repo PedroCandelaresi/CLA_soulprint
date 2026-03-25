@@ -81,17 +81,13 @@ export async function ensureArgentinaDefaults(app: AppWithGet): Promise<void> {
         LanguageCode.es,
         ...(defaultChannel.availableLanguageCodes ?? []),
     ]));
-    const availableCurrencyCodes = Array.from(new Set([
-        CurrencyCode.ARS,
-        ...(defaultChannel.availableCurrencyCodes ?? []),
-    ]));
 
     await channelService.update(ctx, {
         id: defaultChannel.id,
         defaultLanguageCode: LanguageCode.es,
         availableLanguageCodes,
         currencyCode: CurrencyCode.ARS,
-        availableCurrencyCodes,
+        availableCurrencyCodes: [CurrencyCode.ARS],
         pricesIncludeTax: true,
         defaultTaxZoneId: argentinaZone.id,
         defaultShippingZoneId: argentinaZone.id,
