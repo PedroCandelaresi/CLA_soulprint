@@ -10,6 +10,7 @@ import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
 import 'dotenv/config';
 import path from 'path';
 import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
+import { getAdminUiApp } from '../admin-ui/config';
 
 function requireEnv(name: string): string {
     const value = process.env[name];
@@ -209,10 +210,16 @@ export const config: VendureConfig = {
         AdminUiPlugin.init({
             route: 'admin',
             port: 3002, // Admin UI standalone mode port (internal)
+            app: getAdminUiApp(),
             adminUiConfig: {
                 apiHost: 'auto',
                 apiPort: 'auto',
                 adminApiPath: 'admin-api',
+                tokenMethod: 'bearer',
+                authTokenHeaderKey: 'vendure-auth-token',
+                brand: 'CLA Soulprint',
+                hideVersion: true,
+                loginImageUrl: 'assets/cla-admin-login-hero.webp',
                 defaultLanguage: LanguageCode.es,
                 defaultLocale: 'ES',
             },

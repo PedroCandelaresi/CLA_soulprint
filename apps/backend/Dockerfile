@@ -31,6 +31,7 @@ COPY --from=builder /usr/src/app/package.json ./
 COPY --from=builder /usr/src/app/pnpm-workspace.yaml ./
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/apps/backend/package.json ./apps/backend/
+COPY --from=builder /usr/src/app/apps/backend/admin-ui ./apps/backend/admin-ui
 COPY --from=builder /usr/src/app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder /usr/src/app/apps/backend/node_modules ./apps/backend/node_modules
 

@@ -141,6 +141,14 @@ Modelo principal recomendado:
 Referencia operativa de infra:
 - Ver [infra/docker/README.md](/home/candelaresi/Proyectos/CLA_soulprint/infra/docker/README.md)
 
+## Admin UI de Vendure
+
+- El panel de administración se sirve en `/admin` como un bundle estático customizado para CLA Soulprint.
+- La causa raíz del login silencioso era una desalineación entre el Admin UI y el backend: el backend estaba devolviendo `vendure-auth-token`, pero el Admin estaba configurado como si persistiera sesión por cookie. El Admin quedó forzado a `tokenMethod: bearer` con `authTokenHeaderKey: vendure-auth-token`.
+- El branding del Admin vive en `apps/backend/admin-ui-src/`.
+- El bundle generado del Admin vive en `apps/backend/admin-ui/` y no se versiona.
+- `pnpm --dir apps/backend build` ahora recompone también el Admin custom antes de empaquetar Docker.
+
 ## Accesos locales / debug
 
 - **Storefront**: [http://localhost:4000](http://localhost:4000)
