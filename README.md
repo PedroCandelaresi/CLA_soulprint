@@ -78,7 +78,7 @@ curl -fsS http://127.0.0.1:4002/health
 curl -fsSI http://127.0.0.1:4000
 ```
 
-El workflow de `testing` sigue ese gate mínimo antes de considerar exitoso el deploy.
+Ese gate mínimo sigue siendo recomendable para validación manual. El workflow de `testing` del VPS, en cambio, ejecuta el deploy de forma Docker-only.
 
 ## Deploy automático de testing
 
@@ -118,7 +118,9 @@ Alcance actual del workflow `Deploy Testing`:
     - `turbo.json`
   - `none`: cambios solo en docs, ejemplos manuales de `infra/docker/nginx/**` o archivos de CI
 - exige que exista `infra/docker/.env`
+- no requiere `pnpm` instalado en el host del runner
 - ejecuta siempre `docker compose` con `--env-file infra/docker/.env`
+- construye backend/storefront dentro de Docker usando los `Dockerfile` del repo
 - no usa `git pull`
 - no toca Nginx host-level
 - evita carreras entre workflows porque el deploy de `testing` quedó unificado en un solo workflow

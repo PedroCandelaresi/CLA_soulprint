@@ -132,13 +132,6 @@ jobs:
           set -euo pipefail
           echo "${{ steps.detect.outputs.reason }}"
 
-      - name: Install dependencies
-        if: steps.detect.outputs.scope != 'none'
-        run: |
-          set -euo pipefail
-          cd "$REPO_PATH"
-          pnpm install --frozen-lockfile
-
       - name: Preflight deploy environment
         if: steps.detect.outputs.scope != 'none'
         run: |
@@ -149,28 +142,6 @@ jobs:
             exit 1
           fi
 
-      - name: Validate backend
-        if: steps.detect.outputs.scope == 'backend'
-        run: |
-          set -euo pipefail
-          cd "$REPO_PATH"
-          pnpm --dir apps/backend build
-
-      - name: Validate storefront
-        if: steps.detect.outputs.scope == 'storefront'
-        run: |
-          set -euo pipefail
-          cd "$REPO_PATH"
-          pnpm --dir apps/storefront lint
-          pnpm --dir apps/storefront build
-
-      - name: Validate workspace
-        if: steps.detect.outputs.scope == 'stack'
-        run: |
-          set -euo pipefail
-          cd "$REPO_PATH"
-          pnpm validate
-
       - name: Validate Compose config
         if: steps.detect.outputs.scope != 'none'
         run: |
@@ -178,7 +149,7 @@ jobs:
           cd "$REPO_PATH"
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" config
 
-      - name: Deploy backend
+      - name: Build and deploy backend
         if: steps.detect.outputs.scope == 'backend'
         run: |
           set -euo pipefail
@@ -186,7 +157,7 @@ jobs:
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d mysql backend
 
-      - name: Deploy storefront
+      - name: Build and deploy storefront
         if: steps.detect.outputs.scope == 'storefront'
         run: |
           set -euo pipefail
@@ -194,7 +165,7 @@ jobs:
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build storefront
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d storefront
 
-      - name: Deploy stack
+      - name: Build and deploy stack
         if: steps.detect.outputs.scope == 'stack'
         run: |
           set -euo pipefail
