@@ -1,6 +1,7 @@
 {
   "common": {
     "login-image-title": "",
-    "login-title": "Sign in"
+    "login-title": "Sign in",
+    "no-results": "No results found"
   }
 }
