@@ -26,7 +26,6 @@
   --color-left-nav-text-hover: #ffffff;
   --color-channel-switcher-bg: rgba(246, 239, 227, 0.09);
   --color-channel-switcher-hover-bg: rgba(246, 239, 227, 0.16);
-  --color-channel-switcher-icon: #f6efe3;
   --color-text-100: #173726;
   --color-grey-200: #c8c1b8;
   --color-grey-300: #9e968d;
@@ -83,57 +82,67 @@ a {
 }
 
 .login-wrapper .login-wrapper-inner {
-  background: rgba(255, 255, 255, 0.84) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
   border: 1px solid rgba(18, 41, 29, 0.08) !important;
   border-radius: 32px !important;
   box-shadow: 0 30px 80px rgba(18, 41, 29, 0.12);
   overflow: hidden;
 }
 
-.login-wrapper .login-wrapper-image .login-wrapper-image-content {
-  background: linear-gradient(180deg, rgba(6, 44, 30, 0.04) 0%, rgba(6, 44, 30, 0.86) 100%) !important;
-  padding: 36px !important;
+.login-wrapper .login-wrapper-image {
+  background: #004825 !important;
+  min-width: 0;
+  position: relative;
 }
 
-.login-wrapper .login-wrapper-image .login-wrapper-image-title {
-  font-size: 1.85rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.02em;
-  line-height: 1.25 !important;
-  margin-bottom: 14px !important;
-  max-width: 420px;
+.login-wrapper .login-wrapper-image > img {
+  display: none !important;
+}
+
+.login-wrapper .login-wrapper-image .login-wrapper-image-content {
+  align-items: center !important;
+  background: none !important;
+  display: flex !important;
+  justify-content: center !important;
+  padding: 40px !important;
+}
+
+.login-wrapper .login-wrapper-image .login-wrapper-image-content::before {
+  background: url("assets/logo-login.webp") center / contain no-repeat;
+  content: "";
+  display: block;
+  height: clamp(120px, 20vw, 188px);
+  max-width: 640px;
+  width: min(92%, 640px);
+}
+
+.login-wrapper .login-wrapper-image .login-wrapper-image-title,
+.login-wrapper .login-wrapper-image .login-wrapper-image-copyright,
+.login-wrapper .login-wrapper-logo {
+  display: none !important;
 }
 
 .login-wrapper .login-wrapper-form {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(250, 247, 242, 0.98)) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 247, 242, 0.98)) !important;
   box-shadow: inset 1px 0 0 rgba(18, 41, 29, 0.04);
-  padding: 44px 42px !important;
-}
-
-.login-wrapper .login-wrapper-logo {
-  width: 176px !important;
-  max-width: 176px !important;
-  right: 30px !important;
-  top: 28px !important;
+  justify-content: center !important;
+  padding: 52px 44px !important;
 }
 
 .login-wrapper .login-title {
   color: #12291d !important;
-  font-size: 1.6rem !important;
-  line-height: 1.25;
-  margin-top: 84px !important;
-  margin-bottom: 14px !important;
+  font-size: 1.3rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2;
+  margin: 0 0 26px !important;
 }
 
 .login-wrapper .login-title::after {
-  color: #6e6357;
-  content: "Gestiona productos, variantes, assets y contenido desde un entorno cuidado, elegante y consistente con la marca.";
-  display: block;
-  font-size: 0.95rem;
-  font-weight: 400;
-  line-height: 1.7;
-  margin-top: 12px;
-  max-width: 320px;
+  display: none !important;
+}
+
+.login-wrapper .login-group {
+  margin-bottom: 0 !important;
 }
 
 .login-wrapper .login-group input.username,
@@ -145,13 +154,62 @@ a {
   color: #173726 !important;
   font-size: 0.96rem !important;
   margin-bottom: 16px !important;
+  min-height: 52px;
   padding: 14px 16px !important;
+}
+
+.login-wrapper .login-group input.password {
+  margin-bottom: 0 !important;
+  padding-inline-end: 52px !important;
 }
 
 .login-wrapper .login-group input.username:focus,
 .login-wrapper .login-group input.password:focus {
   border-color: #004825 !important;
   box-shadow: 0 0 0 3px rgba(0, 72, 37, 0.12) !important;
+}
+
+.cla-password-field {
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.cla-password-toggle {
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: #6e5845;
+  cursor: pointer;
+  display: inline-flex;
+  height: 42px;
+  inset-inline-end: 8px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+}
+
+.cla-password-toggle:hover {
+  color: #004825;
+}
+
+.cla-password-toggle:focus-visible {
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px rgba(0, 72, 37, 0.18);
+  outline: none;
+}
+
+.cla-password-toggle svg {
+  display: block;
+  fill: none;
+  height: 20px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  width: 20px;
 }
 
 .login-wrapper .login-button {
@@ -219,11 +277,17 @@ vdr-welcome-widget .p5,
     padding: 16px !important;
   }
 
-  .login-wrapper .login-wrapper-form {
-    padding: 28px 22px !important;
+  .login-wrapper .login-wrapper-image .login-wrapper-image-content {
+    min-height: 220px;
+    padding: 28px !important;
   }
 
-  .login-wrapper .login-title {
-    margin-top: 72px !important;
+  .login-wrapper .login-wrapper-image .login-wrapper-image-content::before {
+    height: 88px;
+    width: min(88%, 420px);
+  }
+
+  .login-wrapper .login-wrapper-form {
+    padding: 32px 24px !important;
   }
 }

@@ -29,21 +29,35 @@ function injectCustomStylesheet(indexHtmlPath: string): void {
     fs.writeFileSync(indexHtmlPath, updatedHtml, 'utf8');
 }
 
+function injectCustomScript(indexHtmlPath: string): void {
+    const currentHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+
+    if (currentHtml.includes('cla-soulprint-admin.js')) {
+        return;
+    }
+
+    const updatedHtml = currentHtml.replace(
+        '</body>',
+        '    <script src="cla-soulprint-admin.js"></script></body>',
+    );
+
+    fs.writeFileSync(indexHtmlPath, updatedHtml, 'utf8');
+}
+
 function patchTranslationFile(
     translationFilePath: string,
-    values: {
-        loginImageTitle: string;
-        loginTitle: string;
-    },
+    sourceTranslationPath: string,
 ): void {
     const translations = JSON.parse(fs.readFileSync(translationFilePath, 'utf8')) as {
+        common?: Record<string, string>;
+    };
+    const sourceTranslations = JSON.parse(fs.readFileSync(sourceTranslationPath, 'utf8')) as {
         common?: Record<string, string>;
     };
 
     translations.common = {
         ...(translations.common ?? {}),
-        'login-image-title': values.loginImageTitle,
-        'login-title': values.loginTitle,
+        ...(sourceTranslations.common ?? {}),
     };
 
     fs.writeFileSync(translationFilePath, `${JSON.stringify(translations, null, 2)}\n`, 'utf8');
@@ -77,16 +91,21 @@ export async function buildAdminUi(): Promise<void> {
         path.join(ADMIN_UI_SOURCE_PATH, 'cla-theme.scss'),
         path.join(ADMIN_UI_OUTPUT_PATH, 'cla-soulprint-admin.css'),
     );
+    copyFile(
+        path.join(ADMIN_UI_SOURCE_PATH, 'cla-login-enhancements.js'),
+        path.join(ADMIN_UI_OUTPUT_PATH, 'cla-soulprint-admin.js'),
+    );
     injectCustomStylesheet(path.join(ADMIN_UI_OUTPUT_PATH, 'index.html'));
+    injectCustomScript(path.join(ADMIN_UI_OUTPUT_PATH, 'index.html'));
 
-    patchTranslationFile(path.join(ADMIN_UI_OUTPUT_PATH, 'i18n-messages/es.json'), {
-        loginImageTitle: 'CLA Soulprint | atelier de gestion boutique',
-        loginTitle: 'Ingresa al panel de CLA Soulprint',
-    });
-    patchTranslationFile(path.join(ADMIN_UI_OUTPUT_PATH, 'i18n-messages/en.json'), {
-        loginImageTitle: 'CLA Soulprint | boutique management atelier',
-        loginTitle: 'Sign in to the CLA Soulprint workspace',
-    });
+    patchTranslationFile(
+        path.join(ADMIN_UI_OUTPUT_PATH, 'i18n-messages/es.json'),
+        path.join(ADMIN_UI_SOURCE_PATH, 'translations/es.json'),
+    );
+    patchTranslationFile(
+        path.join(ADMIN_UI_OUTPUT_PATH, 'i18n-messages/en.json'),
+        path.join(ADMIN_UI_SOURCE_PATH, 'translations/en.json'),
+    );
 }
 
 export function hasBuiltAdminUi(): boolean {
