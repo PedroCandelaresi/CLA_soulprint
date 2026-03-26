@@ -12,6 +12,52 @@ This plugin integrates Getnet Checkout (Santander) payment gateway with Vendure 
 - Vendure order/payment integration
 - Development and production environment support
 
+## IMPORTANT: API URLs Configuration
+
+The Getnet API URLs may vary depending on your region and environment. **You must verify these URLs with your Getnet/Santander documentation or support team.**
+
+### Expected API Endpoints
+
+The plugin expects the following endpoint paths:
+
+| Service | Endpoint Path |
+|---------|--------------|
+| OAuth Token | `/oauth/token` |
+| Create Order | `/api/v2/orders` |
+| Get Order | `/api/v2/orders/{uuid}` |
+
+### Common URL Formats
+
+**Preprod (Sandbox):**
+```
+GETNET_AUTH_BASE_URL=https://auth.preprod.geopagos.com
+GETNET_CHECKOUT_BASE_URL=https://api-santander.preprod.geopagos.com
+```
+
+**Production:**
+```
+GETNET_AUTH_BASE_URL=https://auth.getnet.com.br (or similar)
+GETNET_CHECKOUT_BASE_URL=https://api.getnet.com.br (or similar)
+```
+
+### Verifying URLs
+
+Before testing, verify your URLs by checking:
+
+1. **OAuth endpoint** - Should return 400 or 401 (expected for invalid credentials):
+   ```bash
+   curl -X POST "https://auth.preprod.geopagos.com/oauth/token" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "grant_type=client_credentials&client_id=test&client_secret=test&scope=*"
+   ```
+
+2. **Checkout API** - Should return 401 or 404:
+   ```bash
+   curl -X GET "https://api-santander.preprod.geopagos.com/api/v2/orders"
+   ```
+
+If you get a **404** on the OAuth endpoint, the URL path is incorrect. Contact Getnet support for the correct API URLs.
+
 ## Architecture
 
 ```
@@ -50,11 +96,19 @@ This plugin integrates Getnet Checkout (Santander) payment gateway with Vendure 
 
 ## Environment Variables
 
+> **Note:** All environment variables are defined in `apps/backend/.env.example` and shared between backend and frontend. The frontend reads `GETNET_INTERNAL_API_URL` from the same .env file.
+
 ### Required
 
 ```env
 # Enable Getnet integration
 GETNET_ENABLED=true
+
+# Standalone server port
+GETNET_PORT=4003
+
+# Internal API URL (used by frontend to communicate with standalone server)
+GETNET_INTERNAL_API_URL=http://localhost:4003/payments/getnet
 
 # API Credentials (from Getnet/Santander developer portal)
 GETNET_CLIENT_ID=your_client_id
@@ -219,12 +273,12 @@ pnpm run dev:getnet
 pnpm run start:getnet
 ```
 
-This starts a separate server on port 3002 (configurable via `GETNET_PORT`).
+This starts a separate server on port 4003 (configurable via `GETNET_PORT`).
 
 **nginx configuration:**
 ```nginx
 location /payments/getnet/ {
-    proxy_pass http://127.0.0.1:3002/payments/getnet/;
+    proxy_pass http://127.0.0.1:4003/payments/getnet/;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;

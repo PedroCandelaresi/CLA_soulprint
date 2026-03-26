@@ -146,6 +146,7 @@ services:
       NEXT_PUBLIC_VENDURE_API_URL: ${NEXT_PUBLIC_VENDURE_API_URL}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       VENDURE_INTERNAL_API_URL: http://backend:3001/shop-api
+      GETNET_INTERNAL_API_URL: http://getnet:4003/payments/getnet
     ports:
       # Loopback upstream for the recommended host-level Nginx root route.
       - "127.0.0.1:4000:3000"

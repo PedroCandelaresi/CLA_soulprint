@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GETNET_API_URL = process.env.GETNET_API_URL || 'http://localhost:3001/payments/getnet';
+// Getnet standalone server URL (port 4003)
+const GETNET_API_URL = process.env.GETNET_INTERNAL_API_URL || 'http://localhost:4003/payments/getnet';
 
 export async function GET(
     request: NextRequest,

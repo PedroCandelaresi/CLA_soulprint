@@ -87,9 +87,18 @@ export class GetnetService {
         // Need to refresh token
         console.log(`${this.prefix} Refreshing OAuth token...`);
         
+        // Build OAuth URL and log for debugging
+        const oauthUrl = `${this.oauthConfig.baseUrl}/oauth/token`;
+        console.log(`${this.prefix} OAuth Request Details:`);
+        console.log(`${this.prefix}   URL: ${oauthUrl}`);
+        console.log(`${this.prefix}   Method: POST`);
+        console.log(`${this.prefix}   authBaseUrl: ${this.oauthConfig.baseUrl}`);
+        console.log(`${this.prefix}   clientId: ${this.oauthConfig.clientId.substring(0, 10)}...`);
+        console.log(`${this.prefix}   scope: ${this.oauthConfig.scope}`);
+        
         try {
             const response = await axios.post<GetnetOAuthTokenResponse>(
-                `${this.oauthConfig.baseUrl}/oauth/token`,
+                oauthUrl,
                 new URLSearchParams({
                     grant_type: 'client_credentials',
                     client_id: this.oauthConfig.clientId,
@@ -122,6 +131,16 @@ export class GetnetService {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             console.error(`${this.prefix} Failed to obtain OAuth token: ${errorMessage}`);
+            
+            // Log detailed error info for debugging
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as { response?: { status?: number; statusText?: string; data?: unknown; headers?: unknown } };
+                console.error(`${this.prefix} OAuth Response Status: ${axiosError.response?.status}`);
+                console.error(`${this.prefix} OAuth Response StatusText: ${axiosError.response?.statusText}`);
+                console.error(`${this.prefix} OAuth Response Data:`, axiosError.response?.data);
+                console.error(`${this.prefix} OAuth Response Headers:`, axiosError.response?.headers);
+            }
+            
             throw new Error('Getnet authentication failed');
         }
     }
