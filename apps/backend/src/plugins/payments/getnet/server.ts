@@ -86,7 +86,14 @@ async function main() {
     console.log(`${LOG_PREFIX} Starting standalone Getnet server...`);
     
     const config = getGetnetConfigFromEnv();
-    const PORT = parseInt(process.env.GETNET_PORT || '3002', 10);
+    // Check multiple environment variable names for the port
+    const PORT = parseInt(
+        process.env.GETNET_STANDALONE_PORT ||
+        process.env.GETNET_PORT ||
+        process.env.PORT ||
+        '4003',
+        10
+    );
     
     // Validate required config
     const requiredFields = ['authBaseUrl', 'checkoutBaseUrl', 'clientId', 'clientSecret'];
@@ -181,9 +188,13 @@ async function main() {
     });
     
     // Start server
-    server.listen(PORT, () => {
+    server.listen(PORT, '0.0.0.0', () => {
         console.log(`${LOG_PREFIX} Server started!`);
         console.log(`${LOG_PREFIX} Listening on port ${PORT}`);
+        console.log(`${LOG_PREFIX} Environment variables checked:`);
+        console.log(`${LOG_PREFIX}   GETNET_STANDALONE_PORT: ${process.env.GETNET_STANDALONE_PORT || '(not set)'}`);
+        console.log(`${LOG_PREFIX}   GETNET_PORT: ${process.env.GETNET_PORT || '(not set)'}`);
+        console.log(`${LOG_PREFIX}   PORT: ${process.env.PORT || '(not set)'}`);
         console.log(`${LOG_PREFIX} Routes:`);
         console.log(`${LOG_PREFIX}   GET  /payments/getnet/health`);
         console.log(`${LOG_PREFIX}   POST /payments/getnet/checkout`);
