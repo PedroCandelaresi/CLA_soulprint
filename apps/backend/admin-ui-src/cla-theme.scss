@@ -212,8 +212,8 @@
 
   --login-wrapper-inner-bg: rgba(255, 255, 255, 0.94);
   --login-page-bg: linear-gradient(180deg, #fbf8f1 0%, #f1f5ee 100%);
-  --color-login-gradient-top: var(--brand-primary);
-  --color-login-gradient-bottom: var(--brand-primary-strong);
+  --color-login-gradient-top: #0b5a34;
+  --color-login-gradient-bottom: #022f1b;
 
   --clr-global-borderradius: 10px;
   --border-radius-sm: 8px;
@@ -1819,7 +1819,7 @@ vdr-empty-placeholder .empty-state .empty-label {
 }
 
 .login-wrapper .login-wrapper-image {
-  background: linear-gradient(180deg, #004825 0%, #004825 100%) !important;
+  background: linear-gradient(180deg, var(--color-login-gradient-top) 0%, var(--brand-primary) 55%, var(--color-login-gradient-bottom) 100%) !important;
   min-width: 0;
   position: relative;
 }
