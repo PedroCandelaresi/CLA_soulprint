@@ -1,3 +1,17 @@
+:root {
+  --cla-brand-green: #004825;
+  --cla-brand-cream: #f4ead5;
+  --cla-header-border: rgba(244, 234, 213, 0.26);
+  --brand-logo-bg: transparent;
+  --brand-logo-fg: var(--cla-brand-green);
+  --brand-accent: rgba(0, 72, 37, 0.16);
+  --header-logo-fg: #ffffff;
+  --header-logo-bg: transparent;
+  --surface-logo-fg: var(--cla-brand-green);
+  --surface-logo-bg: transparent;
+  --muted-logo-fg: rgba(0, 72, 37, 0.72);
+}
+
 html {
   overflow-y: scroll;
 }

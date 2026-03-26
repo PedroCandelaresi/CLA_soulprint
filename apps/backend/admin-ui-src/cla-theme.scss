@@ -149,6 +149,11 @@
   --login-page-bg: linear-gradient(160deg, #f7faf8 0%, #eef4ef 100%);
   --color-login-gradient-top: #153e2c;
   --color-login-gradient-bottom: #0f2d21;
+  --brand-logo-bg: transparent;
+  --brand-logo-fg: var(--color-primary-600);
+  --brand-accent: rgba(116, 192, 143, 0.3);
+  --sidebar-logo-fg: rgba(237, 243, 239, 0.9);
+  --login-logo-fg: rgba(255, 255, 255, 0.96);
 
   --clr-global-borderradius: 10px;
   --border-radius-sm: 8px;
@@ -281,6 +286,9 @@ body[data-theme="dark"] {
   --clr-link-hover-color: #b7e0c4;
   --clr-link-active-color: #b7e0c4;
   --clr-link-visited-color: #9fd3b2;
+  --brand-logo-fg: #b7e0c4;
+  --brand-accent: rgba(134, 211, 161, 0.42);
+  --sidebar-logo-fg: rgba(243, 247, 244, 0.92);
 }
 
 @media screen and (min-width: 992px) {
@@ -491,6 +499,52 @@ body[data-theme="dark"] .surface {
   min-width: 0;
 }
 
+.cla-brand-mark,
+.cla-brand-mark:link,
+.cla-brand-mark:visited {
+  color: inherit;
+  display: inline-flex;
+  line-height: 0;
+  text-decoration: none;
+}
+
+.cla-brand-logo-svg {
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.cla-breadcrumb-shell {
+  gap: 14px;
+  min-width: 0;
+}
+
+.cla-breadcrumb-shell vdr-breadcrumb {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cla-brand-mark--top {
+  --brand-logo-bg: transparent;
+  color: var(--brand-logo-fg);
+  padding-inline-end: 14px;
+  position: relative;
+  width: clamp(124px, 10vw, 148px);
+}
+
+.cla-brand-mark--top::after {
+  background: linear-gradient(180deg, transparent 0%, var(--color-card-border) 16%, var(--color-card-border) 84%, transparent 100%);
+  content: "";
+  inset-block: 3px;
+  inset-inline-end: 0;
+  position: absolute;
+  width: 1px;
+}
+
+body a.cla-brand-mark--top:hover {
+  color: var(--color-text-active);
+}
+
 .top-bar .universal-search.flex-spacer {
   flex: 1 1 auto;
   min-width: 0;
@@ -524,6 +578,16 @@ vdr-breadcrumb .breadcrumbs li a:visited {
 vdr-breadcrumb .breadcrumbs li:last-child {
   color: var(--color-text-100) !important;
   font-weight: 600 !important;
+}
+
+@media screen and (max-width: 767px) {
+  .cla-brand-mark--top {
+    display: none;
+  }
+
+  .cla-breadcrumb-shell {
+    gap: 0;
+  }
 }
 
 vdr-user-menu .user-menu-btn {
@@ -624,11 +688,54 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
   border-bottom: 1px solid var(--nav-divider);
   gap: 12px;
   padding: 18px 16px;
+  position: relative;
 }
 
-.branding .logo {
-  filter: none;
-  max-width: 118px;
+.cla-branding-shell {
+  gap: 10px;
+}
+
+.cla-sidebar-brand-stack {
+  align-items: flex-start;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cla-brand-mark--sidebar {
+  --brand-logo-bg: transparent;
+  --brand-logo-fg: var(--sidebar-logo-fg);
+  color: var(--brand-logo-fg);
+  overflow: hidden;
+  width: 136px;
+}
+
+.cla-brand-mark--sidebar .cla-brand-logo-svg {
+  width: 136px;
+}
+
+.cla-sidebar-brand-detail {
+  --brand-logo-bg: transparent;
+  --brand-logo-fg: var(--brand-accent);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 88%, transparent 100%);
+  align-items: center;
+  color: var(--brand-logo-fg);
+  display: flex;
+  height: 12px;
+  margin-inline-start: 2px;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 88%, transparent 100%);
+  opacity: 0.46;
+  overflow: hidden;
+  pointer-events: none;
+  width: 168px;
+}
+
+.cla-sidebar-brand-detail .cla-brand-logo-svg {
+  transform: translateY(-56%) scale(1.08);
+  transform-origin: left center;
+  width: 168px;
 }
 
 .main-nav-container,
@@ -804,8 +911,23 @@ vdr-channel-switcher .active-channel:hover {
     padding-inline: 12px;
   }
 
-  body.cla-sidebar-collapsed .branding .logo {
-    max-width: 42px;
+  body.cla-sidebar-collapsed .cla-sidebar-brand-stack {
+    margin-inline: auto;
+    width: 44px;
+  }
+
+  body.cla-sidebar-collapsed .cla-brand-mark--sidebar {
+    width: 44px;
+  }
+
+  body.cla-sidebar-collapsed .cla-brand-mark--sidebar .cla-brand-logo-svg {
+    width: 132px;
+  }
+
+  body.cla-sidebar-collapsed .cla-sidebar-brand-detail {
+    height: 0;
+    opacity: 0;
+    width: 44px;
   }
 
   body.cla-sidebar-collapsed .main-nav-container,
@@ -1587,10 +1709,21 @@ vdr-empty-placeholder .empty-state .empty-label {
 }
 
 .login-wrapper .login-wrapper-image .login-wrapper-image-content::before {
-  background: url("assets/logo-login.webp") center / contain no-repeat;
-  content: "";
-  display: block;
-  height: clamp(110px, 18vw, 184px);
+  display: none;
+}
+
+.login-wrapper .login-wrapper-image .cla-login-brand-slot {
+  --brand-logo-bg: transparent;
+  --brand-logo-fg: var(--login-logo-fg);
+  align-items: center;
+  color: var(--brand-logo-fg);
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.login-wrapper .login-wrapper-image .cla-login-brand-slot .cla-brand-logo-svg {
+  height: auto;
   max-width: 620px;
   width: min(92%, 620px);
 }

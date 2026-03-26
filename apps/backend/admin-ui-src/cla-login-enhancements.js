@@ -1,5 +1,6 @@
 (function () {
   var SIDEBAR_STORAGE_KEY = 'cla-admin-sidebar-collapsed';
+  var BRAND_LOGO_ASSET_PATH = 'assets/cla-logo.svg';
   var SIDEBAR_COLLAPSE_ICON =
     '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"></rect><path d="M8.5 5v14"></path><path d="M14 9.25 10.5 12 14 14.75"></path></svg>';
   var SIDEBAR_EXPAND_ICON =
@@ -30,6 +31,8 @@
       showPassword: 'Mostrar contraseña'
     }
   };
+  var brandLogoMarkupPromise = null;
+  var brandLogoInstanceId = 0;
 
   function getMessages() {
     var lang =
@@ -38,6 +41,255 @@
       'es';
 
     return String(lang).toLowerCase().indexOf('en') === 0 ? MESSAGES.en : MESSAGES.es;
+  }
+
+  function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function getBrandLogoAssetUrl() {
+    try {
+      return new URL(BRAND_LOGO_ASSET_PATH, document.baseURI).toString();
+    } catch (error) {
+      return BRAND_LOGO_ASSET_PATH;
+    }
+  }
+
+  function getAdminRootHref() {
+    try {
+      return new URL('./', document.baseURI).toString();
+    } catch (error) {
+      return getAdminBasePath() + '/';
+    }
+  }
+
+  function getBrandLogoMarkup() {
+    if (!brandLogoMarkupPromise) {
+      brandLogoMarkupPromise = window.fetch(getBrandLogoAssetUrl(), {
+        credentials: 'same-origin'
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('Unable to load CLA brand logo');
+          }
+
+          return response.text();
+        })
+        .then(function (markup) {
+          return markup.trim();
+        })
+        .catch(function () {
+          return null;
+        });
+    }
+
+    return brandLogoMarkupPromise;
+  }
+
+  function replaceSvgReferenceIds(value, idMap) {
+    var nextValue = value;
+
+    Object.keys(idMap).forEach(function (sourceId) {
+      nextValue = nextValue.replace(
+        new RegExp('url\\(#' + escapeRegExp(sourceId) + '\\)', 'g'),
+        'url(#' + idMap[sourceId] + ')'
+      );
+
+      if (nextValue === '#' + sourceId) {
+        nextValue = '#' + idMap[sourceId];
+      }
+    });
+
+    return nextValue;
+  }
+
+  function uniquifyBrandLogoIds(svg) {
+    var instanceSuffix = 'cla-brand-' + brandLogoInstanceId;
+    var idMap = {};
+    var referenceAttributes = [
+      'clip-path',
+      'fill',
+      'filter',
+      'mask',
+      'marker-start',
+      'marker-mid',
+      'marker-end',
+      'href',
+      'xlink:href'
+    ];
+
+    brandLogoInstanceId += 1;
+
+    if (svg.hasAttribute('id')) {
+      var rootId = svg.getAttribute('id');
+
+      idMap[rootId] = rootId + '-' + instanceSuffix;
+      svg.setAttribute('id', idMap[rootId]);
+    }
+
+    svg.querySelectorAll('[id]').forEach(function (element) {
+      var sourceId = element.getAttribute('id');
+      var nextId = sourceId + '-' + instanceSuffix;
+
+      idMap[sourceId] = nextId;
+      element.setAttribute('id', nextId);
+    });
+
+    svg.querySelectorAll('*').forEach(function (element) {
+      referenceAttributes.forEach(function (attributeName) {
+        var value = element.getAttribute(attributeName);
+
+        if (!value) {
+          return;
+        }
+
+        element.setAttribute(attributeName, replaceSvgReferenceIds(value, idMap));
+      });
+    });
+  }
+
+  function createBrandLogoSvg(markup, context) {
+    var template = document.createElement('template');
+    template.innerHTML = markup;
+
+    if (!(template.content.firstElementChild instanceof SVGElement)) {
+      return null;
+    }
+
+    var svg = template.content.firstElementChild;
+
+    uniquifyBrandLogoIds(svg);
+    svg.setAttribute('data-brand-context', context);
+
+    return svg;
+  }
+
+  function mountBrandLogo(host, context) {
+    if (!(host instanceof HTMLElement)) {
+      return;
+    }
+
+    if (host.querySelector('svg[data-brand-context="' + context + '"]')) {
+      return;
+    }
+
+    if (host.dataset.claBrandLoading === context) {
+      return;
+    }
+
+    host.dataset.claBrandLoading = context;
+
+    getBrandLogoMarkup().then(function (markup) {
+      delete host.dataset.claBrandLoading;
+
+      if (!markup || !document.documentElement.contains(host)) {
+        return;
+      }
+
+      if (host.querySelector('svg[data-brand-context="' + context + '"]')) {
+        return;
+      }
+
+      var svg = createBrandLogoSvg(markup, context);
+
+      if (!(svg instanceof SVGElement)) {
+        return;
+      }
+
+      host.replaceChildren(svg);
+      host.dataset.claBrandMounted = context;
+    });
+  }
+
+  function ensureSidebarBranding() {
+    var branding = document.querySelector('.left-nav .branding');
+
+    if (!(branding instanceof HTMLElement)) {
+      return;
+    }
+
+    var legacyLink = branding.querySelector('a');
+
+    if (!(legacyLink instanceof HTMLAnchorElement)) {
+      return;
+    }
+
+    var collapseMenu = branding.querySelector('.collapse-menu');
+    var stack = branding.querySelector('.cla-sidebar-brand-stack');
+
+    branding.classList.add('cla-branding-shell');
+
+    if (!(stack instanceof HTMLElement)) {
+      stack = document.createElement('div');
+      stack.className = 'cla-sidebar-brand-stack';
+
+      if (collapseMenu && collapseMenu.parentNode === branding) {
+        branding.insertBefore(stack, collapseMenu);
+      } else {
+        branding.insertBefore(stack, legacyLink);
+      }
+    }
+
+    if (legacyLink.parentNode !== stack) {
+      stack.insertBefore(legacyLink, stack.firstChild);
+    }
+
+    legacyLink.classList.add('cla-brand-mark', 'cla-brand-mark--sidebar');
+    legacyLink.setAttribute('aria-label', 'CLA Soulprint');
+    mountBrandLogo(legacyLink, 'sidebar');
+
+    var detail = stack.querySelector('.cla-sidebar-brand-detail');
+
+    if (!(detail instanceof HTMLElement)) {
+      detail = document.createElement('div');
+      detail.className = 'cla-sidebar-brand-detail';
+      detail.setAttribute('aria-hidden', 'true');
+      stack.appendChild(detail);
+    }
+
+    mountBrandLogo(detail, 'sidebar-detail');
+  }
+
+  function ensureTopBarBranding() {
+    var breadcrumb = document.querySelector('.top-bar vdr-breadcrumb');
+
+    if (!(breadcrumb instanceof HTMLElement) || !(breadcrumb.parentElement instanceof HTMLElement)) {
+      return;
+    }
+
+    var shell = breadcrumb.parentElement;
+    var link = shell.querySelector('.cla-brand-mark--top');
+
+    shell.classList.add('cla-breadcrumb-shell');
+
+    if (!(link instanceof HTMLAnchorElement)) {
+      link = document.createElement('a');
+      link.className = 'cla-brand-mark cla-brand-mark--top';
+      link.href = getAdminRootHref();
+      link.setAttribute('aria-label', 'CLA Soulprint');
+      shell.insertBefore(link, breadcrumb);
+    }
+
+    mountBrandLogo(link, 'top');
+  }
+
+  function ensureLoginBranding() {
+    var imageContent = document.querySelector('.login-wrapper .login-wrapper-image .login-wrapper-image-content');
+
+    if (!(imageContent instanceof HTMLElement)) {
+      return;
+    }
+
+    var slot = imageContent.querySelector('.cla-login-brand-slot');
+
+    if (!(slot instanceof HTMLElement)) {
+      slot = document.createElement('div');
+      slot.className = 'cla-login-brand-slot';
+      slot.setAttribute('aria-hidden', 'true');
+      imageContent.insertBefore(slot, imageContent.firstChild);
+    }
+
+    mountBrandLogo(slot, 'login');
   }
 
   function findPasswordInput() {
@@ -345,6 +597,9 @@
 
   function runEnhancements() {
     applySidebarPreference();
+    ensureSidebarBranding();
+    ensureTopBarBranding();
+    ensureLoginBranding();
     enhancePasswordField();
     ensureDesktopSidebarToggle();
     enhanceEmptyStates();

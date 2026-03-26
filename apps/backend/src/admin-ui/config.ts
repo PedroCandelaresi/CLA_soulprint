@@ -9,10 +9,44 @@ const ADMIN_ROUTE = adminUiRoute;
 const ADMIN_UI_OUTPUT_PATH = path.join(__dirname, '../../admin-ui');
 const ADMIN_UI_SOURCE_PATH = path.join(__dirname, '../../admin-ui-src');
 const DEFAULT_ADMIN_UI_PATH = path.join(path.dirname(require.resolve('@vendure/admin-ui-plugin/package.json')), 'lib/admin-ui');
+const BRAND_LOGO_SOURCE_PATH = path.resolve(ADMIN_UI_SOURCE_PATH, '../../storefront/public/images/logos/CLA.svg');
 
 function copyFile(sourcePath: string, destinationPath: string): void {
     fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
     fs.copyFileSync(sourcePath, destinationPath);
+}
+
+function writeFile(destinationPath: string, contents: string): void {
+    fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
+    fs.writeFileSync(destinationPath, contents, 'utf8');
+}
+
+function buildThemeableBrandSvg(sourcePath: string): string {
+    let svg = fs
+        .readFileSync(sourcePath, 'utf8')
+        .replace(/<\?xml[\s\S]*?\?>\s*/i, '')
+        .replace(/<!--[\s\S]*?-->\s*/g, '')
+        .trim();
+
+    const rootTag = svg.match(/<svg\b[^>]*>/i)?.[0];
+
+    if (!rootTag) {
+        throw new Error(`Unable to find root <svg> tag in ${sourcePath}`);
+    }
+
+    const themedRootTag = rootTag
+        .replace(/\s(?:width|height)="[^"]*"/gi, '')
+        .replace(
+            '<svg',
+            '<svg class="cla-brand-logo-svg" aria-hidden="true" focusable="false" preserveAspectRatio="xMidYMid meet"',
+        );
+
+    svg = svg
+        .replace(rootTag, themedRootTag)
+        .replace(/fill="#004825"/i, 'fill="var(--brand-logo-bg, transparent)"')
+        .replace(/fill="#ffffff"/gi, 'fill="var(--brand-logo-fg, currentColor)"');
+
+    return `${svg}\n`;
 }
 
 function injectCustomStylesheet(indexHtmlPath: string): void {
@@ -75,6 +109,9 @@ function patchVendureUiConfig(vendureUiConfigPath: string): void {
 }
 
 function copyBrandingAssets(): void {
+    // Vendure ships the shell and login templates precompiled with these asset paths.
+    // We keep the legacy rasters as compatibility fallbacks while the injected UI layer
+    // replaces the visible branding with the inline themeable SVG at runtime.
     copyFile(
         path.join(ADMIN_UI_SOURCE_PATH, 'assets/cla-logo-top-source.webp'),
         path.join(ADMIN_UI_OUTPUT_PATH, 'assets/logo-top.webp'),
@@ -90,6 +127,10 @@ function copyBrandingAssets(): void {
     copyFile(
         path.join(ADMIN_UI_SOURCE_PATH, 'assets/cla-favicon-source.ico'),
         path.join(ADMIN_UI_OUTPUT_PATH, 'favicon.ico'),
+    );
+    writeFile(
+        path.join(ADMIN_UI_OUTPUT_PATH, 'assets/cla-logo.svg'),
+        buildThemeableBrandSvg(BRAND_LOGO_SOURCE_PATH),
     );
 }
 

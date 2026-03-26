@@ -1,7 +1,5 @@
-'use client';
-
 import { Container, Box, Typography, Paper, Stack } from '@mui/material';
-import Image from 'next/image';
+import BrandLogo from '@/components/branding/BrandLogo';
 
 export default function LoginPage() {
     return (
@@ -11,8 +9,8 @@ export default function LoginPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: 'grey.50',
-                py: 4
+                background: 'linear-gradient(180deg, rgba(244, 234, 213, 0.34) 0%, rgba(255, 255, 255, 1) 58%)',
+                py: 4,
             }}
         >
             <Container maxWidth="sm">
@@ -23,14 +21,31 @@ export default function LoginPage() {
                         borderRadius: 4,
                         textAlign: 'center',
                         border: '1px solid',
-                        borderColor: 'divider'
+                        borderColor: 'divider',
                     }}
                 >
-                    <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
-                        <Image src="/images/logos/CLA.svg" alt="CLA Logo" width={180} height={60} style={{ objectFit: 'contain' }} />
+                    <Box
+                        sx={{
+                            mb: 4,
+                            display: 'grid',
+                            justifyItems: 'center',
+                            gap: 1.75,
+                            '--brand-logo-fg': 'var(--surface-logo-fg)',
+                            '--brand-logo-bg': 'var(--surface-logo-bg)',
+                        }}
+                    >
+                        <BrandLogo label="CLA Soulprint" style={{ width: 'clamp(9.5rem, 38vw, 11.25rem)' }} />
+                        <Box
+                            aria-hidden
+                            sx={{
+                                width: 'min(8rem, 42%)',
+                                height: '1px',
+                                background: 'linear-gradient(90deg, transparent, var(--brand-accent), transparent)',
+                            }}
+                        />
                     </Box>
 
-                    <Typography variant="h4" fontWeight="bold" gutterBottom color="primary">
+                    <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ color: 'var(--cla-brand-green)' }}>
                         Acceso de clientes no disponible
                     </Typography>
                     <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
