@@ -118,11 +118,11 @@ services:
       GETNET_REQUEST_TIMEOUT: ${GETNET_REQUEST_TIMEOUT:-30000}
     ports:
       # Getnet standalone server loopback upstream for host-level Nginx
-      - "127.0.0.1:4002:4002"
+      - "127.0.0.1:4003:4003"
     networks:
       - tienda_net
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:4002/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4003/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 10
