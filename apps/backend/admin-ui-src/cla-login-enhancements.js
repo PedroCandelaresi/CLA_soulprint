@@ -252,26 +252,11 @@
   }
 
   function ensureTopBarBranding() {
-    var breadcrumb = document.querySelector('.top-bar vdr-breadcrumb');
+    var existingTopLogo = document.querySelector('.top-bar .cla-brand-mark--top');
 
-    if (!(breadcrumb instanceof HTMLElement) || !(breadcrumb.parentElement instanceof HTMLElement)) {
-      return;
+    if (existingTopLogo && existingTopLogo.parentNode) {
+      existingTopLogo.parentNode.removeChild(existingTopLogo);
     }
-
-    var shell = breadcrumb.parentElement;
-    var link = shell.querySelector('.cla-brand-mark--top');
-
-    shell.classList.add('cla-breadcrumb-shell');
-
-    if (!(link instanceof HTMLAnchorElement)) {
-      link = document.createElement('a');
-      link.className = 'cla-brand-mark cla-brand-mark--top';
-      link.href = getAdminRootHref();
-      link.setAttribute('aria-label', 'CLA Soulprint');
-      shell.insertBefore(link, breadcrumb);
-    }
-
-    mountBrandLogo(link, 'top');
   }
 
   function ensureLoginBranding() {
@@ -629,7 +614,7 @@
   function runEnhancements() {
     applySidebarPreference();
     ensureSidebarBranding();
-    ensureTopBarBranding();
+    // ensureTopBarBranding();
     ensureLoginBranding();
     enhancePasswordField();
     ensureDesktopSidebarToggle();
