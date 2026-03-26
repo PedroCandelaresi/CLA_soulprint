@@ -1,17 +1,29 @@
-import { Request, Response, NextFunction } from 'express';
 import { GetnetService } from './getnet.service';
 import { CreateCheckoutDto, GetnetWebhookPayload } from './getnet.types';
 
 const LOG_PREFIX = '[getnet:controller]';
 
+// Generic request/response types (no Express dependency)
+interface Request {
+    body: any;
+    params: Record<string, string>;
+}
+
+interface Response {
+    status(code: number): Response;
+    json(data: any): void;
+}
+
+type NextFunction = () => void;
+
 /**
- * Create Express request handlers for Getnet payment endpoints
- * These are used by the middleware that exposes REST routes
+ * Create Express-style request handlers for Getnet payment endpoints
+ * These are used by the standalone server that uses native Node.js HTTP
  */
 export function createGetnetHandlers(getnetService: GetnetService) {
     
     /**
-     * POST /payments/getnet/checkout
+     * POST /checkout
      * Create a new checkout session with Getnet
      */
     async function createCheckout(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -67,7 +79,7 @@ export function createGetnetHandlers(getnetService: GetnetService) {
     }
     
     /**
-     * GET /payments/getnet/order/:uuid
+     * GET /order/:uuid
      * Get order status from Getnet (by Getnet order UUID)
      */
     async function getOrderStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -108,7 +120,7 @@ export function createGetnetHandlers(getnetService: GetnetService) {
     }
     
     /**
-     * GET /payments/getnet/transaction/:id
+     * GET /transaction/:id
      * Get transaction by local ID
      */
     async function getTransaction(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -148,7 +160,7 @@ export function createGetnetHandlers(getnetService: GetnetService) {
     }
     
     /**
-     * POST /payments/getnet/webhook
+     * POST /webhook
      * Receive and process webhook notifications from Getnet
      */
     async function handleWebhook(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -179,7 +191,7 @@ export function createGetnetHandlers(getnetService: GetnetService) {
     }
     
     /**
-     * GET /payments/getnet/health
+     * GET /health
      * Health check endpoint
      */
     async function healthCheck(req: Request, res: Response, next: NextFunction): Promise<void> {

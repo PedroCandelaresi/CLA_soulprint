@@ -204,9 +204,40 @@ The plugin integrates with Vendure's order/payment system:
 
 The `getnetPaymentHandler` is registered in `vendure-config.ts` and available in the admin panel for payment method configuration.
 
-## Testing
+## Deployment Options
 
-### Local Development with Webhook
+### Option 1: Standalone Server (Recommended)
+
+The Getnet routes can run as a separate HTTP server, which is the recommended approach when using nginx as a reverse proxy.
+
+```bash
+# Development
+cd apps/backend
+pnpm run dev:getnet
+
+# Production
+pnpm run start:getnet
+```
+
+This starts a separate server on port 3002 (configurable via `GETNET_PORT`).
+
+**nginx configuration:**
+```nginx
+location /payments/getnet/ {
+    proxy_pass http://127.0.0.1:3002/payments/getnet/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+### Option 2: Integrated with Vendure (Alternative)
+
+The Getnet plugin can be integrated into the Vendure bootstrap. See the Troubleshooting section for details on why this may not work in all environments.
+
+## Testing
 
 For testing webhooks locally, you need a public URL. Options:
 
@@ -266,6 +297,27 @@ curl http://localhost:3001/payments/getnet/order/{uuid}
 - [ ] Remove `dummyPaymentHandler` from payment options
 
 ## Troubleshooting
+
+### "Cannot POST /payments/getnet/checkout" (404)
+
+If you're getting 404 errors on the Getnet endpoints, the Express middleware might not be registered. Check the bootstrap logs for:
+
+```
+[getnet] Searching for Express app...
+[getnet] SUCCESS: Routes registered at /payments/getnet/*
+```
+
+If you see "Could not find Express app to register middleware", try:
+
+1. Ensure `GETNET_ENABLED=true` is set (or `APP_ENV=local` for dev mode)
+2. Restart the backend completely
+3. Check that the app is using a supported Vendure version (2.x)
+4. Verify the bootstrap logs show the plugin initialization
+
+If the middleware still won't register, you can verify by checking the app structure:
+```bash
+curl -v http://localhost:3001/payments/getnet/health
+```
 
 ### "Entity not found in DataSource"
 

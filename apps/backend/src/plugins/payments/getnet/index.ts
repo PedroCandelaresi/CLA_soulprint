@@ -76,28 +76,33 @@ export function getGetnetMiddleware(): ExpressMiddleware {
         const path = req.path;
         const method = req.method;
         
+        // Strip the base path (/payments/getnet) before matching
+        const relativePath = path.replace(/^\/payments\/getnet/, '') || '/';
+        
+        console.log(`[getnet:middleware] ${method} ${path} -> ${relativePath}`);
+        
         // Health check
-        if (method === 'GET' && path === '/payments/getnet/health') {
+        if (method === 'GET' && (relativePath === '/' || relativePath === '/health')) {
             return handlers.healthCheck(req, res, next);
         }
         
         // Create checkout
-        if (method === 'POST' && path === '/payments/getnet/checkout') {
+        if (method === 'POST' && relativePath === '/checkout') {
             return handlers.createCheckout(req, res, next);
         }
         
         // Get order status
-        if (method === 'GET' && path.match(/^\/payments\/getnet\/order\/[^/]+$/)) {
+        if (method === 'GET' && relativePath.match(/^\/order\/[^/]+$/)) {
             return handlers.getOrderStatus(req, res, next);
         }
         
         // Get transaction by local ID
-        if (method === 'GET' && path.match(/^\/payments\/getnet\/transaction\/[^/]+$/)) {
+        if (method === 'GET' && relativePath.match(/^\/transaction\/[^/]+$/)) {
             return handlers.getTransaction(req, res, next);
         }
         
         // Webhook handler
-        if (method === 'POST' && path === '/payments/getnet/webhook') {
+        if (method === 'POST' && relativePath === '/webhook') {
             return handlers.handleWebhook(req, res, next);
         }
         

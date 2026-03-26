@@ -125,6 +125,7 @@ export const config: VendureConfig = {
             origin: CORS_ORIGINS,
             credentials: true,
         },
+        middleware: [],
     },
     authOptions: {
         tokenMethod: ['bearer', 'cookie'],
