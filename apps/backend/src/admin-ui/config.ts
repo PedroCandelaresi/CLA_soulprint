@@ -9,7 +9,10 @@ const ADMIN_ROUTE = adminUiRoute;
 const ADMIN_UI_OUTPUT_PATH = path.join(__dirname, '../../admin-ui');
 const ADMIN_UI_SOURCE_PATH = path.join(__dirname, '../../admin-ui-src');
 const DEFAULT_ADMIN_UI_PATH = path.join(path.dirname(require.resolve('@vendure/admin-ui-plugin/package.json')), 'lib/admin-ui');
-const BRAND_LOGO_SOURCE_PATH = path.resolve(ADMIN_UI_SOURCE_PATH, '../../storefront/public/images/logos/CLA.svg');
+const BRAND_LOGO_SOURCE_CANDIDATES = [
+    path.join(ADMIN_UI_SOURCE_PATH, 'assets/cla-logo-source.svg'),
+    path.resolve(ADMIN_UI_SOURCE_PATH, '../../storefront/public/images/logos/CLA.svg'),
+];
 
 function copyFile(sourcePath: string, destinationPath: string): void {
     fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
@@ -19,6 +22,20 @@ function copyFile(sourcePath: string, destinationPath: string): void {
 function writeFile(destinationPath: string, contents: string): void {
     fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
     fs.writeFileSync(destinationPath, contents, 'utf8');
+}
+
+function resolveBrandLogoSourcePath(): string {
+    const existingSourcePath = BRAND_LOGO_SOURCE_CANDIDATES.find((candidatePath) =>
+        fs.existsSync(candidatePath),
+    );
+
+    if (!existingSourcePath) {
+        throw new Error(
+            `Unable to find CLA logo source SVG. Checked: ${BRAND_LOGO_SOURCE_CANDIDATES.join(', ')}`,
+        );
+    }
+
+    return existingSourcePath;
 }
 
 function buildThemeableBrandSvg(sourcePath: string): string {
@@ -130,7 +147,7 @@ function copyBrandingAssets(): void {
     );
     writeFile(
         path.join(ADMIN_UI_OUTPUT_PATH, 'assets/cla-logo.svg'),
-        buildThemeableBrandSvg(BRAND_LOGO_SOURCE_PATH),
+        buildThemeableBrandSvg(resolveBrandLogoSourcePath()),
     );
 }
 
