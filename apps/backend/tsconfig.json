@@ -12,7 +12,8 @@
         "skipLibCheck": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "types": ["node", "jest"]
     },
     "include": [
         "src/**/*"

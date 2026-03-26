@@ -12,6 +12,7 @@ import path from 'path';
 import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
 import { getAdminUiApp } from '../admin-ui/config';
 import { adminUiConfig, adminUiPort, adminUiRoute } from '../admin-ui/admin-ui-options';
+import { initGetnetPlugin, getGetnetMiddleware, getGetnetConfigFromEnv, getnetPaymentHandler } from '../plugins/payments/getnet';
 
 function requireEnv(name: string): string {
     const value = process.env[name];
@@ -153,8 +154,14 @@ export const config: VendureConfig = {
         migrationsTableName: 'vendure_migrations',
     },
     paymentOptions: {
-        // Real payment integrations are required before enabling checkout in persistent environments.
-        paymentMethodHandlers: IS_DEV ? [dummyPaymentHandler] : [],
+        // Payment method handlers configuration
+        // In development: include both dummy (for testing) and Getnet
+        // In production: only include Getnet (when credentials are configured)
+        paymentMethodHandlers: IS_DEV 
+            ? [dummyPaymentHandler, getnetPaymentHandler] 
+            : (process.env.GETNET_ENABLED === 'true' && process.env.GETNET_CLIENT_ID !== 'your_client_id' 
+                ? [getnetPaymentHandler] 
+                : []),
     },
     customFields: {},
     plugins: [

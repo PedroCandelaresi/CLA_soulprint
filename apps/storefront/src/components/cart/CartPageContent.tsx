@@ -21,6 +21,7 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import { useState } from 'react';
 import type { CartLine } from '@/types/cart';
 import { useCart } from './CartProvider';
+import { GetnetCheckoutButton } from '../payments/GetnetCheckoutButton';
 
 function formatMoney(amount: number, currencyCode: string): string {
     return new Intl.NumberFormat('es-AR', {
@@ -233,9 +234,8 @@ export default function CartPageContent() {
                                 {formatMoney(cart.totalWithTax, cart.currencyCode)}
                             </Typography>
                         </Stack>
-                        <Typography color="text.secondary">
-                            Checkout y pagos quedan fuera de esta etapa.
-                        </Typography>
+                        <Divider />
+                        <GetnetCheckoutButton cart={cart} />
                         <Button component={Link} href="/productos" variant="outlined" fullWidth>
                             Seguir comprando
                         </Button>
