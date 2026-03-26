@@ -1,4 +1,5 @@
 (function () {
+  var SIDEBAR_COLLAPSED_CLASS = 'cla-sidebar-collapsed';
   var SIDEBAR_STORAGE_KEY = 'cla-admin-sidebar-collapsed';
   var BRAND_LOGO_ASSET_PATH = 'assets/cla-logo.svg';
   var SIDEBAR_COLLAPSE_ICON =
@@ -387,32 +388,47 @@
     }
   }
 
+  function setSidebarCollapsedState(value) {
+    if (!(document.body instanceof HTMLBodyElement)) {
+      return false;
+    }
+
+    document.body.classList.toggle(SIDEBAR_COLLAPSED_CLASS, value);
+    document.body.setAttribute('data-cla-sidebar-collapsed', value ? 'true' : 'false');
+
+    return value;
+  }
+
   function applySidebarPreference() {
     if (!(document.body instanceof HTMLBodyElement)) {
       return;
     }
 
     if (!isDesktopViewport()) {
-      document.body.classList.remove('cla-sidebar-collapsed');
+      setSidebarCollapsedState(false);
       return;
     }
 
-    document.body.classList.toggle('cla-sidebar-collapsed', readSidebarState());
+    setSidebarCollapsedState(readSidebarState());
   }
 
   function updateSidebarToggleButton() {
-    var button = document.querySelector('.cla-desktop-nav-toggle');
     var messages = getMessages();
+    var buttons = document.querySelectorAll('.cla-desktop-nav-toggle');
+    var collapsed =
+      document.body instanceof HTMLBodyElement &&
+      document.body.classList.contains(SIDEBAR_COLLAPSED_CLASS);
 
-    if (!(button instanceof HTMLButtonElement)) {
-      return;
-    }
+    buttons.forEach(function (button) {
+      if (!(button instanceof HTMLButtonElement)) {
+        return;
+      }
 
-    var collapsed = document.body.classList.contains('cla-sidebar-collapsed');
-    button.innerHTML = collapsed ? SIDEBAR_EXPAND_ICON : SIDEBAR_COLLAPSE_ICON;
-    button.setAttribute('aria-label', collapsed ? messages.expandSidebar : messages.collapseSidebar);
-    button.setAttribute('title', collapsed ? messages.expandSidebar : messages.collapseSidebar);
-    button.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
+      button.innerHTML = collapsed ? SIDEBAR_EXPAND_ICON : SIDEBAR_COLLAPSE_ICON;
+      button.setAttribute('aria-label', collapsed ? messages.expandSidebar : messages.collapseSidebar);
+      button.setAttribute('title', collapsed ? messages.expandSidebar : messages.collapseSidebar);
+      button.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
+    });
   }
 
   function toggleDesktopSidebar() {
@@ -420,8 +436,9 @@
       return;
     }
 
-    var collapsed = !document.body.classList.contains('cla-sidebar-collapsed');
-    document.body.classList.toggle('cla-sidebar-collapsed', collapsed);
+    var collapsed = !document.body.classList.contains(SIDEBAR_COLLAPSED_CLASS);
+
+    setSidebarCollapsedState(collapsed);
     writeSidebarState(collapsed);
     updateSidebarToggleButton();
   }
@@ -439,7 +456,6 @@
       button = document.createElement('button');
       button.type = 'button';
       button.className = 'cla-desktop-nav-toggle';
-      button.addEventListener('click', toggleDesktopSidebar);
 
       var expandMenu = topBar.querySelector('.expand-menu');
 
@@ -457,6 +473,21 @@
     }
 
     updateSidebarToggleButton();
+  }
+
+  function handleDocumentClick(event) {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+
+    var desktopToggle = event.target.closest('.cla-desktop-nav-toggle');
+
+    if (!(desktopToggle instanceof HTMLButtonElement)) {
+      return;
+    }
+
+    event.preventDefault();
+    toggleDesktopSidebar();
   }
 
   function isVisible(element) {
@@ -611,6 +642,7 @@
     runEnhancements();
   }
 
+  document.addEventListener('click', handleDocumentClick);
   window.addEventListener('resize', runEnhancements);
 
   var enhancementScheduled = false;
