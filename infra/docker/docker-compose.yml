@@ -104,7 +104,7 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      GETNET_PORT: 3002
+      GETNET_PORT: 4002
       GETNET_AUTH_BASE_URL: ${GETNET_AUTH_BASE_URL:-}
       GETNET_CHECKOUT_BASE_URL: ${GETNET_CHECKOUT_BASE_URL:-}
       GETNET_CLIENT_ID: ${GETNET_CLIENT_ID:-}
@@ -118,11 +118,11 @@ services:
       GETNET_REQUEST_TIMEOUT: ${GETNET_REQUEST_TIMEOUT:-30000}
     ports:
       # Getnet standalone server loopback upstream for host-level Nginx
-      - "127.0.0.1:4003:3002"
+      - "127.0.0.1:4002:4002"
     networks:
       - tienda_net
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:3002/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4002/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 10
