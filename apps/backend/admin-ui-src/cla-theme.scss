@@ -147,8 +147,8 @@
   --nav-divider: rgba(244, 234, 213, 0.12);
   --nav-text: rgba(255, 255, 255, 0.94);
   --nav-muted: rgba(244, 234, 213, 0.72);
---nav-hover-bg: rgba(255, 255, 255, 0.10);
---nav-active-bg: rgba(255, 255, 255, 0.14);
+  --nav-hover-bg: rgba(255, 255, 255, 0.10);
+  --nav-active-bg: rgba(255, 255, 255, 0.14);
   --nav-active-text: #ffffff;
   --nav-active-accent: var(--brand-cream);
   --nav-control-bg: rgba(244, 234, 213, 0.08);
@@ -806,11 +806,19 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
 .left-nav clr-icon {
   color: var(--nav-text) !important;
 }
+
 .left-nav {
   background: var(--nav-bg) !important;
   border-inline-end: 1px solid var(--nav-border);
   box-shadow: none;
-  transition: max-width 0.22s ease, width 0.22s ease;
+  width: var(--left-nav-width) !important;
+  min-width: var(--left-nav-width) !important;
+  max-width: var(--left-nav-width) !important;
+  overflow: hidden;
+  transition:
+    width 0.22s ease,
+    min-width 0.22s ease,
+    max-width 0.22s ease;
 }
 
 .branding {
@@ -2025,6 +2033,20 @@ vdr-empty-placeholder .empty-state .empty-label {
 
 .login-wrapper .login-error.visible {
   max-height: 64px !important;
+}
+
+@media screen and (min-width: 992px) {
+  .left-nav {
+    width: 240px !important;
+    min-width: 240px !important;
+    max-width: 240px !important;
+  }
+
+  body.cla-sidebar-collapsed .left-nav {
+    width: 84px !important;
+    min-width: 84px !important;
+    max-width: 84px !important;
+  }
 }
 
 @media screen and (max-width: 991px) {
