@@ -1,9 +1,6 @@
 import { createGetnetHandlers } from '../getnet.controller';
 import { GetnetService } from '../getnet.service';
-import { CreateCheckoutDto } from '../getnet.types';
-
-// Mock the GetnetService
-jest.mock('../getnet.service');
+import { CreateCheckoutDto, CheckoutResponse, OrderStatusResponse, GetnetWebhookPayload } from '../getnet.types';
 
 // Mock console methods to keep test output clean
 const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
@@ -11,7 +8,12 @@ const mockConsoleDebug = jest.spyOn(console, 'debug').mockImplementation();
 const mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
 
 describe('GetnetController', () => {
-    let mockService: jest.Mocked<GetnetService>;
+    let mockService: {
+        createOrder: jest.Mock<Promise<CheckoutResponse>, [CreateCheckoutDto]>;
+        getOrderStatus: jest.Mock<Promise<OrderStatusResponse>, [string]>;
+        processWebhook: jest.Mock<Promise<{ success: boolean; message: string; isIdempotent: boolean }>, [GetnetWebhookPayload]>;
+        findTransactionById: jest.Mock;
+    };
     let handlers: ReturnType<typeof createGetnetHandlers>;
     let mockReq: any;
     let mockRes: any;
@@ -22,9 +24,10 @@ describe('GetnetController', () => {
             createOrder: jest.fn(),
             getOrderStatus: jest.fn(),
             processWebhook: jest.fn(),
-        } as any;
+            findTransactionById: jest.fn(),
+        };
 
-        handlers = createGetnetHandlers(mockService);
+        handlers = createGetnetHandlers(mockService as unknown as GetnetService);
 
         mockReq = {
             body: {},
@@ -58,14 +61,20 @@ describe('GetnetController', () => {
             ],
         };
 
-        it('should create checkout successfully', async () => {
-            const mockResponse = {
-                orderUuid: 'getnet-uuid-123',
-                checkoutUrl: 'https://checkout.getnet.com/pay/123',
-                expiresAt: '2024-01-01T12:00:00Z',
-            };
+        const validCheckoutResponse: CheckoutResponse = {
+            transactionId: 'local-tx-uuid-123',
+            orderUuid: 'getnet-uuid-123',
+            checkoutUrl: 'https://checkout.getnet.com/pay/123',
+            vendureOrderCode: 'ORD-001',
+            expiresAt: '2024-01-01T12:00:00Z',
+            rawResponse: {
+                status: 'pending',
+                createdAt: '2024-01-01T10:00:00Z',
+            },
+        };
 
-            mockService.createOrder.mockResolvedValue(mockResponse);
+        it('should create checkout successfully', async () => {
+            mockService.createOrder.mockResolvedValue(validCheckoutResponse);
             mockReq.body = validCheckoutDto;
 
             await handlers.createCheckout(mockReq, mockRes, mockNext);
@@ -74,7 +83,7 @@ describe('GetnetController', () => {
             expect(mockRes.status).toHaveBeenCalledWith(201);
             expect(mockRes.json).toHaveBeenCalledWith({
                 success: true,
-                data: mockResponse,
+                data: validCheckoutResponse,
             });
         });
 
@@ -156,14 +165,20 @@ describe('GetnetController', () => {
     });
 
     describe('getOrderStatus', () => {
-        it('should return order status successfully', async () => {
-            const mockResponse = {
-                orderUuid: 'getnet-uuid-123',
-                status: 'approved',
-                createdAt: '2024-01-01T10:00:00Z',
-            };
+        const validOrderStatusResponse: OrderStatusResponse = {
+            transactionId: 'local-tx-uuid-123',
+            orderUuid: 'getnet-uuid-123',
+            vendureOrderCode: 'ORD-001',
+            status: 'approved',
+            providerStatus: 'approved',
+            createdAt: '2024-01-01T10:00:00Z',
+            updatedAt: '2024-01-01T10:05:00Z',
+            isTerminal: true,
+            webhookEventCount: 2,
+        };
 
-            mockService.getOrderStatus.mockResolvedValue(mockResponse);
+        it('should return order status successfully', async () => {
+            mockService.getOrderStatus.mockResolvedValue(validOrderStatusResponse);
             mockReq.params = { uuid: 'getnet-uuid-123' };
 
             await handlers.getOrderStatus(mockReq, mockRes, mockNext);
@@ -172,7 +187,7 @@ describe('GetnetController', () => {
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith({
                 success: true,
-                data: mockResponse,
+                data: validOrderStatusResponse,
             });
         });
 
@@ -192,46 +207,77 @@ describe('GetnetController', () => {
 
             expect(mockRes.status).toHaveBeenCalledWith(404);
         });
+
+        it('should return 500 when service throws generic error', async () => {
+            mockService.getOrderStatus.mockRejectedValue(new Error('Internal error'));
+            mockReq.params = { uuid: 'some-uuid' };
+
+            await handlers.getOrderStatus(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(500);
+        });
     });
 
     describe('handleWebhook', () => {
+        const validWebhookPayload: GetnetWebhookPayload = {
+            event: 'payment.approved',
+            orderUuid: 'getnet-uuid-123',
+            orderId: 'getnet-uuid-123',
+            status: 'approved',
+            timestamp: '2024-01-01T10:05:00Z',
+        };
+
         it('should process webhook successfully', async () => {
-            mockService.processWebhook.mockReturnValue({
+            mockService.processWebhook.mockResolvedValue({
                 success: true,
                 message: 'Webhook processed',
+                isIdempotent: false,
             });
 
-            mockReq.body = {
-                event: 'payment.approved',
-                orderUuid: 'getnet-uuid-123',
-                status: 'approved',
-            };
+            mockReq.body = validWebhookPayload;
 
             await handlers.handleWebhook(mockReq, mockRes, mockNext);
 
-            expect(mockService.processWebhook).toHaveBeenCalledWith(mockReq.body);
+            expect(mockService.processWebhook).toHaveBeenCalledWith(validWebhookPayload);
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith({
                 success: true,
                 message: 'Webhook processed',
+                isIdempotent: false,
             });
         });
 
-        it('should return 400 when webhook processing fails', async () => {
-            mockService.processWebhook.mockReturnValue({
-                success: false,
-                message: 'Invalid payload',
+        it('should handle idempotent webhook', async () => {
+            mockService.processWebhook.mockResolvedValue({
+                success: true,
+                message: 'Webhook already processed',
+                isIdempotent: true,
             });
 
-            mockReq.body = {
-                event: 'payment.approved',
-                orderUuid: '',
-                status: 'approved',
-            };
+            mockReq.body = validWebhookPayload;
 
             await handlers.handleWebhook(mockReq, mockRes, mockNext);
 
-            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                success: true,
+                message: 'Webhook already processed',
+                isIdempotent: true,
+            });
+        });
+
+        it('should always return 200 even on service error', async () => {
+            mockService.processWebhook.mockRejectedValue(new Error('Unexpected error'));
+
+            mockReq.body = validWebhookPayload;
+
+            await handlers.handleWebhook(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                })
+            );
         });
     });
 
@@ -246,6 +292,52 @@ describe('GetnetController', () => {
                     message: 'Getnet payment service is healthy',
                 })
             );
+        });
+    });
+
+    describe('getTransaction', () => {
+        it('should return transaction when found', async () => {
+            const mockTransaction = {
+                id: 'local-tx-uuid',
+                vendureOrderCode: 'ORD-001',
+                providerOrderUuid: 'getnet-uuid',
+                status: 'pending',
+                amount: 2000,
+                currency: '032',
+            };
+
+            mockService.findTransactionById.mockResolvedValue(mockTransaction);
+            mockReq.params = { id: 'local-tx-uuid' };
+
+            await handlers.getTransaction(mockReq, mockRes, mockNext);
+
+            expect(mockService.findTransactionById).toHaveBeenCalledWith('local-tx-uuid');
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                success: true,
+                data: mockTransaction,
+            });
+        });
+
+        it('should return 404 when transaction not found', async () => {
+            mockService.findTransactionById.mockResolvedValue(null);
+            mockReq.params = { id: 'non-existent-id' };
+
+            await handlers.getTransaction(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(404);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                success: false,
+                error: 'Transaction not found',
+            });
+        });
+
+        it('should return 400 when id is missing', async () => {
+            mockReq.params = {};
+
+            await handlers.getTransaction(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
         });
     });
 });

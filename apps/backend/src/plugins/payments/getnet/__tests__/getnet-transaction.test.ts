@@ -1,4 +1,4 @@
-import { mapGetnetStatus, isTerminalStatus, GetnetPaymentStatus } from '../getnet-transaction.entity';
+import { GetnetPaymentStatus, mapGetnetStatus, isTerminalStatus, TERMINAL_STATUSES } from '../getnet-transaction.entity';
 
 describe('GetnetTransaction Entity', () => {
     describe('mapGetnetStatus', () => {
@@ -45,8 +45,10 @@ describe('GetnetTransaction Entity', () => {
         });
 
         it('should default to processing for unknown statuses', () => {
+            const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
             expect(mapGetnetStatus('unknown')).toBe('processing');
             expect(mapGetnetStatus('random_status')).toBe('processing');
+            consoleSpy.mockRestore();
         });
     });
 
@@ -74,8 +76,8 @@ describe('GetnetTransaction Entity', () => {
         });
 
         it('should correctly identify terminal statuses', () => {
-            const terminalStatuses = ['approved', 'rejected', 'cancelled', 'expired'];
-            const nonTerminalStatuses = ['pending', 'processing'];
+            const terminalStatuses: GetnetPaymentStatus[] = ['approved', 'rejected', 'cancelled', 'expired'];
+            const nonTerminalStatuses: GetnetPaymentStatus[] = ['pending', 'processing'];
 
             terminalStatuses.forEach(status => {
                 expect(isTerminalStatus(status)).toBe(true);
@@ -151,6 +153,21 @@ describe('Idempotency Logic', () => {
         it('should process transition to terminal state', () => {
             const result = shouldProcessEvent('processing', 'approved', false);
             expect(result).toBe(true);
+        });
+    });
+
+    describe('TERMINAL_STATUSES constant', () => {
+        it('should contain only terminal statuses', () => {
+            expect(TERMINAL_STATUSES).toContain('approved');
+            expect(TERMINAL_STATUSES).toContain('rejected');
+            expect(TERMINAL_STATUSES).toContain('cancelled');
+            expect(TERMINAL_STATUSES).toContain('expired');
+            expect(TERMINAL_STATUSES).not.toContain('pending');
+            expect(TERMINAL_STATUSES).not.toContain('processing');
+        });
+
+        it('should have 4 terminal statuses', () => {
+            expect(TERMINAL_STATUSES).toHaveLength(4);
         });
     });
 });
