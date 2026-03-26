@@ -46,35 +46,38 @@ async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Pro
         });
         
         // Get the database connection from Vendure app
-        // In Vendure 2, the DataSource is accessed via app.dbConnection
-        // But we also try alternative paths for compatibility
+        // In Vendure 2, the DataSource is accessed via app.injector
         let dataSource: any = null;
         
         const appAny = app as any;
         
-        // Try multiple paths to find DataSource
-        const dataSourcePaths = [
-            { name: 'dbConnection', get: () => appAny.dbConnection },
-            { name: 'dataSource', get: () => appAny.dataSource },
-            { name: 'connection', get: () => appAny.connection },
-            { name: 'ormConnection', get: () => appAny.ormConnection },
-        ];
-        
-        for (const path of dataSourcePaths) {
-            dataSource = path.get();
-            if (dataSource) {
-                console.log(`[getnet] Found DataSource via "${path.name}"`);
-                break;
+        // Try to get DataSource from injector (NestJS/Vendure pattern)
+        if (appAny.injector) {
+            try {
+                // Try to get the DataSource directly from injector
+                dataSource = appAny.injector.get('DataSource') || appAny.injector.get('dataSource');
+                if (dataSource) {
+                    console.log('[getnet] Found DataSource via injector.get()');
+                }
+            } catch (e) {
+                // Not found via injector
             }
         }
         
-        // If still not found, try to access through entity manager or repos
+        // Try alternative paths
         if (!dataSource) {
-            // Check if app has a way to get connection
-            const entityManager = appAny.entityManager || appAny.em;
-            if (entityManager) {
-                dataSource = entityManager.connection || entityManager.queryRunner?.connection;
-                console.log('[getnet] Found DataSource via entityManager');
+            const dataSourcePaths = [
+                { name: 'dbConnection', get: () => appAny.dbConnection },
+                { name: 'dataSource', get: () => appAny.dataSource },
+                { name: 'connection', get: () => appAny.connection },
+            ];
+            
+            for (const path of dataSourcePaths) {
+                dataSource = path.get();
+                if (dataSource) {
+                    console.log(`[getnet] Found DataSource via "${path.name}"`);
+                    break;
+                }
             }
         }
         
@@ -82,7 +85,7 @@ async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Pro
             console.error('[getnet] Could not get DataSource from Vendure app');
             console.log('[getnet] Available app properties:', Object.keys(appAny).join(', '));
             console.log('[getnet] NOTE: Plugin initialization requires database access');
-            console.log('[getnet] Using standalone server mode instead is recommended');
+            console.log('[getnet] The standalone server handles Getnet API instead');
             return false;
         }
         
@@ -138,6 +141,7 @@ async function registerMiddleware(app: Awaited<ReturnType<typeof bootstrap>>): P
             { name: 'apiServer.express', get: () => appAny.apiServer?.express },
             { name: 'apiServer.app', get: () => appAny.apiServer?.app },
             { name: 'httpAdapter', get: () => appAny.httpAdapter },
+            { name: 'httpAdapter.app', get: () => appAny.httpAdapter?.app },
         ];
         
         for (const path of expressPaths) {
