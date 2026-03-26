@@ -147,8 +147,8 @@
   --nav-divider: rgba(244, 234, 213, 0.12);
   --nav-text: rgba(255, 255, 255, 0.94);
   --nav-muted: rgba(244, 234, 213, 0.72);
-  --nav-hover-bg: rgba(244, 234, 213, 0.10);
-  --nav-active-bg: rgba(244, 234, 213, 0.12);
+--nav-hover-bg: rgba(255, 255, 255, 0.10);
+--nav-active-bg: rgba(255, 255, 255, 0.14);
   --nav-active-text: #ffffff;
   --nav-active-accent: var(--brand-cream);
   --nav-control-bg: rgba(244, 234, 213, 0.08);
@@ -779,8 +779,35 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
 }
 
 /* Navigation */
+.left-nav,
+.left-nav .nav,
+.left-nav .main-nav,
+.left-nav .main-nav-container,
+.left-nav .settings-nav-container,
+.left-nav .branding,
+.left-nav .nav-group,
+.left-nav .sidenav {
+  background: var(--nav-bg) !important;
+}
+
+.left-nav,
+.left-nav .nav,
+.left-nav .main-nav,
+.left-nav .main-nav-container,
+.left-nav .settings-nav-container,
+.left-nav .branding,
+.left-nav .nav-group,
+.left-nav .section-header,
+.left-nav .nav-group-header,
+.left-nav .nav-link,
+.left-nav .nav-link a,
+.left-nav .setting-link,
+.left-nav .setting-link label,
+.left-nav clr-icon {
+  color: var(--nav-text) !important;
+}
 .left-nav {
-  background: linear-gradient(180deg, rgba(244, 234, 213, 0.04) 0%, rgba(244, 234, 213, 0) 112px), var(--nav-bg);
+  background: var(--nav-bg) !important;
   border-inline-end: 1px solid var(--nav-border);
   box-shadow: none;
   transition: max-width 0.22s ease, width 0.22s ease;
@@ -788,7 +815,7 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
 
 .branding {
   align-items: center;
-  background: linear-gradient(180deg, rgba(244, 234, 213, 0.04), rgba(244, 234, 213, 0));
+  background: var(--nav-bg) !important;
   border-bottom: 1px solid var(--nav-divider);
   gap: 12px;
   padding: 20px 18px 18px;
