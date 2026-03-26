@@ -212,8 +212,8 @@
 
   --login-wrapper-inner-bg: rgba(255, 255, 255, 0.94);
   --login-page-bg: linear-gradient(180deg, #fbf8f1 0%, #f1f5ee 100%);
-  --color-login-gradient-top: #0b5a34;
-  --color-login-gradient-bottom: #022f1b;
+  --color-login-gradient-top: #004825;
+  --color-login-gradient-bottom: #021f12;
 
   --clr-global-borderradius: 10px;
   --border-radius-sm: 8px;
@@ -568,14 +568,14 @@ body[data-theme="dark"] .surface {
   }
 }
 
-.top-bar > div {
+.top-bar>div {
   align-items: center;
   color: inherit;
   display: flex;
   min-height: 44px;
 }
 
-.top-bar > div:nth-child(2) {
+.top-bar>div:nth-child(2) {
   min-width: 0;
 }
 
@@ -906,7 +906,7 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
   padding: 0;
 }
 
-.main-nav .nav-group .nav-link + .nav-link {
+.main-nav .nav-group .nav-link+.nav-link {
   margin-top: 4px;
 }
 
@@ -1009,7 +1009,8 @@ vdr-channel-switcher .active-channel:hover {
 }
 
 @media screen and (min-width: 992px) {
-  body.cla-sidebar-collapsed .left-nav > .mx-4,
+
+  body.cla-sidebar-collapsed .left-nav>.mx-4,
   body.cla-sidebar-collapsed .settings-nav-container hr,
   body.cla-sidebar-collapsed .version {
     display: none !important;
@@ -1265,7 +1266,7 @@ vdr-card .contents {
   padding-inline: 22px;
 }
 
-vdr-card .contents > * {
+vdr-card .contents>* {
   min-width: 0;
 }
 
@@ -1792,6 +1793,7 @@ vdr-empty-placeholder .empty-state .empty-label {
 }
 
 @media screen and (min-width: 992px) {
+
   .table thead tr th:first-child,
   .table tbody tr td:first-child {
     padding-inline-start: 20px !important;
@@ -1819,20 +1821,20 @@ vdr-empty-placeholder .empty-state .empty-label {
 }
 
 .login-wrapper .login-wrapper-image {
-  background: linear-gradient(180deg, var(--color-login-gradient-top) 0%, var(--brand-primary) 55%, var(--color-login-gradient-bottom) 100%) !important;
+  background: linear-gradient(180deg, #004825 0%, #003d20 52%, #022515 100%) !important;
   min-width: 0;
   position: relative;
 }
 
 .login-wrapper .login-wrapper-image::after {
-  background: radial-gradient(circle at top right, rgba(244, 234, 213, 0.18), transparent 42%);
+  background: radial-gradient(circle at top right, rgba(244, 234, 213, 0.08), transparent 42%);
   content: "";
   inset: 0;
   pointer-events: none;
   position: absolute;
 }
 
-.login-wrapper .login-wrapper-image > img {
+.login-wrapper .login-wrapper-image>img {
   display: none !important;
 }
 
@@ -2005,11 +2007,11 @@ vdr-empty-placeholder .empty-state .empty-label {
 
   .page-block,
   .max-w-layout,
-/* Tables */
-vdr-data-table,
-vdr-data-table-2,
-vdr-collection-data-table,
-vdr-data-table-filter-presets {
+  /* Tables */
+  vdr-data-table,
+  vdr-data-table-2,
+  vdr-collection-data-table,
+  vdr-data-table-filter-presets {
     max-width: calc(100% - 24px);
     width: calc(100% - 24px);
   }
