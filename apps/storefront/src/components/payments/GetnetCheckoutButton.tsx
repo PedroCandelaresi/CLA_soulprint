@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
     Box,
     Button,
@@ -14,36 +14,39 @@ import {
 } from '@mui/material';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import type { Cart } from '@/types/cart';
+import { createGetnetCheckout, getnetStorage } from '@/lib/getnet';
+import type { CreateCheckoutResponse } from '@/types/getnet';
 
 interface GetnetCheckoutButtonProps {
     cart: Cart;
     onCheckoutComplete?: () => void;
+    disabled?: boolean;
+    variant?: 'contained' | 'outlined';
 }
 
-interface CheckoutResponse {
-    success: boolean;
-    data?: {
-        transactionId: string;
-        orderUuid: string;
-        checkoutUrl: string;
-        vendureOrderCode: string;
-        expiresAt?: string;
-    };
-    error?: string;
-}
-
-export function GetnetCheckoutButton({ cart, onCheckoutComplete }: GetnetCheckoutButtonProps) {
+export function GetnetCheckoutButton({
+    cart,
+    onCheckoutComplete,
+    disabled = false,
+    variant = 'contained',
+}: GetnetCheckoutButtonProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showDialog, setShowDialog] = useState(false);
     const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
-    const [transactionId, setTransactionId] = useState<string | null>(null);
-    const [orderUuid, setOrderUuid] = useState<string | null>(null);
+    const [checkoutData, setCheckoutData] = useState<{
+        transactionId: string;
+        orderUuid: string;
+        vendureOrderCode: string;
+    } | null>(null);
 
-    async function handleCheckout() {
+    const handleCheckout = useCallback(async () => {
+        // Prevent double-click
+        if (isLoading || disabled) return;
+
         setIsLoading(true);
         setError(null);
-        
+
         try {
             // Map cart items to the format expected by the backend
             const items = cart.lines.map((line) => ({
@@ -52,57 +55,49 @@ export function GetnetCheckoutButton({ cart, onCheckoutComplete }: GetnetCheckou
                 quantity: line.quantity,
                 unitPrice: line.unitPriceWithTax, // in cents
             }));
-            
-            // Add shipping if applicable
-            const shippingCost = cart.shippingWithTax > 0 ? cart.shippingWithTax : undefined;
-            
-            const response = await fetch('/api/payments/getnet', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    orderCode: cart.code,
-                    items,
-                    shippingCost,
-                    successUrl: `${window.location.origin}/checkout/success`,
-                    failedUrl: `${window.location.origin}/checkout/failed`,
-                }),
+
+            // Get site URL
+            const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
+            // Create checkout request
+            const response = await createGetnetCheckout({
+                orderCode: cart.code,
+                items,
+                shippingCost: cart.shippingWithTax > 0 ? cart.shippingWithTax : undefined,
+                successUrl: `${siteUrl}/checkout/success`,
+                failedUrl: `${siteUrl}/checkout/failed`,
             });
-            
-            const data: CheckoutResponse = await response.json();
-            
-            if (!response.ok || !data.success || !data.data) {
-                setError(data.error || 'No se pudo iniciar el proceso de pago');
+
+            if (!response.success || !response.data) {
+                setError(response.error || 'No se pudo iniciar el proceso de pago');
                 return;
             }
-            
-            // Store IDs for later retrieval
-            setTransactionId(data.data.transactionId);
-            setOrderUuid(data.data.orderUuid);
-            setCheckoutUrl(data.data.checkoutUrl);
+
+            // Store checkout data for dialog
+            setCheckoutData({
+                transactionId: response.data.transactionId,
+                orderUuid: response.data.orderUuid,
+                vendureOrderCode: response.data.vendureOrderCode,
+            });
+            setCheckoutUrl(response.data.checkoutUrl);
             setShowDialog(true);
-            
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al procesar el pago');
         } finally {
             setIsLoading(false);
         }
-    }
+    }, [cart, isLoading, disabled]);
 
     function handleRedirectToPayment() {
-        if (checkoutUrl) {
-            // Store IDs in sessionStorage for later retrieval on success/failed pages
-            if (transactionId) {
-                sessionStorage.setItem('getnet_transaction_id', transactionId);
-            }
-            if (orderUuid) {
-                sessionStorage.setItem('getnet_order_uuid', orderUuid);
-            }
-            if (cart.code) {
-                sessionStorage.setItem('getnet_cart_code', cart.code);
-            }
-            
+        if (checkoutUrl && checkoutData) {
+            // Ensure data is saved in sessionStorage (should already be saved by client)
+            getnetStorage.saveTransaction({
+                transactionId: checkoutData.transactionId,
+                orderUuid: checkoutData.orderUuid,
+                vendureOrderCode: checkoutData.vendureOrderCode,
+                cartCode: cart.code,
+            });
+
             // Redirect to Getnet checkout
             window.location.href = checkoutUrl;
         }
@@ -111,12 +106,13 @@ export function GetnetCheckoutButton({ cart, onCheckoutComplete }: GetnetCheckou
     function handleCloseDialog() {
         setShowDialog(false);
         setCheckoutUrl(null);
-        setTransactionId(null);
-        setOrderUuid(null);
+        setCheckoutData(null);
         if (error) {
             setError(null);
         }
     }
+
+    const isDisabled = disabled || isLoading || cart.lines.length === 0;
 
     return (
         <>
@@ -126,15 +122,21 @@ export function GetnetCheckoutButton({ cart, onCheckoutComplete }: GetnetCheckou
                         {error}
                     </Alert>
                 )}
-                
+
                 <Button
-                    variant="contained"
+                    variant={variant}
                     color="primary"
                     size="large"
                     fullWidth
-                    disabled={isLoading || cart.lines.length === 0}
+                    disabled={isDisabled}
                     onClick={handleCheckout}
-                    startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <LocalShippingIcon />}
+                    startIcon={
+                        isLoading ? (
+                            <CircularProgress size={20} color="inherit" />
+                        ) : (
+                            <LocalShippingIcon />
+                        )
+                    }
                     sx={{
                         py: 1.5,
                         fontSize: '1.1rem',
@@ -143,43 +145,61 @@ export function GetnetCheckoutButton({ cart, onCheckoutComplete }: GetnetCheckou
                 >
                     {isLoading ? 'Iniciando pago...' : 'Pagar con Getnet'}
                 </Button>
-                
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
+
+                <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 1, display: 'block', textAlign: 'center' }}
+                >
                     Pago seguro procesado por Santander / Getnet
                 </Typography>
             </Box>
 
-            {/* Checkout Dialog */}
+            {/* Checkout Confirmation Dialog */}
             <Dialog
                 open={showDialog}
                 onClose={handleCloseDialog}
                 maxWidth="sm"
                 fullWidth
+                aria-labelledby="checkout-dialog-title"
             >
-                <DialogTitle>
+                <DialogTitle id="checkout-dialog-title">
                     Redirigiendo al pago...
                 </DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} alignItems="center" sx={{ py: 2 }}>
                         <CircularProgress size={48} />
-                        
-                        {transactionId && orderUuid && (
-                            <Typography variant="body2" color="text.secondary">
-                                Transaction: {transactionId.slice(0, 8)}... / Order: {orderUuid.slice(0, 8)}...
-                            </Typography>
+
+                        {checkoutData && (
+                            <Box
+                                sx={{
+                                    width: '100%',
+                                    p: 2,
+                                    bgcolor: 'grey.100',
+                                    borderRadius: 2,
+                                }}
+                            >
+                                <Typography variant="body2" color="text.secondary">
+                                    Transaction: {checkoutData.transactionId.slice(0, 8)}...
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Orden: {checkoutData.vendureOrderCode || checkoutData.orderUuid.slice(0, 8)}...
+                                </Typography>
+                            </Box>
                         )}
-                        
-                        <Typography variant="body2" textAlign="center" color="text.secondary">
+
+                        <Typography
+                            variant="body2"
+                            textAlign="center"
+                            color="text.secondary"
+                        >
                             Serás redirigido a la página de pago segura de Santander.
                             <br />
                             Una vez completado el pago, serás redirigido de vuelta aquí.
                         </Typography>
-                        
+
                         <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                            <Button
-                                variant="outlined"
-                                onClick={handleCloseDialog}
-                            >
+                            <Button variant="outlined" onClick={handleCloseDialog}>
                                 Cancelar
                             </Button>
                             <Button

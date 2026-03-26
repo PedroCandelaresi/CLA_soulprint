@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
     Box,
@@ -11,28 +11,18 @@ import {
     Paper,
     Stack,
     Typography,
+    Alert,
+    Chip,
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-
-interface TransactionStatus {
-    id: string;
-    vendureOrderCode: string;
-    providerOrderUuid: string;
-    status: string;
-    amount: number;
-    currency: string;
-    webhookEventCount: number;
-    isTerminal: boolean;
-    approvedAt?: string;
-    createdAt: string;
-}
-
-interface ApiResponse {
-    success: boolean;
-    data?: TransactionStatus;
-    error?: string;
-}
+import RefreshIcon from '@mui/icons-material/Refresh';
+import {
+    fetchTransactionWithFallback,
+    getnetStorage,
+    STATUS_DISPLAY_MAP,
+} from '@/lib/getnet';
+import type { TransactionStatus, TransactionStatusValue } from '@/types/getnet';
 
 function formatMoney(amount: number, currency: string): string {
     // Amount is in cents, currency is like "032" for ARS
@@ -42,76 +32,65 @@ function formatMoney(amount: number, currency: string): string {
     }).format(amount / 100);
 }
 
+function formatDate(dateString: string): string {
+    try {
+        return new Date(dateString).toLocaleString('es-AR', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        });
+    } catch {
+        return dateString;
+    }
+}
+
+function getStatusColor(status: TransactionStatusValue): 'success' | 'warning' | 'error' | 'info' {
+    const config = STATUS_DISPLAY_MAP[status];
+    return config?.color || 'info';
+}
+
 export default function CheckoutSuccessPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [transaction, setTransaction] = useState<TransactionStatus | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        async function checkOrderStatus() {
-            // Get transaction ID from sessionStorage
-            const transactionId = sessionStorage.getItem('getnet_transaction_id');
-            const orderUuid = sessionStorage.getItem('getnet_order_uuid');
-            const cartCode = sessionStorage.getItem('getnet_cart_code');
+    const checkOrderStatus = useCallback(async (showRefreshIndicator = false) => {
+        if (showRefreshIndicator) setRefreshing(true);
+        
+        const result = await fetchTransactionWithFallback();
 
-            if (!transactionId) {
-                // Try to get status by order UUID if no transaction ID
-                if (orderUuid) {
-                    try {
-                        const response = await fetch(`/api/payments/getnet/order/${encodeURIComponent(orderUuid)}`);
-                        const data = await response.json();
-                        
-                        if (data.success && data.data) {
-                            setTransaction({
-                                id: data.data.transactionId || '',
-                                vendureOrderCode: data.data.vendureOrderCode || cartCode || '',
-                                providerOrderUuid: data.data.orderUuid || orderUuid,
-                                status: data.data.status || 'unknown',
-                                amount: 0,
-                                currency: '032',
-                                webhookEventCount: data.data.webhookEventCount || 0,
-                                isTerminal: data.data.isTerminal || false,
-                                approvedAt: data.data.approvedAt,
-                                createdAt: data.data.createdAt || '',
-                            });
-                        }
-                    } catch (err) {
-                        console.error('Error fetching order status:', err);
-                    }
-                }
-                
-                setError('No se encontró información de la transacción.');
-                setIsLoading(false);
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/payments/getnet/transaction/${encodeURIComponent(transactionId)}`);
-                const data: ApiResponse = await response.json();
-
-                if (!response.ok || !data.success || !data.data) {
-                    setError(data.error || 'No se pudo obtener el estado de la transacción');
-                    return;
-                }
-
-                setTransaction(data.data);
-            } catch (err) {
-                setError('Error al consultar el estado del pago');
-                console.error('Error checking order status:', err);
-            } finally {
-                setIsLoading(false);
+        if (result.status) {
+            setTransaction(result.status);
+            setError(null);
+        } else if (result.error) {
+            setError(result.error);
+            // Keep existing transaction if we have one
+            if (!transaction) {
+                setTransaction(null);
             }
         }
+        
+        setIsLoading(false);
+        if (showRefreshIndicator) setRefreshing(false);
+    }, [transaction]);
 
+    useEffect(() => {
         void checkOrderStatus();
     }, []);
 
-    function handleNewOrder() {
-        // Clear session storage
-        sessionStorage.removeItem('getnet_transaction_id');
-        sessionStorage.removeItem('getnet_order_uuid');
-        sessionStorage.removeItem('getnet_cart_code');
+    async function handleRefresh() {
+        await checkOrderStatus(true);
     }
+
+    function handleClearAndNavigate(href: string) {
+        getnetStorage.clearTransaction();
+        window.location.href = href;
+    }
+
+    const statusConfig = transaction?.status
+        ? STATUS_DISPLAY_MAP[transaction.status as TransactionStatusValue] ||
+          STATUS_DISPLAY_MAP.unknown
+        : STATUS_DISPLAY_MAP.unknown;
 
     if (isLoading) {
         return (
@@ -124,34 +103,47 @@ export default function CheckoutSuccessPage() {
         );
     }
 
+    // Determine the actual status to display
+    const displayStatus = transaction?.status || 'unknown';
+    const statusColor = getStatusColor(displayStatus as TransactionStatusValue);
+
     return (
         <Box maxWidth={600} mx="auto" py={6}>
             <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, borderRadius: 4 }}>
                 <Stack spacing={4} alignItems="center" textAlign="center">
-                    {/* Success Icon */}
+                    {/* Status Icon */}
                     <Box
                         sx={{
                             width: 80,
                             height: 80,
                             borderRadius: '50%',
-                            bgcolor: 'success.light',
+                            bgcolor: `${statusColor}.light`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                         }}
                     >
-                        <CheckCircleOutlineIcon sx={{ fontSize: 48, color: 'success.main' }} />
+                        <CheckCircleOutlineIcon
+                            sx={{ fontSize: 48, color: `${statusColor}.main` }}
+                        />
                     </Box>
 
                     {/* Title */}
                     <Box>
                         <Typography variant="h3" fontWeight={700} gutterBottom>
-                            ¡Pago exitoso!
+                            {statusConfig.title}
                         </Typography>
                         <Typography color="text.secondary">
-                            Tu pedido ha sido procesado correctamente.
+                            {statusConfig.message}
                         </Typography>
                     </Box>
+
+                    {/* Status Chip */}
+                    <Chip
+                        label={displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
+                        color={statusColor}
+                        size="medium"
+                    />
 
                     {/* Transaction Details */}
                     {transaction && (
@@ -161,63 +153,92 @@ export default function CheckoutSuccessPage() {
                                     {transaction.vendureOrderCode && (
                                         <Stack direction="row" justifyContent="space-between">
                                             <Typography color="text.secondary">Orden</Typography>
-                                            <Typography fontWeight={600}>{transaction.vendureOrderCode}</Typography>
-                                        </Stack>
-                                    )}
-                                    
-                                    <Stack direction="row" justifyContent="space-between">
-                                        <Typography color="text.secondary">Transaction ID</Typography>
-                                        <Typography fontWeight={600}>
-                                            {transaction.id.slice(0, 8)}...
-                                        </Typography>
-                                    </Stack>
-                                    
-                                    <Stack direction="row" justifyContent="space-between">
-                                        <Typography color="text.secondary">Estado</Typography>
-                                        <Typography 
-                                            fontWeight={600}
-                                            sx={{ 
-                                                color: transaction.status === 'approved' ? 'success.main' : 'warning.main',
-                                                textTransform: 'capitalize',
-                                            }}
-                                        >
-                                            {transaction.status}
-                                        </Typography>
-                                    </Stack>
-                                    
-                                    {transaction.amount > 0 && (
-                                        <Stack direction="row" justifyContent="space-between">
-                                            <Typography color="text.secondary">Monto</Typography>
                                             <Typography fontWeight={600}>
-                                                {formatMoney(transaction.amount, transaction.currency)}
+                                                {transaction.vendureOrderCode}
                                             </Typography>
                                         </Stack>
                                     )}
-                                    
+
+                                    <Stack direction="row" justifyContent="space-between">
+                                        <Typography color="text.secondary">Transaction ID</Typography>
+                                        <Typography fontWeight={600}>
+                                            {transaction.transactionId.slice(0, 12)}...
+                                        </Typography>
+                                    </Stack>
+
+                                    {transaction.amount && transaction.amount > 0 && (
+                                        <Stack direction="row" justifyContent="space-between">
+                                            <Typography color="text.secondary">Monto</Typography>
+                                            <Typography fontWeight={600}>
+                                                {formatMoney(
+                                                    transaction.amount,
+                                                    transaction.currency || '032'
+                                                )}
+                                            </Typography>
+                                        </Stack>
+                                    )}
+
+                                    {transaction.createdAt && (
+                                        <Stack direction="row" justifyContent="space-between">
+                                            <Typography color="text.secondary">Fecha</Typography>
+                                            <Typography>
+                                                {formatDate(transaction.createdAt)}
+                                            </Typography>
+                                        </Stack>
+                                    )}
+
                                     {transaction.approvedAt && (
                                         <Stack direction="row" justifyContent="space-between">
                                             <Typography color="text.secondary">Aprobado</Typography>
                                             <Typography>
-                                                {new Date(transaction.approvedAt).toLocaleString('es-AR')}
+                                                {formatDate(transaction.approvedAt)}
                                             </Typography>
                                         </Stack>
                                     )}
+
+                                    <Stack direction="row" justifyContent="space-between">
+                                        <Typography color="text.secondary">
+                                            Eventos webhook
+                                        </Typography>
+                                        <Typography>{transaction.webhookEventCount}</Typography>
+                                    </Stack>
                                 </Stack>
                             </CardContent>
                         </Card>
                     )}
 
-                    {/* Error message if status couldn't be verified */}
+                    {/* Error message */}
                     {error && !transaction && (
-                        <Box sx={{ width: '100%' }}>
-                            <Typography color="warning.main" textAlign="center">
-                                {error}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 1 }}>
-                                Si realizaste un pago, el mismo será procesado en breve.
-                                Puedes verificar el estado de tu orden desde tu cuenta.
-                            </Typography>
-                        </Box>
+                        <Alert
+                            severity="warning"
+                            sx={{ width: '100%' }}
+                            action={
+                                <Button
+                                    color="inherit"
+                                    size="small"
+                                    onClick={handleRefresh}
+                                    disabled={refreshing}
+                                    startIcon={
+                                        refreshing ? (
+                                            <CircularProgress size={16} color="inherit" />
+                                        ) : (
+                                            <RefreshIcon />
+                                        )
+                                    }
+                                >
+                                    {refreshing ? 'Verificando...' : 'Reintentar'}
+                                </Button>
+                            }
+                        >
+                            {error}
+                        </Alert>
+                    )}
+
+                    {error && transaction && (
+                        <Alert severity="info" sx={{ width: '100%' }}>
+                            Hubo un problema al verificar el estado actualizado, pero tu pago
+                            está siendo procesado.
+                        </Alert>
                     )}
 
                     {/* Actions */}
@@ -228,18 +249,33 @@ export default function CheckoutSuccessPage() {
                             variant="contained"
                             size="large"
                             startIcon={<ShoppingBagIcon />}
-                            onClick={handleNewOrder}
+                            onClick={() => getnetStorage.clearTransaction()}
                         >
                             Volver al carrito
                         </Button>
-                        
+
                         <Button
                             component={Link}
                             href="/productos"
                             variant="outlined"
-                            onClick={handleNewOrder}
+                            onClick={() => getnetStorage.clearTransaction()}
                         >
                             Continuar comprando
+                        </Button>
+
+                        <Button
+                            startIcon={
+                                refreshing ? (
+                                    <CircularProgress size={16} color="inherit" />
+                                ) : (
+                                    <RefreshIcon />
+                                )
+                            }
+                            onClick={handleRefresh}
+                            disabled={refreshing}
+                            size="small"
+                        >
+                            {refreshing ? 'Actualizando...' : 'Actualizar estado'}
                         </Button>
                     </Stack>
 
