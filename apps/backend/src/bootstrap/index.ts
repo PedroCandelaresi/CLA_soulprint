@@ -3,40 +3,90 @@ import { config } from '../config/vendure-config';
 import { ensureArgentinaDefaults } from './argentina-defaults';
 import { initGetnetPlugin, getGetnetMiddleware, getGetnetConfigFromEnv, getGetnetService } from '../plugins/payments/getnet';
 
-// Populate on start if needed or use separate script.
-// For this setup we will assume populate is run separately or via seed.
-// But we might want to ensure database access.
-
 /**
- * Initialize Getnet payment plugin if enabled
- * Only initialize in development environment or when explicitly configured
+ * Initialize Getnet payment plugin
+ * This plugin provides REST endpoints for Getnet Checkout (Santander) integration
  */
 async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Promise<boolean> {
-    // Check both environment variable and dev mode
-    const getnetEnabled = process.env.GETNET_ENABLED === 'true';
-    const appEnv = process.env.APP_ENV || 'local';
-    const isDev = appEnv === 'local' || appEnv === 'dev';
+    // Read environment variables with detailed logging
+    const getnetEnabledEnv = process.env.GETNET_ENABLED;
+    const appEnv = process.env.APP_ENV || 'not set';
+    const nodeEnv = process.env.NODE_ENV || 'not set';
     
-    if (!getnetEnabled && !isDev) {
-        console.log('[getnet] Plugin is disabled (set GETNET_ENABLED=true to enable)');
+    // Parse GETNET_ENABLED - handle various formats
+    const getnetEnabledRaw = getnetEnabledEnv || '';
+    const getnetEnabled = getnetEnabledRaw.toLowerCase().trim() === 'true';
+    
+    // Also enable in dev mode by default (APP_ENV=local or APP_ENV=dev)
+    const isDevMode = appEnv === 'local' || appEnv === 'dev';
+    const shouldEnable = getnetEnabled || isDevMode;
+    
+    console.log('[getnet] Environment check:');
+    console.log(`  - GETNET_ENABLED="${getnetEnabledEnv}" (raw)`);
+    console.log(`  - GETNET_ENABLED=${getnetEnabled} (parsed)`);
+    console.log(`  - APP_ENV="${appEnv}"`);
+    console.log(`  - NODE_ENV="${nodeEnv}"`);
+    console.log(`  - isDevMode=${isDevMode}`);
+    console.log(`  - shouldEnable=${shouldEnable}`);
+    
+    if (!shouldEnable) {
+        console.log('[getnet] Plugin is disabled (GETNET_ENABLED!=true and not in dev mode)');
         return false;
     }
     
-    console.log(`[getnet] Initializing plugin (enabled=${getnetEnabled}, dev=${isDev})...`);
+    console.log('[getnet] Plugin will be enabled');
     
     try {
         const getnetConfig = getGetnetConfigFromEnv();
+        console.log('[getnet] Config loaded:', {
+            authBaseUrl: getnetConfig.authBaseUrl,
+            checkoutBaseUrl: getnetConfig.checkoutBaseUrl,
+            clientId: getnetConfig.clientId === 'your_client_id' ? 'PLACEHOLDER' : 'SET',
+            currency: getnetConfig.currency,
+        });
         
-        // Get the database connection from the Vendure app
-        // Vendure stores the DataSource in the app
-        const dataSource = (app as unknown as { dbConnection: import('typeorm').DataSource }).dbConnection;
+        // Get the database connection from Vendure app
+        // In Vendure 2, the DataSource is accessed via app.dbConnection
+        // But we also try alternative paths for compatibility
+        let dataSource: any = null;
+        
+        const appAny = app as any;
+        
+        // Try multiple paths to find DataSource
+        const dataSourcePaths = [
+            { name: 'dbConnection', get: () => appAny.dbConnection },
+            { name: 'dataSource', get: () => appAny.dataSource },
+            { name: 'connection', get: () => appAny.connection },
+            { name: 'ormConnection', get: () => appAny.ormConnection },
+        ];
+        
+        for (const path of dataSourcePaths) {
+            dataSource = path.get();
+            if (dataSource) {
+                console.log(`[getnet] Found DataSource via "${path.name}"`);
+                break;
+            }
+        }
+        
+        // If still not found, try to access through entity manager or repos
+        if (!dataSource) {
+            // Check if app has a way to get connection
+            const entityManager = appAny.entityManager || appAny.em;
+            if (entityManager) {
+                dataSource = entityManager.connection || entityManager.queryRunner?.connection;
+                console.log('[getnet] Found DataSource via entityManager');
+            }
+        }
         
         if (!dataSource) {
             console.error('[getnet] Could not get DataSource from Vendure app');
+            console.log('[getnet] Available app properties:', Object.keys(appAny).join(', '));
+            console.log('[getnet] NOTE: Plugin initialization requires database access');
+            console.log('[getnet] Using standalone server mode instead is recommended');
             return false;
         }
         
-        console.log('[getnet] DataSource acquired');
+        console.log('[getnet] DataSource acquired successfully');
         
         // Initialize the plugin with DataSource
         initGetnetPlugin(getnetConfig, dataSource);
@@ -71,98 +121,44 @@ async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Pro
 }
 
 /**
- * Find and register middleware on the Express app
- * Vendure 2 exposes the HTTP server through apiServer.servers
+ * Try to register middleware on the Express server
+ * In Vendure 2, this can be challenging as the Express app is internal
  */
 async function registerMiddleware(app: Awaited<ReturnType<typeof bootstrap>>): Promise<boolean> {
-    const middleware = getGetnetMiddleware();
-    
-    console.log('[getnet] Searching for Express server...');
-    
-    // In Vendure 2, the server structure is typically:
-    // app.apiServer.servers[0].server (or httpServer)
+    console.log('[getnet] Attempting to register Express middleware...');
     
     try {
-        // Check for apiServer
-        const apiServer = (app as any)?.apiServer;
-        if (apiServer) {
-            console.log('[getnet] Found apiServer');
-            
-            // Try to access the underlying HTTP server
-            // In Vendure 2 with @vendure/http-server-plugin or similar
-            
-            // Check servers array
-            const servers = apiServer?.servers;
-            if (servers && Array.isArray(servers)) {
-                console.log(`[getnet] Found ${servers.length} server(s)`);
-                
-                for (let i = 0; i < servers.length; i++) {
-                    const server = servers[i];
-                    console.log(`[getnet] Checking server[${i}]:`, typeof server);
-                    
-                    // Check for httpServer property
-                    const httpServer = server?.httpServer || server?.server;
-                    if (httpServer && typeof httpServer.on === 'function') {
-                        console.log(`[getnet] Found httpServer on server[${i}]`);
-                        
-                        // In Node.js http.Server, you can access the underlying app via .on('request', ...)
-                        // But a better approach is to use the event emitter pattern
-                        
-                        // Try to get the express app from the server's request handler
-                        // This is tricky because Node's http.Server doesn't expose the app directly
-                        
-                        // Alternative: check if there's an express property
-                        const expressApp = server?.express || server?.app;
-                        if (expressApp && typeof expressApp.use === 'function') {
-                            expressApp.use('/payments/getnet', middleware);
-                            console.log('[getnet] SUCCESS: Routes registered via server[${i}].express');
-                            return true;
-                        }
-                    }
-                }
-            }
-            
-            // Try direct express property
-            const expressApp = apiServer?.express || apiServer?.app;
+        const middleware = getGetnetMiddleware();
+        const appAny = app as any;
+        
+        // Try various paths to find Express app
+        const expressPaths = [
+            { name: 'express', get: () => appAny.express },
+            { name: 'app (if Express)', get: () => appAny.use ? appAny : null },
+            { name: 'apiServer.express', get: () => appAny.apiServer?.express },
+            { name: 'apiServer.app', get: () => appAny.apiServer?.app },
+            { name: 'httpAdapter', get: () => appAny.httpAdapter },
+        ];
+        
+        for (const path of expressPaths) {
+            const expressApp = path.get();
             if (expressApp && typeof expressApp.use === 'function') {
+                console.log(`[getnet] Found Express app via "${path.name}"`);
                 expressApp.use('/payments/getnet', middleware);
-                console.log('[getnet] SUCCESS: Routes registered via apiServer.express');
+                console.log('[getnet] SUCCESS: Routes registered at /payments/getnet/*');
                 return true;
             }
         }
         
-        // Try accessing httpServer directly
-        const httpServer = (app as any)?.httpServer;
-        if (httpServer && typeof httpServer.on === 'function') {
-            console.log('[getnet] Found httpServer');
-            
-            // The httpServer in Vendure 2 wraps an express app
-            // We can try to get the wrapped app through inspection
-            // or by listening to 'request' events
-        }
+        console.warn('[getnet] Could not find Express app to register middleware');
+        console.log('[getnet] Available top-level properties:', Object.keys(appAny).join(', '));
         
-        // Last resort: try to use app directly if it's an express app
-        if (app && typeof (app as any).use === 'function') {
-            (app as any).use('/payments/getnet', middleware);
-            console.log('[getnet] SUCCESS: Routes registered via app directly');
-            return true;
+        if (appAny.apiServer) {
+            console.log('[getnet] apiServer properties:', Object.keys(appAny.apiServer).join(', '));
         }
         
     } catch (error) {
-        console.error('[getnet] Error during middleware registration:', error);
-    }
-    
-    console.warn('[getnet] Could not find Express server to register middleware');
-    console.log('[getnet] Available app keys:', Object.keys(app || {}).join(', '));
-    
-    // Log nested structure for debugging
-    try {
-        console.log('[getnet] apiServer keys:', Object.keys((app as any)?.apiServer || {}).join(', '));
-        if ((app as any)?.apiServer?.servers) {
-            console.log('[getnet] servers array length:', (app as any).apiServer.servers.length);
-        }
-    } catch (e) {
-        // Ignore
+        console.error('[getnet] Error registering middleware:', error);
     }
     
     return false;
@@ -170,6 +166,8 @@ async function registerMiddleware(app: Awaited<ReturnType<typeof bootstrap>>): P
 
 bootstrap(config)
     .then(async (app) => {
+        console.log('[getnet] Vendure bootstrap complete');
+        
         try {
             await ensureArgentinaDefaults(app);
             console.log('Argentina defaults ensured (country AR + currency ARS)');
@@ -177,7 +175,7 @@ bootstrap(config)
             console.warn('Argentina defaults setup failed (continuing):', err);
         }
 
-        // Reindex search to ensure colecciones/filtros reflejan cambios recientes
+        // Reindex search
         try {
             const requestContextService = app.get(RequestContextService);
             const searchService = app.get(SearchService);
@@ -196,10 +194,11 @@ bootstrap(config)
             const middlewareRegistered = await registerMiddleware(app);
             
             if (!middlewareRegistered) {
-                console.warn('[getnet] WARNING: Middleware not registered. REST endpoints will not be available.');
-                console.warn('[getnet] The plugin is initialized but the REST API routes are not mounted.');
-                console.warn('[getnet] Consider using the frontend /api/payments/getnet routes instead.');
+                console.warn('[getnet] WARNING: REST endpoints not mounted via middleware');
+                console.warn('[getnet] INFO: Use standalone server or frontend /api/payments/getnet routes');
             }
+        } else {
+            console.warn('[getnet] Plugin not enabled - endpoints unavailable');
         }
 
         console.log('Vendure server started!');
@@ -208,7 +207,8 @@ bootstrap(config)
         console.log('Admin UI: http://localhost:3001/admin');
         
         if (getnetInitialized) {
-            console.log('Getnet API: http://localhost:3001/payments/getnet/health');
+            console.log('Getnet REST: http://localhost:3001/payments/getnet/health (if middleware works)');
+            console.log('[getnet] Alternatively use: http://localhost:3002/payments/getnet/health (standalone)');
         }
     })
     .catch((err) => {

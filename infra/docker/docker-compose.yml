@@ -56,6 +56,20 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
       SMTP_SECURE: ${SMTP_SECURE:-}
+      # Getnet Payment Configuration
+      GETNET_ENABLED: ${GETNET_ENABLED:-false}
+      GETNET_PORT: 3002
+      GETNET_AUTH_BASE_URL: ${GETNET_AUTH_BASE_URL:-}
+      GETNET_CHECKOUT_BASE_URL: ${GETNET_CHECKOUT_BASE_URL:-}
+      GETNET_CLIENT_ID: ${GETNET_CLIENT_ID:-}
+      GETNET_CLIENT_SECRET: ${GETNET_CLIENT_SECRET:-}
+      GETNET_SCOPE: ${GETNET_SCOPE:-*}
+      GETNET_CURRENCY: ${GETNET_CURRENCY:-032}
+      GETNET_WEBHOOK_URL: ${GETNET_WEBHOOK_URL:-}
+      GETNET_SUCCESS_URL: ${GETNET_SUCCESS_URL:-}
+      GETNET_FAILED_URL: ${GETNET_FAILED_URL:-}
+      GETNET_EXPIRE_LIMIT_MINUTES: ${GETNET_EXPIRE_LIMIT_MINUTES:-10}
+      GETNET_REQUEST_TIMEOUT: ${GETNET_REQUEST_TIMEOUT:-30000}
     ports:
       # Primary backend loopback upstream for the recommended host-level Nginx.
       - "127.0.0.1:4002:3001"
@@ -71,6 +85,48 @@ services:
       timeout: 5s
       retries: 10
       start_period: 40s
+
+  getnet:
+    build:
+      context: ../../
+      dockerfile: apps/backend/Dockerfile
+    container_name: tienda_getnet
+    restart: always
+    command: ["pnpm", "start:getnet:prod"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      APP_ENV: ${APP_ENV}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      GETNET_PORT: 3002
+      GETNET_AUTH_BASE_URL: ${GETNET_AUTH_BASE_URL:-}
+      GETNET_CHECKOUT_BASE_URL: ${GETNET_CHECKOUT_BASE_URL:-}
+      GETNET_CLIENT_ID: ${GETNET_CLIENT_ID:-}
+      GETNET_CLIENT_SECRET: ${GETNET_CLIENT_SECRET:-}
+      GETNET_SCOPE: ${GETNET_SCOPE:-*}
+      GETNET_CURRENCY: ${GETNET_CURRENCY:-032}
+      GETNET_WEBHOOK_URL: ${GETNET_WEBHOOK_URL:-}
+      GETNET_SUCCESS_URL: ${GETNET_SUCCESS_URL:-}
+      GETNET_FAILED_URL: ${GETNET_FAILED_URL:-}
+      GETNET_EXPIRE_LIMIT_MINUTES: ${GETNET_EXPIRE_LIMIT_MINUTES:-10}
+      GETNET_REQUEST_TIMEOUT: ${GETNET_REQUEST_TIMEOUT:-30000}
+    ports:
+      # Getnet standalone server loopback upstream for host-level Nginx
+      - "127.0.0.1:4003:3002"
+    networks:
+      - tienda_net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3002/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   storefront:
     build:

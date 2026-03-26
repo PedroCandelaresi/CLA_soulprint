@@ -42,4 +42,7 @@ RUN mkdir -p ./apps/backend/static/assets ./apps/backend/static/email/test-email
 WORKDIR /usr/src/app/apps/backend
 
 EXPOSE 3001
+# Default command starts Vendure server
 CMD ["pnpm", "start:prod"]
+# To run Getnet standalone server instead, override command with:
+#   docker compose run --rm getnet pnpm start:getnet:prod

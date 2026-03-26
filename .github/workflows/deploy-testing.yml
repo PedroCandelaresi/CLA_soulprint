@@ -154,8 +154,8 @@ jobs:
         run: |
           set -euo pipefail
           cd "$REPO_PATH"
-          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend
-          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d mysql backend
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend getnet
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d mysql backend getnet
 
       - name: Build and deploy storefront
         if: steps.detect.outputs.scope == 'storefront'
@@ -170,7 +170,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "$REPO_PATH"
-          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --build mysql backend storefront
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --build mysql backend getnet storefront
 
       - name: Smoke test backend
         if: steps.detect.outputs.scope == 'backend'
@@ -183,6 +183,19 @@ jobs:
             sleep 3
           done
           echo "Backend healthcheck failed after deploy" >&2
+          exit 1
+
+      - name: Smoke test getnet
+        if: steps.detect.outputs.scope == 'backend'
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:4003/health > /dev/null; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Getnet healthcheck failed after deploy" >&2
           exit 1
 
       - name: Smoke test storefront
@@ -203,7 +216,9 @@ jobs:
         run: |
           set -euo pipefail
           for i in $(seq 1 20); do
-            if curl -fsS http://127.0.0.1:4002/health > /dev/null && curl -fsSI http://127.0.0.1:4000 > /dev/null; then
+            if curl -fsS http://127.0.0.1:4002/health > /dev/null && \
+               curl -fsS http://127.0.0.1:4003/health > /dev/null && \
+               curl -fsSI http://127.0.0.1:4000 > /dev/null; then
               exit 0
             fi
             sleep 3
