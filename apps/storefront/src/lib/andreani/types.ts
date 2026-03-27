@@ -59,8 +59,25 @@ export interface AndreaniSelectionResponse {
     error?: string;
 }
 
+export interface AndreaniLogisticsData {
+    carrier?: string;
+    serviceCode?: string;
+    serviceName?: string;
+    price?: number;
+    currency?: string;
+    destinationPostalCode?: string;
+    destinationCity?: string;
+    shipmentCreated?: boolean;
+    shipmentDate?: string;
+    shipmentId?: string;
+    trackingNumber?: string;
+    shipmentStatus?: string;
+    selectionMetadata?: string | Record<string, unknown>;
+    shipmentRawResponse?: string;
+}
+
 export interface AndreaniOrderLogisticsResponse {
     success: boolean;
-    data?: Record<string, unknown>;
+    data?: AndreaniLogisticsData;
     error?: string;
 }
