@@ -156,7 +156,7 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
                     return;
                 }
 
-                if (response.success && response.data) {
+                if (response.success) {
                     const selection = mapSavedSelection(response.data);
                     const shipment = mapSavedShipment(response.data);
                     setSavedSelection(selection);
@@ -172,9 +172,7 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
                 } else {
                     setSavedSelection(null);
                     setSavedShipment(null);
-                    if (response.error) {
-                        setLogisticsError(response.error);
-                    }
+                    setLogisticsError(response.error || 'No se pudo cargar la selección Andreani.');
                 }
             })
             .catch((error) => {
@@ -242,7 +240,7 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
             };
 
             const response = await quoteAndreani(payload);
-            if (response.success && response.data) {
+            if (response.success) {
                 setQuote(response.data);
                 setQuoteAddress({ postalCode: payload.destinationPostalCode, city: payload.destinationCity });
                 setSelectionSuccess(false);
@@ -268,7 +266,7 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
         setSelectionError(null);
         try {
             const response = await saveAndreaniSelection({
-                orderCode: cart.code,
+            orderCode: cart.code,
                 carrier: quote.carrier,
                 serviceCode: quote.serviceCode,
                 serviceName: quote.serviceName ?? 'Andreani',

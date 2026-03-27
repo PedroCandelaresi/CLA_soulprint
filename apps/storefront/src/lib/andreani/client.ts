@@ -4,13 +4,26 @@ import type {
     AndreaniSelectionRequest,
     AndreaniSelectionResponse,
     AndreaniOrderLogisticsResponse,
+    AndreaniQuoteSuccessResponse,
+    AndreaniSelectionSuccessResponse,
+    AndreaniOrderLogisticsSuccessResponse,
+    AndreaniApiErrorResponse,
 } from './types';
 
 const QUOTE_API = '/api/logistics/andreani/quote';
 const SELECTION_API = '/api/logistics/andreani/selection';
 const ORDER_LOGISTICS_API = (orderCode: string) => `/api/logistics/andreani/order/${encodeURIComponent(orderCode)}`;
 
-async function postJson<T extends { success: boolean }>(url: string, payload: unknown): Promise<T> {
+type AndréaniParsedResponse = { success?: boolean; error?: string } | null;
+
+function buildErrorResponse(message: string): AndreaniApiErrorResponse {
+    return {
+        success: false,
+        error: message,
+    };
+}
+
+async function postJson<TSuccess>(url: string, payload: unknown): Promise<TSuccess | AndreaniApiErrorResponse> {
     try {
         const response = await fetch(url, {
             method: 'POST',
@@ -21,64 +34,67 @@ async function postJson<T extends { success: boolean }>(url: string, payload: un
             body: JSON.stringify(payload),
         });
 
-        const parsed = await response.json().catch(() => null);
+        const parsed = (await response.json().catch(() => null)) as AndréaniParsedResponse;
 
         if (!response.ok) {
-            return (
-                {
-                    success: false,
-                    error: parsed?.error || 'No se pudo completar la solicitud.',
-                } as T
-            );
+            return buildErrorResponse(parsed?.error || 'No se pudo completar la solicitud.');
         }
 
         if (!parsed) {
-            return ({ success: false, error: 'Respuesta vacía del servidor.' } as T);
+            return buildErrorResponse('Respuesta vacía del servidor.');
         }
 
-        return parsed as T;
+        if (parsed.success === false) {
+            return buildErrorResponse(parsed.error || 'La solicitud a Andreani falló.');
+        }
+
+        return parsed as TSuccess;
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Error inesperado al conectar con Andreani.';
-        return ({ success: false, error: message } as T);
+        return buildErrorResponse(message);
     }
 }
 
-export async function quoteAndreani(payload: AndreaniQuoteRequest): Promise<AndreaniQuoteResponse> {
-    return postJson<AndreaniQuoteResponse>(QUOTE_API, payload);
-}
-
-export async function saveAndreaniSelection(payload: AndreaniSelectionRequest): Promise<AndreaniSelectionResponse> {
-    return postJson<AndreaniSelectionResponse>(SELECTION_API, payload);
-}
-
-export async function getAndreaniOrderLogistics(orderCode: string): Promise<AndreaniOrderLogisticsResponse> {
-    if (!orderCode) {
-        return { success: false, error: 'Se requiere el código de orden para consultar Andreani.' };
-    }
-
+async function getJson<TSuccess>(url: string): Promise<TSuccess | AndreaniApiErrorResponse> {
     try {
-        const response = await fetch(ORDER_LOGISTICS_API(orderCode), {
+        const response = await fetch(url, {
             method: 'GET',
             credentials: 'same-origin',
             cache: 'no-store',
         });
 
-        const parsed = await response.json().catch(() => null);
+        const parsed = (await response.json().catch(() => null)) as AndréaniParsedResponse;
 
         if (!response.ok) {
-            return {
-                success: false,
-                error: parsed?.error || 'No se pudo obtener la información logística de Andreani.',
-            };
+            return buildErrorResponse(parsed?.error || 'No se pudo obtener la información logística de Andreani.');
         }
 
         if (!parsed) {
-            return { success: false, error: 'Respuesta vacía del backend de Andreani.' };
+            return buildErrorResponse('Respuesta vacía del backend de Andreani.');
         }
 
-        return parsed as AndreaniOrderLogisticsResponse;
+        if (parsed.success === false) {
+            return buildErrorResponse(parsed.error || 'No se pudo obtener la información logística de Andreani.');
+        }
+
+        return parsed as TSuccess;
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Error inesperado al consultar Andreani.';
-        return { success: false, error: message };
+        return buildErrorResponse(message);
     }
+}
+export async function quoteAndreani(payload: AndreaniQuoteRequest): Promise<AndreaniQuoteResponse> {
+    return postJson<AndreaniQuoteSuccessResponse>(QUOTE_API, payload);
+}
+
+export async function saveAndreaniSelection(payload: AndreaniSelectionRequest): Promise<AndreaniSelectionResponse> {
+    return postJson<AndreaniSelectionSuccessResponse>(SELECTION_API, payload);
+}
+
+export async function getAndreaniOrderLogistics(orderCode: string): Promise<AndreaniOrderLogisticsResponse> {
+    if (!orderCode) {
+        return buildErrorResponse('Se requiere el código de orden para consultar Andreani.');
+    }
+
+    return getJson<AndreaniOrderLogisticsSuccessResponse>(ORDER_LOGISTICS_API(orderCode));
 }

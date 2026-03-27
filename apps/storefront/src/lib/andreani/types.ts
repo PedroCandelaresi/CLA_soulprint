@@ -30,11 +30,17 @@ export interface AndreaniQuoteResult {
     rawResponse?: Record<string, unknown>;
 }
 
-export interface AndreaniQuoteResponse {
-    success: boolean;
-    data?: AndreaniQuoteResult;
-    error?: string;
+export interface AndreaniApiErrorResponse {
+    success: false;
+    error: string;
 }
+
+export interface AndreaniQuoteSuccessResponse {
+    success: true;
+    data: AndreaniQuoteResult;
+}
+
+export type AndreaniQuoteResponse = AndreaniQuoteSuccessResponse | AndreaniApiErrorResponse;
 
 export interface AndreaniSelectionRequest {
     orderCode?: string;
@@ -53,11 +59,12 @@ export interface AndreaniSelectionRequest {
     volume?: number;
 }
 
-export interface AndreaniSelectionResponse {
-    success: boolean;
+export interface AndreaniSelectionSuccessResponse {
+    success: true;
     orderId?: string;
-    error?: string;
 }
+
+export type AndreaniSelectionResponse = AndreaniSelectionSuccessResponse | AndreaniApiErrorResponse;
 
 export interface AndreaniLogisticsData {
     andreaniCarrier?: string;
@@ -78,8 +85,9 @@ export interface AndreaniLogisticsData {
     andreaniShipmentRawResponse?: string;
 }
 
-export interface AndreaniOrderLogisticsResponse {
-    success: boolean;
-    data?: AndreaniLogisticsData;
-    error?: string;
+export interface AndreaniOrderLogisticsSuccessResponse {
+    success: true;
+    data: AndreaniLogisticsData;
 }
+
+export type AndreaniOrderLogisticsResponse = AndreaniOrderLogisticsSuccessResponse | AndreaniApiErrorResponse;
