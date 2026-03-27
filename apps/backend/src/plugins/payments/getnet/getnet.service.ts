@@ -18,6 +18,8 @@ import {
     isTerminalStatus,
 } from './getnet-transaction.entity';
 import { GetnetTransactionRepository } from './getnet-transaction.repository';
+import { AndreaniShipmentService } from '../../plugins/logistics/andreani/andreani-shipment.service';
+import type { Order } from '@vendure/core';
 
 const GETNET_LOG_PREFIX = '[getnet]';
 
@@ -471,6 +473,7 @@ export class GetnetService {
                 try {
                     await orderService.transitionToState(ctx, order.id, 'PaymentSettled');
                     console.log(`${this.prefix} Order ${transaction.vendureOrderCode} transitioned to PaymentSettled`);
+                    await this.createShipmentForOrder(order);
                 } catch (stateError: any) {
                     // Order might already be in a terminal state or state transition not available
                     console.warn(`${this.prefix} Could not transition order state: ${stateError.message}`);
@@ -518,6 +521,23 @@ export class GetnetService {
         (this as any).requestContextService = services.requestContextService;
         (this as any).eventBus = services.eventBus;
         console.log(`${this.prefix} Vendure services registered`);
+    }
+
+    public setAndreaniShipmentService(service: AndreaniShipmentService | null): void {
+        this.andreaniShipmentService = service;
+    }
+
+    private async createShipmentForOrder(order: Order): Promise<void> {
+        if (!this.andreaniShipmentService) {
+            return;
+        }
+
+        const result = await this.andreaniShipmentService.createShipment(order);
+        if (!result.success) {
+            console.warn(`${this.prefix} Andreani shipment creation skipped: ${result.error}`);
+        } else {
+            console.log(`${this.prefix} Andreani shipment created for order ${order.code}: ${result.shipmentId}`);
+        }
     }
 
     /**

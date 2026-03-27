@@ -164,7 +164,26 @@ export const config: VendureConfig = {
                 ? [getnetPaymentHandler] 
                 : []),
     },
-    customFields: {},
+    customFields: {
+        Order: [
+            { name: 'andreaniCarrier', type: 'string', nullable: true },
+            { name: 'andreaniServiceCode', type: 'string', nullable: true },
+            { name: 'andreaniServiceName', type: 'string', nullable: true },
+            { name: 'andreaniPrice', type: 'float', nullable: true },
+            { name: 'andreaniCurrency', type: 'string', nullable: true },
+            { name: 'andreaniDestinationPostalCode', type: 'string', nullable: true },
+            { name: 'andreaniDestinationCity', type: 'string', nullable: true },
+            { name: 'andreaniSelectionMetadata', type: 'string', nullable: true },
+            { name: 'andreaniWeightKg', type: 'float', nullable: true },
+            { name: 'andreaniDimensions', type: 'string', nullable: true },
+            { name: 'andreaniShipmentCreated', type: 'boolean', nullable: true },
+            { name: 'andreaniShipmentDate', type: 'datetime', nullable: true },
+            { name: 'andreaniTrackingNumber', type: 'string', nullable: true },
+            { name: 'andreaniShipmentId', type: 'string', nullable: true },
+            { name: 'andreaniShipmentStatus', type: 'string', nullable: true },
+            { name: 'andreaniShipmentRawResponse', type: 'string', nullable: true },
+        ],
+    },
     plugins: [
         AssetServerPlugin.init({
             route: 'assets',

@@ -1,7 +1,14 @@
 import { bootstrap, RequestContextService, SearchService, OrderService, PaymentService, EventBus } from '@vendure/core';
 import { config } from '../config/vendure-config';
 import { ensureArgentinaDefaults } from './argentina-defaults';
-import { initGetnetPlugin, getGetnetMiddleware, getGetnetConfigFromEnv, getGetnetService } from '../plugins/payments/getnet';
+import {
+    initGetnetPlugin,
+    getGetnetMiddleware,
+    getGetnetConfigFromEnv,
+    getGetnetService,
+} from '../plugins/payments/getnet';
+import { initAndreani, getAndreaniService, getAndreaniOrderService } from '../plugins/logistics/andreani';
+import { createAndreaniHandlers } from '../plugins/logistics/andreani/andreani.controller';
 
 /**
  * Initialize Getnet payment plugin
@@ -122,6 +129,28 @@ async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Pro
         return false;
     }
 }
+/**
+ * Helper that locates the Express handler embedded in Vendure/Nest.
+ */
+function getExpressApp(appAny: any): { app: any; source: string } | null {
+    const expressPaths = [
+        { name: 'express', get: () => appAny.express },
+        { name: 'app (if Express)', get: () => (appAny.use ? appAny : null) },
+        { name: 'apiServer.express', get: () => appAny.apiServer?.express },
+        { name: 'apiServer.app', get: () => appAny.apiServer?.app },
+        { name: 'httpAdapter', get: () => appAny.httpAdapter },
+        { name: 'httpAdapter.app', get: () => appAny.httpAdapter?.app },
+    ];
+
+    for (const path of expressPaths) {
+        const expressApp = path.get();
+        if (expressApp && typeof expressApp.use === 'function') {
+            return { app: expressApp, source: path.name };
+        }
+    }
+
+    return null;
+}
 
 /**
  * Try to register middleware on the Express server
@@ -129,49 +158,68 @@ async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Pro
  */
 async function registerMiddleware(app: Awaited<ReturnType<typeof bootstrap>>): Promise<boolean> {
     console.log('[getnet] Attempting to register Express middleware...');
-    
+
     try {
         const middleware = getGetnetMiddleware();
         const appAny = app as any;
-        
-        // Try various paths to find Express app
-        const expressPaths = [
-            { name: 'express', get: () => appAny.express },
-            { name: 'app (if Express)', get: () => appAny.use ? appAny : null },
-            { name: 'apiServer.express', get: () => appAny.apiServer?.express },
-            { name: 'apiServer.app', get: () => appAny.apiServer?.app },
-            { name: 'httpAdapter', get: () => appAny.httpAdapter },
-            { name: 'httpAdapter.app', get: () => appAny.httpAdapter?.app },
-        ];
-        
-        for (const path of expressPaths) {
-            const expressApp = path.get();
-            if (expressApp && typeof expressApp.use === 'function') {
-                console.log(`[getnet] Found Express app via "${path.name}"`);
-                expressApp.use('/payments/getnet', middleware);
-                console.log('[getnet] SUCCESS: Routes registered at /payments/getnet/*');
-                return true;
-            }
+        const expressEntry = getExpressApp(appAny);
+
+        if (expressEntry) {
+            console.log(`[getnet] Found Express app via "${expressEntry.source}"`);
+            expressEntry.app.use('/payments/getnet', middleware);
+            console.log('[getnet] SUCCESS: Routes registered at /payments/getnet/*');
+            return true;
         }
-        
+
         console.warn('[getnet] Could not find Express app to register middleware');
         console.log('[getnet] Available top-level properties:', Object.keys(appAny).join(', '));
-        
+
         if (appAny.apiServer) {
             console.log('[getnet] apiServer properties:', Object.keys(appAny.apiServer).join(', '));
         }
-        
     } catch (error) {
         console.error('[getnet] Error registering middleware:', error);
     }
-    
+
     return false;
+}
+
+async function registerAndreaniRoutes(app: Awaited<ReturnType<typeof bootstrap>>): Promise<void> {
+    const service = getAndreaniService();
+    if (!service) {
+        console.log('[andreani] Service is unavailable; skipping route registration.');
+        return;
+    }
+
+    const appAny = app as any;
+    const expressEntry = getExpressApp(appAny);
+    if (!expressEntry) {
+        console.warn('[andreani] Could not find Express application to mount routes.');
+        return;
+    }
+
+    const handlers = createAndreaniHandlers(service, getAndreaniOrderService());
+    expressEntry.app.post('/logistics/andreani/quote', async (req: any, res: any) => {
+        await handlers.createQuote(req, res);
+    });
+    expressEntry.app.post('/logistics/andreani/selection', async (req: any, res: any) => {
+        await handlers.persistSelection(req, res);
+    });
+    expressEntry.app.get('/logistics/andreani/order/:orderCode', async (req: any, res: any) => {
+        await handlers.getOrderLogistics(req, res);
+    });
+    console.log('[andreani] Registered POST /logistics/andreani/quote via', expressEntry.source);
+    console.log('[andreani] Registered POST /logistics/andreani/selection via', expressEntry.source);
+    console.log('[andreani] Registered GET /logistics/andreani/order/:orderCode via', expressEntry.source);
 }
 
 bootstrap(config)
     .then(async (app) => {
         console.log('[getnet] Vendure bootstrap complete');
-        
+        const requestContextService = app.get(RequestContextService);
+        const searchService = app.get(SearchService);
+        const orderService = app.get(OrderService);
+
         try {
             await ensureArgentinaDefaults(app);
             console.log('Argentina defaults ensured (country AR + currency ARS)');
@@ -181,8 +229,6 @@ bootstrap(config)
 
         // Reindex search
         try {
-            const requestContextService = app.get(RequestContextService);
-            const searchService = app.get(SearchService);
             const ctx = await requestContextService.create({ apiType: 'admin' });
             await searchService.reindex(ctx);
             console.log('Search index rebuilt');
@@ -190,6 +236,12 @@ bootstrap(config)
             console.warn('Search reindex failed (continuing):', err);
         }
 
+        try {
+            initAndreani(orderService, requestContextService);
+        } catch (error) {
+            console.error('[andreani] Initialization failed:', error);
+        }
+ 
         // Initialize Getnet payment plugin
         const getnetInitialized = await initializeGetnet(app);
         
@@ -201,9 +253,16 @@ bootstrap(config)
                 console.warn('[getnet] WARNING: REST endpoints not mounted via middleware');
                 console.warn('[getnet] INFO: Use standalone server or frontend /api/payments/getnet routes');
             }
+            const getnetService = getGetnetService();
+            const shipmentService = getAndreaniShipmentService();
+            if (getnetService && shipmentService) {
+                getnetService.setAndreaniShipmentService(shipmentService);
+            }
         } else {
             console.warn('[getnet] Plugin not enabled - endpoints unavailable');
         }
+
+        await registerAndreaniRoutes(app);
 
         console.log('Vendure server started!');
         console.log('Shop API: http://localhost:3001/shop-api');

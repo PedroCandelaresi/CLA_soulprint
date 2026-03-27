@@ -22,6 +22,7 @@ import { useState } from 'react';
 import type { CartLine } from '@/types/cart';
 import { useCart } from './CartProvider';
 import { GetnetCheckoutButton } from '../payments/GetnetCheckoutButton';
+import AndreaniShippingPanel from '../logistics/AndreaniShippingPanel';
 
 function formatMoney(amount: number, currencyCode: string): string {
     return new Intl.NumberFormat('es-AR', {
@@ -234,6 +235,8 @@ export default function CartPageContent() {
                                 {formatMoney(cart.totalWithTax, cart.currencyCode)}
                             </Typography>
                         </Stack>
+                        <Divider />
+                        <AndreaniShippingPanel cart={cart} />
                         <Divider />
                         <GetnetCheckoutButton cart={cart} />
                         <Button component={Link} href="/productos" variant="outlined" fullWidth>
