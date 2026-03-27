@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { appendVendureSetCookieHeaders } from '@/lib/vendure/client';
-import { buildAndreaniBackendUrl } from '../utils';
+import { buildAndreaniBackendUrl } from '../../utils';
 
 export const dynamic = 'force-dynamic';
 
