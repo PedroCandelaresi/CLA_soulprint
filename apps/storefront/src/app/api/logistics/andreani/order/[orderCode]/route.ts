@@ -5,11 +5,12 @@ import { buildAndreaniBackendUrl } from '../../utils';
 export const dynamic = 'force-dynamic';
 
 interface RouteContext {
-    params: { orderCode: string };
+    params: { orderCode: string } | Promise<{ orderCode: string }>;
 }
 
 export async function GET(request: NextRequest, context: RouteContext) {
-    const { orderCode } = context.params;
+    const params = await context.params;
+    const { orderCode } = params;
 
     if (!orderCode) {
         return NextResponse.json({ success: false, error: 'Falta el código de orden.' }, { status: 400 });
