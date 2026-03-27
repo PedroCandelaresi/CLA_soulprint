@@ -60,7 +60,7 @@ function toNumber(value: unknown): number | undefined {
     return undefined;
 }
 
-function mapSavedSelection(data: Record<string, unknown> | null | undefined): SavedSelection | null {
+function mapSavedSelection(data: AndreaniLogisticsData | null | undefined): SavedSelection | null {
     if (!data) {
         return null;
     }
@@ -89,7 +89,7 @@ function mapSavedSelection(data: Record<string, unknown> | null | undefined): Sa
     return selection;
 }
 
-function mapSavedShipment(data: Record<string, unknown> | null | undefined): SavedShipment | null {
+function mapSavedShipment(data: AndreaniLogisticsData | null | undefined): SavedShipment | null {
     if (!data) {
         return null;
     }

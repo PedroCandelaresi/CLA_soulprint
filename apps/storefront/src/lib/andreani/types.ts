@@ -60,20 +60,22 @@ export interface AndreaniSelectionResponse {
 }
 
 export interface AndreaniLogisticsData {
-    carrier?: string;
-    serviceCode?: string;
-    serviceName?: string;
-    price?: number;
-    currency?: string;
-    destinationPostalCode?: string;
-    destinationCity?: string;
-    shipmentCreated?: boolean;
-    shipmentDate?: string;
-    shipmentId?: string;
-    trackingNumber?: string;
-    shipmentStatus?: string;
-    selectionMetadata?: string | Record<string, unknown>;
-    shipmentRawResponse?: string;
+    andreaniCarrier?: string;
+    andreaniServiceCode?: string;
+    andreaniServiceName?: string;
+    andreaniPrice?: number;
+    andreaniCurrency?: string;
+    andreaniDestinationPostalCode?: string;
+    andreaniDestinationCity?: string;
+    andreaniSelectionMetadata?: string | Record<string, unknown>;
+    andreaniWeightKg?: number;
+    andreaniDimensions?: string;
+    andreaniShipmentCreated?: boolean;
+    andreaniShipmentDate?: string;
+    andreaniShipmentId?: string;
+    andreaniTrackingNumber?: string;
+    andreaniShipmentStatus?: string;
+    andreaniShipmentRawResponse?: string;
 }
 
 export interface AndreaniOrderLogisticsResponse {
