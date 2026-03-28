@@ -15,6 +15,17 @@ type ExpressMiddleware = (
 // Singleton instance
 let getnetService: GetnetService | null = null;
 
+function resolveGetnetModeFromEnv(): GetnetPluginConfig['mode'] {
+    const rawMode = process.env.GETNET_MODE?.trim().toLowerCase();
+    if (rawMode === 'mock' || rawMode === 'real') {
+        return rawMode;
+    }
+    if (rawMode) {
+        console.warn(`[getnet] Invalid GETNET_MODE="${process.env.GETNET_MODE}". Falling back to "real".`);
+    }
+    return 'real';
+}
+
 /**
  * Initialize the Getnet plugin configuration
  * Call this during Vendure bootstrap to set up the payment service
@@ -126,8 +137,9 @@ export function getGetnetMiddleware(): ExpressMiddleware {
  * Get the default configuration from environment variables
  */
 export function getGetnetConfigFromEnv(): GetnetPluginConfig {
+    const mode = resolveGetnetModeFromEnv();
     return {
-        mode: process.env.GETNET_MODE?.toLowerCase() === 'mock' ? 'mock' : 'real',
+        mode,
         mockForceStatus: (process.env.GETNET_MOCK_FORCE_STATUS || 'interactive').toLowerCase() as GetnetPluginConfig['mockForceStatus'],
         authBaseUrl: process.env.GETNET_AUTH_BASE_URL || 'https://auth.preprod.geopagos.com',
         checkoutBaseUrl: process.env.GETNET_CHECKOUT_BASE_URL || 'https://api-santander.preprod.geopagos.com',

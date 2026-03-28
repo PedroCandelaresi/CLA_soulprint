@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
         
         // Forward to backend
         const backendUrl = `${GETNET_API_URL}/checkout`;
+        console.log(`[api/payments/getnet] Forwarding checkout to ${backendUrl}`);
         const response = await fetch(backendUrl, {
             method: 'POST',
             headers: {

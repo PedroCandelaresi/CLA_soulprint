@@ -419,9 +419,11 @@ export class GetnetService {
      */
     async createOrder(dto: CreateCheckoutDto): Promise<CheckoutResponse> {
         if (this.isMockModeEnabled()) {
+            console.log(`${this.prefix} Checkout resolution: mode=mock for order ${dto.orderCode}`);
             return this.createMockOrder(dto);
         }
 
+        console.log(`${this.prefix} Checkout resolution: mode=real for order ${dto.orderCode}`);
         console.log(`${this.prefix} Creating order for internal order: ${dto.orderCode}`);
         
         // Build the order request payload

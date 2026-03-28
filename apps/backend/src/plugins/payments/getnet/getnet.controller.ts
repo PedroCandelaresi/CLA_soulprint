@@ -198,11 +198,12 @@ export function createGetnetHandlers(getnetService: GetnetService) {
                 }
             }
             
-            console.log(`${LOG_PREFIX} Creating checkout for order: ${body.orderCode}`);
+            const mode = getnetService.isMockModeEnabled() ? 'mock' : 'real';
+            console.log(`${LOG_PREFIX} Creating checkout for order: ${body.orderCode} (mode=${mode})`);
             
             const result = await getnetService.createOrder(body);
             
-            console.log(`${LOG_PREFIX} Checkout created: ${result.orderUuid}, Transaction: ${result.transactionId}`);
+            console.log(`${LOG_PREFIX} Checkout created (${mode}): ${result.orderUuid}, Transaction: ${result.transactionId}`);
             
             res.status(201).json({
                 success: true,
@@ -334,8 +335,10 @@ export function createGetnetHandlers(getnetService: GetnetService) {
                 return;
             }
 
+            console.log(`${LOG_PREFIX} Rendering mock checkout for ${uuid} (mode=mock)`);
             const selectedStatus = getQueryParam(req, 'status');
             if (selectedStatus) {
+                console.log(`${LOG_PREFIX} Completing mock checkout ${uuid} with status=${selectedStatus}`);
                 const result = await getnetService.completeMockCheckout(uuid, selectedStatus);
                 redirect(res, result.redirectUrl);
                 return;

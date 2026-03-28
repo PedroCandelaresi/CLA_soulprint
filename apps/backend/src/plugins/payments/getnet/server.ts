@@ -114,6 +114,8 @@ async function main() {
     
     const config = getGetnetConfigFromEnv();
     const isMockMode = config.mode === 'mock';
+    console.log(`${LOG_PREFIX} GETNET_MODE raw: ${process.env.GETNET_MODE || '(unset)'}`);
+    console.log(`${LOG_PREFIX} Effective mode: ${config.mode}`);
     // Check multiple environment variable names for the port
     const PORT = parseInt(
         process.env.GETNET_STANDALONE_PORT ||
@@ -236,6 +238,7 @@ async function main() {
         console.log(`${LOG_PREFIX} Environment variables checked:`);
         console.log(`${LOG_PREFIX}   GETNET_STANDALONE_PORT: ${process.env.GETNET_STANDALONE_PORT || '(not set)'}`);
         console.log(`${LOG_PREFIX}   GETNET_PORT: ${process.env.GETNET_PORT || '(not set)'}`);
+        console.log(`${LOG_PREFIX}   GETNET_MODE: ${process.env.GETNET_MODE || '(unset)'}`);
         console.log(`${LOG_PREFIX}   PORT: ${process.env.PORT || '(not set)'}`);
         console.log(`${LOG_PREFIX} Routes:`);
         console.log(`${LOG_PREFIX}   GET  /payments/getnet/health`);

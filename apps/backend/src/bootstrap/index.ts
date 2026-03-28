@@ -36,6 +36,7 @@ async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Pro
     console.log('[getnet] Environment check:');
     console.log(`  - GETNET_ENABLED="${getnetEnabledEnv}" (raw)`);
     console.log(`  - GETNET_ENABLED=${getnetEnabled} (parsed)`);
+    console.log(`  - GETNET_MODE="${process.env.GETNET_MODE || '(unset)'}"`);
     console.log(`  - APP_ENV="${appEnv}"`);
     console.log(`  - NODE_ENV="${nodeEnv}"`);
     console.log(`  - isDevMode=${isDevMode}`);
@@ -52,6 +53,7 @@ async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Pro
         const getnetConfig = getGetnetConfigFromEnv();
         console.log('[getnet] Config loaded:', {
             mode: getnetConfig.mode,
+            rawMode: process.env.GETNET_MODE || '(unset)',
             mockForceStatus: getnetConfig.mockForceStatus,
             authBaseUrl: getnetConfig.authBaseUrl,
             checkoutBaseUrl: getnetConfig.checkoutBaseUrl,
