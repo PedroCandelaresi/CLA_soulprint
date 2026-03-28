@@ -1,3 +1,9 @@
+x-backend-image: &backend-image
+  image: tienda-backend:${APP_ENV:-local}
+  build:
+    context: ../../
+    dockerfile: apps/backend/Dockerfile
+
 services:
   mysql:
     image: mysql:8.4
@@ -22,9 +28,7 @@ services:
       - tienda_net
 
   backend:
-    build:
-      context: ../../
-      dockerfile: apps/backend/Dockerfile
+    <<: *backend-image
     container_name: tienda_backend
     restart: always
     depends_on:
@@ -92,9 +96,7 @@ services:
       start_period: 40s
 
   getnet:
-    build:
-      context: ../../
-      dockerfile: apps/backend/Dockerfile
+    image: tienda-backend:${APP_ENV:-local}
     container_name: tienda_getnet
     restart: always
     command: ["pnpm", "start:getnet:prod"]
@@ -166,7 +168,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 45s
 
 volumes:
   mysql_data:

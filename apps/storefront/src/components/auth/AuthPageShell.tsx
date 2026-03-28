@@ -73,9 +73,16 @@ export default function AuthPageShell({
 
                         <Typography variant="body2" color="text.secondary" textAlign="center">
                             {footerText}{' '}
-                            <Box component={Link} href={footerHref} sx={{ color: 'var(--cla-brand-green)', fontWeight: 600 }}>
+                            <Link
+                                href={footerHref}
+                                style={{
+                                    color: 'var(--cla-brand-green)',
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                }}
+                            >
                                 {footerLinkLabel}
-                            </Box>
+                            </Link>
                         </Typography>
                     </Stack>
                 </Paper>

@@ -1,0 +1,15 @@
+.git
+.github
+.turbo
+node_modules
+**/node_modules
+**/.next
+**/dist
+**/coverage
+apps/storefront
+apps/backend/admin-ui
+apps/backend/static/assets
+apps/backend/static/email/test-emails
+infra/docker/.env
+infra/docker/nginx/*.log
+infra/docker/nginx/*.log.*

@@ -1,48 +1,57 @@
-FROM node:20-slim AS builder
+# syntax=docker/dockerfile:1.7
+
+FROM node:20-slim AS base
+
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+FROM base AS build
 
 WORKDIR /usr/src/app
 
-# Enable corepack for pnpm
-RUN corepack enable
-
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml turbo.json ./
-# Cache bust for backend copy
-ARG CACHEBUST=1
-COPY apps/backend ./apps/backend
-# Copy other apps package.json if needed for workspace resolution, 
-# but mostly we just need the root and backend context.
-# Ideally we should copy only necessary package.jsons to leverage cache.
+COPY apps/backend/package.json ./apps/backend/package.json
 
-# For simplicity in this monorepo context without pruning:
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=backend-pnpm-store,target=/pnpm/store \
+    pnpm fetch --filter backend...
+
+RUN --mount=type=cache,id=backend-pnpm-store,target=/pnpm/store \
+    pnpm install --filter backend... --frozen-lockfile --offline
+
+COPY apps/backend ./apps/backend
 
 WORKDIR /usr/src/app/apps/backend
 RUN pnpm build
 
-FROM node:20-slim AS runner
+FROM build AS deploy
+
 WORKDIR /usr/src/app
 
-RUN corepack enable
+RUN --mount=type=cache,id=backend-pnpm-store,target=/pnpm/store \
+    pnpm --filter backend deploy --prod /prod/backend \
+    && rm -rf /prod/backend/src /prod/backend/admin-ui-src /prod/backend/.turbo
 
-# Install curl for healthcheck
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+FROM node:20-slim AS runner
 
-COPY --from=builder /usr/src/app/package.json ./
-COPY --from=builder /usr/src/app/pnpm-workspace.yaml ./
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-COPY --from=builder /usr/src/app/apps/backend/package.json ./apps/backend/
-COPY --from=builder /usr/src/app/apps/backend/admin-ui ./apps/backend/admin-ui
-COPY --from=builder /usr/src/app/apps/backend/dist ./apps/backend/dist
-COPY --from=builder /usr/src/app/apps/backend/node_modules ./apps/backend/node_modules
-
-# The repo no longer versions apps/backend/static, but Vendure still writes
-# runtime assets and dev email output under this path.
-RUN mkdir -p ./apps/backend/static/assets ./apps/backend/static/email/test-emails
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+ENV NODE_ENV=production
 
 WORKDIR /usr/src/app/apps/backend
 
+RUN corepack enable \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=deploy /prod/backend ./
+
+# The repo no longer versions apps/backend/static, but Vendure still writes
+# runtime assets and dev email output under this path.
+RUN mkdir -p ./static/assets ./static/email/test-emails
+
 EXPOSE 3001
-# Default command starts Vendure server
+
 CMD ["pnpm", "start:prod"]
-# To run Getnet standalone server instead, override command with:
-#   docker compose run --rm getnet pnpm start:getnet:prod
