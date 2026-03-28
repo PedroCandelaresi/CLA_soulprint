@@ -54,6 +54,7 @@ const APP_ENV = process.env.APP_ENV || 'local';
 const IS_DEV = APP_ENV === 'local' || APP_ENV === 'dev';
 const IS_PERSISTENT_ENV = APP_ENV === 'testing' || APP_ENV === 'production';
 const IS_MIGRATION_COMMAND = process.env.VENDURE_RUN_MIGRATIONS === 'true';
+const IS_GETNET_MOCK = (process.env.GETNET_MODE || 'real').toLowerCase() === 'mock';
 const SUPERADMIN_USERNAME = IS_DEV ? (process.env.SUPERADMIN_USERNAME || 'superadmin') : requireEnv('SUPERADMIN_USERNAME');
 const SUPERADMIN_PASSWORD = IS_DEV ? (process.env.SUPERADMIN_PASSWORD || 'superadmin') : requireEnv('SUPERADMIN_PASSWORD');
 const COOKIE_SECRET = IS_DEV ? (process.env.COOKIE_SECRET || 'dev-cookie-secret-change-me') : requireEnv('COOKIE_SECRET');
@@ -169,7 +170,7 @@ export const config: VendureConfig = {
         // In production: only include Getnet (when credentials are configured)
         paymentMethodHandlers: IS_DEV 
             ? [dummyPaymentHandler, getnetPaymentHandler] 
-            : (process.env.GETNET_ENABLED === 'true' && process.env.GETNET_CLIENT_ID !== 'your_client_id' 
+            : (process.env.GETNET_ENABLED === 'true' && (IS_GETNET_MOCK || process.env.GETNET_CLIENT_ID !== 'your_client_id') 
                 ? [getnetPaymentHandler] 
                 : []),
     },

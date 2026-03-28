@@ -34,20 +34,26 @@ function parseBody(req: http.IncomingMessage): Promise<any> {
 function createHandlerContext(req: http.IncomingMessage, res: http.ServerResponse) {
     let parsedBody: any = null;
     let params: Record<string, string> = {};
+    let query: Record<string, string> = {};
     
     return {
         get body() { return parsedBody; },
         get params() { return params; },
+        get query() { return query; },
         
         async parse() {
             parsedBody = await parseBody(req);
             const url = req.url || '/';
-            const pathname = new URL(url, 'http://localhost').pathname;
+            const parsedUrl = new URL(url, 'http://localhost');
+            const pathname = parsedUrl.pathname;
+            query = Object.fromEntries(parsedUrl.searchParams.entries());
             
             // Match patterns
             const patterns = [
                 { regex: /^\/order\/([^/]+)$/, param: 'uuid' },
                 { regex: /^\/payments\/getnet\/order\/([^/]+)$/, param: 'uuid' },
+                { regex: /^\/mock\/checkout\/([^/]+)$/, param: 'uuid' },
+                { regex: /^\/payments\/getnet\/mock\/checkout\/([^/]+)$/, param: 'uuid' },
                 { regex: /^\/transaction\/([^/]+)$/, param: 'id' },
                 { regex: /^\/payments\/getnet\/transaction\/([^/]+)$/, param: 'id' },
             ];
@@ -70,14 +76,35 @@ function createHandlerContext(req: http.IncomingMessage, res: http.ServerRespons
             res.statusCode = code;
             return this;
         },
+
+        setHeader(name: string, value: string) {
+            res.setHeader(name, value);
+            return this;
+        },
+
+        redirect(statusOrUrl: number | string, maybeUrl?: string) {
+            const statusCode = typeof statusOrUrl === 'number' ? statusOrUrl : 302;
+            const location = typeof statusOrUrl === 'string' ? statusOrUrl : maybeUrl;
+            res.statusCode = statusCode;
+            if (location) {
+                res.setHeader('Location', location);
+            }
+            res.end();
+        },
+
+        end(data?: any) {
+            res.end(data);
+        },
         
         send(data: any) {
-            if (res.statusCode !== 200) {
-                res.writeHead(res.statusCode, { 'Content-Type': 'application/json' });
-            } else {
-                res.writeHead(200, { 'Content-Type': 'application/json' });
+            const contentType = typeof data === 'string'
+                ? 'text/html; charset=utf-8'
+                : 'application/json';
+
+            if (!res.headersSent) {
+                res.writeHead(res.statusCode || 200, { 'Content-Type': contentType });
             }
-            res.end(JSON.stringify(data));
+            res.end(typeof data === 'string' ? data : JSON.stringify(data));
         }
     };
 }
@@ -86,6 +113,7 @@ async function main() {
     console.log(`${LOG_PREFIX} Starting standalone Getnet server...`);
     
     const config = getGetnetConfigFromEnv();
+    const isMockMode = config.mode === 'mock';
     // Check multiple environment variable names for the port
     const PORT = parseInt(
         process.env.GETNET_STANDALONE_PORT ||
@@ -96,15 +124,20 @@ async function main() {
     );
     
     // Validate required config
-    const requiredFields = ['authBaseUrl', 'checkoutBaseUrl', 'clientId', 'clientSecret'];
-    for (const field of requiredFields) {
-        if (!config[field as keyof typeof config]) {
-            throw new Error(`${LOG_PREFIX} Missing required config: ${field}`);
+    if (!isMockMode) {
+        const requiredFields = ['authBaseUrl', 'checkoutBaseUrl', 'clientId', 'clientSecret'];
+        for (const field of requiredFields) {
+            if (!config[field as keyof typeof config]) {
+                throw new Error(`${LOG_PREFIX} Missing required config: ${field}`);
+            }
         }
     }
     
-    if (config.clientId === 'your_client_id' || config.clientSecret === 'your_client_secret') {
+    if (!isMockMode && (config.clientId === 'your_client_id' || config.clientSecret === 'your_client_secret')) {
         console.warn(`${LOG_PREFIX} WARNING: Using placeholder credentials!`);
+    }
+    if (isMockMode) {
+        console.warn(`${LOG_PREFIX} MOCK mode enabled (forceStatus=${config.mockForceStatus || 'interactive'})`);
     }
     
     // Initialize database connection
@@ -136,6 +169,7 @@ async function main() {
     const server = http.createServer(async (req, res) => {
         const url = req.url || '/';
         const method = req.method || 'GET';
+        const pathname = new URL(url, 'http://localhost').pathname;
         
         console.log(`${LOG_PREFIX} ${method} ${url}`);
         
@@ -145,7 +179,7 @@ async function main() {
         
         try {
             // Health check
-            if (method === 'GET' && (url === '/health' || url === '/payments/getnet/health')) {
+            if (method === 'GET' && (pathname === '/health' || pathname === '/payments/getnet/health')) {
                 ctx.json({
                     success: true,
                     message: 'Getnet payment service is healthy',
@@ -155,25 +189,33 @@ async function main() {
             }
             
             // Checkout
-            if (method === 'POST' && (url === '/checkout' || url === '/payments/getnet/checkout')) {
+            if (method === 'POST' && (pathname === '/checkout' || pathname === '/payments/getnet/checkout')) {
                 await handlers.createCheckout(ctx, null as any, () => {});
                 return;
             }
             
             // Order status
-            if (method === 'GET' && (url.match(/^\/order\/[^/]+$/) || url.match(/^\/payments\/getnet\/order\/[^/]+$/))) {
+            if (method === 'GET' && (pathname.match(/^\/order\/[^/]+$/) || pathname.match(/^\/payments\/getnet\/order\/[^/]+$/))) {
                 await handlers.getOrderStatus(ctx, null as any, () => {});
+                return;
+            }
+
+            if (
+                method === 'GET'
+                && (pathname.match(/^\/mock\/checkout\/[^/]+$/) || pathname.match(/^\/payments\/getnet\/mock\/checkout\/[^/]+$/))
+            ) {
+                await handlers.renderMockCheckout(ctx, null as any, () => {});
                 return;
             }
             
             // Transaction by ID
-            if (method === 'GET' && (url.match(/^\/transaction\/[^/]+$/) || url.match(/^\/payments\/getnet\/transaction\/[^/]+$/))) {
+            if (method === 'GET' && (pathname.match(/^\/transaction\/[^/]+$/) || pathname.match(/^\/payments\/getnet\/transaction\/[^/]+$/))) {
                 await handlers.getTransaction(ctx, null as any, () => {});
                 return;
             }
             
             // Webhook
-            if (method === 'POST' && (url === '/webhook' || url === '/payments/getnet/webhook')) {
+            if (method === 'POST' && (pathname === '/webhook' || pathname === '/payments/getnet/webhook')) {
                 await handlers.handleWebhook(ctx, null as any, () => {});
                 return;
             }
@@ -198,6 +240,7 @@ async function main() {
         console.log(`${LOG_PREFIX} Routes:`);
         console.log(`${LOG_PREFIX}   GET  /payments/getnet/health`);
         console.log(`${LOG_PREFIX}   POST /payments/getnet/checkout`);
+        console.log(`${LOG_PREFIX}   GET  /payments/getnet/mock/checkout/:uuid`);
         console.log(`${LOG_PREFIX}   GET  /payments/getnet/order/:uuid`);
         console.log(`${LOG_PREFIX}   GET  /payments/getnet/transaction/:id`);
         console.log(`${LOG_PREFIX}   POST /payments/getnet/webhook`);

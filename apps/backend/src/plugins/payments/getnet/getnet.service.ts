@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { DataSource } from 'typeorm';
 import {
@@ -10,6 +11,7 @@ import {
     CheckoutResponse,
     OrderStatusResponse,
     GetnetWebhookPayload,
+    GetnetMockForceStatus,
 } from './getnet.types';
 import {
     GetnetPaymentTransaction,
@@ -23,6 +25,19 @@ import type { PersonalizationService } from '../../logistics/personalization/per
 import type { Order } from '@vendure/core';
 
 const GETNET_LOG_PREFIX = '[getnet]';
+
+type GetnetStoredMetadata = {
+    itemCount?: number;
+    createdFrom?: string;
+    redirectUrls?: {
+        success: string;
+        failed: string;
+    };
+    mock?: {
+        enabled: boolean;
+        forceStatus: GetnetMockForceStatus;
+    };
+};
 
 /**
  * GetnetService handles all communication with the Getnet Checkout API.
@@ -73,6 +88,250 @@ export class GetnetService {
         console.log(`${this.prefix} Service initialized`);
         console.log(`${this.prefix} Auth URL: ${config.authBaseUrl}`);
         console.log(`${this.prefix} Checkout URL: ${config.checkoutBaseUrl}`);
+        console.log(`${this.prefix} Mode: ${this.getMode()}`);
+    }
+
+    public isMockModeEnabled(): boolean {
+        return this.getMode() === 'mock';
+    }
+
+    private getMode(): 'real' | 'mock' {
+        return this.pluginConfig.mode === 'mock' ? 'mock' : 'real';
+    }
+
+    private getMockForceStatus(): GetnetMockForceStatus {
+        const value = (this.pluginConfig.mockForceStatus || 'interactive').toLowerCase().trim();
+        const allowed: GetnetMockForceStatus[] = [
+            'interactive',
+            'pending',
+            'processing',
+            'approved',
+            'rejected',
+            'cancelled',
+            'expired',
+        ];
+
+        return allowed.includes(value as GetnetMockForceStatus)
+            ? (value as GetnetMockForceStatus)
+            : 'interactive';
+    }
+
+    private resolveRedirectUrls(dto?: CreateCheckoutDto, metadata?: GetnetStoredMetadata): { success: string; failed: string } {
+        const success = dto?.successUrl
+            || metadata?.redirectUrls?.success
+            || this.pluginConfig.successUrl
+            || 'http://localhost:3000/checkout/success';
+        const failed = dto?.failedUrl
+            || metadata?.redirectUrls?.failed
+            || this.pluginConfig.failedUrl
+            || 'http://localhost:3000/checkout/failed';
+
+        return { success, failed };
+    }
+
+    private buildStoredMetadata(dto: CreateCheckoutDto, extra?: Partial<GetnetStoredMetadata>): string {
+        const metadata: GetnetStoredMetadata = {
+            itemCount: dto.items.length,
+            createdFrom: 'createOrder',
+            redirectUrls: this.resolveRedirectUrls(dto),
+            ...extra,
+        };
+
+        return JSON.stringify(metadata);
+    }
+
+    private parseStoredMetadata(transaction: GetnetPaymentTransaction): GetnetStoredMetadata {
+        if (!transaction.metadata) {
+            return {};
+        }
+
+        try {
+            return JSON.parse(transaction.metadata) as GetnetStoredMetadata;
+        } catch (error) {
+            console.warn(`${this.prefix} Could not parse transaction metadata for ${transaction.id}:`, error);
+            return {};
+        }
+    }
+
+    private buildMockCheckoutUrl(dto: CreateCheckoutDto, orderUuid: string): string {
+        const redirectUrls = this.resolveRedirectUrls(dto);
+        let origin = 'http://localhost:3000';
+
+        try {
+            origin = new URL(redirectUrls.success).origin;
+        } catch {
+            try {
+                origin = new URL(redirectUrls.failed).origin;
+            } catch {
+                origin = 'http://localhost:3000';
+            }
+        }
+
+        const url = new URL(`/api/payments/getnet/mock/checkout/${encodeURIComponent(orderUuid)}`, origin);
+        const forcedStatus = this.getMockForceStatus();
+        if (forcedStatus !== 'interactive') {
+            url.searchParams.set('status', forcedStatus);
+        }
+        return url.toString();
+    }
+
+    private shouldRedirectToSuccess(status: GetnetPaymentStatus): boolean {
+        return status === 'approved' || status === 'pending' || status === 'processing';
+    }
+
+    private sanitizeMockStatus(rawStatus?: string | null): GetnetPaymentStatus | null {
+        if (!rawStatus) {
+            return null;
+        }
+
+        const normalized = rawStatus.toLowerCase().trim();
+        const allowed: GetnetPaymentStatus[] = [
+            'pending',
+            'processing',
+            'approved',
+            'rejected',
+            'cancelled',
+            'expired',
+        ];
+
+        return allowed.includes(normalized as GetnetPaymentStatus)
+            ? (normalized as GetnetPaymentStatus)
+            : null;
+    }
+
+    private buildMockWebhookPayload(orderUuid: string, status: GetnetPaymentStatus): GetnetWebhookPayload {
+        return {
+            event: `mock.${status}`,
+            timestamp: new Date().toISOString(),
+            orderId: orderUuid,
+            orderUuid,
+            status,
+            metadata: {
+                source: 'getnet-mock',
+                mode: 'mock',
+            },
+        };
+    }
+
+    private async createMockOrder(dto: CreateCheckoutDto): Promise<CheckoutResponse> {
+        console.log(`${this.prefix} [mock] Creating mock checkout for order ${dto.orderCode}`);
+
+        const totalAmount = dto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+        const shippingCost = dto.shippingCost || 0;
+        const finalAmount = totalAmount + shippingCost;
+        const providerOrderUuid = `mock-${randomUUID()}`;
+        const checkoutUrl = this.buildMockCheckoutUrl(dto, providerOrderUuid);
+        const expiresAt = this.pluginConfig.expireLimitMinutes
+            ? new Date(Date.now() + this.pluginConfig.expireLimitMinutes * 60_000)
+            : undefined;
+
+        const transaction = await this.transactionRepo.create({
+            vendureOrderCode: dto.orderCode,
+            providerOrderUuid,
+            checkoutUrl,
+            amount: finalAmount,
+            currency: this.pluginConfig.currency,
+            expiresAt,
+            metadata: this.buildStoredMetadata(dto, {
+                mock: {
+                    enabled: true,
+                    forceStatus: this.getMockForceStatus(),
+                },
+            }),
+        });
+
+        await this.transactionRepo.updateCheckoutUrl(transaction.id, checkoutUrl, expiresAt);
+
+        return {
+            transactionId: transaction.id,
+            orderUuid: providerOrderUuid,
+            checkoutUrl,
+            vendureOrderCode: dto.orderCode,
+            expiresAt: expiresAt?.toISOString(),
+            rawResponse: {
+                status: 'pending',
+                createdAt: transaction.createdAt.toISOString(),
+            },
+        };
+    }
+
+    private async getMockOrderStatus(orderUuid: string): Promise<OrderStatusResponse> {
+        const transaction = await this.transactionRepo.findByProviderOrderUuid(orderUuid);
+
+        if (!transaction) {
+            throw new Error(`Order not found: ${orderUuid}`);
+        }
+
+        return {
+            transactionId: transaction.id,
+            orderUuid: transaction.providerOrderUuid,
+            vendureOrderCode: transaction.vendureOrderCode,
+            status: transaction.status,
+            providerStatus: transaction.lastEvent,
+            createdAt: transaction.createdAt.toISOString(),
+            updatedAt: transaction.updatedAt.toISOString(),
+            expiresAt: transaction.expiresAt?.toISOString(),
+            approvedAt: transaction.approvedAt?.toISOString(),
+            isTerminal: transaction.isTerminal,
+            webhookEventCount: transaction.webhookEventCount,
+        };
+    }
+
+    public async getMockCheckoutContext(orderUuid: string): Promise<{
+        transaction: GetnetPaymentTransaction;
+        redirectUrls: { success: string; failed: string };
+        forceStatus: GetnetMockForceStatus;
+    }> {
+        const transaction = await this.transactionRepo.findByProviderOrderUuid(orderUuid);
+        if (!transaction) {
+            throw new Error(`Order not found: ${orderUuid}`);
+        }
+
+        const metadata = this.parseStoredMetadata(transaction);
+        return {
+            transaction,
+            redirectUrls: this.resolveRedirectUrls(undefined, metadata),
+            forceStatus: metadata.mock?.forceStatus || this.getMockForceStatus(),
+        };
+    }
+
+    public async completeMockCheckout(orderUuid: string, rawStatus?: string | null): Promise<{
+        transaction: GetnetPaymentTransaction;
+        redirectUrl: string;
+        finalStatus: GetnetPaymentStatus;
+    }> {
+        if (!this.isMockModeEnabled()) {
+            throw new Error('Mock checkout is disabled');
+        }
+
+        const { transaction, redirectUrls, forceStatus } = await this.getMockCheckoutContext(orderUuid);
+        const selectedStatus = this.sanitizeMockStatus(rawStatus || undefined)
+            || (forceStatus !== 'interactive' ? this.sanitizeMockStatus(forceStatus) : null)
+            || 'approved';
+
+        const webhookResult = await this.processWebhook(
+            this.buildMockWebhookPayload(orderUuid, selectedStatus),
+        );
+
+        if (!webhookResult.success && !webhookResult.isIdempotent) {
+            throw new Error(webhookResult.message);
+        }
+
+        const updatedTransaction = await this.transactionRepo.findByProviderOrderUuid(orderUuid) || transaction;
+        const redirectBase = this.shouldRedirectToSuccess(updatedTransaction.status)
+            ? redirectUrls.success
+            : redirectUrls.failed;
+        const redirectUrl = new URL(redirectBase);
+        redirectUrl.searchParams.set('mock', '1');
+        redirectUrl.searchParams.set('mock_status', updatedTransaction.status);
+        redirectUrl.searchParams.set('order_uuid', updatedTransaction.providerOrderUuid);
+        redirectUrl.searchParams.set('transaction_id', updatedTransaction.id);
+
+        return {
+            transaction: updatedTransaction,
+            redirectUrl: redirectUrl.toString(),
+            finalStatus: updatedTransaction.status,
+        };
     }
 
     /**
@@ -80,6 +339,10 @@ export class GetnetService {
      * Uses cached token if still valid (with buffer time)
      */
     async getAccessToken(): Promise<string> {
+        if (this.isMockModeEnabled()) {
+            throw new Error('OAuth token is not used in GETNET_MODE=mock');
+        }
+
         const now = Date.now();
         const bufferMs = GetnetService.TOKEN_REFRESH_BUFFER * 1000;
         
@@ -155,6 +418,10 @@ export class GetnetService {
      * This also persists the transaction to the local database
      */
     async createOrder(dto: CreateCheckoutDto): Promise<CheckoutResponse> {
+        if (this.isMockModeEnabled()) {
+            return this.createMockOrder(dto);
+        }
+
         console.log(`${this.prefix} Creating order for internal order: ${dto.orderCode}`);
         
         // Build the order request payload
@@ -205,8 +472,7 @@ export class GetnetService {
                 currency: this.pluginConfig.currency,
                 expiresAt,
                 metadata: JSON.stringify({
-                    itemCount: dto.items.length,
-                    createdFrom: 'createOrder',
+                    ...JSON.parse(this.buildStoredMetadata(dto)),
                 }),
             });
             
@@ -244,6 +510,10 @@ export class GetnetService {
      * Also returns local transaction state
      */
     async getOrderStatus(orderUuid: string): Promise<OrderStatusResponse> {
+        if (this.isMockModeEnabled()) {
+            return this.getMockOrderStatus(orderUuid);
+        }
+
         console.log(`${this.prefix} Fetching order status: ${orderUuid}`);
         
         // First, get local transaction state
@@ -457,10 +727,8 @@ export class GetnetService {
                 }
                 
                 // Add payment to order
-                await paymentService.create(ctx, {
-                    orderId: order.id,
+                await paymentService.createManualPayment(ctx, order, transaction.amount, {
                     method: 'getnet',
-                    amount: transaction.amount / 100, // Convert from cents to major currency
                     transactionId: transaction.providerOrderUuid,
                     metadata: {
                         provider: 'getnet',

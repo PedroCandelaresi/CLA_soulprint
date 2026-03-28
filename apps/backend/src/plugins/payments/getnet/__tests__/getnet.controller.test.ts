@@ -315,7 +315,21 @@ describe('GetnetController', () => {
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith({
                 success: true,
-                data: mockTransaction,
+                data: {
+                    transactionId: 'local-tx-uuid',
+                    orderUuid: 'getnet-uuid',
+                    vendureOrderCode: 'ORD-001',
+                    status: 'pending',
+                    amount: 2000,
+                    currency: '032',
+                    createdAt: undefined,
+                    updatedAt: undefined,
+                    expiresAt: undefined,
+                    approvedAt: undefined,
+                    lastEvent: undefined,
+                    isTerminal: undefined,
+                    webhookEventCount: undefined,
+                },
             });
         });
 

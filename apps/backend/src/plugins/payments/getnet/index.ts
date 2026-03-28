@@ -22,17 +22,24 @@ let getnetService: GetnetService | null = null;
 export function initGetnetPlugin(config: GetnetPluginConfig, dataSource: DataSource): void {
     console.log('[getnet] Initializing Getnet plugin...');
     
+    const isMockMode = config.mode === 'mock';
+
     // Validate required config
-    const requiredFields = ['authBaseUrl', 'checkoutBaseUrl', 'clientId', 'clientSecret'];
-    for (const field of requiredFields) {
-        if (!config[field as keyof GetnetPluginConfig]) {
-            throw new Error(`[getnet] Missing required config: ${field}`);
+    if (!isMockMode) {
+        const requiredFields = ['authBaseUrl', 'checkoutBaseUrl', 'clientId', 'clientSecret'];
+        for (const field of requiredFields) {
+            if (!config[field as keyof GetnetPluginConfig]) {
+                throw new Error(`[getnet] Missing required config: ${field}`);
+            }
         }
     }
     
     // Check if credentials are placeholder values
-    if (config.clientId === 'your_client_id' || config.clientSecret === 'your_client_secret') {
+    if (!isMockMode && (config.clientId === 'your_client_id' || config.clientSecret === 'your_client_secret')) {
         console.warn('[getnet] WARNING: Using placeholder credentials. Set GETNET_CLIENT_ID and GETNET_CLIENT_SECRET in environment.');
+    }
+    if (isMockMode) {
+        console.warn(`[getnet] MOCK mode enabled (forceStatus=${config.mockForceStatus || 'interactive'})`);
     }
     
     // Ensure the entity is registered with TypeORM
@@ -95,6 +102,10 @@ export function getGetnetMiddleware(): ExpressMiddleware {
         if (method === 'GET' && relativePath.match(/^\/order\/[^/]+$/)) {
             return handlers.getOrderStatus(req, res, next);
         }
+
+        if (method === 'GET' && relativePath.match(/^\/mock\/checkout\/[^/]+$/)) {
+            return handlers.renderMockCheckout(req, res, next);
+        }
         
         // Get transaction by local ID
         if (method === 'GET' && relativePath.match(/^\/transaction\/[^/]+$/)) {
@@ -116,6 +127,8 @@ export function getGetnetMiddleware(): ExpressMiddleware {
  */
 export function getGetnetConfigFromEnv(): GetnetPluginConfig {
     return {
+        mode: process.env.GETNET_MODE?.toLowerCase() === 'mock' ? 'mock' : 'real',
+        mockForceStatus: (process.env.GETNET_MOCK_FORCE_STATUS || 'interactive').toLowerCase() as GetnetPluginConfig['mockForceStatus'],
         authBaseUrl: process.env.GETNET_AUTH_BASE_URL || 'https://auth.preprod.geopagos.com',
         checkoutBaseUrl: process.env.GETNET_CHECKOUT_BASE_URL || 'https://api-santander.preprod.geopagos.com',
         clientId: process.env.GETNET_CLIENT_ID || 'your_client_id',

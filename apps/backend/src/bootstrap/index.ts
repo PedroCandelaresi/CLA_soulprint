@@ -51,6 +51,8 @@ async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Pro
     try {
         const getnetConfig = getGetnetConfigFromEnv();
         console.log('[getnet] Config loaded:', {
+            mode: getnetConfig.mode,
+            mockForceStatus: getnetConfig.mockForceStatus,
             authBaseUrl: getnetConfig.authBaseUrl,
             checkoutBaseUrl: getnetConfig.checkoutBaseUrl,
             clientId: getnetConfig.clientId === 'your_client_id' ? 'PLACEHOLDER' : 'SET',

@@ -3,6 +3,16 @@
  * Based on: https://api-santander.preprod.geopagos.com
  */
 
+export type GetnetMode = 'real' | 'mock';
+export type GetnetMockForceStatus =
+    | 'interactive'
+    | 'pending'
+    | 'processing'
+    | 'approved'
+    | 'rejected'
+    | 'cancelled'
+    | 'expired';
+
 // ============================================================================
 // OAuth Types
 // ============================================================================
@@ -186,6 +196,8 @@ export interface GetnetPluginConfig {
     clientId: string;
     clientSecret: string;
     scope: string;
+    mode?: GetnetMode;
+    mockForceStatus?: GetnetMockForceStatus;
     currency: string;
     webhookUrl?: string;
     successUrl?: string;
