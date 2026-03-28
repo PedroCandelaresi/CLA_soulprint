@@ -1,6 +1,7 @@
 {
     "name": "backend",
     "version": "1.0.0",
+    "packageManager": "pnpm@9.0.0",
     "scripts": {
         "start": "ts-node src/bootstrap/index.ts",
         "start:server": "ts-node src/bootstrap/index.ts",

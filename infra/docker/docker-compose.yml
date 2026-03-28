@@ -96,7 +96,7 @@ services:
       start_period: 40s
 
   getnet:
-    image: tienda-backend:${APP_ENV:-local}
+    <<: *backend-image
     container_name: tienda_getnet
     restart: always
     command: ["pnpm", "start:getnet:prod"]

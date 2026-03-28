@@ -33,16 +33,13 @@ RUN --mount=type=cache,id=backend-pnpm-store,target=/pnpm/store \
     pnpm --filter backend deploy --prod /prod/backend \
     && rm -rf /prod/backend/src /prod/backend/admin-ui-src /prod/backend/.turbo
 
-FROM node:20-slim AS runner
+FROM base AS runner
 
-ENV PNPM_HOME=/pnpm
-ENV PATH=$PNPM_HOME:$PATH
 ENV NODE_ENV=production
 
 WORKDIR /usr/src/app/apps/backend
 
-RUN corepack enable \
-    && apt-get update \
+RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
