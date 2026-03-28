@@ -4,6 +4,8 @@ import {
     DefaultSearchPlugin,
     VendureConfig,
     LanguageCode,
+    Asset,
+    NativeAuthenticationStrategy,
 } from '@vendure/core';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
 import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
@@ -13,6 +15,8 @@ import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
 import { getAdminUiApp } from '../admin-ui/config';
 import { adminUiConfig, adminUiPort, adminUiRoute } from '../admin-ui/admin-ui-options';
 import { initGetnetPlugin, getGetnetMiddleware, getGetnetConfigFromEnv, getnetPaymentHandler } from '../plugins/payments/getnet';
+import { GoogleAuthPlugin, getGoogleAuthConfigFromEnv, GoogleAuthenticationStrategy } from '../plugins/auth/google-auth';
+import { PersonalizationPlugin } from '../plugins/logistics/personalization';
 
 function requireEnv(name: string): string {
     const value = process.env[name];
@@ -83,6 +87,7 @@ const MIGRATIONS = [
     path.join(__dirname, '../migrations/history/*.js'),
     path.join(__dirname, '../migrations/history/*.ts'),
 ];
+const GOOGLE_AUTH_CONFIG = getGoogleAuthConfigFromEnv();
 
 if (IS_PERSISTENT_ENV && DB_SYNCHRONIZE) {
     throw new Error('DB_SYNCHRONIZE=true is not allowed in testing/production. Generate and run migrations instead.');
@@ -129,6 +134,10 @@ export const config: VendureConfig = {
     },
     authOptions: {
         tokenMethod: ['bearer', 'cookie'],
+        shopAuthenticationStrategy: [
+            new NativeAuthenticationStrategy(),
+            ...(GOOGLE_AUTH_CONFIG.enabled ? [new GoogleAuthenticationStrategy()] : []),
+        ],
         superadminCredentials: {
             identifier: SUPERADMIN_USERNAME,
             password: SUPERADMIN_PASSWORD,
@@ -182,6 +191,16 @@ export const config: VendureConfig = {
             { name: 'andreaniShipmentId', type: 'string', nullable: true },
             { name: 'andreaniShipmentStatus', type: 'string', nullable: true },
             { name: 'andreaniShipmentRawResponse', type: 'string', nullable: true },
+            { name: 'personalizationRequired', type: 'boolean', defaultValue: false, public: false },
+            { name: 'personalizationStatus', type: 'string', nullable: false, defaultValue: 'not-required', public: false },
+            { name: 'personalizationAsset', type: 'relation', entity: Asset, nullable: true, public: false },
+            { name: 'personalizationAssetPreviewUrl', type: 'text', nullable: true, public: false },
+            { name: 'personalizationOriginalFilename', type: 'string', nullable: true, public: false },
+            { name: 'personalizationUploadedAt', type: 'datetime', nullable: true, public: false },
+            { name: 'personalizationNotes', type: 'text', nullable: true, public: false },
+        ],
+        ProductVariant: [
+            { name: 'requiresPersonalization', type: 'boolean', defaultValue: false, public: true },
         ],
     },
     plugins: [
@@ -242,5 +261,7 @@ export const config: VendureConfig = {
             app: getAdminUiApp(),
             adminUiConfig,
         }),
+        GoogleAuthPlugin,
+        PersonalizationPlugin,
     ],
 };

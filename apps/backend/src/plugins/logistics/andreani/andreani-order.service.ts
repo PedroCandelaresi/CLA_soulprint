@@ -58,7 +58,7 @@ export class AndreaniOrderService {
             }),
         };
 
-        return this.orderService.setCustomFields(ctx, order.id, selection);
+        return this.orderService.updateCustomFields(ctx, order.id, selection);
     }
 
     async getLogistics(orderCode: string): Promise<Record<string, unknown> | null> {
@@ -67,6 +67,6 @@ export class AndreaniOrderService {
         if (!order) {
             return null;
         }
-        return order.customFields || null;
+        return (order.customFields as Record<string, unknown>) || null;
     }
 }

@@ -54,7 +54,7 @@ export function createAndreaniHandlers(service: AndreaniService, selectionServic
             const order = await selectionService.persistSelection(payload);
             const response: AndreaniSelectionResponse = {
                 success: true,
-                orderId: order.id,
+                orderId: String(order.id),
             };
             res.status(200).json(response);
         } catch (error) {

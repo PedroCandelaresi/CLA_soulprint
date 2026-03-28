@@ -68,6 +68,9 @@ export interface AndreaniShipmentRequest {
     categoria?: string;
     valorDeclarado?: number;
     numeroBultos?: number;
+    altoCm?: number;
+    anchoCm?: number;
+    largoCm?: number;
     destinatario?: {
         nombre?: string;
         apellido?: string;

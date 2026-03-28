@@ -18,7 +18,8 @@ import {
     isTerminalStatus,
 } from './getnet-transaction.entity';
 import { GetnetTransactionRepository } from './getnet-transaction.repository';
-import { AndreaniShipmentService } from '../../plugins/logistics/andreani/andreani-shipment.service';
+import { AndreaniShipmentService } from '../../logistics/andreani/andreani-shipment.service';
+import type { PersonalizationService } from '../../logistics/personalization/personalization.service';
 import type { Order } from '@vendure/core';
 
 const GETNET_LOG_PREFIX = '[getnet]';
@@ -38,6 +39,8 @@ export class GetnetService {
     private oauthConfig: GetnetOAuthConfig;
     private pluginConfig: GetnetPluginConfig;
     private transactionRepo: GetnetTransactionRepository;
+    private andreaniShipmentService: AndreaniShipmentService | null = null;
+    private personalizationService: PersonalizationService | null = null;
     
     // Token cache
     private cachedToken: string | null = null;
@@ -474,9 +477,11 @@ export class GetnetService {
                     await orderService.transitionToState(ctx, order.id, 'PaymentSettled');
                     console.log(`${this.prefix} Order ${transaction.vendureOrderCode} transitioned to PaymentSettled`);
                     await this.createShipmentForOrder(order);
+                    await this.syncPersonalizationForOrder(order.code);
                 } catch (stateError: any) {
                     // Order might already be in a terminal state or state transition not available
                     console.warn(`${this.prefix} Could not transition order state: ${stateError.message}`);
+                    await this.syncPersonalizationForOrder(order.code);
                 }
                 
             } else if (transaction.status === 'rejected' || transaction.status === 'cancelled' || transaction.status === 'expired') {
@@ -527,6 +532,10 @@ export class GetnetService {
         this.andreaniShipmentService = service;
     }
 
+    public setPersonalizationService(service: PersonalizationService | null): void {
+        this.personalizationService = service;
+    }
+
     private async createShipmentForOrder(order: Order): Promise<void> {
         if (!this.andreaniShipmentService) {
             return;
@@ -537,6 +546,18 @@ export class GetnetService {
             console.warn(`${this.prefix} Andreani shipment creation skipped: ${result.error}`);
         } else {
             console.log(`${this.prefix} Andreani shipment created for order ${order.code}: ${result.shipmentId}`);
+        }
+    }
+
+    private async syncPersonalizationForOrder(orderCode: string): Promise<void> {
+        if (!this.personalizationService) {
+            return;
+        }
+
+        try {
+            await this.personalizationService.syncOrderAfterPayment(orderCode);
+        } catch (error) {
+            console.warn(`${this.prefix} Personalization sync skipped for ${orderCode}:`, error);
         }
     }
 

@@ -47,6 +47,7 @@ export function getAndreaniConfigFromEnv(): AndreaniConfig {
             baseUrl: '',
             authToken: '',
             timeoutMs: 10000,
+            shipmentBaseUrl: '',
             originPostalCode: '',
             originCity: '',
         };

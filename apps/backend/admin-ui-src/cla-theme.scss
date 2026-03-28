@@ -2035,6 +2035,267 @@ vdr-empty-placeholder .empty-state .empty-label {
   max-height: 64px !important;
 }
 
+/* Order personalization panel */
+#cla-order-personalization-panel {
+  margin-top: calc(var(--space-unit) * 2);
+}
+
+.cla-order-personalization-card {
+  --cla-personalization-accent: rgba(0, 72, 37, 0.12);
+  --cla-personalization-accent-border: rgba(0, 72, 37, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(244, 234, 213, 0.24), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 244, 0.98) 100%);
+  border: 1px solid var(--color-card-border);
+  box-shadow:
+    inset 0 4px 0 var(--cla-personalization-accent-border),
+    0 20px 42px rgba(3, 18, 10, 0.08);
+  overflow: hidden;
+}
+
+.cla-order-personalization-card--warning {
+  --cla-personalization-accent: var(--color-chip-warning-bg);
+  --cla-personalization-accent-border: rgba(155, 106, 18, 0.22);
+}
+
+.cla-order-personalization-card--success {
+  --cla-personalization-accent: var(--color-chip-success-bg);
+  --cla-personalization-accent-border: rgba(31, 107, 68, 0.2);
+}
+
+.cla-order-personalization-card .card-header {
+  align-items: flex-start;
+  border-bottom: none;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 20px 22px 0;
+}
+
+.cla-order-personalization-card__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cla-order-personalization-card__subtitle {
+  color: var(--color-text-300);
+  margin: 0;
+}
+
+.cla-order-personalization-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 22px 22px;
+}
+
+.cla-order-personalization-card__summary {
+  color: var(--color-text-200);
+  margin: 0;
+  max-width: 72ch;
+}
+
+.cla-order-personalization-card__content {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+}
+
+.cla-order-personalization-card__preview {
+  align-self: start;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid var(--color-card-border);
+  border-radius: calc(var(--border-radius-lg) + 2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88);
+  min-height: 240px;
+  overflow: hidden;
+  position: relative;
+}
+
+.cla-order-personalization-card__image {
+  display: block;
+  height: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.cla-order-personalization-card__preview-placeholder {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(0, 72, 37, 0.05), rgba(244, 234, 213, 0.58)),
+    rgba(255, 255, 255, 0.88);
+  color: var(--color-text-300);
+  display: flex;
+  font-weight: 500;
+  justify-content: center;
+  min-height: 240px;
+  padding: 24px;
+  text-align: center;
+}
+
+.cla-order-personalization-card__preview-placeholder-copy {
+  max-width: 22ch;
+}
+
+.cla-order-personalization-card__details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.cla-order-personalization-card__meta {
+  display: grid;
+  gap: 12px 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.cla-order-personalization-card__meta-item {
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--border-radius);
+  padding: 12px 14px;
+}
+
+.cla-order-personalization-card__meta-label {
+  color: var(--color-text-300);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+.cla-order-personalization-card__meta-value {
+  color: var(--color-text-100);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.cla-order-personalization-card__meta-value.is-muted {
+  color: var(--color-text-300);
+  font-weight: 500;
+}
+
+.cla-order-personalization-card__notes {
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--border-radius);
+  padding: 14px 16px;
+}
+
+.cla-order-personalization-card__notes-title {
+  font-size: 13px;
+  margin: 0 0 6px;
+}
+
+.cla-order-personalization-card__notes-copy {
+  color: var(--color-text-200);
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.cla-order-personalization-card__notes-copy.is-muted {
+  color: var(--color-text-300);
+}
+
+.cla-order-personalization-card__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cla-order-personalization-card__action {
+  margin: 0 !important;
+}
+
+.cla-order-personalization-badge {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  min-height: 30px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.cla-order-personalization-badge--neutral {
+  background: var(--color-component-bg-200);
+  color: var(--color-text-200);
+}
+
+.cla-order-personalization-badge--warning {
+  background: var(--color-chip-warning-bg);
+  color: var(--color-chip-warning-text);
+}
+
+.cla-order-personalization-badge--success {
+  background: var(--color-chip-success-bg);
+  color: var(--color-chip-success-text);
+}
+
+.cla-order-personalization-card__state {
+  align-items: flex-start;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px dashed var(--color-card-border);
+  border-radius: var(--border-radius);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+}
+
+.cla-order-personalization-card__state-title {
+  font-size: 15px;
+  margin: 0;
+}
+
+.cla-order-personalization-card__state-copy {
+  color: var(--color-text-200);
+  margin: 0;
+  max-width: 64ch;
+}
+
+body[data-theme="dark"] .cla-order-personalization-card {
+  background:
+    radial-gradient(circle at top right, rgba(244, 234, 213, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(24, 30, 24, 0.98) 0%, rgba(18, 24, 19, 0.98) 100%);
+  box-shadow:
+    inset 0 4px 0 var(--cla-personalization-accent-border),
+    0 18px 38px rgba(0, 0, 0, 0.26);
+}
+
+body[data-theme="dark"] .cla-order-personalization-card__preview,
+body[data-theme="dark"] .cla-order-personalization-card__meta-item,
+body[data-theme="dark"] .cla-order-personalization-card__notes,
+body[data-theme="dark"] .cla-order-personalization-card__state {
+  background: rgba(20, 28, 21, 0.8);
+}
+
+@media screen and (max-width: 991px) {
+  .cla-order-personalization-card__content {
+    grid-template-columns: 1fr;
+  }
+
+  .cla-order-personalization-card__meta {
+    grid-template-columns: 1fr;
+  }
+
+  .cla-order-personalization-card .card-header,
+  .cla-order-personalization-card__body {
+    padding-inline: 18px;
+  }
+}
+
 @media screen and (min-width: 992px) {
   .left-nav {
     width: 240px !important;

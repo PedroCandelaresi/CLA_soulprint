@@ -1,4 +1,5 @@
 import { bootstrap, RequestContextService, SearchService, OrderService, PaymentService, EventBus } from '@vendure/core';
+import { DataSource } from 'typeorm';
 import { config } from '../config/vendure-config';
 import { ensureArgentinaDefaults } from './argentina-defaults';
 import {
@@ -7,8 +8,11 @@ import {
     getGetnetConfigFromEnv,
     getGetnetService,
 } from '../plugins/payments/getnet';
-import { initAndreani, getAndreaniService, getAndreaniOrderService } from '../plugins/logistics/andreani';
+import { initAndreani, getAndreaniOrderService, getAndreaniService, getAndreaniShipmentService } from '../plugins/logistics/andreani';
 import { createAndreaniHandlers } from '../plugins/logistics/andreani/andreani.controller';
+import {
+    PersonalizationService,
+} from '../plugins/logistics/personalization';
 
 /**
  * Initialize Getnet payment plugin
@@ -57,12 +61,21 @@ async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Pro
         let dataSource: any = null;
         
         const appAny = app as any;
+
+        try {
+            dataSource = app.get(DataSource);
+            if (dataSource) {
+                console.log('[getnet] Found DataSource via app.get(DataSource)');
+            }
+        } catch (e) {
+            // Not found via Nest app.get
+        }
         
         // Try to get DataSource from injector (NestJS/Vendure pattern)
-        if (appAny.injector) {
+        if (!dataSource && appAny.injector) {
             try {
                 // Try to get the DataSource directly from injector
-                dataSource = appAny.injector.get('DataSource') || appAny.injector.get('dataSource');
+                dataSource = appAny.injector.get(DataSource) || appAny.injector.get('DataSource') || appAny.injector.get('dataSource');
                 if (dataSource) {
                     console.log('[getnet] Found DataSource via injector.get()');
                 }
@@ -117,6 +130,13 @@ async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Pro
                 requestContextService,
                 eventBus,
             });
+            try {
+                const personalizationService = app.get(PersonalizationService);
+                personalizationService.setGetnetService(getnetService);
+                getnetService.setPersonalizationService(personalizationService);
+            } catch (error) {
+                console.warn('[personalization] Personalization service unavailable for Getnet sync:', error);
+            }
             
             console.log('[getnet] Payment plugin initialized with Vendure services');
         } else {
@@ -133,18 +153,23 @@ async function initializeGetnet(app: Awaited<ReturnType<typeof bootstrap>>): Pro
  * Helper that locates the Express handler embedded in Vendure/Nest.
  */
 function getExpressApp(appAny: any): { app: any; source: string } | null {
+    const isHttpRouter = (candidate: any): boolean =>
+        Boolean(candidate)
+        && typeof candidate.use === 'function'
+        && typeof candidate.get === 'function'
+        && typeof candidate.post === 'function';
+
     const expressPaths = [
+        { name: 'httpAdapter.getInstance()', get: () => appAny.httpAdapter?.getInstance?.() },
         { name: 'express', get: () => appAny.express },
-        { name: 'app (if Express)', get: () => (appAny.use ? appAny : null) },
         { name: 'apiServer.express', get: () => appAny.apiServer?.express },
         { name: 'apiServer.app', get: () => appAny.apiServer?.app },
-        { name: 'httpAdapter', get: () => appAny.httpAdapter },
         { name: 'httpAdapter.app', get: () => appAny.httpAdapter?.app },
     ];
 
     for (const path of expressPaths) {
         const expressApp = path.get();
-        if (expressApp && typeof expressApp.use === 'function') {
+        if (isHttpRouter(expressApp)) {
             return { app: expressApp, source: path.name };
         }
     }
@@ -198,7 +223,7 @@ async function registerAndreaniRoutes(app: Awaited<ReturnType<typeof bootstrap>>
         return;
     }
 
-    const handlers = createAndreaniHandlers(service, getAndreaniOrderService());
+    const handlers = createAndreaniHandlers(service, getAndreaniOrderService() ?? undefined);
     expressEntry.app.post('/logistics/andreani/quote', async (req: any, res: any) => {
         await handlers.createQuote(req, res);
     });
@@ -241,7 +266,7 @@ bootstrap(config)
         } catch (error) {
             console.error('[andreani] Initialization failed:', error);
         }
- 
+
         // Initialize Getnet payment plugin
         const getnetInitialized = await initializeGetnet(app);
         

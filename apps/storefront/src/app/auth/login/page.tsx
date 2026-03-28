@@ -1,78 +1,31 @@
-import { Container, Box, Typography, Paper, Stack } from '@mui/material';
-import BrandLogo from '@/components/branding/BrandLogo';
+import AuthPageShell from '@/components/auth/AuthPageShell';
+import LoginForm from '@/components/auth/LoginForm';
 
-export default function LoginPage() {
+interface LoginPageProps {
+    searchParams?: Record<string, string | string[] | undefined> | Promise<Record<string, string | string[] | undefined>>;
+}
+
+function getSearchParamValue(value: string | string[] | undefined): string | null {
+    if (Array.isArray(value)) {
+        return value[0] || null;
+    }
+    return value || null;
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+    const resolvedSearchParams = searchParams ? await searchParams : undefined;
+    const nextParam = getSearchParamValue(resolvedSearchParams?.next);
+    const oauthError = getSearchParamValue(resolvedSearchParams?.error);
+
     return (
-        <Box
-            sx={{
-                minHeight: '80vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(180deg, rgba(244, 234, 213, 0.34) 0%, rgba(255, 255, 255, 1) 58%)',
-                py: 4,
-            }}
+        <AuthPageShell
+            title="Ingresá a tu cuenta"
+            subtitle="Consultá tus pedidos, seguí el tracking y completá la personalización desde un solo lugar."
+            footerText="¿Todavía no tenés cuenta?"
+            footerLinkLabel="Registrate"
+            footerHref={nextParam ? `/auth/register?next=${encodeURIComponent(nextParam)}` : '/auth/register'}
         >
-            <Container maxWidth="sm">
-                <Paper
-                    elevation={0}
-                    sx={{
-                        p: { xs: 3, md: 6 },
-                        borderRadius: 4,
-                        textAlign: 'center',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                    }}
-                >
-                    <Box
-                        sx={{
-                            mb: 4,
-                            display: 'grid',
-                            justifyItems: 'center',
-                            gap: 1.75,
-                            '--brand-logo-fg': 'var(--surface-logo-fg)',
-                            '--brand-logo-bg': 'var(--surface-logo-bg)',
-                        }}
-                    >
-                        <BrandLogo label="CLA Soulprint" style={{ width: 'clamp(9.5rem, 38vw, 11.25rem)' }} />
-                        <Box
-                            aria-hidden
-                            sx={{
-                                width: 'min(8rem, 42%)',
-                                height: '1px',
-                                background: 'linear-gradient(90deg, transparent, var(--brand-accent), transparent)',
-                            }}
-                        />
-                    </Box>
-
-                    <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ color: 'var(--cla-brand-green)' }}>
-                        Acceso de clientes no disponible
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                        La autenticación de clientes todavía no está habilitada en esta tienda.
-                    </Typography>
-
-                    <Stack spacing={2} sx={{ mt: 4 }}>
-                        <Typography variant="body2" color="text.secondary">
-                            El historial de pedidos, el acceso con email y el registro de clientes siguen en desarrollo.
-                        </Typography>
-                        <Typography variant="caption" color="text.disabled">
-                            Cuando estas funciones estén disponibles, se publicarán nuevamente desde el encabezado principal.
-                        </Typography>
-                    </Stack>
-
-                    <Box sx={{ mt: 4 }}>
-                        <Typography variant="body2" color="text.secondary">
-                            Por ahora, esta tienda funciona como catálogo público.
-                        </Typography>
-                        <Box mt={2}>
-                            <Typography variant="caption" color="text.disabled">
-                                (Autenticación y compra online en desarrollo)
-                            </Typography>
-                        </Box>
-                    </Box>
-                </Paper>
-            </Container>
-        </Box>
+            <LoginForm nextParam={nextParam} oauthError={oauthError} />
+        </AuthPageShell>
     );
 }

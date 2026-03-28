@@ -146,7 +146,21 @@ export function createGetnetHandlers(getnetService: GetnetService) {
             
             res.status(200).json({
                 success: true,
-                data: transaction,
+                data: {
+                    transactionId: transaction.id,
+                    orderUuid: transaction.providerOrderUuid,
+                    vendureOrderCode: transaction.vendureOrderCode,
+                    status: transaction.status,
+                    amount: transaction.amount,
+                    currency: transaction.currency,
+                    createdAt: transaction.createdAt.toISOString(),
+                    updatedAt: transaction.updatedAt.toISOString(),
+                    expiresAt: transaction.expiresAt?.toISOString(),
+                    approvedAt: transaction.approvedAt?.toISOString(),
+                    lastEvent: transaction.lastEvent,
+                    isTerminal: transaction.isTerminal,
+                    webhookEventCount: transaction.webhookEventCount,
+                },
             });
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';

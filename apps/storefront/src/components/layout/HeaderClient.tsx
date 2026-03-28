@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
     AppBar,
     Badge,
@@ -20,7 +20,10 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import { useCart } from "@/components/cart/CartProvider";
+import { useCustomer } from "@/components/auth/CustomerProvider";
 
 type OpcionMenu = {
     etiqueta: string;
@@ -43,8 +46,26 @@ const opcionesMenu: OpcionMenu[] = [
 
 export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeLogo }: HeaderClientProps) {
     const [menuAbierto, setMenuAbierto] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const pathname = usePathname();
-    const { totalQuantity } = useCart();
+    const router = useRouter();
+    const { totalQuantity, refreshCart } = useCart();
+    const { customer, isAuthenticated, logout } = useCustomer();
+
+    async function handleLogout() {
+        setIsLoggingOut(true);
+        try {
+            const success = await logout();
+            if (success) {
+                await refreshCart();
+                router.push("/");
+                router.refresh();
+            }
+        } finally {
+            setIsLoggingOut(false);
+            setMenuAbierto(false);
+        }
+    }
 
     const renderOpciones = () => (
         <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="center">
@@ -120,17 +141,49 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                         {renderOpciones()}
                     </Box>
 
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: { xs: "auto", md: 0 } }}>
+                        <Button
+                            component={Link}
+                            href={isAuthenticated ? "/auth/account" : "/auth/login"}
+                            color="inherit"
+                            startIcon={<PersonOutlineOutlinedIcon />}
+                            sx={{
+                                display: { xs: "none", md: "inline-flex" },
+                                textTransform: "none",
+                                color: "inherit",
+                            }}
+                        >
+                            {isAuthenticated ? (customer?.firstName || "Mi cuenta") : "Ingresar"}
+                        </Button>
+
+                        {isAuthenticated && (
+                            <Button
+                                color="inherit"
+                                onClick={() => void handleLogout()}
+                                disabled={isLoggingOut}
+                                startIcon={<LogoutOutlinedIcon />}
+                                sx={{
+                                    display: { xs: "none", md: "inline-flex" },
+                                    textTransform: "none",
+                                    color: "inherit",
+                                }}
+                            >
+                                Salir
+                            </Button>
+                        )}
+
                     <IconButton
                         component={Link}
                         href="/carrito"
                         aria-label="ir al carrito"
                         color="inherit"
-                        sx={{ ml: "auto" }}
+                        sx={{ ml: { xs: 0, md: 0 } }}
                     >
                         <Badge badgeContent={totalQuantity} color="secondary" invisible={totalQuantity === 0}>
                             <ShoppingBagOutlinedIcon />
                         </Badge>
                     </IconButton>
+                    </Stack>
                 </Toolbar>
             </Container>
 
@@ -192,6 +245,18 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                                 <ListItemText primary={`Carrito${totalQuantity > 0 ? ` (${totalQuantity})` : ""}`} />
                             </ListItemButton>
                         </ListItem>
+                        <ListItem disablePadding>
+                            <ListItemButton component={Link} href={isAuthenticated ? "/auth/account" : "/auth/login"}>
+                                <ListItemText primary={isAuthenticated ? "Mi cuenta" : "Ingresar"} />
+                            </ListItemButton>
+                        </ListItem>
+                        {isAuthenticated && (
+                            <ListItem disablePadding>
+                                <ListItemButton onClick={() => void handleLogout()} disabled={isLoggingOut}>
+                                    <ListItemText primary={isLoggingOut ? "Cerrando sesión..." : "Cerrar sesión"} />
+                                </ListItemButton>
+                            </ListItem>
+                        )}
                     </List>
                 </Box>
             </Drawer>

@@ -1,5 +1,5 @@
 import { OrderService, RequestContextService } from '@vendure/core';
-import type { Order, Address } from '@vendure/core';
+import type { Order } from '@vendure/core';
 import { AndreaniClient } from './andreani.client';
 import { AndreaniConfig } from './andreani.config';
 import { AndreaniShipmentRequest, AndreaniShipmentResponse } from './andreani.dto';
@@ -13,7 +13,7 @@ export class AndreaniShipmentService {
     ) {}
 
     async createShipment(order: Order): Promise<AndreaniShipmentResponse> {
-        const selection = order.customFields || {};
+        const selection = (order.customFields || {}) as Record<string, unknown>;
         if (selection.andreaniShipmentCreated === true) {
             return {
                 success: false,
@@ -49,13 +49,13 @@ export class AndreaniShipmentService {
     }
 
     private buildShipmentRequest(order: Order, selection: Record<string, unknown>): AndreaniShipmentRequest {
-        const shippingAddress = order.shippingAddress as Address | undefined;
-        const clienteName = [shippingAddress?.firstName, shippingAddress?.lastName].filter(Boolean).join(' ') || 'Cliente';
+        const shippingAddress = order.shippingAddress;
+        const clienteName = [shippingAddress?.fullName].filter(Boolean).join(' ') || 'Cliente';
         const pesoKg = Number(selection['andreaniWeightKg'] ?? 0) || 1;
         const dimensions = this.parseDimensions(selection['andreaniDimensions'] as string | undefined);
 
         return {
-            orderId: order.id,
+            orderId: String(order.id),
             contrato: this.config.contractCode,
             cliente: this.config.clientCode,
             cpOrigen: this.config.originPostalCode,
@@ -91,7 +91,7 @@ export class AndreaniShipmentService {
             andreaniShipmentStatus: response.Estado,
             andreaniShipmentRawResponse: JSON.stringify(response),
         };
-        await this.orderService.setCustomFields(ctx, order.id, shipmentFields);
+        await this.orderService.updateCustomFields(ctx, order.id, shipmentFields);
     }
 
     private parseDimensions(value?: string): {

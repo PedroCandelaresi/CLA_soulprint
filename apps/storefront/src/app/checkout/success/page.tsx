@@ -23,6 +23,7 @@ import {
     STATUS_DISPLAY_MAP,
 } from '@/lib/getnet';
 import type { TransactionStatus, TransactionStatusValue } from '@/types/getnet';
+import OrderPersonalizationCard from '@/components/personalization/OrderPersonalizationCard';
 
 function formatMoney(amount: number, currency: string): string {
     // Amount is in cents, currency is like "032" for ARS
@@ -239,6 +240,16 @@ export default function CheckoutSuccessPage() {
                             Hubo un problema al verificar el estado actualizado, pero tu pago
                             está siendo procesado.
                         </Alert>
+                    )}
+
+                    {transaction?.vendureOrderCode && (
+                        <Box width="100%">
+                            <OrderPersonalizationCard
+                                orderCode={transaction.vendureOrderCode}
+                                transactionId={transaction.transactionId}
+                                title="Subí la foto para fabricar tu pedido"
+                            />
+                        </Box>
                     )}
 
                     {/* Actions */}
