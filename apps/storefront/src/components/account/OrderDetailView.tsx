@@ -19,6 +19,7 @@ import {
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import { getCustomerOrder } from '@/lib/auth/client';
+import { ANDREANI_ENABLED } from '@/lib/andreani/config';
 import OrderPersonalizationCard from '@/components/personalization/OrderPersonalizationCard';
 import type { CustomerOrderDetailResponse, CustomerOrderSummary } from '@/types/customer-account';
 
@@ -181,7 +182,7 @@ export default function OrderDetailView({ orderCode }: OrderDetailViewProps) {
                                         : data.customer.emailAddress}
                                 </Typography>
 
-                                {order.logistics?.serviceName && (
+                                {ANDREANI_ENABLED && order.logistics?.serviceName && (
                                     <Typography color="text.secondary">
                                         Andreani: {order.logistics.serviceName}
                                         {order.logistics.shipmentStatus ? ` · ${order.logistics.shipmentStatus}` : ''}

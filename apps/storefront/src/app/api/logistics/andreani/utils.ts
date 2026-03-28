@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { appendVendureSetCookieHeaders } from '@/lib/vendure/client';
+import { ANDREANI_DISABLED_MESSAGE, ANDREANI_ENABLED } from '@/lib/andreani/config';
 
 const DEFAULT_VENDURE_API_URL =
     process.env.ANDREANI_INTERNAL_API_URL ||
@@ -38,7 +39,22 @@ export function buildAndreaniBackendUrl(path: string): string {
     return `${ANDREANI_BASE_URL}/logistics/andreani/${path}`.replace(/\/+$/, '');
 }
 
+export function buildAndreaniDisabledReadResponse(): NextResponse {
+    return NextResponse.json({ success: true, enabled: false, data: {} }, { status: 200 });
+}
+
+export function buildAndreaniDisabledWriteResponse(): NextResponse {
+    return NextResponse.json(
+        { success: false, enabled: false, error: ANDREANI_DISABLED_MESSAGE },
+        { status: 503 },
+    );
+}
+
 export async function proxyAndreaniRequest(path: string, request: NextRequest): Promise<NextResponse> {
+    if (!ANDREANI_ENABLED) {
+        return buildAndreaniDisabledWriteResponse();
+    }
+
     const payload = await parseJsonBody(request);
     if (!payload) {
         return NextResponse.json(

@@ -10,6 +10,7 @@ import {
 } from '../plugins/payments/getnet';
 import { initAndreani, getAndreaniOrderService, getAndreaniService, getAndreaniShipmentService } from '../plugins/logistics/andreani';
 import { createAndreaniHandlers } from '../plugins/logistics/andreani/andreani.controller';
+import { getAndreaniConfigFromEnv } from '../plugins/logistics/andreani/andreani.config';
 import {
     PersonalizationService,
 } from '../plugins/logistics/personalization';
@@ -210,12 +211,6 @@ async function registerMiddleware(app: Awaited<ReturnType<typeof bootstrap>>): P
 }
 
 async function registerAndreaniRoutes(app: Awaited<ReturnType<typeof bootstrap>>): Promise<void> {
-    const service = getAndreaniService();
-    if (!service) {
-        console.log('[andreani] Service is unavailable; skipping route registration.');
-        return;
-    }
-
     const appAny = app as any;
     const expressEntry = getExpressApp(appAny);
     if (!expressEntry) {
@@ -223,7 +218,18 @@ async function registerAndreaniRoutes(app: Awaited<ReturnType<typeof bootstrap>>
         return;
     }
 
-    const handlers = createAndreaniHandlers(service, getAndreaniOrderService() ?? undefined);
+    let andreaniEnabled = false;
+    try {
+        andreaniEnabled = getAndreaniConfigFromEnv().enabled;
+    } catch (error) {
+        console.warn('[andreani] Could not read Andreani config while mounting routes. Falling back to disabled routes:', error);
+    }
+
+    const handlers = createAndreaniHandlers({
+        enabled: andreaniEnabled,
+        service: getAndreaniService(),
+        selectionService: getAndreaniOrderService(),
+    });
     expressEntry.app.post('/logistics/andreani/quote', async (req: any, res: any) => {
         await handlers.createQuote(req, res);
     });
@@ -233,9 +239,13 @@ async function registerAndreaniRoutes(app: Awaited<ReturnType<typeof bootstrap>>
     expressEntry.app.get('/logistics/andreani/order/:orderCode', async (req: any, res: any) => {
         await handlers.getOrderLogistics(req, res);
     });
-    console.log('[andreani] Registered POST /logistics/andreani/quote via', expressEntry.source);
-    console.log('[andreani] Registered POST /logistics/andreani/selection via', expressEntry.source);
-    console.log('[andreani] Registered GET /logistics/andreani/order/:orderCode via', expressEntry.source);
+    if (andreaniEnabled) {
+        console.log('[andreani] Registered POST /logistics/andreani/quote via', expressEntry.source);
+        console.log('[andreani] Registered POST /logistics/andreani/selection via', expressEntry.source);
+        console.log('[andreani] Registered GET /logistics/andreani/order/:orderCode via', expressEntry.source);
+    } else {
+        console.log('[andreani] Registered disabled Andreani fallback routes via', expressEntry.source);
+    }
 }
 
 bootstrap(config)

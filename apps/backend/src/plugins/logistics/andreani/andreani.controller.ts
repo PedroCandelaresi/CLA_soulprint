@@ -2,8 +2,19 @@ import { AndreaniQuoteRequest, AndreaniQuoteResponse, AndreaniSelectionPayload, 
 import { AndreaniService } from './andreani.service';
 import { AndreaniOrderService } from './andreani-order.service';
 
-export function createAndreaniHandlers(service: AndreaniService, selectionService?: AndreaniOrderService) {
+interface CreateAndreaniHandlersOptions {
+    enabled: boolean;
+    service?: AndreaniService | null;
+    selectionService?: AndreaniOrderService | null;
+}
+
+export function createAndreaniHandlers({ enabled, service, selectionService }: CreateAndreaniHandlersOptions) {
     async function createQuote(req: { body: any }, res: { status(code: number): any; json(data: any): void }): Promise<void> {
+        if (!enabled || !service) {
+            res.status(503).json({ success: false, error: 'Andreani está deshabilitado.' });
+            return;
+        }
+
         const payload: AndreaniQuoteRequest = {
             destinationPostalCode: req.body.destinationPostalCode,
             destinationCity: req.body.destinationCity,
@@ -24,8 +35,8 @@ export function createAndreaniHandlers(service: AndreaniService, selectionServic
     }
 
     async function persistSelection(req: { body: any }, res: { status(code: number): any; json(data: any): void }): Promise<void> {
-        if (!selectionService) {
-            res.status(503).json({ success: false, error: 'Andreani order persistence is not configured.' });
+        if (!enabled || !selectionService) {
+            res.status(503).json({ success: false, error: 'Andreani está deshabilitado.' });
             return;
         }
 
@@ -65,8 +76,13 @@ export function createAndreaniHandlers(service: AndreaniService, selectionServic
     }
 
     async function getOrderLogistics(req: { params: { orderCode: string } }, res: { status(code: number): any; json(data: any): void }): Promise<void> {
-        if (!selectionService) {
-            res.status(503).json({ success: false, error: 'Andreani order service not configured.' });
+        if (!enabled || !selectionService) {
+            res.status(200).json({ success: true, enabled: false, data: {} });
+            return;
+        }
+
+        if (!req.params.orderCode) {
+            res.status(400).json({ success: false, error: 'orderCode es requerido.' });
             return;
         }
 

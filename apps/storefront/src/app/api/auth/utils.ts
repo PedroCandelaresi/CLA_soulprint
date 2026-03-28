@@ -8,6 +8,7 @@ import type {
     CustomerSummary,
 } from '@/types/customer-account';
 import type { PersonalizationOrderResponseData } from '@/types/personalization';
+import { ANDREANI_ENABLED } from '@/lib/andreani/config';
 import { buildAndreaniBackendUrl } from '../logistics/andreani/utils';
 import {
     buildPersonalizationBackendUrl,
@@ -444,6 +445,10 @@ async function fetchAndreaniLogistics(
     orderCode: string,
     cookieHeader?: string,
 ): Promise<Record<string, unknown> | null> {
+    if (!ANDREANI_ENABLED) {
+        return null;
+    }
+
     const response = await fetch(
         buildAndreaniBackendUrl(`order/${encodeURIComponent(orderCode)}`),
         {

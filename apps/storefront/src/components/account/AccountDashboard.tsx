@@ -21,6 +21,7 @@ import PhotoCameraBackOutlinedIcon from '@mui/icons-material/PhotoCameraBackOutl
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import { getCustomerDashboard } from '@/lib/auth/client';
+import { ANDREANI_ENABLED } from '@/lib/andreani/config';
 import type { CustomerDashboardData, CustomerOrderSummary } from '@/types/customer-account';
 
 function formatDate(value: string | null): string {
@@ -97,7 +98,9 @@ export default function AccountDashboard() {
                             Mi cuenta
                         </Typography>
                         <Typography color="text.secondary">
-                            Revisá tus pedidos, el tracking de Andreani y la personalización pendiente o ya enviada.
+                            {ANDREANI_ENABLED
+                                ? 'Revisá tus pedidos, el tracking de Andreani y la personalización pendiente o ya enviada.'
+                                : 'Revisá tus pedidos y la personalización pendiente o ya enviada.'}
                         </Typography>
                     </Box>
 
@@ -197,7 +200,7 @@ export default function AccountDashboard() {
                                                                     Tracking: {order.trackingCode}
                                                                 </Typography>
                                                             )}
-                                                            {order.logistics?.serviceName && (
+                                                            {ANDREANI_ENABLED && order.logistics?.serviceName && (
                                                                 <Typography variant="body2" color="text.secondary">
                                                                     Servicio Andreani: {order.logistics.serviceName}
                                                                 </Typography>

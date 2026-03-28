@@ -538,6 +538,7 @@ export class GetnetService {
 
     private async createShipmentForOrder(order: Order): Promise<void> {
         if (!this.andreaniShipmentService) {
+            console.log(`${this.prefix} Andreani is disabled or unavailable; skipping shipment creation for order ${order.code}`);
             return;
         }
 

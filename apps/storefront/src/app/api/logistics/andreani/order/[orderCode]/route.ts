@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { appendVendureSetCookieHeaders } from '@/lib/vendure/client';
-import { buildAndreaniBackendUrl } from '../../utils';
+import { ANDREANI_ENABLED } from '@/lib/andreani/config';
+import { buildAndreaniBackendUrl, buildAndreaniDisabledReadResponse } from '../../utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,10 @@ interface RouteContext {
 }
 
 export async function GET(request: NextRequest, context: RouteContext) {
+    if (!ANDREANI_ENABLED) {
+        return buildAndreaniDisabledReadResponse();
+    }
+
     const params = await context.params;
     const { orderCode } = params;
 

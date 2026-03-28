@@ -12,6 +12,9 @@ let andreaniShipmentService: AndreaniShipmentService | null = null;
 export function initAndreani(orderService: OrderService, requestContextService: RequestContextService): boolean {
     const config = getAndreaniConfigFromEnv();
     if (!config.enabled) {
+        andreaniService = null;
+        andreaniOrderService = null;
+        andreaniShipmentService = null;
         console.log('[andreani] Andreani integration is disabled via config.');
         return false;
     }

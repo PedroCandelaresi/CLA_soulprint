@@ -9,6 +9,7 @@ import type {
     AndreaniOrderLogisticsSuccessResponse,
     AndreaniApiErrorResponse,
 } from './types';
+import { ANDREANI_DISABLED_MESSAGE, ANDREANI_ENABLED } from './config';
 
 const QUOTE_API = '/api/logistics/andreani/quote';
 const SELECTION_API = '/api/logistics/andreani/selection';
@@ -84,14 +85,29 @@ async function getJson<TSuccess>(url: string): Promise<TSuccess | AndreaniApiErr
     }
 }
 export async function quoteAndreani(payload: AndreaniQuoteRequest): Promise<AndreaniQuoteResponse> {
+    if (!ANDREANI_ENABLED) {
+        return buildErrorResponse(ANDREANI_DISABLED_MESSAGE);
+    }
+
     return postJson<AndreaniQuoteSuccessResponse>(QUOTE_API, payload);
 }
 
 export async function saveAndreaniSelection(payload: AndreaniSelectionRequest): Promise<AndreaniSelectionResponse> {
+    if (!ANDREANI_ENABLED) {
+        return buildErrorResponse(ANDREANI_DISABLED_MESSAGE);
+    }
+
     return postJson<AndreaniSelectionSuccessResponse>(SELECTION_API, payload);
 }
 
 export async function getAndreaniOrderLogistics(orderCode: string): Promise<AndreaniOrderLogisticsResponse> {
+    if (!ANDREANI_ENABLED) {
+        return {
+            success: true,
+            data: {},
+        };
+    }
+
     if (!orderCode) {
         return buildErrorResponse('Se requiere el código de orden para consultar Andreani.');
     }

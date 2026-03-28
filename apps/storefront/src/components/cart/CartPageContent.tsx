@@ -20,6 +20,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { useState } from 'react';
 import type { CartLine } from '@/types/cart';
+import { ANDREANI_DISABLED_MESSAGE, ANDREANI_ENABLED } from '@/lib/andreani/config';
 import { useCart } from './CartProvider';
 import { GetnetCheckoutButton } from '../payments/GetnetCheckoutButton';
 import AndreaniShippingPanel from '../logistics/AndreaniShippingPanel';
@@ -236,7 +237,11 @@ export default function CartPageContent() {
                             </Typography>
                         </Stack>
                         <Divider />
-                        <AndreaniShippingPanel cart={cart} />
+                        {ANDREANI_ENABLED ? (
+                            <AndreaniShippingPanel cart={cart} />
+                        ) : (
+                            <Alert severity="info">{ANDREANI_DISABLED_MESSAGE}</Alert>
+                        )}
                         <Divider />
                         <GetnetCheckoutButton cart={cart} />
                         <Button component={Link} href="/productos" variant="outlined" fullWidth>
