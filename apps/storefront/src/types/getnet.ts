@@ -30,15 +30,20 @@ export interface CreateCheckoutResponse {
 }
 
 export interface CheckoutData {
+    mode: 'real' | 'mock';
+    status: string;
+    checkoutId: string;
     transactionId: string;
     orderUuid: string;
+    processUrl: string;
     checkoutUrl: string;
     vendureOrderCode: string;
     expiresAt?: string;
+    raw?: unknown;
     rawResponse?: {
-        status: string;
-        createdAt: string;
-    };
+        status?: string;
+        createdAt?: string;
+    } | null;
 }
 
 // ============================================================================

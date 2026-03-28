@@ -62,8 +62,12 @@ describe('GetnetController', () => {
         };
 
         const validCheckoutResponse: CheckoutResponse = {
+            mode: 'real',
+            status: 'pending',
+            checkoutId: 'getnet-uuid-123',
             transactionId: 'local-tx-uuid-123',
             orderUuid: 'getnet-uuid-123',
+            processUrl: 'https://checkout.getnet.com/pay/123',
             checkoutUrl: 'https://checkout.getnet.com/pay/123',
             vendureOrderCode: 'ORD-001',
             expiresAt: '2024-01-01T12:00:00Z',

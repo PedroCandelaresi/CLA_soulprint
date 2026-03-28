@@ -157,15 +157,20 @@ export interface CreateCheckoutDto {
  * Response returned to frontend after creating checkout
  */
 export interface CheckoutResponse {
+    mode: GetnetMode;
+    status: string;
+    checkoutId: string;            // Provider checkout/order UUID alias
     transactionId: string;           // Local transaction ID
     orderUuid: string;              // Getnet order UUID
+    processUrl: string;             // Preferred redirect URL
     checkoutUrl: string;            // Redirect URL
     vendureOrderCode: string;       // Internal order code
     expiresAt?: string;
+    raw?: unknown;
     rawResponse?: {
-        status: string;
-        createdAt: string;
-    };
+        status?: string;
+        createdAt?: string;
+    } | null;
 }
 
 /**

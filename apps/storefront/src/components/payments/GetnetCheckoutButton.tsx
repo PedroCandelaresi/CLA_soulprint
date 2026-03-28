@@ -79,7 +79,7 @@ export function GetnetCheckoutButton({
                 orderUuid: response.data.orderUuid,
                 vendureOrderCode: response.data.vendureOrderCode,
             });
-            setCheckoutUrl(response.data.checkoutUrl);
+            setCheckoutUrl(response.data.processUrl || response.data.checkoutUrl);
             setShowDialog(true);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al procesar el pago');

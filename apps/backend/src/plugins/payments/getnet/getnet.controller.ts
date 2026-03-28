@@ -162,6 +162,11 @@ function buildMockCheckoutHtml(input: {
  * These are used by the standalone server that uses native Node.js HTTP
  */
 export function createGetnetHandlers(getnetService: GetnetService) {
+    function getConfiguredMode(): 'mock' | 'real' {
+        return typeof getnetService.isMockModeEnabled === 'function' && getnetService.isMockModeEnabled()
+            ? 'mock'
+            : 'real';
+    }
     
     /**
      * POST /checkout
@@ -198,12 +203,14 @@ export function createGetnetHandlers(getnetService: GetnetService) {
                 }
             }
             
-            const mode = getnetService.isMockModeEnabled() ? 'mock' : 'real';
-            console.log(`${LOG_PREFIX} Creating checkout for order: ${body.orderCode} (mode=${mode})`);
+            const configuredMode = getConfiguredMode();
+            console.log(`${LOG_PREFIX} Creating checkout for order: ${body.orderCode} (mode=${configuredMode})`);
             
             const result = await getnetService.createOrder(body);
             
-            console.log(`${LOG_PREFIX} Checkout created (${mode}): ${result.orderUuid}, Transaction: ${result.transactionId}`);
+            console.log(
+                `${LOG_PREFIX} Checkout created (${result.mode}): ${result.checkoutId}, Transaction: ${result.transactionId}, status=${result.status}, processUrl=${result.processUrl}`,
+            );
             
             res.status(201).json({
                 success: true,

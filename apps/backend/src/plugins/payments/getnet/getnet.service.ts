@@ -243,11 +243,19 @@ export class GetnetService {
         await this.transactionRepo.updateCheckoutUrl(transaction.id, checkoutUrl, expiresAt);
 
         return {
+            mode: 'mock',
+            status: 'pending',
+            checkoutId: providerOrderUuid,
             transactionId: transaction.id,
             orderUuid: providerOrderUuid,
+            processUrl: checkoutUrl,
             checkoutUrl,
             vendureOrderCode: dto.orderCode,
             expiresAt: expiresAt?.toISOString(),
+            raw: {
+                mode: 'mock',
+                forceStatus: this.getMockForceStatus(),
+            },
             rawResponse: {
                 status: 'pending',
                 createdAt: transaction.createdAt.toISOString(),
@@ -484,11 +492,16 @@ export class GetnetService {
             console.log(`${this.prefix} Order created: ${orderData.id}, Transaction: ${transaction.id}`);
             
             return {
+                mode: 'real',
+                status: orderData.attributes.status,
+                checkoutId: orderData.id,
                 transactionId: transaction.id,
                 orderUuid: orderData.id,
+                processUrl: checkoutUrl,
                 checkoutUrl,
                 vendureOrderCode: dto.orderCode,
                 expiresAt: orderData.attributes.expiresAt,
+                raw: response.data,
                 rawResponse: {
                     status: orderData.attributes.status,
                     createdAt: orderData.attributes.createdAt,

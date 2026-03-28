@@ -68,7 +68,9 @@ function createHandlerContext(req: http.IncomingMessage, res: http.ServerRespons
         },
         
         json(data: any) {
-            res.writeHead(200, { 'Content-Type': 'application/json' });
+            if (!res.headersSent) {
+                res.writeHead(res.statusCode || 200, { 'Content-Type': 'application/json' });
+            }
             res.end(JSON.stringify(data));
         },
         
@@ -192,13 +194,13 @@ async function main() {
             
             // Checkout
             if (method === 'POST' && (pathname === '/checkout' || pathname === '/payments/getnet/checkout')) {
-                await handlers.createCheckout(ctx, null as any, () => {});
+                await handlers.createCheckout(ctx as any, ctx as any, () => {});
                 return;
             }
             
             // Order status
             if (method === 'GET' && (pathname.match(/^\/order\/[^/]+$/) || pathname.match(/^\/payments\/getnet\/order\/[^/]+$/))) {
-                await handlers.getOrderStatus(ctx, null as any, () => {});
+                await handlers.getOrderStatus(ctx as any, ctx as any, () => {});
                 return;
             }
 
@@ -206,19 +208,19 @@ async function main() {
                 method === 'GET'
                 && (pathname.match(/^\/mock\/checkout\/[^/]+$/) || pathname.match(/^\/payments\/getnet\/mock\/checkout\/[^/]+$/))
             ) {
-                await handlers.renderMockCheckout(ctx, null as any, () => {});
+                await handlers.renderMockCheckout(ctx as any, ctx as any, () => {});
                 return;
             }
             
             // Transaction by ID
             if (method === 'GET' && (pathname.match(/^\/transaction\/[^/]+$/) || pathname.match(/^\/payments\/getnet\/transaction\/[^/]+$/))) {
-                await handlers.getTransaction(ctx, null as any, () => {});
+                await handlers.getTransaction(ctx as any, ctx as any, () => {});
                 return;
             }
             
             // Webhook
             if (method === 'POST' && (pathname === '/webhook' || pathname === '/payments/getnet/webhook')) {
-                await handlers.handleWebhook(ctx, null as any, () => {});
+                await handlers.handleWebhook(ctx as any, ctx as any, () => {});
                 return;
             }
             

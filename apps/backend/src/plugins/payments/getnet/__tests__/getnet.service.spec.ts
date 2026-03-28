@@ -98,8 +98,12 @@ describe('GetnetService', () => {
     describe('CheckoutResponse structure', () => {
         it('should have all required fields', () => {
             const response: CheckoutResponse = {
+                mode: 'real',
+                status: 'pending',
+                checkoutId: 'getnet-uuid',
                 transactionId: 'local-uuid',
                 orderUuid: 'getnet-uuid',
+                processUrl: 'https://checkout.getnet.com/123',
                 checkoutUrl: 'https://checkout.getnet.com/123',
                 vendureOrderCode: 'ORD-00001',
                 expiresAt: '2024-01-01T12:00:00Z',
