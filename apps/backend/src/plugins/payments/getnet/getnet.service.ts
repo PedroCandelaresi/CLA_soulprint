@@ -153,26 +153,18 @@ export class GetnetService {
         }
     }
 
-    private buildMockCheckoutUrl(dto: CreateCheckoutDto, orderUuid: string): string {
-        const redirectUrls = this.resolveRedirectUrls(dto);
-        let origin = 'http://localhost:3000';
-
-        try {
-            origin = new URL(redirectUrls.success).origin;
-        } catch {
-            try {
-                origin = new URL(redirectUrls.failed).origin;
-            } catch {
-                origin = 'http://localhost:3000';
-            }
-        }
-
-        const url = new URL(`/api/payments/getnet/mock/checkout/${encodeURIComponent(orderUuid)}`, origin);
+    private buildMockCheckoutUrl(_dto: CreateCheckoutDto, orderUuid: string): string {
+        const url = new URL(
+            `/api/payments/getnet/mock/checkout/${encodeURIComponent(orderUuid)}`,
+            'http://mock.local',
+        );
         const forcedStatus = this.getMockForceStatus();
         if (forcedStatus !== 'interactive') {
             url.searchParams.set('status', forcedStatus);
         }
-        return url.toString();
+        const processUrl = `${url.pathname}${url.search}`;
+        console.log(`${this.prefix} [mock] Using storefront proxy processUrl: ${processUrl}`);
+        return processUrl;
     }
 
     private shouldRedirectToSuccess(status: GetnetPaymentStatus): boolean {
