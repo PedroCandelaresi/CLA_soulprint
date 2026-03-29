@@ -64,6 +64,39 @@ const REGISTER_MUTATION = `
     }
 `;
 
+const VERIFY_CUSTOMER_ACCOUNT_MUTATION = `
+    mutation VerifyCustomerAccount($token: String!, $password: String!) {
+        verifyCustomerAccount(token: $token, password: $password) {
+            __typename
+            ... on CurrentUser {
+                id
+                identifier
+            }
+            ... on VerificationTokenInvalidError {
+                errorCode
+                message
+            }
+            ... on VerificationTokenExpiredError {
+                errorCode
+                message
+            }
+            ... on PasswordValidationError {
+                errorCode
+                message
+                validationErrorMessage
+            }
+            ... on MissingPasswordError {
+                errorCode
+                message
+            }
+            ... on NativeAuthStrategyError {
+                errorCode
+                message
+            }
+        }
+    }
+`;
+
 const LOGOUT_MUTATION = `
     mutation Logout {
         logout {
@@ -189,7 +222,8 @@ const ACTIVE_CUSTOMER_DASHBOARD_QUERY = `
                         buyerFullName
                         buyerEmail
                         buyerPhone
-                        buyerDocument
+                        productionStatus
+                        productionUpdatedAt
                     }
                     lines {
                         id
@@ -253,6 +287,10 @@ interface AuthenticateGoogleData {
     authenticate: CurrentUserResult | ErrorResult;
 }
 
+interface VerifyCustomerAccountData {
+    verifyCustomerAccount: CurrentUserResult | ErrorResult;
+}
+
 interface VendureOrderAddress {
     fullName: string | null;
     company: string | null;
@@ -313,7 +351,8 @@ interface VendureOrder {
         buyerFullName?: string | null;
         buyerEmail?: string | null;
         buyerPhone?: string | null;
-        buyerDocument?: string | null;
+        productionStatus?: string | null;
+        productionUpdatedAt?: string | null;
     } | null;
     lines: Array<{
         id: string;
@@ -592,8 +631,9 @@ function mapOrder(
             fullName: order.customFields?.buyerFullName || null,
             email: order.customFields?.buyerEmail || null,
             phone: order.customFields?.buyerPhone || null,
-            document: order.customFields?.buyerDocument || null,
         },
+        productionStatus: order.customFields?.productionStatus || null,
+        productionUpdatedAt: order.customFields?.productionUpdatedAt || null,
         shippingLines: (order.shippingLines || []).map((line) => ({
             name: line.shippingMethod?.name || 'Envío',
             priceWithTax: line.priceWithTax,
@@ -692,10 +732,14 @@ export async function performLogin(input: {
     });
 
     if (result.data.login.__typename !== 'CurrentUser') {
+        const verificationRequired = result.data.login.__typename === 'NotVerifiedError';
         return {
             body: {
                 success: false,
-                error: extractUnionError(result.data.login),
+                error: verificationRequired
+                    ? 'Tu cuenta todavía no está verificada. Revisá el email que te enviamos para activar el acceso.'
+                    : extractUnionError(result.data.login),
+                verificationRequired,
             },
             headers: result.headers,
         };
@@ -709,11 +753,9 @@ export async function performLogin(input: {
 
 export async function performRegister(input: {
     email: string;
-    password: string;
     firstName?: string;
     lastName?: string;
     phoneNumber?: string;
-    documentNumber?: string;
     cookieHeader?: string;
 }): Promise<{ body: AuthActionResponse; headers: Headers }> {
     const registerResult = await fetchVendureApi<RegisterData>(REGISTER_MUTATION, {
@@ -724,7 +766,6 @@ export async function performRegister(input: {
                 firstName: input.firstName || undefined,
                 lastName: input.lastName || undefined,
                 phoneNumber: input.phoneNumber || undefined,
-                password: input.password,
             },
         },
     });
@@ -739,51 +780,14 @@ export async function performRegister(input: {
         };
     }
 
-    const loginResult = await performLogin({
-        email: input.email,
-        password: input.password,
-        rememberMe: true,
-        cookieHeader: input.cookieHeader,
-    });
-
-    if (!loginResult.body.success) {
-        return {
-            body: {
-                success: true,
-                verificationRequired: true,
-                message: 'Si la cuenta ya quedó lista, iniciá sesión. Si usa verificación, revisá tu email antes de entrar.',
-            },
-            headers: loginResult.headers,
-        };
-    }
-
-    if (input.documentNumber?.trim()) {
-        const mergedCookieHeader = mergeCookieHeaders(input.cookieHeader, loginResult.headers);
-        const updateResult = await performUpdateCustomer({
-            firstName: input.firstName,
-            lastName: input.lastName,
-            phoneNumber: input.phoneNumber,
-            documentNumber: input.documentNumber,
-            cookieHeader: mergedCookieHeader,
-        });
-
-        if (!updateResult.body.success) {
-            return {
-                body: {
-                    success: true,
-                    message: 'La cuenta quedó creada. Revisá tus datos de comprador desde tu cuenta si faltó guardar algún campo.',
-                },
-                headers: loginResult.headers,
-            };
-        }
-
-        return {
-            body: loginResult.body,
-            headers: loginResult.headers,
-        };
-    }
-
-    return loginResult;
+    return {
+        body: {
+            success: true,
+            verificationRequired: true,
+            message: 'Te enviamos un email para activar tu cuenta. Abrí ese link, definí tu contraseña y después volvés al carrito para pagar.',
+        },
+        headers: registerResult.headers,
+    };
 }
 
 export async function performUpdateCustomer(input: {
@@ -848,6 +852,45 @@ export async function authenticateWithGoogleIdToken(input: {
 
     return {
         body: { success: true },
+        headers: result.headers,
+    };
+}
+
+export async function performVerifyCustomerAccount(input: {
+    token: string;
+    password: string;
+    cookieHeader?: string;
+}): Promise<{ body: AuthActionResponse; headers: Headers }> {
+    const result = await fetchVendureApi<VerifyCustomerAccountData>(VERIFY_CUSTOMER_ACCOUNT_MUTATION, {
+        headers: buildVendureHeaders(input.cookieHeader),
+        variables: {
+            token: input.token,
+            password: input.password,
+        },
+    });
+
+    if (result.data.verifyCustomerAccount.__typename !== 'CurrentUser') {
+        const errorType = result.data.verifyCustomerAccount.__typename;
+        const defaultMessage = errorType === 'VerificationTokenExpiredError'
+            ? 'El link de verificación expiró. Creá la cuenta nuevamente o pedí un nuevo email.'
+            : errorType === 'VerificationTokenInvalidError'
+                ? 'El link de verificación no es válido.'
+                : extractUnionError(result.data.verifyCustomerAccount);
+
+        return {
+            body: {
+                success: false,
+                error: defaultMessage,
+            },
+            headers: result.headers,
+        };
+    }
+
+    return {
+        body: {
+            success: true,
+            message: 'Tu cuenta quedó verificada y ya podés volver al carrito para finalizar la compra.',
+        },
         headers: result.headers,
     };
 }

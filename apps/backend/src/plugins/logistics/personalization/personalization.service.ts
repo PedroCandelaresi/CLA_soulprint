@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream';
 import { Inject, Injectable } from '@nestjs/common';
-import { Asset, AssetService, Order, OrderService, Payment, RequestContextService } from '@vendure/core';
+import { Asset, AssetService, EventBus, Order, OrderService, Payment, RequestContextService } from '@vendure/core';
 import type { GetnetService } from '../../payments/getnet';
 import { PersonalizationConfig, PERSONALIZATION_CONFIG_OPTIONS } from './personalization.config';
 import {
@@ -15,6 +15,7 @@ import {
     normalizeMimeType,
     sanitizeNotes,
 } from './personalization.utils';
+import { PersonalizationReceivedEvent } from '../../orders/business-status/personalization-received.event';
 
 const PERSONALIZATION_ORDER_RELATIONS = [
     'customer',
@@ -37,6 +38,7 @@ export class PersonalizationService {
         private readonly orderService: OrderService,
         private readonly requestContextService: RequestContextService,
         private readonly assetService: AssetService,
+        private readonly eventBus: EventBus,
         @Inject(PERSONALIZATION_CONFIG_OPTIONS)
         private readonly config: PersonalizationConfig,
     ) {}
@@ -122,6 +124,12 @@ export class PersonalizationService {
         order = await this.loadOrderByCode(ctx, input.orderCode);
         if (!order) {
             throw new Error('La orden no pudo recargarse después de subir el archivo.');
+        }
+
+        try {
+            await this.eventBus.publish(new PersonalizationReceivedEvent(ctx, order));
+        } catch (error) {
+            console.warn('[personalization] notification event publish failed:', error);
         }
 
         return this.mapOrderToResponse(order, authorization.accessToken, authorization.transactionStatus);

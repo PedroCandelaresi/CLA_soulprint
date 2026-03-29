@@ -1,0 +1,17 @@
+<h2>Nuevo material recibido para producción</h2>
+
+<p>Se recibió el archivo de personalización del pedido <strong>#{{ order.code }}</strong>.</p>
+
+<ul>
+  <li><strong>Cliente:</strong> {{ customerName }}</li>
+  <li><strong>Email:</strong> {{ customerEmail }}</li>
+  <li><strong>Estado:</strong> {{ businessStatusLabel }}</li>
+  {{#if uploadedAt}}
+    <li><strong>Archivo recibido:</strong> {{ uploadedAt }}</li>
+  {{/if}}
+  {{#if assetUrl}}
+    <li><strong>Vista previa / archivo:</strong> <a href="{{ assetUrl }}">{{ assetUrl }}</a></li>
+  {{/if}}
+</ul>
+
+<p>Podés revisar el pedido en Vendure Admin usando el código <strong>{{ order.code }}</strong>.</p>

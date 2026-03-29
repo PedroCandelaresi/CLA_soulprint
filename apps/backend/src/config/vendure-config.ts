@@ -17,7 +17,10 @@ import { adminUiConfig, adminUiPort, adminUiRoute } from '../admin-ui/admin-ui-o
 import { GetnetPlugin, initGetnetPlugin, getGetnetMiddleware, getGetnetConfigFromEnv, getnetPaymentHandler } from '../plugins/payments/getnet';
 import { GetnetPaymentTransaction } from '../plugins/payments/getnet/getnet-transaction.entity';
 import { GoogleAuthPlugin, getGoogleAuthConfigFromEnv, GoogleAuthenticationStrategy } from '../plugins/auth/google-auth';
+import { BuyerCheckoutPlugin } from '../plugins/checkout/buyer';
 import { PersonalizationPlugin } from '../plugins/logistics/personalization';
+import { createEmailTemplateLoader } from '../email/composite-template-loader';
+import { orderBusinessEmailHandlers } from '../plugins/orders/business-status/order-email-handlers';
 
 function requireEnv(name: string): string {
     const value = process.env[name];
@@ -85,6 +88,11 @@ const IS_USING_SMTP_BOOTSTRAP_FALLBACK = !IS_DEV
     && !IS_MIGRATION_COMMAND
     && ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM'].some(name => !process.env[name]);
 const EMAIL_TEMPLATE_PATH = path.join(path.dirname(require.resolve('@vendure/email-plugin/package.json')), 'templates');
+const EMAIL_TEMPLATE_LOADER = createEmailTemplateLoader(EMAIL_TEMPLATE_PATH);
+const EMAIL_HANDLERS = [
+    ...defaultEmailHandlers,
+    ...orderBusinessEmailHandlers,
+];
 const MIGRATIONS = [
     path.join(__dirname, '../migrations/history/*.js'),
     path.join(__dirname, '../migrations/history/*.ts'),
@@ -136,6 +144,7 @@ export const config: VendureConfig = {
     },
     authOptions: {
         tokenMethod: ['bearer', 'cookie'],
+        requireVerification: true,
         shopAuthenticationStrategy: [
             new NativeAuthenticationStrategy(),
             ...(GOOGLE_AUTH_CONFIG.enabled ? [new GoogleAuthenticationStrategy()] : []),
@@ -200,7 +209,8 @@ export const config: VendureConfig = {
             { name: 'buyerFullName', type: 'string', nullable: true, public: true },
             { name: 'buyerEmail', type: 'string', nullable: true, public: true },
             { name: 'buyerPhone', type: 'string', nullable: true, public: true },
-            { name: 'buyerDocument', type: 'string', nullable: true, public: true },
+            { name: 'productionStatus', type: 'string', nullable: false, defaultValue: 'not-started', public: true },
+            { name: 'productionUpdatedAt', type: 'datetime', nullable: true, public: true },
             { name: 'personalizationRequired', type: 'boolean', defaultValue: false, public: false },
             { name: 'personalizationStatus', type: 'string', nullable: false, defaultValue: 'not-required', public: false },
             { name: 'personalizationAsset', type: 'relation', entity: Asset, nullable: true, public: false },
@@ -227,8 +237,8 @@ export const config: VendureConfig = {
                       devMode: true,
                       outputPath: path.join(__dirname, '../../static/email/test-emails'),
                       route: 'mailbox',
-                      handlers: defaultEmailHandlers,
-                      templatePath: EMAIL_TEMPLATE_PATH,
+                      handlers: EMAIL_HANDLERS,
+                      templateLoader: EMAIL_TEMPLATE_LOADER,
                       globalTemplateVars: {
                           fromAddress: SMTP_FROM,
                           verifyEmailAddressUrl: `${SHOP_PUBLIC_URL}/verify`,
@@ -244,8 +254,8 @@ export const config: VendureConfig = {
             : !IS_MIGRATION_COMMAND && SHOP_PUBLIC_URL
               ? [
                     EmailPlugin.init({
-                        handlers: defaultEmailHandlers,
-                        templatePath: EMAIL_TEMPLATE_PATH,
+                        handlers: EMAIL_HANDLERS,
+                        templateLoader: EMAIL_TEMPLATE_LOADER,
                         globalTemplateVars: {
                             fromAddress: SMTP_FROM,
                             verifyEmailAddressUrl: `${SHOP_PUBLIC_URL}/verify`,
@@ -273,6 +283,7 @@ export const config: VendureConfig = {
         }),
         GetnetPlugin,
         GoogleAuthPlugin,
+        BuyerCheckoutPlugin,
         PersonalizationPlugin,
     ],
 };

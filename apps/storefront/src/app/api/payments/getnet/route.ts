@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { fetchActiveCustomer } from '@/app/api/auth/utils';
 
 // Getnet standalone server URL (port 4003)
 const GETNET_API_URL = process.env.GETNET_INTERNAL_API_URL || 'http://localhost:4003/payments/getnet';
@@ -12,6 +13,15 @@ function getErrorMessage(error: unknown): string {
 
 export async function POST(request: NextRequest) {
     try {
+        const cookieHeader = request.headers.get('cookie') || undefined;
+        const activeCustomer = await fetchActiveCustomer(cookieHeader).catch(() => null);
+        if (!activeCustomer) {
+            return NextResponse.json(
+                { error: 'Necesitás iniciar sesión para iniciar el pago.' },
+                { status: 401 },
+            );
+        }
+
         const body = await request.json();
         
         // Validate required fields

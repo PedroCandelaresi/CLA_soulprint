@@ -8,8 +8,7 @@ export class AddOrderBuyerSnapshotFields1713000000000 implements MigrationInterf
             ALTER TABLE \`order\`
             ADD COLUMN \`customFieldsBuyerfullname\` VARCHAR(255) NULL,
             ADD COLUMN \`customFieldsBuyeremail\` VARCHAR(255) NULL,
-            ADD COLUMN \`customFieldsBuyerphone\` VARCHAR(255) NULL,
-            ADD COLUMN \`customFieldsBuyerdocument\` VARCHAR(255) NULL
+            ADD COLUMN \`customFieldsBuyerphone\` VARCHAR(255) NULL
         `);
     }
 
@@ -18,8 +17,7 @@ export class AddOrderBuyerSnapshotFields1713000000000 implements MigrationInterf
             ALTER TABLE \`order\`
             DROP COLUMN \`customFieldsBuyerfullname\`,
             DROP COLUMN \`customFieldsBuyeremail\`,
-            DROP COLUMN \`customFieldsBuyerphone\`,
-            DROP COLUMN \`customFieldsBuyerdocument\`
+            DROP COLUMN \`customFieldsBuyerphone\`
         `);
     }
 }

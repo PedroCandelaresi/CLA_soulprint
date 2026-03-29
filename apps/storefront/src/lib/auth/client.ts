@@ -51,11 +51,8 @@ export async function login(input: {
 
 export async function register(input: {
     email: string;
-    password: string;
-    firstName?: string;
-    lastName?: string;
+    fullName: string;
     phoneNumber?: string;
-    documentNumber?: string;
 }): Promise<AuthActionResponse> {
     try {
         return await requestJson<AuthActionResponse>('/register', {
@@ -71,6 +68,20 @@ export async function logout(): Promise<AuthActionResponse> {
     try {
         return await requestJson<AuthActionResponse>('/logout', {
             method: 'POST',
+        });
+    } catch (error) {
+        return { success: false, error: getErrorMessage(error) };
+    }
+}
+
+export async function verifyAccount(input: {
+    token: string;
+    password: string;
+}): Promise<AuthActionResponse> {
+    try {
+        return await requestJson<AuthActionResponse>('/verify', {
+            method: 'POST',
+            body: JSON.stringify(input),
         });
     } catch (error) {
         return { success: false, error: getErrorMessage(error) };

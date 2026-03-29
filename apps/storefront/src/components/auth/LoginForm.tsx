@@ -141,7 +141,7 @@ export default function LoginForm({ nextParam, oauthError }: LoginFormProps) {
             </Box>
 
             <Typography variant="body2" color="text.secondary" textAlign="center">
-                También podés seguir comprando como invitado y crear tu cuenta más tarde.
+                Para pagar necesitás una cuenta activa. Si todavía no verificaste tu email, abrí ese link primero y después volvés al carrito.
             </Typography>
         </Stack>
     );

@@ -42,16 +42,16 @@ function getDigits(value: string): string {
 
 export default function CartPageContent() {
     const { cart, error, clearError, isInitializing, isMutating, updateLineQuantity, removeLine, saveBuyerDetails } = useCart();
-    const { customer, isAuthenticated } = useCustomer();
+    const { customer, isAuthenticated, isLoading: isCustomerLoading } = useCustomer();
     const [busyLineId, setBusyLineId] = useState<string | null>(null);
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
-    const [document, setDocument] = useState('');
     const [buyerDataInitialized, setBuyerDataInitialized] = useState(false);
     const [buyerError, setBuyerError] = useState<string | null>(null);
     const [buyerMessage, setBuyerMessage] = useState<string | null>(null);
     const [isSavingBuyer, setIsSavingBuyer] = useState(false);
+    const effectiveEmail = isAuthenticated ? (customer?.emailAddress || email) : email;
 
     useEffect(() => {
         if (!cart || buyerDataInitialized) {
@@ -63,7 +63,6 @@ export default function CartPageContent() {
         setFullName(snapshot?.fullName || customerFullName || '');
         setEmail(isAuthenticated ? customer?.emailAddress || snapshot?.email || '' : snapshot?.email || '');
         setPhone(snapshot?.phone || customer?.phoneNumber || '');
-        setDocument(snapshot?.document || customer?.documentNumber || '');
         setBuyerDataInitialized(true);
     }, [buyerDataInitialized, cart, customer, isAuthenticated]);
 
@@ -71,14 +70,11 @@ export default function CartPageContent() {
         if (fullName.trim().length < 3) {
             return 'Ingresá nombre y apellido del comprador.';
         }
-        if (!EMAIL_REGEX.test(email.trim())) {
+        if (!EMAIL_REGEX.test(effectiveEmail.trim())) {
             return 'Ingresá un email válido.';
         }
         if (getDigits(phone).length < 8) {
             return 'Ingresá un teléfono válido.';
-        }
-        if (getDigits(document).length < 7) {
-            return 'Ingresá un DNI / documento válido.';
         }
         return null;
     }
@@ -99,9 +95,8 @@ export default function CartPageContent() {
         try {
             await saveBuyerDetails({
                 fullName,
-                email,
+                email: effectiveEmail,
                 phone,
-                document,
             });
 
             if (showSuccessMessage) {
@@ -318,70 +313,97 @@ export default function CartPageContent() {
                         </Stack>
                         <Divider />
                         <Stack spacing={2}>
-                            <Typography variant="h6" fontWeight={700}>Datos del comprador</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Guardamos un snapshot en la orden antes del pago para que el pedido quede identificado aunque después cambie la cuenta.
-                            </Typography>
+                            {isCustomerLoading ? (
+                                <Stack spacing={1.5} alignItems="center" py={1}>
+                                    <CircularProgress size={24} />
+                                    <Typography variant="body2" color="text.secondary" textAlign="center">
+                                        Verificando tu sesión para habilitar el pago...
+                                    </Typography>
+                                </Stack>
+                            ) : !isAuthenticated ? (
+                                <Stack spacing={2}>
+                                    <Typography variant="h6" fontWeight={700}>Cuenta requerida para pagar</Typography>
+                                    <Alert severity="info">
+                                        Para finalizar la compra tenés que crear una cuenta o iniciar sesión. Tu carrito no se pierde: cuando vuelvas autenticado, retoma esta misma orden.
+                                    </Alert>
+                                    <Button
+                                        component={Link}
+                                        href="/auth/register?next=%2Fcarrito"
+                                        variant="contained"
+                                        fullWidth
+                                    >
+                                        Crear cuenta
+                                    </Button>
+                                    <Button
+                                        component={Link}
+                                        href="/auth/login?next=%2Fcarrito"
+                                        variant="outlined"
+                                        fullWidth
+                                    >
+                                        Iniciar sesión
+                                    </Button>
+                                    <Typography variant="body2" color="text.secondary" textAlign="center">
+                                        También podés entrar con Google desde la pantalla de login y volver directo al carrito.
+                                    </Typography>
+                                </Stack>
+                            ) : (
+                                <>
+                                    <Typography variant="h6" fontWeight={700}>Datos del comprador</Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Guardamos un snapshot en la orden antes del pago para que el pedido quede identificado aunque después cambie la cuenta.
+                                    </Typography>
 
-                            {isAuthenticated && (
-                                <Alert severity="info">
-                                    Si editás nombre, teléfono o DNI acá, también se actualizan en tu cuenta. El email de una cuenta logueada se toma desde la sesión actual.
-                                </Alert>
+                                    <Alert severity="info">
+                                        Si editás nombre o teléfono acá, también se actualizan en tu cuenta. El email se toma siempre desde la sesión autenticada.
+                                    </Alert>
+
+                                    {buyerError && (
+                                        <Alert severity="error" onClose={() => setBuyerError(null)}>
+                                            {buyerError}
+                                        </Alert>
+                                    )}
+
+                                    {buyerMessage && (
+                                        <Alert severity="success" onClose={() => setBuyerMessage(null)}>
+                                            {buyerMessage}
+                                        </Alert>
+                                    )}
+
+                                    <TextField
+                                        label="Nombre completo"
+                                        value={fullName}
+                                        onChange={(event) => setFullName(event.target.value)}
+                                        autoComplete="name"
+                                        required
+                                    />
+
+                                    <TextField
+                                        label="Email"
+                                        type="email"
+                                        value={effectiveEmail}
+                                        autoComplete="email"
+                                        required
+                                        InputProps={{ readOnly: true }}
+                                        helperText="Se usa el email verificado de tu cuenta."
+                                    />
+
+                                    <TextField
+                                        label="Teléfono"
+                                        value={phone}
+                                        onChange={(event) => setPhone(event.target.value)}
+                                        autoComplete="tel"
+                                        required
+                                    />
+
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => void persistBuyerData(true)}
+                                        disabled={isSavingBuyer}
+                                    >
+                                        {isSavingBuyer ? 'Guardando...' : 'Guardar datos del comprador'}
+                                    </Button>
+                                </>
                             )}
-
-                            {buyerError && (
-                                <Alert severity="error" onClose={() => setBuyerError(null)}>
-                                    {buyerError}
-                                </Alert>
-                            )}
-
-                            {buyerMessage && (
-                                <Alert severity="success" onClose={() => setBuyerMessage(null)}>
-                                    {buyerMessage}
-                                </Alert>
-                            )}
-
-                            <TextField
-                                label="Nombre completo"
-                                value={fullName}
-                                onChange={(event) => setFullName(event.target.value)}
-                                autoComplete="name"
-                                required
-                            />
-
-                            <TextField
-                                label="Email"
-                                type="email"
-                                value={isAuthenticated ? (customer?.emailAddress || email) : email}
-                                onChange={(event) => setEmail(event.target.value)}
-                                autoComplete="email"
-                                required
-                                InputProps={isAuthenticated ? { readOnly: true } : undefined}
-                                helperText={isAuthenticated ? 'Para cuentas logueadas se usa el email de la sesión.' : undefined}
-                            />
-
-                            <TextField
-                                label="Teléfono"
-                                value={phone}
-                                onChange={(event) => setPhone(event.target.value)}
-                                autoComplete="tel"
-                                required
-                            />
-
-                            <TextField
-                                label="DNI / Documento"
-                                value={document}
-                                onChange={(event) => setDocument(event.target.value)}
-                                required
-                            />
-
-                            <Button
-                                variant="outlined"
-                                onClick={() => void persistBuyerData(true)}
-                                disabled={isSavingBuyer}
-                            >
-                                {isSavingBuyer ? 'Guardando...' : 'Guardar datos del comprador'}
-                            </Button>
                         </Stack>
                         <Divider />
                         {ANDREANI_ENABLED ? (
@@ -390,10 +412,17 @@ export default function CartPageContent() {
                             <Alert severity="info">{ANDREANI_DISABLED_MESSAGE}</Alert>
                         )}
                         <Divider />
-                        <GetnetCheckoutButton
-                            cart={cart}
-                            onBeforeCheckout={() => persistBuyerData(false)}
-                        />
+                        {isAuthenticated ? (
+                            <GetnetCheckoutButton
+                                cart={cart}
+                                onBeforeCheckout={() => persistBuyerData(false)}
+                                disabled={isCustomerLoading}
+                            />
+                        ) : (
+                            <Alert severity="warning">
+                                El pago queda bloqueado hasta que verifiques tu cuenta e inicies sesión.
+                            </Alert>
+                        )}
                         <Button component={Link} href="/productos" variant="outlined" fullWidth>
                             Seguir comprando
                         </Button>

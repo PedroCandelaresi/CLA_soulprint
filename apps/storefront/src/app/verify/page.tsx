@@ -1,7 +1,7 @@
 import AuthPageShell from '@/components/auth/AuthPageShell';
-import RegisterForm from '@/components/auth/RegisterForm';
+import VerifyAccountForm from '@/components/auth/VerifyAccountForm';
 
-interface RegisterPageProps {
+interface VerifyPageProps {
     searchParams?: Record<string, string | string[] | undefined> | Promise<Record<string, string | string[] | undefined>>;
 }
 
@@ -12,19 +12,20 @@ function getSearchParamValue(value: string | string[] | undefined): string | nul
     return value || null;
 }
 
-export default async function RegisterPage({ searchParams }: RegisterPageProps) {
+export default async function VerifyPage({ searchParams }: VerifyPageProps) {
     const resolvedSearchParams = searchParams ? await searchParams : undefined;
+    const token = getSearchParamValue(resolvedSearchParams?.token);
     const nextParam = getSearchParamValue(resolvedSearchParams?.next);
 
     return (
         <AuthPageShell
-            title="Creá tu cuenta"
-            subtitle="Antes de pagar necesitás una cuenta verificada. Registrate, confirmá tu email y después volvés al carrito."
-            footerText="¿Ya tenés cuenta?"
+            title="Activá tu cuenta"
+            subtitle="Definí tu contraseña para verificar el email y quedar listo para volver al carrito."
+            footerText="¿Ya activaste la cuenta?"
             footerLinkLabel="Ingresá"
             footerHref={nextParam ? `/auth/login?next=${encodeURIComponent(nextParam)}` : '/auth/login'}
         >
-            <RegisterForm nextParam={nextParam} />
+            <VerifyAccountForm token={token} nextParam={nextParam} />
         </AuthPageShell>
     );
 }

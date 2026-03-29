@@ -63,6 +63,7 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
       SMTP_SECURE: ${SMTP_SECURE:-}
+      OPERATIONS_NOTIFICATION_EMAIL: ${OPERATIONS_NOTIFICATION_EMAIL:-}
       # Getnet Payment Configuration
       GETNET_ENABLED: ${GETNET_ENABLED:-false}
       GETNET_MODE: ${GETNET_MODE:-real}

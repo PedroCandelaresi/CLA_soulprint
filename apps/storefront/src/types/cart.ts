@@ -35,6 +35,5 @@ export interface Cart {
         fullName: string | null;
         email: string | null;
         phone: string | null;
-        document: string | null;
     } | null;
 }

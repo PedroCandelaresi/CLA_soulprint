@@ -20,6 +20,12 @@ import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import { getCustomerOrder } from '@/lib/auth/client';
 import { ANDREANI_ENABLED } from '@/lib/andreani/config';
+import {
+    deriveOrderBusinessStatus,
+    getBusinessStatusPresentation,
+    getProductionStatusLabel,
+} from '@/lib/orders/business-status';
+import OrderProgressTimeline from '@/components/orders/OrderProgressTimeline';
 import OrderPersonalizationCard from '@/components/personalization/OrderPersonalizationCard';
 import type { CustomerOrderDetailResponse, CustomerOrderSummary } from '@/types/customer-account';
 
@@ -139,6 +145,8 @@ export default function OrderDetailView({ orderCode }: OrderDetailViewProps) {
     }
 
     const { order } = data;
+    const businessStatus = deriveOrderBusinessStatus(order);
+    const statusPresentation = getBusinessStatusPresentation(businessStatus);
 
     return (
         <Box sx={{ py: { xs: 4, md: 6 } }}>
@@ -171,10 +179,15 @@ export default function OrderDetailView({ orderCode }: OrderDetailViewProps) {
                                 </Stack>
 
                                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} flexWrap="wrap">
+                                    <Chip color={statusPresentation.tone} label={`Estado: ${statusPresentation.label}`} />
                                     <Chip label={`Pago: ${order.payment.state || order.state}`} />
-                                    <Chip label={`Envío: ${order.shipmentState || 'Sin novedades'}`} />
+                                    <Chip label={`Envío: ${order.shipmentState || 'Aún no disponible'}`} />
                                     <Chip label={`Tracking: ${order.trackingCode || 'No disponible'}`} />
                                 </Stack>
+
+                                <Alert severity={statusPresentation.tone === 'default' ? 'info' : statusPresentation.tone}>
+                                    {statusPresentation.description}
+                                </Alert>
 
                                 <Typography color="text.secondary">
                                     Cliente cuenta: {data.customer.firstName || data.customer.lastName
@@ -200,11 +213,10 @@ export default function OrderDetailView({ orderCode }: OrderDetailViewProps) {
                                     </Typography>
                                 )}
 
-                                {order.buyer?.document && (
-                                    <Typography color="text.secondary">
-                                        DNI / Documento compra: {order.buyer.document}
-                                    </Typography>
-                                )}
+                                <Typography color="text.secondary">
+                                    Producción: {getProductionStatusLabel(order.productionStatus)}
+                                    {order.productionUpdatedAt ? ` · ${formatDate(order.productionUpdatedAt)}` : ''}
+                                </Typography>
 
                                 {ANDREANI_ENABLED && order.logistics?.serviceName && (
                                     <Typography color="text.secondary">
@@ -226,6 +238,17 @@ export default function OrderDetailView({ orderCode }: OrderDetailViewProps) {
                                         Abrir archivo cargado
                                     </Button>
                                 )}
+                            </Stack>
+                        </CardContent>
+                    </Card>
+
+                    <Card variant="outlined" sx={{ borderRadius: 3 }}>
+                        <CardContent>
+                            <Stack spacing={2}>
+                                <Typography variant="h5" fontWeight={700}>
+                                    Timeline del pedido
+                                </Typography>
+                                <OrderProgressTimeline order={order} />
                             </Stack>
                         </CardContent>
                     </Card>

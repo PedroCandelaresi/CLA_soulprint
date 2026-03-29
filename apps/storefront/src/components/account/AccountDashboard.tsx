@@ -23,6 +23,12 @@ import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import { getCustomerDashboard, updateCustomerProfile } from '@/lib/auth/client';
 import { ANDREANI_ENABLED } from '@/lib/andreani/config';
+import {
+    deriveOrderBusinessStatus,
+    getBusinessStatusPresentation,
+    getProductionStatusLabel,
+} from '@/lib/orders/business-status';
+import OrderProgressTimeline from '@/components/orders/OrderProgressTimeline';
 import type { CustomerDashboardData, CustomerOrderSummary } from '@/types/customer-account';
 
 function formatDate(value: string | null): string {
@@ -261,7 +267,11 @@ export default function AccountDashboard() {
                                 </Alert>
                             ) : (
                                 <Stack spacing={2.5}>
-                                    {data.orders.map((order) => (
+                                    {data.orders.map((order) => {
+                                        const businessStatus = deriveOrderBusinessStatus(order);
+                                        const statusPresentation = getBusinessStatusPresentation(businessStatus);
+
+                                        return (
                                         <Card key={order.code} variant="outlined" sx={{ borderRadius: 3 }}>
                                             <CardContent>
                                                 <Stack spacing={2}>
@@ -285,10 +295,15 @@ export default function AccountDashboard() {
                                                     </Stack>
 
                                                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} flexWrap="wrap">
+                                                        <Chip color={statusPresentation.tone} label={`Estado: ${statusPresentation.label}`} />
                                                         <Chip icon={<ReceiptLongOutlinedIcon />} label={`Pago: ${order.payment.state || order.state}`} />
-                                                        <Chip icon={<LocalShippingOutlinedIcon />} label={`Envío: ${order.shipmentState || 'Sin novedades'}`} />
+                                                        <Chip icon={<LocalShippingOutlinedIcon />} label={`Envío: ${order.trackingCode ? order.trackingCode : order.shipmentState || 'Aún no disponible'}`} />
                                                         <Chip icon={<PhotoCameraBackOutlinedIcon />} color={getPersonalizationColor(order)} label={`Personalización: ${getPersonalizationLabel(order)}`} />
                                                     </Stack>
+
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {statusPresentation.description}
+                                                    </Typography>
 
                                                     {order.personalization?.requiresPersonalization && order.personalization.personalizationStatus === 'pending' && (
                                                         <Alert severity="warning">
@@ -321,6 +336,10 @@ export default function AccountDashboard() {
                                                                     Teléfono compra: {order.buyer.phone}
                                                                 </Typography>
                                                             )}
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Producción: {getProductionStatusLabel(order.productionStatus)}
+                                                                {order.productionUpdatedAt ? ` · ${formatDate(order.productionUpdatedAt)}` : ''}
+                                                            </Typography>
                                                             {order.trackingCode && (
                                                                 <Typography variant="body2" color="text.secondary">
                                                                     Tracking: {order.trackingCode}
@@ -338,21 +357,32 @@ export default function AccountDashboard() {
                                                             )}
                                                         </Box>
 
-                                                        {order.personalization?.assetPreviewUrl && (
-                                                            <Box
-                                                                component="img"
-                                                                src={order.personalization.assetPreviewUrl}
-                                                                alt={order.personalization.originalFilename || `Personalización ${order.code}`}
-                                                                sx={{
-                                                                    width: { xs: '100%', md: 140 },
-                                                                    height: 140,
-                                                                    objectFit: 'cover',
-                                                                    borderRadius: 2,
-                                                                    border: '1px solid',
-                                                                    borderColor: 'divider',
-                                                                }}
-                                                            />
-                                                        )}
+                                                        <Stack spacing={2} width={{ xs: '100%', md: 280 }}>
+                                                            <Card variant="outlined" sx={{ borderRadius: 2.5 }}>
+                                                                <CardContent sx={{ p: 2 }}>
+                                                                    <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+                                                                        Progreso del pedido
+                                                                    </Typography>
+                                                                    <OrderProgressTimeline order={order} compact />
+                                                                </CardContent>
+                                                            </Card>
+
+                                                            {order.personalization?.assetPreviewUrl && (
+                                                                <Box
+                                                                    component="img"
+                                                                    src={order.personalization.assetPreviewUrl}
+                                                                    alt={order.personalization.originalFilename || `Personalización ${order.code}`}
+                                                                    sx={{
+                                                                        width: '100%',
+                                                                        height: 140,
+                                                                        objectFit: 'cover',
+                                                                        borderRadius: 2,
+                                                                        border: '1px solid',
+                                                                        borderColor: 'divider',
+                                                                    }}
+                                                                />
+                                                            )}
+                                                        </Stack>
                                                     </Stack>
 
                                                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -377,7 +407,8 @@ export default function AccountDashboard() {
                                                 </Stack>
                                             </CardContent>
                                         </Card>
-                                    ))}
+                                        );
+                                    })}
                                 </Stack>
                             )}
                         </>

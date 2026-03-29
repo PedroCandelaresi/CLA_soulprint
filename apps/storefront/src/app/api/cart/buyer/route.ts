@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchActiveCustomer, performUpdateCustomer } from '@/app/api/auth/utils';
 import { appendVendureSetCookieHeaders } from '@/lib/vendure/client';
-import { setOrderBuyerSnapshot } from '@/lib/vendure/cart';
+import { getActiveOrder } from '@/lib/vendure/cart';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,23 +26,23 @@ function getDigits(value: string): string {
 
 function validateBuyerInput(input: {
     fullName: string;
-    email: string;
     phone: string;
-    document: string;
 }): string | null {
     if (input.fullName.trim().length < 3) {
         return 'Ingresá nombre y apellido del comprador.';
     }
-    if (!EMAIL_REGEX.test(input.email.trim())) {
-        return 'Ingresá un email válido.';
-    }
     if (getDigits(input.phone).length < 8) {
         return 'Ingresá un teléfono válido.';
     }
-    if (getDigits(input.document).length < 7) {
-        return 'Ingresá un DNI / documento válido.';
-    }
     return null;
+}
+
+function buildBuyerBackendUrl(): string {
+    const vendureApiUrl = process.env.VENDURE_INTERNAL_API_URL
+        || process.env.NEXT_PUBLIC_VENDURE_API_URL
+        || 'http://localhost:3001/shop-api';
+
+    return vendureApiUrl.replace(/\/shop-api\/?$/, '/checkout/buyer');
 }
 
 function getErrorMessage(error: unknown): string {
@@ -62,53 +62,78 @@ export async function POST(request: NextRequest) {
 
     const cookieHeader = request.headers.get('cookie') || undefined;
     const fullName = typeof body?.fullName === 'string' ? body.fullName.trim() : '';
-    const email = typeof body?.email === 'string' ? body.email.trim() : '';
     const phone = typeof body?.phone === 'string' ? body.phone.trim() : '';
-    const document = typeof body?.document === 'string' ? body.document.trim() : '';
 
-    const validationError = validateBuyerInput({ fullName, email, phone, document });
+    const validationError = validateBuyerInput({ fullName, phone });
     if (validationError) {
         return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
     try {
         const customer = await fetchActiveCustomer(cookieHeader).catch(() => null);
-        let snapshotEmail = email;
+        if (!customer || !EMAIL_REGEX.test(customer.emailAddress.trim())) {
+            return NextResponse.json({
+                error: 'Necesitás iniciar sesión con una cuenta verificada para guardar los datos del comprador.',
+            }, { status: 401 });
+        }
+
         const response = NextResponse.json({ ok: true });
 
-        if (customer) {
-            const { firstName, lastName } = splitFullName(fullName);
-            const updateResult = await performUpdateCustomer({
-                firstName,
-                lastName,
-                phoneNumber: phone,
-                documentNumber: document,
-                cookieHeader,
-            });
-
-            if (!updateResult.body.success) {
-                return NextResponse.json({ error: updateResult.body.error || 'No se pudo actualizar la cuenta.' }, { status: 400 });
-            }
-
-            snapshotEmail = customer.emailAddress;
-            appendVendureSetCookieHeaders(updateResult.headers, response.headers);
-        }
-
-        const result = await setOrderBuyerSnapshot(cookieHeader, {
-            buyerFullName: fullName,
-            buyerEmail: snapshotEmail,
-            buyerPhone: phone,
-            buyerDocument: document,
+        const { firstName, lastName } = splitFullName(fullName);
+        const updateResult = await performUpdateCustomer({
+            firstName,
+            lastName,
+            phoneNumber: phone,
+            cookieHeader,
         });
 
-        if (result.error) {
-            return NextResponse.json({ error: result.error, cart: result.cart }, { status: 400 });
+        if (!updateResult.body.success) {
+            return NextResponse.json({ error: updateResult.body.error || 'No se pudo actualizar la cuenta.' }, { status: 400 });
         }
 
-        appendVendureSetCookieHeaders(result.headers, response.headers);
+        appendVendureSetCookieHeaders(updateResult.headers, response.headers);
+
+        const backendResponse = await fetch(buildBuyerBackendUrl(), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(cookieHeader ? { cookie: cookieHeader } : {}),
+            },
+            body: JSON.stringify({
+                fullName,
+                email: customer.emailAddress,
+                phone,
+            }),
+            cache: 'no-store',
+        });
+
+        appendVendureSetCookieHeaders(backendResponse.headers, response.headers);
+        const payload = await backendResponse.json() as {
+            success?: boolean;
+            data?: {
+                orderCode: string;
+                buyer: {
+                    fullName: string | null;
+                    email: string | null;
+                    phone: string | null;
+                } | null;
+            };
+            error?: string;
+        };
+
+        if (!backendResponse.ok || payload.success !== true || !payload.data) {
+            return NextResponse.json(
+                { error: payload.error || 'No se pudieron guardar los datos del comprador.' },
+                { status: backendResponse.status || 400 },
+            );
+        }
+
+        const activeOrderResult = await getActiveOrder(cookieHeader);
+        appendVendureSetCookieHeaders(activeOrderResult.headers, response.headers);
+
         return NextResponse.json({
-            cart: result.cart,
-            buyer: result.cart?.buyer || null,
+            cart: activeOrderResult.cart,
+            buyer: payload.data.buyer,
         }, {
             headers: response.headers,
         });

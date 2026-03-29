@@ -35,6 +35,7 @@
   var PERSONALIZATION_MESSAGES = {
     en: {
       assetUnavailable: 'No linked file',
+      businessStatus: 'Business status',
       fileName: 'File',
       loadErrorBody: 'The personalization data for this order could not be loaded.',
       loadErrorTitle: 'Unable to load personalization',
@@ -56,12 +57,14 @@
       pendingDescription: 'This order requires a file and there is still no photo linked to the order.',
       paymentState: 'Payment',
       refresh: 'Refresh',
+      productionStatus: 'Production',
+      productionUpdatedAt: 'Production updated',
       required: 'Requires personalization',
       retry: 'Retry',
       shipmentState: 'Shipment',
       status: 'Personalization status',
       trackingCode: 'Tracking',
-      title: 'Order personalization',
+      title: 'Order status and personalization',
       unavailable: 'Unavailable',
       unknownStatus: 'Unknown status',
       uploaded: 'File uploaded',
@@ -71,6 +74,7 @@
     },
     es: {
       assetUnavailable: 'No hay archivo vinculado',
+      businessStatus: 'Estado general',
       fileName: 'Archivo',
       loadErrorBody: 'No se pudieron cargar los datos de personalización de esta orden.',
       loadErrorTitle: 'No se pudo cargar la personalización',
@@ -92,12 +96,14 @@
       pendingDescription: 'Esta orden requiere un archivo y todavía no hay una foto vinculada al pedido.',
       paymentState: 'Pago',
       refresh: 'Actualizar',
+      productionStatus: 'Producción',
+      productionUpdatedAt: 'Actualización producción',
       required: 'Requiere personalización',
       retry: 'Reintentar',
       shipmentState: 'Envío',
       status: 'Estado de personalización',
       trackingCode: 'Tracking',
-      title: 'Personalización del pedido',
+      title: 'Estado del pedido y personalización',
       unavailable: 'No disponible',
       unknownStatus: 'Estado desconocido',
       uploaded: 'Foto subida',
@@ -110,6 +116,8 @@
   var PERSONALIZATION_ORDER_QUERY_FIELDS = [
     'personalizationRequired',
     'personalizationStatus',
+    'productionStatus',
+    'productionUpdatedAt',
     'personalizationAssetPreviewUrl',
     'personalizationOriginalFilename',
     'personalizationUploadedAt',
@@ -1116,6 +1124,116 @@
     };
   }
 
+  function normalizeProductionStatus(value) {
+    var normalized = normalizeText(value);
+
+    if (normalized === 'in-production' || normalized === 'in_production' || normalized === 'production') {
+      return 'in-production';
+    }
+
+    if (
+      normalized === 'ready' ||
+      normalized === 'ready-to-ship' ||
+      normalized === 'ready_to_ship' ||
+      normalized === 'listo'
+    ) {
+      return 'ready';
+    }
+
+    return 'not-started';
+  }
+
+  function getProductionLabel(value) {
+    var status = normalizeProductionStatus(value);
+
+    if (status === 'in-production') {
+      return 'En producción';
+    }
+
+    if (status === 'ready') {
+      return 'Listo para enviar';
+    }
+
+    return 'Sin iniciar';
+  }
+
+  function deriveBusinessStatus(normalized) {
+    var paymentState = normalizeText(normalized.paymentState);
+    var orderState = normalizeText(normalized.orderState);
+    var shipmentState = normalizeText(normalized.shipmentState);
+    var productionStatus = normalizeProductionStatus(normalized.productionStatus);
+
+    if (orderState === 'cancelled') {
+      return 'cancelled';
+    }
+
+    if (
+      ['authorized', 'settled', 'paymentauthorized', 'paymentsettled', 'approved'].indexOf(paymentState) === -1 &&
+      ['paymentauthorized', 'paymentsettled'].indexOf(orderState) === -1
+    ) {
+      return 'pending_payment';
+    }
+
+    if (shipmentState.indexOf('deliver') !== -1 || shipmentState.indexOf('entreg') !== -1) {
+      return 'delivered';
+    }
+
+    if (
+      normalized.trackingCode ||
+      shipmentState.indexOf('ship') !== -1 ||
+      shipmentState.indexOf('dispatch') !== -1 ||
+      shipmentState.indexOf('enviado') !== -1 ||
+      shipmentState.indexOf('transito') !== -1 ||
+      shipmentState.indexOf('camino') !== -1
+    ) {
+      return 'shipped';
+    }
+
+    if (productionStatus === 'ready') {
+      return 'ready_to_ship';
+    }
+
+    if (productionStatus === 'in-production') {
+      return 'in_production';
+    }
+
+    if (normalized.required && normalized.status === 'pending') {
+      return 'awaiting_personalization';
+    }
+
+    if (normalized.required && normalized.status === 'uploaded') {
+      return 'personalization_received';
+    }
+
+    return 'paid';
+  }
+
+  function getBusinessStatusPresentation(status) {
+    var messages = getPersonalizationMessages();
+
+    switch (status) {
+      case 'pending_payment':
+        return { label: 'Pendiente de pago', description: 'La orden existe, pero todavía no tiene pago confirmado.', tone: 'neutral' };
+      case 'awaiting_personalization':
+        return { label: 'Esperando personalización', description: 'El pago está acreditado, pero falta el archivo requerido.', tone: 'warning' };
+      case 'personalization_received':
+        return { label: 'Material recibido', description: 'La foto ya fue recibida y el pedido puede pasar a producción.', tone: 'success' };
+      case 'in_production':
+        return { label: 'En producción', description: 'Operación marcó este pedido como en producción.', tone: 'success' };
+      case 'ready_to_ship':
+        return { label: 'Listo para enviar', description: 'La producción terminó y el pedido quedó listo para despacho.', tone: 'success' };
+      case 'shipped':
+        return { label: 'Enviado', description: 'El pedido ya salió y tiene datos de envío disponibles.', tone: 'success' };
+      case 'delivered':
+        return { label: 'Entregado', description: 'El pedido figura como entregado.', tone: 'success' };
+      case 'cancelled':
+        return { label: 'Cancelado', description: 'La orden quedó cancelada.', tone: 'warning' };
+      case 'paid':
+      default:
+        return { label: 'Pago confirmado', description: 'El pago está acreditado y el pedido quedó listo para preparación.', tone: 'neutral' };
+    }
+  }
+
   function normalizePersonalizationData(order) {
     var customFields = order && order.customFields && typeof order.customFields === 'object' ? order.customFields : {};
     var asset =
@@ -1134,19 +1252,36 @@
       asset && asset.name
     );
     var rawStatus = normalizeText(customFields.personalizationStatus);
+    var productionStatus = normalizeText(customFields.productionStatus);
     var lastPayment = getLastItem(order && order.payments);
     var lastFulfillment = getLastItem(order && order.fulfillments);
     var statusPresentation = getStatusPresentation(required, rawStatus, Boolean(assetUrl));
+    var businessStatus = deriveBusinessStatus({
+      paymentState: normalizeText(lastPayment && lastPayment.state),
+      orderState: normalizeText(order && order.state),
+      required: required,
+      shipmentState: normalizeText(lastFulfillment && lastFulfillment.state),
+      status: rawStatus || (required ? (assetUrl ? 'uploaded' : 'pending') : 'not-required'),
+      trackingCode: normalizeText(lastFulfillment && lastFulfillment.trackingCode),
+      productionStatus: productionStatus
+    });
+    var businessPresentation = getBusinessStatusPresentation(businessStatus);
 
     return {
       assetMimeType: normalizeText(asset && asset.mimeType),
       assetUrl: assetUrl,
+      businessStatus: businessStatus,
+      businessStatusDescription: businessPresentation.description,
+      businessStatusLabel: businessPresentation.label,
       filename: filename,
       notes: normalizeText(customFields.personalizationNotes),
       orderCode: normalizeText(order && order.code),
       orderState: normalizeText(order && order.state),
       paymentState: normalizeText(lastPayment && lastPayment.state),
       previewUrl: previewUrl,
+      productionStatus: productionStatus,
+      productionStatusLabel: getProductionLabel(productionStatus),
+      productionUpdatedAt: formatDateTime(customFields.productionUpdatedAt),
       required: required,
       shipmentState: normalizeText(lastFulfillment && lastFulfillment.state),
       status: rawStatus || (required ? (assetUrl ? 'uploaded' : 'pending') : 'not-required'),
@@ -1183,7 +1318,7 @@
     var badge = createElement(
       'span',
       'cla-order-personalization-badge cla-order-personalization-badge--' + normalized.tone,
-      normalized.statusLabel || messages.unknownStatus
+      normalized.businessStatusLabel || normalized.statusLabel || messages.unknownStatus
     );
     var header = createElement('div', 'card-header cla-order-personalization-card__header');
     var titleGroup = createElement('div', 'cla-order-personalization-card__title-group');
@@ -1197,7 +1332,7 @@
     var summary = createElement(
       'p',
       'cla-order-personalization-card__summary',
-      normalized.statusDescription
+      normalized.businessStatusDescription || normalized.statusDescription
     );
     var content = createElement('div', 'cla-order-personalization-card__content');
     var previewColumn = createElement('div', 'cla-order-personalization-card__preview');
@@ -1242,8 +1377,11 @@
       );
     }
 
+    appendMetaRow(meta, messages.businessStatus, normalized.businessStatusLabel || messages.unavailable);
     appendMetaRow(meta, messages.required, normalized.required ? messages.orderRequiresYes : messages.orderRequiresNo);
     appendMetaRow(meta, messages.status, normalized.statusLabel || messages.unknownStatus);
+    appendMetaRow(meta, messages.productionStatus, normalized.productionStatusLabel);
+    appendMetaRow(meta, messages.productionUpdatedAt, normalized.productionUpdatedAt);
     appendMetaRow(meta, messages.fileName, normalized.filename || messages.assetUnavailable);
     appendMetaRow(meta, messages.uploadedAt, normalized.uploadedAt);
     appendMetaRow(meta, messages.orderState, normalized.orderState);

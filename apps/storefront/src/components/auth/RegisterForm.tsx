@@ -30,12 +30,9 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
     const router = useRouter();
     const { customer, isLoading, refreshCustomer } = useCustomer();
     const { refreshCart } = useCart();
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
+    const [fullName, setFullName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [documentNumber, setDocumentNumber] = useState('');
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -56,11 +53,8 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
 
         const response = await register({
             email,
-            password,
-            firstName,
-            lastName,
+            fullName,
             phoneNumber,
-            documentNumber,
         });
 
         if (!response.success) {
@@ -70,7 +64,7 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
         }
 
         if (response.verificationRequired) {
-            setMessage(response.message || 'Revisá tu email para verificar la cuenta y después iniciá sesión.');
+            setMessage(response.message || 'Revisá tu email para verificar la cuenta, definí tu contraseña y después volvés al carrito.');
             setIsSubmitting(false);
             return;
         }
@@ -98,20 +92,13 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
                 </Alert>
             )}
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <TextField
-                    label="Nombre"
-                    autoComplete="given-name"
-                    value={firstName}
-                    onChange={(event) => setFirstName(event.target.value)}
-                />
-                <TextField
-                    label="Apellido"
-                    autoComplete="family-name"
-                    value={lastName}
-                    onChange={(event) => setLastName(event.target.value)}
-                />
-            </Stack>
+            <TextField
+                label="Nombre completo"
+                autoComplete="name"
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
+                required
+            />
 
             <TextField
                 label="Email"
@@ -122,31 +109,18 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
                 required
             />
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <TextField
-                    label="Teléfono"
-                    autoComplete="tel"
-                    value={phoneNumber}
-                    onChange={(event) => setPhoneNumber(event.target.value)}
-                    helperText="Se usa para contacto y futuros envíos."
-                />
-                <TextField
-                    label="DNI / Documento"
-                    value={documentNumber}
-                    onChange={(event) => setDocumentNumber(event.target.value)}
-                    helperText="Podés completarlo ahora o más tarde desde tu cuenta."
-                />
-            </Stack>
-
             <TextField
-                label="Contraseña"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                label="Teléfono"
+                autoComplete="tel"
+                value={phoneNumber}
+                onChange={(event) => setPhoneNumber(event.target.value)}
+                helperText="Lo usamos para identificar tu compra y contactarte si hace falta."
                 required
-                helperText="Usá una contraseña que recuerdes; después vas a poder seguir tus pedidos desde el dashboard."
             />
+
+            <Alert severity="info">
+                Después de crear la cuenta te vamos a enviar un email para activarla. En ese link definís tu contraseña y quedás listo para volver al carrito.
+            </Alert>
 
             <Button
                 type="submit"
@@ -159,7 +133,7 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
             </Button>
 
             <Typography variant="body2" color="text.secondary" textAlign="center">
-                El checkout como invitado sigue disponible. Esta cuenta suma historial, tracking y personalización centralizados.
+                Necesitás una cuenta verificada para finalizar la compra. Si preferís, también podés entrar con Google desde la pantalla de login.
             </Typography>
         </Stack>
     );

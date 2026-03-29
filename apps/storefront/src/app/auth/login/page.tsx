@@ -20,7 +20,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     return (
         <AuthPageShell
             title="Ingresá a tu cuenta"
-            subtitle="Consultá tus pedidos, seguí el tracking y completá la personalización desde un solo lugar."
+            subtitle="Necesitás estar autenticado para finalizar la compra. También podés entrar con Google y volver directo al carrito."
             footerText="¿Todavía no tenés cuenta?"
             footerLinkLabel="Registrate"
             footerHref={nextParam ? `/auth/register?next=${encodeURIComponent(nextParam)}` : '/auth/register'}

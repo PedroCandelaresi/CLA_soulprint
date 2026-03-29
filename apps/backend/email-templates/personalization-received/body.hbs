@@ -1,0 +1,28 @@
+{{> header title="Recibimos tu archivo" }}
+
+<mj-section>
+  <mj-column>
+    <mj-text>
+      Hola {{ customerName }},
+    </mj-text>
+    <mj-text>
+      El archivo de personalización de tu pedido <strong>#{{ order.code }}</strong> ya quedó recibido y vinculado correctamente.
+    </mj-text>
+    <mj-text>
+      Estado actual: <strong>{{ businessStatusLabel }}</strong>
+    </mj-text>
+    {{#if uploadedAt}}
+      <mj-text>
+        Fecha de carga: {{ formatDate uploadedAt }}
+      </mj-text>
+    {{/if}}
+    <mj-button href="{{ orderUrl }}" background-color="#0a6c42">
+      Ver detalle del pedido
+    </mj-button>
+    {{#if assetUrl}}
+      <mj-text>
+        Si necesitás revisar el material cargado, podés abrirlo desde el detalle del pedido.
+      </mj-text>
+    {{/if}}
+  </mj-column>
+</mj-section>

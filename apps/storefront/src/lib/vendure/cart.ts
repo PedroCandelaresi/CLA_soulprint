@@ -16,7 +16,6 @@ const ACTIVE_ORDER_FRAGMENT = `
       buyerFullName
       buyerEmail
       buyerPhone
-      buyerDocument
     }
     lines {
       id
@@ -106,24 +105,6 @@ const REMOVE_ORDER_LINE_MUTATION = `
   ${ACTIVE_ORDER_FRAGMENT}
 `;
 
-const SET_ORDER_CUSTOM_FIELDS_MUTATION = `
-  mutation SetOrderCustomFields($input: UpdateOrderInput!) {
-    setOrderCustomFields(input: $input) {
-      __typename
-      ...ActiveOrderFields
-      ... on ErrorResult {
-        errorCode
-        message
-      }
-      ... on NoActiveOrderError {
-        errorCode
-        message
-      }
-    }
-  }
-  ${ACTIVE_ORDER_FRAGMENT}
-`;
-
 interface VendureAsset {
     preview: string;
 }
@@ -159,7 +140,6 @@ interface VendureOrder {
         buyerFullName?: string | null;
         buyerEmail?: string | null;
         buyerPhone?: string | null;
-        buyerDocument?: string | null;
     } | null;
     lines: VendureOrderLine[];
 }
@@ -186,10 +166,6 @@ interface AdjustOrderLineResponse {
 
 interface RemoveOrderLineResponse {
     removeOrderLine: VendureOrder | VendureErrorResult;
-}
-
-interface SetOrderCustomFieldsResponse {
-    setOrderCustomFields: VendureOrder | VendureErrorResult;
 }
 
 export interface CartOperationResult {
@@ -222,7 +198,6 @@ function mapOrderToCart(order: VendureOrder): Cart {
             fullName: order.customFields?.buyerFullName || null,
             email: order.customFields?.buyerEmail || null,
             phone: order.customFields?.buyerPhone || null,
-            document: order.customFields?.buyerDocument || null,
         },
         lines: order.lines.map((line) => ({
             id: line.id,
@@ -319,28 +294,6 @@ export async function removeOrderLine(cookieHeader: string | undefined, orderLin
 
     return {
         ...mapMutationResult(data.removeOrderLine),
-        headers,
-    };
-}
-
-export async function setOrderBuyerSnapshot(
-    cookieHeader: string | undefined,
-    input: {
-        buyerFullName: string;
-        buyerEmail: string;
-        buyerPhone: string;
-        buyerDocument: string;
-    },
-): Promise<CartOperationResult> {
-    const { data, headers } = await fetchVendureApi<SetOrderCustomFieldsResponse>(SET_ORDER_CUSTOM_FIELDS_MUTATION, {
-        headers: buildVendureHeaders(cookieHeader),
-        variables: {
-            input,
-        },
-    });
-
-    return {
-        ...mapMutationResult(data.setOrderCustomFields),
         headers,
     };
 }
