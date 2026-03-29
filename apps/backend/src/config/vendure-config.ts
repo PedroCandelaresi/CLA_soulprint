@@ -15,6 +15,7 @@ import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
 import { getAdminUiApp } from '../admin-ui/config';
 import { adminUiConfig, adminUiPort, adminUiRoute } from '../admin-ui/admin-ui-options';
 import { initGetnetPlugin, getGetnetMiddleware, getGetnetConfigFromEnv, getnetPaymentHandler } from '../plugins/payments/getnet';
+import { GetnetPaymentTransaction } from '../plugins/payments/getnet/getnet-transaction.entity';
 import { GoogleAuthPlugin, getGoogleAuthConfigFromEnv, GoogleAuthenticationStrategy } from '../plugins/auth/google-auth';
 import { PersonalizationPlugin } from '../plugins/logistics/personalization';
 
@@ -156,6 +157,7 @@ export const config: VendureConfig = {
         type: 'mysql',
         synchronize: IS_DEV && DB_SYNCHRONIZE,
         logging: false,
+        entities: [GetnetPaymentTransaction],
         database: process.env.DB_NAME || 'vendure',
         host: process.env.DB_HOST || 'localhost',
         port: Number(process.env.DB_PORT) || 3306,
