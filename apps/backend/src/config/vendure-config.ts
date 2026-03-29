@@ -14,7 +14,7 @@ import path from 'path';
 import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
 import { getAdminUiApp } from '../admin-ui/config';
 import { adminUiConfig, adminUiPort, adminUiRoute } from '../admin-ui/admin-ui-options';
-import { initGetnetPlugin, getGetnetMiddleware, getGetnetConfigFromEnv, getnetPaymentHandler } from '../plugins/payments/getnet';
+import { GetnetPlugin, initGetnetPlugin, getGetnetMiddleware, getGetnetConfigFromEnv, getnetPaymentHandler } from '../plugins/payments/getnet';
 import { GetnetPaymentTransaction } from '../plugins/payments/getnet/getnet-transaction.entity';
 import { GoogleAuthPlugin, getGoogleAuthConfigFromEnv, GoogleAuthenticationStrategy } from '../plugins/auth/google-auth';
 import { PersonalizationPlugin } from '../plugins/logistics/personalization';
@@ -264,6 +264,7 @@ export const config: VendureConfig = {
             app: getAdminUiApp(),
             adminUiConfig,
         }),
+        GetnetPlugin,
         GoogleAuthPlugin,
         PersonalizationPlugin,
     ],

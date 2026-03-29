@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { PluginCommonModule, VendurePlugin } from '@vendure/core';
 import { DataSource } from 'typeorm';
 import { GetnetService } from './getnet.service';
 import { createGetnetHandlers } from './getnet.controller';
@@ -14,6 +15,13 @@ type ExpressMiddleware = (
 
 // Singleton instance
 let getnetService: GetnetService | null = null;
+
+@VendurePlugin({
+    compatibility: '^2.0.0',
+    imports: [PluginCommonModule],
+    entities: [GetnetPaymentTransaction],
+})
+export class GetnetPlugin {}
 
 function resolveGetnetModeFromEnv(): GetnetPluginConfig['mode'] {
     const rawMode = process.env.GETNET_MODE?.trim().toLowerCase();
