@@ -155,7 +155,7 @@ export class GetnetService {
 
     private buildMockCheckoutUrl(_dto: CreateCheckoutDto, orderUuid: string): string {
         const url = new URL(
-            `/api/payments/getnet/mock/checkout/${encodeURIComponent(orderUuid)}`,
+            `/payments/getnet/mock/checkout/${encodeURIComponent(orderUuid)}`,
             'http://mock.local',
         );
         const forcedStatus = this.getMockForceStatus();
@@ -163,7 +163,7 @@ export class GetnetService {
             url.searchParams.set('status', forcedStatus);
         }
         const processUrl = `${url.pathname}${url.search}`;
-        console.log(`${this.prefix} [mock] Using storefront proxy processUrl: ${processUrl}`);
+        console.log(`${this.prefix} [mock] Using public standalone processUrl: ${processUrl}`);
         return processUrl;
     }
 
