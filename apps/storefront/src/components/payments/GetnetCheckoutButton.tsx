@@ -20,6 +20,7 @@ import type { CreateCheckoutResponse } from '@/types/getnet';
 interface GetnetCheckoutButtonProps {
     cart: Cart;
     onCheckoutComplete?: () => void;
+    onBeforeCheckout?: () => Promise<void>;
     disabled?: boolean;
     variant?: 'contained' | 'outlined';
 }
@@ -27,6 +28,7 @@ interface GetnetCheckoutButtonProps {
 export function GetnetCheckoutButton({
     cart,
     onCheckoutComplete,
+    onBeforeCheckout,
     disabled = false,
     variant = 'contained',
 }: GetnetCheckoutButtonProps) {
@@ -48,6 +50,8 @@ export function GetnetCheckoutButton({
         setError(null);
 
         try {
+            await onBeforeCheckout?.();
+
             // Map cart items to the format expected by the backend
             const items = cart.lines.map((line) => ({
                 id: line.productVariant.id,
@@ -86,7 +90,7 @@ export function GetnetCheckoutButton({
         } finally {
             setIsLoading(false);
         }
-    }, [cart, isLoading, disabled]);
+    }, [cart, isLoading, disabled, onBeforeCheckout]);
 
     function handleRedirectToPayment() {
         if (checkoutUrl && checkoutData) {

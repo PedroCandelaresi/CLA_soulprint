@@ -202,6 +202,7 @@ export default function OrderPersonalizationCard({
     const formattedUploadDate = formatDate(data.uploadedAt);
     const hasUploadedAsset = Boolean(data.assetUrl);
     const uploadAllowed = data.requiresPersonalization && canUploadForPaymentState(data.paymentState);
+    const isPendingRequired = data.requiresPersonalization && data.personalizationStatus === 'pending';
 
     return (
         <Card variant="outlined" sx={{ borderRadius: 3 }}>
@@ -215,6 +216,12 @@ export default function OrderPersonalizationCard({
                             Pedido {data.orderCode}. Estado actual: {data.personalizationStatus === 'uploaded' ? 'foto subida' : data.personalizationStatus === 'pending' ? 'pendiente' : 'no requerida'}.
                         </Typography>
                     </Box>
+
+                    {isPendingRequired && (
+                        <Alert severity="warning">
+                            Acción requerida: este pedido incluye productos personalizables y la imagen es obligatoria. La orden seguirá pendiente hasta que recibamos el archivo.
+                        </Alert>
+                    )}
 
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
                         <Box flex={1}>
@@ -290,8 +297,9 @@ export default function OrderPersonalizationCard({
 
                     {hasUploadedAsset && (
                         <Alert severity="success">
-                            {data.originalFilename ? `Archivo actual: ${data.originalFilename}. ` : ''}
-                            {formattedUploadDate ? `Subido el ${formattedUploadDate}.` : 'La foto ya fue subida.'}
+                            Archivo recibido.
+                            {data.originalFilename ? ` Actual: ${data.originalFilename}.` : ''}
+                            {formattedUploadDate ? ` Subido el ${formattedUploadDate}.` : ' La foto ya fue subida.'}
                         </Alert>
                     )}
 
@@ -307,7 +315,11 @@ export default function OrderPersonalizationCard({
 
                             <Stack spacing={2}>
                                 <Typography fontWeight={600}>
-                                    {hasUploadedAsset ? 'Reemplazar archivo' : 'Archivo para personalizar'}
+                                    {hasUploadedAsset ? 'Reemplazar archivo obligatorio' : 'Archivo obligatorio para personalizar'}
+                                </Typography>
+
+                                <Typography variant="body2" color="text.secondary">
+                                    Sin esta imagen el pedido queda pendiente. Si volvés a cargar un archivo nuevo, reemplaza al anterior.
                                 </Typography>
 
                                 <Button
@@ -364,7 +376,7 @@ export default function OrderPersonalizationCard({
                                         disabled={!selectedFile || isUploading || !uploadAllowed}
                                         startIcon={isUploading ? <CircularProgress size={18} color="inherit" /> : <CloudUploadOutlinedIcon />}
                                     >
-                                        {isUploading ? 'Guardando...' : hasUploadedAsset ? 'Reemplazar archivo' : 'Guardar foto'}
+                                        {isUploading ? 'Guardando...' : hasUploadedAsset ? 'Reemplazar archivo' : 'Guardar foto obligatoria'}
                                     </Button>
 
                                     {data.assetUrl && (

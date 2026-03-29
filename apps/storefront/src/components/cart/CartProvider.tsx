@@ -18,6 +18,7 @@ interface CartContextValue {
     addItem: (productVariantId: string, quantity?: number) => Promise<void>;
     updateLineQuantity: (lineId: string, quantity: number) => Promise<void>;
     removeLine: (lineId: string) => Promise<void>;
+    saveBuyerDetails: (input: { fullName: string; email: string; phone: string; document: string }) => Promise<void>;
     clearError: () => void;
 }
 
@@ -120,6 +121,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }));
     }
 
+    async function saveBuyerDetails(input: { fullName: string; email: string; phone: string; document: string }): Promise<void> {
+        await runMutation(() => requestCart('/api/cart/buyer', {
+            method: 'POST',
+            body: JSON.stringify(input),
+        }));
+    }
+
     return (
         <CartContext.Provider
             value={{
@@ -132,6 +140,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 addItem,
                 updateLineQuantity,
                 removeLine,
+                saveBuyerDetails,
                 clearError: () => setError(null),
             }}
         >

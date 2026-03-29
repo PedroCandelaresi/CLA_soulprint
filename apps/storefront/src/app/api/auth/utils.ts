@@ -72,6 +72,21 @@ const LOGOUT_MUTATION = `
     }
 `;
 
+const UPDATE_CUSTOMER_MUTATION = `
+    mutation UpdateCustomer($input: UpdateCustomerInput!) {
+        updateCustomer(input: $input) {
+            id
+            firstName
+            lastName
+            emailAddress
+            phoneNumber
+            customFields {
+                documentNumber
+            }
+        }
+    }
+`;
+
 const AUTHENTICATE_GOOGLE_MUTATION = `
     mutation AuthenticateWithGoogle($token: String!) {
         authenticate(input: { google: { token: $token } }) {
@@ -101,6 +116,9 @@ const ACTIVE_CUSTOMER_QUERY = `
             lastName
             emailAddress
             phoneNumber
+            customFields {
+                documentNumber
+            }
         }
     }
 `;
@@ -113,6 +131,9 @@ const ACTIVE_CUSTOMER_DASHBOARD_QUERY = `
             lastName
             emailAddress
             phoneNumber
+            customFields {
+                documentNumber
+            }
             orders(options: { take: 50 }) {
                 totalItems
                 items {
@@ -163,6 +184,12 @@ const ACTIVE_CUSTOMER_DASHBOARD_QUERY = `
                         shippingMethod {
                             name
                         }
+                    }
+                    customFields {
+                        buyerFullName
+                        buyerEmail
+                        buyerPhone
+                        buyerDocument
                     }
                     lines {
                         id
@@ -218,6 +245,10 @@ interface LogoutData {
     };
 }
 
+interface UpdateCustomerData {
+    updateCustomer: VendureCustomer;
+}
+
 interface AuthenticateGoogleData {
     authenticate: CurrentUserResult | ErrorResult;
 }
@@ -240,6 +271,9 @@ interface VendureCustomer {
     lastName: string;
     emailAddress: string;
     phoneNumber?: string | null;
+    customFields?: {
+        documentNumber?: string | null;
+    } | null;
     orders?: {
         totalItems: number;
         items: VendureOrder[];
@@ -275,6 +309,12 @@ interface VendureOrder {
             name: string;
         } | null;
     }> | null;
+    customFields?: {
+        buyerFullName?: string | null;
+        buyerEmail?: string | null;
+        buyerPhone?: string | null;
+        buyerDocument?: string | null;
+    } | null;
     lines: Array<{
         id: string;
         quantity: number;
@@ -399,7 +439,39 @@ function mapCustomer(customer: VendureCustomer): CustomerSummary {
         lastName: customer.lastName || '',
         emailAddress: customer.emailAddress,
         phoneNumber: customer.phoneNumber || null,
+        documentNumber: customer.customFields?.documentNumber || null,
     };
+}
+
+function extractCookieHeaderFromResponseHeaders(sourceHeaders: Headers): string | undefined {
+    const headerBag = sourceHeaders as Headers & { getSetCookie?: () => string[] };
+    const setCookies = headerBag.getSetCookie?.() ?? [];
+    const fallbackSetCookie = sourceHeaders.get('set-cookie');
+    const cookieSources = setCookies.length > 0
+        ? setCookies
+        : fallbackSetCookie
+            ? [fallbackSetCookie]
+            : [];
+    const cookiePairs = cookieSources
+        .map((value) => value.split(';', 1)[0])
+        .filter(Boolean);
+
+    if (cookiePairs.length === 0) {
+        return undefined;
+    }
+
+    return cookiePairs.join('; ');
+}
+
+function mergeCookieHeaders(existingCookieHeader: string | undefined, sourceHeaders: Headers): string | undefined {
+    const responseCookieHeader = extractCookieHeaderFromResponseHeaders(sourceHeaders);
+    if (!responseCookieHeader) {
+        return existingCookieHeader;
+    }
+
+    return existingCookieHeader
+        ? `${existingCookieHeader}; ${responseCookieHeader}`
+        : responseCookieHeader;
 }
 
 function readString(value: unknown): string | null {
@@ -516,6 +588,12 @@ function mapOrder(
         trackingCode,
         shippingAddress: order.shippingAddress || null,
         billingAddress: order.billingAddress || null,
+        buyer: {
+            fullName: order.customFields?.buyerFullName || null,
+            email: order.customFields?.buyerEmail || null,
+            phone: order.customFields?.buyerPhone || null,
+            document: order.customFields?.buyerDocument || null,
+        },
         shippingLines: (order.shippingLines || []).map((line) => ({
             name: line.shippingMethod?.name || 'Envío',
             priceWithTax: line.priceWithTax,
@@ -634,6 +712,8 @@ export async function performRegister(input: {
     password: string;
     firstName?: string;
     lastName?: string;
+    phoneNumber?: string;
+    documentNumber?: string;
     cookieHeader?: string;
 }): Promise<{ body: AuthActionResponse; headers: Headers }> {
     const registerResult = await fetchVendureApi<RegisterData>(REGISTER_MUTATION, {
@@ -643,6 +723,7 @@ export async function performRegister(input: {
                 emailAddress: input.email,
                 firstName: input.firstName || undefined,
                 lastName: input.lastName || undefined,
+                phoneNumber: input.phoneNumber || undefined,
                 password: input.password,
             },
         },
@@ -676,7 +757,61 @@ export async function performRegister(input: {
         };
     }
 
+    if (input.documentNumber?.trim()) {
+        const mergedCookieHeader = mergeCookieHeaders(input.cookieHeader, loginResult.headers);
+        const updateResult = await performUpdateCustomer({
+            firstName: input.firstName,
+            lastName: input.lastName,
+            phoneNumber: input.phoneNumber,
+            documentNumber: input.documentNumber,
+            cookieHeader: mergedCookieHeader,
+        });
+
+        if (!updateResult.body.success) {
+            return {
+                body: {
+                    success: true,
+                    message: 'La cuenta quedó creada. Revisá tus datos de comprador desde tu cuenta si faltó guardar algún campo.',
+                },
+                headers: loginResult.headers,
+            };
+        }
+
+        return {
+            body: loginResult.body,
+            headers: loginResult.headers,
+        };
+    }
+
     return loginResult;
+}
+
+export async function performUpdateCustomer(input: {
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    documentNumber?: string;
+    cookieHeader?: string;
+}): Promise<{ body: AuthActionResponse; headers: Headers; customer?: CustomerSummary | null }> {
+    const result = await fetchVendureApi<UpdateCustomerData>(UPDATE_CUSTOMER_MUTATION, {
+        headers: buildVendureHeaders(input.cookieHeader),
+        variables: {
+            input: {
+                firstName: input.firstName?.trim() ? input.firstName.trim() : null,
+                lastName: input.lastName?.trim() ? input.lastName.trim() : null,
+                phoneNumber: input.phoneNumber?.trim() ? input.phoneNumber.trim() : null,
+                customFields: {
+                    documentNumber: input.documentNumber?.trim() ? input.documentNumber.trim() : null,
+                },
+            },
+        },
+    });
+
+    return {
+        body: { success: true },
+        headers: result.headers,
+        customer: mapCustomer(result.data.updateCustomer),
+    };
 }
 
 export async function performLogout(cookieHeader?: string): Promise<{ body: AuthActionResponse; headers: Headers }> {

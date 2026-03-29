@@ -13,6 +13,7 @@ import {
     Container,
     Divider,
     Stack,
+    TextField,
     Typography,
 } from '@mui/material';
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
@@ -20,7 +21,7 @@ import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import PhotoCameraBackOutlinedIcon from '@mui/icons-material/PhotoCameraBackOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import { getCustomerDashboard } from '@/lib/auth/client';
+import { getCustomerDashboard, updateCustomerProfile } from '@/lib/auth/client';
 import { ANDREANI_ENABLED } from '@/lib/andreani/config';
 import type { CustomerDashboardData, CustomerOrderSummary } from '@/types/customer-account';
 
@@ -64,10 +65,21 @@ function getPersonalizationColor(order: CustomerOrderSummary): 'default' | 'warn
     return 'default';
 }
 
+function needsBuyerData(customer: CustomerDashboardData['customer']): boolean {
+    return !customer.firstName || !customer.lastName || !customer.phoneNumber || !customer.documentNumber;
+}
+
 export default function AccountDashboard() {
     const [data, setData] = useState<CustomerDashboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [documentNumber, setDocumentNumber] = useState('');
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const [profileMessage, setProfileMessage] = useState<string | null>(null);
+    const [profileError, setProfileError] = useState<string | null>(null);
 
     const loadDashboard = useEffectEvent(async () => {
         setIsLoading(true);
@@ -81,6 +93,10 @@ export default function AccountDashboard() {
         }
 
         setData(response.data);
+        setFirstName(response.data.customer.firstName || '');
+        setLastName(response.data.customer.lastName || '');
+        setPhoneNumber(response.data.customer.phoneNumber || '');
+        setDocumentNumber(response.data.customer.documentNumber || '');
         setError(null);
         setIsLoading(false);
     });
@@ -88,6 +104,30 @@ export default function AccountDashboard() {
     useEffect(() => {
         void loadDashboard();
     }, []);
+
+    async function handleSaveProfile(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        setIsSavingProfile(true);
+        setProfileError(null);
+        setProfileMessage(null);
+
+        const response = await updateCustomerProfile({
+            firstName,
+            lastName,
+            phoneNumber,
+            documentNumber,
+        });
+
+        if (!response.success) {
+            setProfileError(response.error || 'No se pudo actualizar tu perfil.');
+            setIsSavingProfile(false);
+            return;
+        }
+
+        setProfileMessage('Tus datos se guardaron correctamente.');
+        await loadDashboard();
+        setIsSavingProfile(false);
+    }
 
     return (
         <Box sx={{ py: { xs: 4, md: 6 } }}>
@@ -132,20 +172,85 @@ export default function AccountDashboard() {
                         <>
                             <Card variant="outlined" sx={{ borderRadius: 3 }}>
                                 <CardContent>
-                                    <Stack spacing={1}>
-                                        <Typography variant="h5" fontWeight={700}>
-                                            {data.customer.firstName || data.customer.lastName
-                                                ? `${data.customer.firstName} ${data.customer.lastName}`.trim()
-                                                : 'Cliente'}
-                                        </Typography>
-                                        <Typography color="text.secondary">
-                                            {data.customer.emailAddress}
-                                        </Typography>
-                                        {data.customer.phoneNumber && (
-                                            <Typography color="text.secondary">
-                                                {data.customer.phoneNumber}
+                                    <Stack
+                                        spacing={2}
+                                        component="form"
+                                        onSubmit={handleSaveProfile}
+                                    >
+                                        <Box>
+                                            <Typography variant="h5" fontWeight={700}>
+                                                {data.customer.firstName || data.customer.lastName
+                                                    ? `${data.customer.firstName} ${data.customer.lastName}`.trim()
+                                                    : 'Cliente'}
                                             </Typography>
+                                            <Typography color="text.secondary">
+                                                {data.customer.emailAddress}
+                                            </Typography>
+                                        </Box>
+
+                                        {needsBuyerData(data.customer) && (
+                                            <Alert severity="warning">
+                                                Completá nombre, teléfono y DNI para dejar tu cuenta lista y evitar huecos en futuras compras o seguimientos.
+                                            </Alert>
                                         )}
+
+                                        {profileError && (
+                                            <Alert severity="error">
+                                                {profileError}
+                                            </Alert>
+                                        )}
+
+                                        {profileMessage && (
+                                            <Alert severity="success">
+                                                {profileMessage}
+                                            </Alert>
+                                        )}
+
+                                        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                                            <TextField
+                                                fullWidth
+                                                label="Nombre"
+                                                value={firstName}
+                                                onChange={(event) => setFirstName(event.target.value)}
+                                                autoComplete="given-name"
+                                            />
+                                            <TextField
+                                                fullWidth
+                                                label="Apellido"
+                                                value={lastName}
+                                                onChange={(event) => setLastName(event.target.value)}
+                                                autoComplete="family-name"
+                                            />
+                                        </Stack>
+
+                                        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                                            <TextField
+                                                fullWidth
+                                                label="Teléfono"
+                                                value={phoneNumber}
+                                                onChange={(event) => setPhoneNumber(event.target.value)}
+                                                autoComplete="tel"
+                                            />
+                                            <TextField
+                                                fullWidth
+                                                label="DNI / Documento"
+                                                value={documentNumber}
+                                                onChange={(event) => setDocumentNumber(event.target.value)}
+                                            />
+                                        </Stack>
+
+                                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+                                            <Button
+                                                type="submit"
+                                                variant="outlined"
+                                                disabled={isSavingProfile}
+                                            >
+                                                {isSavingProfile ? 'Guardando...' : 'Guardar datos de comprador'}
+                                            </Button>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Email de cuenta: {data.customer.emailAddress}
+                                            </Typography>
+                                        </Stack>
                                     </Stack>
                                 </CardContent>
                             </Card>
@@ -185,6 +290,12 @@ export default function AccountDashboard() {
                                                         <Chip icon={<PhotoCameraBackOutlinedIcon />} color={getPersonalizationColor(order)} label={`Personalización: ${getPersonalizationLabel(order)}`} />
                                                     </Stack>
 
+                                                    {order.personalization?.requiresPersonalization && order.personalization.personalizationStatus === 'pending' && (
+                                                        <Alert severity="warning">
+                                                            Acción requerida: este pedido necesita una imagen para fabricar el producto. La orden seguirá pendiente hasta que la subas.
+                                                        </Alert>
+                                                    )}
+
                                                     <Divider />
 
                                                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
@@ -195,6 +306,21 @@ export default function AccountDashboard() {
                                                             <Typography variant="body2" color="text.secondary">
                                                                 Estado de la orden: {order.state}
                                                             </Typography>
+                                                            {order.buyer?.fullName && (
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Comprador: {order.buyer.fullName}
+                                                                </Typography>
+                                                            )}
+                                                            {order.buyer?.email && (
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Email compra: {order.buyer.email}
+                                                                </Typography>
+                                                            )}
+                                                            {order.buyer?.phone && (
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Teléfono compra: {order.buyer.phone}
+                                                                </Typography>
+                                                            )}
                                                             {order.trackingCode && (
                                                                 <Typography variant="body2" color="text.secondary">
                                                                     Tracking: {order.trackingCode}

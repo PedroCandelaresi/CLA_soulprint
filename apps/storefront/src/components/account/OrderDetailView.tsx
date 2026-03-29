@@ -177,10 +177,34 @@ export default function OrderDetailView({ orderCode }: OrderDetailViewProps) {
                                 </Stack>
 
                                 <Typography color="text.secondary">
-                                    Cliente: {data.customer.firstName || data.customer.lastName
+                                    Cliente cuenta: {data.customer.firstName || data.customer.lastName
                                         ? `${data.customer.firstName} ${data.customer.lastName}`.trim()
                                         : data.customer.emailAddress}
                                 </Typography>
+
+                                {order.buyer?.fullName && (
+                                    <Typography color="text.secondary">
+                                        Comprador snapshot: {order.buyer.fullName}
+                                    </Typography>
+                                )}
+
+                                {order.buyer?.email && (
+                                    <Typography color="text.secondary">
+                                        Email compra: {order.buyer.email}
+                                    </Typography>
+                                )}
+
+                                {order.buyer?.phone && (
+                                    <Typography color="text.secondary">
+                                        Teléfono compra: {order.buyer.phone}
+                                    </Typography>
+                                )}
+
+                                {order.buyer?.document && (
+                                    <Typography color="text.secondary">
+                                        DNI / Documento compra: {order.buyer.document}
+                                    </Typography>
+                                )}
 
                                 {ANDREANI_ENABLED && order.logistics?.serviceName && (
                                     <Typography color="text.secondary">
@@ -283,6 +307,11 @@ export default function OrderDetailView({ orderCode }: OrderDetailViewProps) {
                     </Card>
 
                     <Box id="personalizacion">
+                        {order.personalization?.requiresPersonalization && order.personalization.personalizationStatus === 'pending' && (
+                            <Alert severity="warning" sx={{ mb: 2 }}>
+                                Falta la imagen de personalización. El pedido queda pendiente hasta que subas el archivo requerido.
+                            </Alert>
+                        )}
                         <OrderPersonalizationCard
                             orderCode={order.code}
                             initialAccessToken={order.personalization?.accessToken ?? null}

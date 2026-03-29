@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
     const password = typeof body?.password === 'string' ? body.password : '';
     const firstName = typeof body?.firstName === 'string' ? body.firstName.trim() : '';
     const lastName = typeof body?.lastName === 'string' ? body.lastName.trim() : '';
+    const phoneNumber = typeof body?.phoneNumber === 'string' ? body.phoneNumber.trim() : '';
+    const documentNumber = typeof body?.documentNumber === 'string' ? body.documentNumber.trim() : '';
 
     if (!email || !password) {
         return toJsonResponse({
@@ -28,6 +30,8 @@ export async function POST(request: NextRequest) {
         password,
         firstName,
         lastName,
+        phoneNumber,
+        documentNumber,
         cookieHeader: request.headers.get('cookie') || undefined,
     });
 

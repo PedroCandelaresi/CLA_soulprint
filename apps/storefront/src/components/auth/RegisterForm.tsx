@@ -32,6 +32,8 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
     const { refreshCart } = useCart();
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [documentNumber, setDocumentNumber] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,6 +59,8 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
             password,
             firstName,
             lastName,
+            phoneNumber,
+            documentNumber,
         });
 
         if (!response.success) {
@@ -117,6 +121,22 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
                 onChange={(event) => setEmail(event.target.value)}
                 required
             />
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <TextField
+                    label="Teléfono"
+                    autoComplete="tel"
+                    value={phoneNumber}
+                    onChange={(event) => setPhoneNumber(event.target.value)}
+                    helperText="Se usa para contacto y futuros envíos."
+                />
+                <TextField
+                    label="DNI / Documento"
+                    value={documentNumber}
+                    onChange={(event) => setDocumentNumber(event.target.value)}
+                    helperText="Podés completarlo ahora o más tarde desde tu cuenta."
+                />
+            </Stack>
 
             <TextField
                 label="Contraseña"

@@ -54,6 +54,8 @@ export async function register(input: {
     password: string;
     firstName?: string;
     lastName?: string;
+    phoneNumber?: string;
+    documentNumber?: string;
 }): Promise<AuthActionResponse> {
     try {
         return await requestJson<AuthActionResponse>('/register', {
@@ -98,6 +100,22 @@ export async function getCustomerDashboard(): Promise<CustomerDashboardResponse>
 export async function getCustomerOrder(orderCode: string): Promise<CustomerOrderDetailResponse> {
     try {
         return await requestJson<CustomerOrderDetailResponse>(`/orders/${encodeURIComponent(orderCode)}`);
+    } catch (error) {
+        return { success: false, error: getErrorMessage(error) };
+    }
+}
+
+export async function updateCustomerProfile(input: {
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    documentNumber?: string;
+}): Promise<AuthActionResponse> {
+    try {
+        return await requestJson<AuthActionResponse>('/profile', {
+            method: 'POST',
+            body: JSON.stringify(input),
+        });
     } catch (error) {
         return { success: false, error: getErrorMessage(error) };
     }

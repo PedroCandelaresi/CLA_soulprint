@@ -13,17 +13,19 @@ import {
     IconButton,
     Paper,
     Stack,
+    TextField,
     Typography,
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CartLine } from '@/types/cart';
 import { ANDREANI_DISABLED_MESSAGE, ANDREANI_ENABLED } from '@/lib/andreani/config';
 import { useCart } from './CartProvider';
 import { GetnetCheckoutButton } from '../payments/GetnetCheckoutButton';
 import AndreaniShippingPanel from '../logistics/AndreaniShippingPanel';
+import { useCustomer } from '@/components/auth/CustomerProvider';
 
 function formatMoney(amount: number, currencyCode: string): string {
     return new Intl.NumberFormat('es-AR', {
@@ -32,9 +34,87 @@ function formatMoney(amount: number, currencyCode: string): string {
     }).format(amount / 100);
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function getDigits(value: string): string {
+    return value.replace(/\D/g, '');
+}
+
 export default function CartPageContent() {
-    const { cart, error, clearError, isInitializing, isMutating, updateLineQuantity, removeLine } = useCart();
+    const { cart, error, clearError, isInitializing, isMutating, updateLineQuantity, removeLine, saveBuyerDetails } = useCart();
+    const { customer, isAuthenticated } = useCustomer();
     const [busyLineId, setBusyLineId] = useState<string | null>(null);
+    const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [document, setDocument] = useState('');
+    const [buyerDataInitialized, setBuyerDataInitialized] = useState(false);
+    const [buyerError, setBuyerError] = useState<string | null>(null);
+    const [buyerMessage, setBuyerMessage] = useState<string | null>(null);
+    const [isSavingBuyer, setIsSavingBuyer] = useState(false);
+
+    useEffect(() => {
+        if (!cart || buyerDataInitialized) {
+            return;
+        }
+
+        const snapshot = cart.buyer;
+        const customerFullName = [customer?.firstName, customer?.lastName].filter(Boolean).join(' ').trim();
+        setFullName(snapshot?.fullName || customerFullName || '');
+        setEmail(isAuthenticated ? customer?.emailAddress || snapshot?.email || '' : snapshot?.email || '');
+        setPhone(snapshot?.phone || customer?.phoneNumber || '');
+        setDocument(snapshot?.document || customer?.documentNumber || '');
+        setBuyerDataInitialized(true);
+    }, [buyerDataInitialized, cart, customer, isAuthenticated]);
+
+    function validateBuyerData(): string | null {
+        if (fullName.trim().length < 3) {
+            return 'Ingresá nombre y apellido del comprador.';
+        }
+        if (!EMAIL_REGEX.test(email.trim())) {
+            return 'Ingresá un email válido.';
+        }
+        if (getDigits(phone).length < 8) {
+            return 'Ingresá un teléfono válido.';
+        }
+        if (getDigits(document).length < 7) {
+            return 'Ingresá un DNI / documento válido.';
+        }
+        return null;
+    }
+
+    async function persistBuyerData(showSuccessMessage = false): Promise<void> {
+        const validationError = validateBuyerData();
+        if (validationError) {
+            setBuyerError(validationError);
+            throw new Error(validationError);
+        }
+
+        setIsSavingBuyer(true);
+        setBuyerError(null);
+        if (showSuccessMessage) {
+            setBuyerMessage(null);
+        }
+
+        try {
+            await saveBuyerDetails({
+                fullName,
+                email,
+                phone,
+                document,
+            });
+
+            if (showSuccessMessage) {
+                setBuyerMessage('Datos del comprador guardados.');
+            }
+        } catch (saveError) {
+            const message = saveError instanceof Error ? saveError.message : 'No se pudieron guardar los datos del comprador.';
+            setBuyerError(message);
+            throw saveError instanceof Error ? saveError : new Error(message);
+        } finally {
+            setIsSavingBuyer(false);
+        }
+    }
 
     async function handleQuantityChange(line: CartLine, quantity: number) {
         setBusyLineId(line.id);
@@ -237,13 +317,83 @@ export default function CartPageContent() {
                             </Typography>
                         </Stack>
                         <Divider />
+                        <Stack spacing={2}>
+                            <Typography variant="h6" fontWeight={700}>Datos del comprador</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Guardamos un snapshot en la orden antes del pago para que el pedido quede identificado aunque después cambie la cuenta.
+                            </Typography>
+
+                            {isAuthenticated && (
+                                <Alert severity="info">
+                                    Si editás nombre, teléfono o DNI acá, también se actualizan en tu cuenta. El email de una cuenta logueada se toma desde la sesión actual.
+                                </Alert>
+                            )}
+
+                            {buyerError && (
+                                <Alert severity="error" onClose={() => setBuyerError(null)}>
+                                    {buyerError}
+                                </Alert>
+                            )}
+
+                            {buyerMessage && (
+                                <Alert severity="success" onClose={() => setBuyerMessage(null)}>
+                                    {buyerMessage}
+                                </Alert>
+                            )}
+
+                            <TextField
+                                label="Nombre completo"
+                                value={fullName}
+                                onChange={(event) => setFullName(event.target.value)}
+                                autoComplete="name"
+                                required
+                            />
+
+                            <TextField
+                                label="Email"
+                                type="email"
+                                value={isAuthenticated ? (customer?.emailAddress || email) : email}
+                                onChange={(event) => setEmail(event.target.value)}
+                                autoComplete="email"
+                                required
+                                InputProps={isAuthenticated ? { readOnly: true } : undefined}
+                                helperText={isAuthenticated ? 'Para cuentas logueadas se usa el email de la sesión.' : undefined}
+                            />
+
+                            <TextField
+                                label="Teléfono"
+                                value={phone}
+                                onChange={(event) => setPhone(event.target.value)}
+                                autoComplete="tel"
+                                required
+                            />
+
+                            <TextField
+                                label="DNI / Documento"
+                                value={document}
+                                onChange={(event) => setDocument(event.target.value)}
+                                required
+                            />
+
+                            <Button
+                                variant="outlined"
+                                onClick={() => void persistBuyerData(true)}
+                                disabled={isSavingBuyer}
+                            >
+                                {isSavingBuyer ? 'Guardando...' : 'Guardar datos del comprador'}
+                            </Button>
+                        </Stack>
+                        <Divider />
                         {ANDREANI_ENABLED ? (
                             <AndreaniShippingPanel cart={cart} />
                         ) : (
                             <Alert severity="info">{ANDREANI_DISABLED_MESSAGE}</Alert>
                         )}
                         <Divider />
-                        <GetnetCheckoutButton cart={cart} />
+                        <GetnetCheckoutButton
+                            cart={cart}
+                            onBeforeCheckout={() => persistBuyerData(false)}
+                        />
                         <Button component={Link} href="/productos" variant="outlined" fullWidth>
                             Seguir comprando
                         </Button>

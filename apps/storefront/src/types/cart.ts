@@ -31,4 +31,10 @@ export interface Cart {
     shippingWithTax: number;
     totalWithTax: number;
     lines: CartLine[];
+    buyer: {
+        fullName: string | null;
+        email: string | null;
+        phone: string | null;
+        document: string | null;
+    } | null;
 }

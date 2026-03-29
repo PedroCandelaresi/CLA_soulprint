@@ -6,6 +6,7 @@ export interface CustomerSummary {
     lastName: string;
     emailAddress: string;
     phoneNumber?: string | null;
+    documentNumber?: string | null;
 }
 
 export interface CustomerOrderAddress {
@@ -34,6 +35,13 @@ export interface CustomerOrderItem {
 export interface CustomerOrderShippingLine {
     name: string;
     priceWithTax: number;
+}
+
+export interface CustomerOrderBuyerSummary {
+    fullName: string | null;
+    email: string | null;
+    phone: string | null;
+    document: string | null;
 }
 
 export interface CustomerOrderPaymentSummary {
@@ -85,6 +93,7 @@ export interface CustomerOrderSummary {
     trackingCode: string | null;
     shippingAddress: CustomerOrderAddress | null;
     billingAddress: CustomerOrderAddress | null;
+    buyer: CustomerOrderBuyerSummary | null;
     shippingLines: CustomerOrderShippingLine[];
     items: CustomerOrderItem[];
     personalization: CustomerOrderPersonalizationSummary | null;

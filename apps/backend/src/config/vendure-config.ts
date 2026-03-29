@@ -177,6 +177,9 @@ export const config: VendureConfig = {
                 : []),
     },
     customFields: {
+        Customer: [
+            { name: 'documentNumber', type: 'string', nullable: true, public: true },
+        ],
         Order: [
             { name: 'andreaniCarrier', type: 'string', nullable: true },
             { name: 'andreaniServiceCode', type: 'string', nullable: true },
@@ -194,6 +197,10 @@ export const config: VendureConfig = {
             { name: 'andreaniShipmentId', type: 'string', nullable: true },
             { name: 'andreaniShipmentStatus', type: 'string', nullable: true },
             { name: 'andreaniShipmentRawResponse', type: 'string', nullable: true },
+            { name: 'buyerFullName', type: 'string', nullable: true, public: true },
+            { name: 'buyerEmail', type: 'string', nullable: true, public: true },
+            { name: 'buyerPhone', type: 'string', nullable: true, public: true },
+            { name: 'buyerDocument', type: 'string', nullable: true, public: true },
             { name: 'personalizationRequired', type: 'boolean', defaultValue: false, public: false },
             { name: 'personalizationStatus', type: 'string', nullable: false, defaultValue: 'not-required', public: false },
             { name: 'personalizationAsset', type: 'relation', entity: Asset, nullable: true, public: false },
