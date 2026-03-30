@@ -35,25 +35,33 @@ export async function POST(request: NextRequest) {
     const phoneNumber = typeof body?.phoneNumber === 'string' ? body.phoneNumber.trim() : '';
     const { firstName, lastName } = splitFullName(fullName);
 
+    console.log(
+        `[api/auth/register] Incoming registration request email=${email ? `${email.slice(0, 2)}***@${email.split('@')[1] || ''}` : '(empty)'} fullNamePresent=${Boolean(fullName)} phonePresent=${Boolean(phoneNumber)}`,
+    );
+
     if (!fullName || !email || !phoneNumber) {
+        console.warn('[api/auth/register] Validation failed: missing required fields');
         return toJsonResponse({
             success: false,
             error: 'Nombre completo, email y teléfono son obligatorios.',
         }, 400);
     }
     if (fullName.length < 3) {
+        console.warn('[api/auth/register] Validation failed: fullName too short');
         return toJsonResponse({
             success: false,
             error: 'Ingresá nombre y apellido completos.',
         }, 400);
     }
     if (!EMAIL_REGEX.test(email)) {
+        console.warn('[api/auth/register] Validation failed: invalid email');
         return toJsonResponse({
             success: false,
             error: 'Ingresá un email válido.',
         }, 400);
     }
     if (getDigits(phoneNumber).length < 8) {
+        console.warn('[api/auth/register] Validation failed: invalid phone number');
         return toJsonResponse({
             success: false,
             error: 'Ingresá un teléfono válido.',
@@ -67,6 +75,10 @@ export async function POST(request: NextRequest) {
         phoneNumber,
         cookieHeader: request.headers.get('cookie') || undefined,
     });
+
+    console.log(
+        `[api/auth/register] Registration result success=${result.body.success} verificationRequired=${String(result.body.verificationRequired)} email=${email ? `${email.slice(0, 2)}***@${email.split('@')[1] || ''}` : '(empty)'}`,
+    );
 
     const status = result.body.success ? 200 : 400;
     return appendVendureCookies(result.headers, toJsonResponse(result.body, status));

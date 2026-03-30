@@ -444,6 +444,20 @@ function getErrorMessage(error: unknown): string {
     return 'No se pudo completar la solicitud.';
 }
 
+function maskEmailForLogs(email: string | undefined | null): string {
+    if (!email) {
+        return '(empty)';
+    }
+    const [localPart = '', domain = ''] = email.split('@');
+    if (!domain) {
+        return email;
+    }
+    const safeLocal = localPart.length <= 2
+        ? `${localPart[0] || '*'}*`
+        : `${localPart.slice(0, 2)}***`;
+    return `${safeLocal}@${domain}`;
+}
+
 function isAuthError(error: unknown): boolean {
     const message = getErrorMessage(error).toLowerCase();
     return message.includes('forbidden')
@@ -758,6 +772,10 @@ export async function performRegister(input: {
     phoneNumber?: string;
     cookieHeader?: string;
 }): Promise<{ body: AuthActionResponse; headers: Headers }> {
+    console.log(
+        `[auth/register] Calling registerCustomerAccount for ${maskEmailForLogs(input.email)} firstName="${input.firstName || ''}" lastName="${input.lastName || ''}" phonePresent=${Boolean(input.phoneNumber)}`,
+    );
+
     const registerResult = await fetchVendureApi<RegisterData>(REGISTER_MUTATION, {
         headers: buildVendureHeaders(input.cookieHeader),
         variables: {
@@ -770,7 +788,14 @@ export async function performRegister(input: {
         },
     });
 
+    console.log(
+        `[auth/register] registerCustomerAccount typename=${registerResult.data.registerCustomerAccount.__typename} email=${maskEmailForLogs(input.email)}`,
+    );
+
     if (registerResult.data.registerCustomerAccount.__typename !== 'Success') {
+        console.error(
+            `[auth/register] registerCustomerAccount failed email=${maskEmailForLogs(input.email)} error=${extractUnionError(registerResult.data.registerCustomerAccount)}`,
+        );
         return {
             body: {
                 success: false,
@@ -779,6 +804,10 @@ export async function performRegister(input: {
             headers: registerResult.headers,
         };
     }
+
+    console.log(
+        `[auth/register] Registration succeeded for ${maskEmailForLogs(input.email)}. Verification email should be queued by Vendure EmailPlugin.`,
+    );
 
     return {
         body: {

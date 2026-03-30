@@ -20,6 +20,7 @@ import { GoogleAuthPlugin, getGoogleAuthConfigFromEnv, GoogleAuthenticationStrat
 import { BuyerCheckoutPlugin } from '../plugins/checkout/buyer';
 import { PersonalizationPlugin } from '../plugins/logistics/personalization';
 import { createEmailTemplateLoader } from '../email/composite-template-loader';
+import { LoggingEmailSender } from '../email/logging-email-sender';
 import { orderBusinessEmailHandlers } from '../plugins/orders/business-status/order-email-handlers';
 
 function requireEnv(name: string): string {
@@ -129,6 +130,14 @@ if (!IS_DEV && !IS_MIGRATION_COMMAND && !SHOP_PUBLIC_URL) {
 if (IS_USING_SMTP_BOOTSTRAP_FALLBACK) {
     console.warn('[email] Using temporary hardcoded SMTP bootstrap defaults. Replace SMTP_* env vars with real provider values when ready.');
 }
+console.log('[email] EmailPlugin configuration summary:');
+console.log(`[email]   mode=${IS_DEV ? 'dev/file' : 'smtp'}`);
+console.log(`[email]   shopPublicUrl=${SHOP_PUBLIC_URL || '(unset)'}`);
+console.log(`[email]   smtpHost=${SMTP_HOST || '(unset)'}`);
+console.log(`[email]   smtpPort=${String(SMTP_PORT || '(unset)')}`);
+console.log(`[email]   smtpUser=${SMTP_USER || '(unset)'}`);
+console.log(`[email]   smtpFrom=${SMTP_FROM || '(unset)'}`);
+console.log(`[email]   smtpSecure=${String(parseBooleanEnv('SMTP_SECURE', SMTP_PORT === 465))}`);
 
 export const config: VendureConfig = {
     defaultLanguageCode: LanguageCode.es,
@@ -239,6 +248,7 @@ export const config: VendureConfig = {
                       route: 'mailbox',
                       handlers: EMAIL_HANDLERS,
                       templateLoader: EMAIL_TEMPLATE_LOADER,
+                      emailSender: new LoggingEmailSender(),
                       globalTemplateVars: {
                           fromAddress: SMTP_FROM,
                           verifyEmailAddressUrl: `${SHOP_PUBLIC_URL}/verify`,
@@ -256,6 +266,7 @@ export const config: VendureConfig = {
                     EmailPlugin.init({
                         handlers: EMAIL_HANDLERS,
                         templateLoader: EMAIL_TEMPLATE_LOADER,
+                        emailSender: new LoggingEmailSender(),
                         globalTemplateVars: {
                             fromAddress: SMTP_FROM,
                             verifyEmailAddressUrl: `${SHOP_PUBLIC_URL}/verify`,
@@ -271,6 +282,7 @@ export const config: VendureConfig = {
                                 pass: SMTP_PASSWORD,
                             },
                             secure: parseBooleanEnv('SMTP_SECURE', SMTP_PORT === 465),
+                            logging: true,
                         },
                     }),
                 ]

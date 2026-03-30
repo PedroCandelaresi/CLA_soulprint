@@ -51,11 +51,20 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
         setError(null);
         setMessage(null);
 
+        console.log('[RegisterForm] Submitting registration request', {
+            email,
+            hasFullName: Boolean(fullName.trim()),
+            hasPhoneNumber: Boolean(phoneNumber.trim()),
+            next: returnTo,
+        });
+
         const response = await register({
             email,
             fullName,
             phoneNumber,
         });
+
+        console.log('[RegisterForm] Registration response received', response);
 
         if (!response.success) {
             setError(response.error || 'No se pudo crear la cuenta.');
