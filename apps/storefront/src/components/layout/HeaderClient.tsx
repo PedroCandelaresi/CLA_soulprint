@@ -10,6 +10,7 @@ import {
     Toolbar,
     IconButton,
     Button,
+    CircularProgress,
     Drawer,
     List,
     ListItem,
@@ -50,7 +51,7 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
     const pathname = usePathname();
     const router = useRouter();
     const { totalQuantity, refreshCart } = useCart();
-    const { customer, isAuthenticated, logout } = useCustomer();
+    const { customer, authStatus, isAuthenticated, logout } = useCustomer();
 
     async function handleLogout() {
         setIsLoggingOut(true);
@@ -142,21 +143,36 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                     </Box>
 
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: { xs: "auto", md: 0 } }}>
-                        <Button
-                            component={Link}
-                            href={isAuthenticated ? "/auth/account" : "/auth/login"}
-                            color="inherit"
-                            startIcon={<PersonOutlineOutlinedIcon />}
-                            sx={{
-                                display: { xs: "none", md: "inline-flex" },
-                                textTransform: "none",
-                                color: "inherit",
-                            }}
-                        >
-                            {isAuthenticated ? (customer?.firstName || "Mi cuenta") : "Ingresar"}
-                        </Button>
+                        {authStatus === 'loading' ? (
+                            <Button
+                                color="inherit"
+                                disabled
+                                startIcon={<CircularProgress size={16} color="inherit" />}
+                                sx={{
+                                    display: { xs: "none", md: "inline-flex" },
+                                    textTransform: "none",
+                                    color: "inherit",
+                                }}
+                            >
+                                Cargando cuenta...
+                            </Button>
+                        ) : (
+                            <Button
+                                component={Link}
+                                href={isAuthenticated ? "/auth/account" : "/auth/login"}
+                                color="inherit"
+                                startIcon={<PersonOutlineOutlinedIcon />}
+                                sx={{
+                                    display: { xs: "none", md: "inline-flex" },
+                                    textTransform: "none",
+                                    color: "inherit",
+                                }}
+                            >
+                                {isAuthenticated ? (customer?.firstName || "Mi cuenta") : "Ingresar"}
+                            </Button>
+                        )}
 
-                        {isAuthenticated && (
+                        {authStatus === 'authenticated' && (
                             <Button
                                 color="inherit"
                                 onClick={() => void handleLogout()}
@@ -246,11 +262,17 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                             </ListItemButton>
                         </ListItem>
                         <ListItem disablePadding>
-                            <ListItemButton component={Link} href={isAuthenticated ? "/auth/account" : "/auth/login"}>
-                                <ListItemText primary={isAuthenticated ? "Mi cuenta" : "Ingresar"} />
-                            </ListItemButton>
+                            {authStatus === 'loading' ? (
+                                <ListItemButton disabled>
+                                    <ListItemText primary="Cargando cuenta..." />
+                                </ListItemButton>
+                            ) : (
+                                <ListItemButton component={Link} href={isAuthenticated ? "/auth/account" : "/auth/login"}>
+                                    <ListItemText primary={isAuthenticated ? "Mi cuenta" : "Ingresar"} />
+                                </ListItemButton>
+                            )}
                         </ListItem>
-                        {isAuthenticated && (
+                        {authStatus === 'authenticated' && (
                             <ListItem disablePadding>
                                 <ListItemButton onClick={() => void handleLogout()} disabled={isLoggingOut}>
                                     <ListItemText primary={isLoggingOut ? "Cerrando sesión..." : "Cerrar sesión"} />

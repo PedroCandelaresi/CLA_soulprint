@@ -4,8 +4,11 @@ import { createContext, useContext, useEffect, useEffectEvent, useState } from '
 import { getActiveCustomer, logout as logoutRequest } from '@/lib/auth/client';
 import type { CustomerSummary } from '@/types/customer-account';
 
+type AuthStatus = 'loading' | 'authenticated' | 'guest';
+
 interface CustomerContextValue {
     customer: CustomerSummary | null;
+    authStatus: AuthStatus;
     isLoading: boolean;
     error: string | null;
     isAuthenticated: boolean;
@@ -26,26 +29,32 @@ function getErrorMessage(error: unknown): string {
 }
 
 export function CustomerProvider({ children }: { children: React.ReactNode }) {
-    const [customer, setCustomer] = useState<CustomerSummary | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [customer, setCustomerState] = useState<CustomerSummary | null>(null);
+    const [authStatus, setAuthStatus] = useState<AuthStatus>('loading');
     const [error, setError] = useState<string | null>(null);
+
+    function setCustomer(nextCustomer: CustomerSummary | null): void {
+        setCustomerState(nextCustomer);
+        setAuthStatus(nextCustomer ? 'authenticated' : 'guest');
+    }
 
     const loadCustomer = useEffectEvent(async () => {
         try {
             const response = await getActiveCustomer();
             if (!response.success) {
-                setCustomer(null);
+                setCustomerState(null);
+                setAuthStatus('guest');
                 setError(response.error || null);
                 return;
             }
 
-            setCustomer(response.customer);
+            setCustomerState(response.customer);
+            setAuthStatus(response.customer ? 'authenticated' : 'guest');
             setError(null);
         } catch (loadError) {
-            setCustomer(null);
+            setCustomerState(null);
+            setAuthStatus('guest');
             setError(getErrorMessage(loadError));
-        } finally {
-            setIsLoading(false);
         }
     });
 
@@ -54,9 +63,8 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     async function refreshCustomer(): Promise<void> {
-        setCustomer(null);
         setError(null);
-        setIsLoading(true);
+        setAuthStatus('loading');
         await loadCustomer();
     }
 
@@ -67,7 +75,8 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
             return false;
         }
 
-        setCustomer(null);
+        setCustomerState(null);
+        setAuthStatus('guest');
         setError(null);
         return true;
     }
@@ -76,9 +85,10 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         <CustomerContext.Provider
             value={{
                 customer,
-                isLoading,
+                authStatus,
+                isLoading: authStatus === 'loading',
                 error,
-                isAuthenticated: Boolean(customer),
+                isAuthenticated: authStatus === 'authenticated',
                 refreshCustomer,
                 setCustomer,
                 logout,
