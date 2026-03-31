@@ -18,6 +18,8 @@ interface VendureRequestOptions {
 export interface VendureFetchResult<T> {
     data: T;
     headers: Headers;
+    status: number;
+    statusText: string;
 }
 
 export async function fetchVendureApi<T>(query: string, options: VendureRequestOptions = {}): Promise<VendureFetchResult<T>> {
@@ -47,6 +49,8 @@ export async function fetchVendureApi<T>(query: string, options: VendureRequestO
     return {
         data: json.data,
         headers: response.headers,
+        status: response.status,
+        statusText: response.statusText,
     };
 }
 

@@ -482,6 +482,53 @@ function getSetCookieCount(headers: Headers): number {
     return headers.get('set-cookie') ? 1 : 0;
 }
 
+function splitCombinedSetCookieHeader(value: string): string[] {
+    const cookies: string[] = [];
+    let current = '';
+    let inExpiresAttribute = false;
+
+    for (let index = 0; index < value.length; index += 1) {
+        const char = value[index];
+        current += char;
+
+        const lowerCurrent = current.toLowerCase();
+        if (!inExpiresAttribute && lowerCurrent.endsWith('expires=')) {
+            inExpiresAttribute = true;
+            continue;
+        }
+
+        if (inExpiresAttribute && char === ';') {
+            inExpiresAttribute = false;
+            continue;
+        }
+
+        if (!inExpiresAttribute && char === ',' && index < value.length - 1) {
+            current = current.slice(0, -1).trim();
+            if (current) {
+                cookies.push(current);
+            }
+            current = '';
+        }
+    }
+
+    const trailing = current.trim();
+    if (trailing) {
+        cookies.push(trailing);
+    }
+
+    return cookies;
+}
+
+function getSetCookieValues(headers: Headers): string[] {
+    const candidate = headers as Headers & { getSetCookie?: () => string[] };
+    if (typeof candidate.getSetCookie === 'function') {
+        return candidate.getSetCookie();
+    }
+
+    const combinedHeader = headers.get('set-cookie');
+    return combinedHeader ? splitCombinedSetCookieHeader(combinedHeader) : [];
+}
+
 function isAuthError(error: unknown): boolean {
     const message = getErrorMessage(error).toLowerCase();
     return message.includes('forbidden')
@@ -876,7 +923,7 @@ export async function performLogin(input: {
     });
 
     console.info(
-        `[auth:login] performLogin vendureTypename=${result.data.login.__typename} setCookieCount=${getSetCookieCount(result.headers)}`,
+        `[auth:login] performLogin vendureStatus=${result.status} vendureStatusText=${result.statusText} vendureTypename=${result.data.login.__typename} setCookieCount=${getSetCookieCount(result.headers)} vendureAuthTokenHeader=${result.headers.get('vendure-auth-token') ? 'present' : '(none)'} vendureSetCookie=${JSON.stringify(getSetCookieValues(result.headers))}`,
     );
 
     if (result.data.login.__typename !== 'CurrentUser') {

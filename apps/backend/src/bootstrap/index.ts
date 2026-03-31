@@ -182,6 +182,25 @@ function getExpressApp(appAny: any): { app: any; source: string } | null {
     return null;
 }
 
+function configureAuthTrustProxy(app: Awaited<ReturnType<typeof bootstrap>>): void {
+    const cookieOptions = config.authOptions.cookieOptions;
+    const shouldTrustProxy = cookieOptions?.secureProxy === true;
+
+    if (!shouldTrustProxy) {
+        console.log('[auth] Express trust proxy not enabled (COOKIE_SECURE_PROXY=false)');
+        return;
+    }
+
+    const expressEntry = getExpressApp(app as any);
+    if (!expressEntry) {
+        console.warn('[auth] Could not find Express app to enable trust proxy for secure cookies.');
+        return;
+    }
+
+    expressEntry.app.set('trust proxy', 1);
+    console.log(`[auth] Enabled Express trust proxy via "${expressEntry.source}" for secure cookie sessions`);
+}
+
 /**
  * Try to register middleware on the Express server
  * In Vendure 2, this can be challenging as the Express app is internal
@@ -255,6 +274,7 @@ async function registerAndreaniRoutes(app: Awaited<ReturnType<typeof bootstrap>>
 bootstrap(config)
     .then(async (app) => {
         console.log('[getnet] Vendure bootstrap complete');
+        configureAuthTrustProxy(app);
         const requestContextService = app.get(RequestContextService);
         const searchService = app.get(SearchService);
         const orderService = app.get(OrderService);
