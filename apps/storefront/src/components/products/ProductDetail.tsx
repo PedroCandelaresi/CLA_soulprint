@@ -116,7 +116,7 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
                             >
                                 {isSubmitting ? 'Agregando...' : 'Agregar al carrito'}
                             </Button>
-                            <Button component={Link} href="/carrito" variant="outlined" size="large">
+                            <Button component={Link} href="/carrito" prefetch={false} variant="outlined" size="large">
                                 Ver carrito
                             </Button>
                         </Stack>

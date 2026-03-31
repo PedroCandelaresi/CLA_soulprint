@@ -160,6 +160,7 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                             <Button
                                 component={Link}
                                 href={isAuthenticated ? "/auth/account" : "/auth/login"}
+                                prefetch={false}
                                 color="inherit"
                                 startIcon={<PersonOutlineOutlinedIcon />}
                                 sx={{
@@ -191,6 +192,7 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                     <IconButton
                         component={Link}
                         href="/carrito"
+                        prefetch={false}
                         aria-label="ir al carrito"
                         color="inherit"
                         sx={{ ml: { xs: 0, md: 0 } }}
@@ -257,7 +259,7 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                             </ListItem>
                         ))}
                         <ListItem disablePadding>
-                            <ListItemButton component={Link} href="/carrito">
+                            <ListItemButton component={Link} href="/carrito" prefetch={false}>
                                 <ListItemText primary={`Carrito${totalQuantity > 0 ? ` (${totalQuantity})` : ""}`} />
                             </ListItemButton>
                         </ListItem>
@@ -267,7 +269,7 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                                     <ListItemText primary="Cargando cuenta..." />
                                 </ListItemButton>
                             ) : (
-                                <ListItemButton component={Link} href={isAuthenticated ? "/auth/account" : "/auth/login"}>
+                                <ListItemButton component={Link} href={isAuthenticated ? "/auth/account" : "/auth/login"} prefetch={false}>
                                     <ListItemText primary={isAuthenticated ? "Mi cuenta" : "Ingresar"} />
                                 </ListItemButton>
                             )}

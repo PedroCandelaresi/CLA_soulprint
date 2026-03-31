@@ -357,6 +357,7 @@ export default function CartPageContent() {
                                     <Button
                                         component={Link}
                                         href="/auth/register?next=%2Fcarrito"
+                                        prefetch={false}
                                         variant="contained"
                                         fullWidth
                                     >
@@ -365,6 +366,7 @@ export default function CartPageContent() {
                                     <Button
                                         component={Link}
                                         href="/auth/login?next=%2Fcarrito"
+                                        prefetch={false}
                                         variant="outlined"
                                         fullWidth
                                     >

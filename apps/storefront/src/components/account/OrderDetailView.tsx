@@ -134,7 +134,7 @@ export default function OrderDetailView({ orderCode }: OrderDetailViewProps) {
             <Box sx={{ py: 6 }}>
                 <Container maxWidth="lg">
                     <Stack spacing={2}>
-                        <Button component={Link} href="/auth/account" startIcon={<ArrowBackOutlinedIcon />} sx={{ alignSelf: 'flex-start' }}>
+                        <Button component={Link} href="/auth/account" prefetch={false} startIcon={<ArrowBackOutlinedIcon />} sx={{ alignSelf: 'flex-start' }}>
                             Volver a mi cuenta
                         </Button>
                         <Alert severity="warning">{error || 'No se encontró el pedido.'}</Alert>
@@ -152,7 +152,7 @@ export default function OrderDetailView({ orderCode }: OrderDetailViewProps) {
         <Box sx={{ py: { xs: 4, md: 6 } }}>
             <Container maxWidth="lg">
                 <Stack spacing={3}>
-                    <Button component={Link} href="/auth/account" startIcon={<ArrowBackOutlinedIcon />} sx={{ alignSelf: 'flex-start' }}>
+                    <Button component={Link} href="/auth/account" prefetch={false} startIcon={<ArrowBackOutlinedIcon />} sx={{ alignSelf: 'flex-start' }}>
                         Volver a mi cuenta
                     </Button>
 

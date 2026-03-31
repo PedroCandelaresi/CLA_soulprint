@@ -257,6 +257,7 @@ export default function CheckoutSuccessPage() {
                         <Button
                             component={Link}
                             href="/carrito"
+                            prefetch={false}
                             variant="contained"
                             size="large"
                             startIcon={<ShoppingBagIcon />}

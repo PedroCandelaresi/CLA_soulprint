@@ -254,6 +254,7 @@ export default function CheckoutFailedPage() {
                         <Button
                             component={Link}
                             href="/carrito"
+                            prefetch={false}
                             variant="contained"
                             size="large"
                             startIcon={<RefreshIcon />}

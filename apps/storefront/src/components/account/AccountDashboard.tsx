@@ -389,6 +389,7 @@ export default function AccountDashboard() {
                                                         <Button
                                                             component={Link}
                                                             href={`/auth/orders/${encodeURIComponent(order.code)}`}
+                                                            prefetch={false}
                                                             variant="contained"
                                                         >
                                                             Ver detalle
@@ -397,6 +398,7 @@ export default function AccountDashboard() {
                                                             <Button
                                                                 component={Link}
                                                                 href={`/auth/orders/${encodeURIComponent(order.code)}#personalizacion`}
+                                                                prefetch={false}
                                                                 variant="outlined"
                                                                 startIcon={<OpenInNewOutlinedIcon />}
                                                             >

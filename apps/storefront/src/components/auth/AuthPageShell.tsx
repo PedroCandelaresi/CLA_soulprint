@@ -75,6 +75,7 @@ export default function AuthPageShell({
                             {footerText}{' '}
                             <Link
                                 href={footerHref}
+                                prefetch={false}
                                 style={{
                                     color: 'var(--cla-brand-green)',
                                     fontWeight: 600,
