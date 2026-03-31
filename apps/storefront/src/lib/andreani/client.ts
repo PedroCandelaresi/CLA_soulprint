@@ -31,7 +31,7 @@ async function postJson<TSuccess>(url: string, payload: unknown): Promise<TSucce
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'same-origin',
+            credentials: 'include',
             body: JSON.stringify(payload),
         });
 
@@ -60,7 +60,7 @@ async function getJson<TSuccess>(url: string): Promise<TSuccess | AndreaniApiErr
     try {
         const response = await fetch(url, {
             method: 'GET',
-            credentials: 'same-origin',
+            credentials: 'include',
             cache: 'no-store',
         });
 

@@ -53,7 +53,7 @@ export async function getOrderPersonalization(input: {
             `${PERSONALIZATION_API_BASE}/order/${encodeURIComponent(input.orderCode)}${query}`,
             {
                 cache: 'no-store',
-                credentials: 'same-origin',
+                credentials: 'include',
             },
         );
 
@@ -94,7 +94,7 @@ export async function uploadOrderPersonalization(input: {
         const response = await fetch(`${PERSONALIZATION_API_BASE}/upload`, {
             method: 'POST',
             body: formData,
-            credentials: 'same-origin',
+            credentials: 'include',
         });
 
         const payload = await response.json() as PersonalizationUploadResponse;

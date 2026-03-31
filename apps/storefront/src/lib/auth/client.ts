@@ -19,7 +19,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await fetch(`${AUTH_API_BASE}${path}`, {
         ...init,
         cache: 'no-store',
-        credentials: 'same-origin',
+        credentials: 'include',
         headers: {
             ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
             ...init?.headers,

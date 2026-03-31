@@ -36,7 +36,7 @@ async function requestCart(endpoint: string, init?: RequestInit): Promise<Cart |
     const response = await fetch(endpoint, {
         ...init,
         cache: 'no-store',
-        credentials: 'same-origin',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
             ...init?.headers,

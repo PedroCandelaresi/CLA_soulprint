@@ -119,7 +119,7 @@ export async function createGetnetCheckout(
     try {
         const response = await fetch(`${GETNET_API_BASE_URL}`, {
             method: 'POST',
-            credentials: 'same-origin',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -164,7 +164,7 @@ export async function getTransactionStatus(
             `${GETNET_API_BASE_URL}/transaction/${encodeURIComponent(transactionId)}`,
             {
                 method: 'GET',
-                credentials: 'same-origin',
+                credentials: 'include',
                 headers: {
                     Accept: 'application/json',
                 },
@@ -201,7 +201,7 @@ export async function getOrderStatus(
             `${GETNET_API_BASE_URL}/order/${encodeURIComponent(orderUuid)}`,
             {
                 method: 'GET',
-                credentials: 'same-origin',
+                credentials: 'include',
                 headers: {
                     Accept: 'application/json',
                 },
