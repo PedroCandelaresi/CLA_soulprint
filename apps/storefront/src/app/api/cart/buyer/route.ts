@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchActiveCustomer, performUpdateCustomer } from '@/app/api/auth/utils';
+import { fetchActiveCustomerWithHeaders, performUpdateCustomer } from '@/app/api/auth/utils';
 import { appendVendureSetCookieHeaders } from '@/lib/vendure/client';
 import { getActiveOrder } from '@/lib/vendure/cart';
 
@@ -70,14 +70,22 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const customer = await fetchActiveCustomer(cookieHeader).catch(() => null);
+        const customerResult = await fetchActiveCustomerWithHeaders(cookieHeader).catch(() => null);
+        const customer = customerResult?.customer ?? null;
         if (!customer || !EMAIL_REGEX.test(customer.emailAddress.trim())) {
-            return NextResponse.json({
+            const response = NextResponse.json({
                 error: 'Necesitás iniciar sesión con una cuenta verificada para guardar los datos del comprador.',
             }, { status: 401 });
+            if (customerResult) {
+                appendVendureSetCookieHeaders(customerResult.headers, response.headers);
+            }
+            return response;
         }
 
         const response = NextResponse.json({ ok: true });
+        if (customerResult) {
+            appendVendureSetCookieHeaders(customerResult.headers, response.headers);
+        }
 
         const { firstName, lastName } = splitFullName(fullName);
         const updateResult = await performUpdateCustomer({

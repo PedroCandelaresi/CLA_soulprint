@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { appendVendureCookies, performLogin, toJsonResponse } from '../utils';
+import { appendVendureCookies, buildAuthProxyContext, performLogin, toJsonResponse } from '../utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,12 +26,7 @@ export async function POST(request: NextRequest) {
         email,
         password,
         rememberMe,
-        cookieHeader: request.headers.get('cookie') || undefined,
-        forwardedProto: request.nextUrl.protocol.replace(':', '') || request.headers.get('x-forwarded-proto') || undefined,
-        forwardedHost: request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.host,
-        forwardedFor: request.headers.get('x-forwarded-for') || undefined,
-        origin: request.nextUrl.origin,
-        referer: request.headers.get('referer') || request.nextUrl.origin,
+        ...buildAuthProxyContext(request),
     });
 
     const status = result.body.success ? 200 : result.body.verificationRequired ? 403 : 401;

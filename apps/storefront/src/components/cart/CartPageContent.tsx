@@ -19,7 +19,7 @@ import {
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CartLine } from '@/types/cart';
 import { ANDREANI_DISABLED_MESSAGE, ANDREANI_ENABLED } from '@/lib/andreani/config';
 import { useCart } from './CartProvider';
@@ -47,14 +47,23 @@ export default function CartPageContent() {
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
-    const [buyerDataInitialized, setBuyerDataInitialized] = useState(false);
     const [buyerError, setBuyerError] = useState<string | null>(null);
     const [buyerMessage, setBuyerMessage] = useState<string | null>(null);
     const [isSavingBuyer, setIsSavingBuyer] = useState(false);
+    const buyerDataSeedRef = useRef<string | null>(null);
     const effectiveEmail = isAuthenticated ? (customer?.emailAddress || email) : email;
+    const isCheckoutContextLoading = isCustomerLoading || isInitializing;
+    const isCheckoutContextBusy = isCheckoutContextLoading || isMutating || isSavingBuyer;
 
     useEffect(() => {
-        if (!cart || buyerDataInitialized) {
+        if (!cart) {
+            buyerDataSeedRef.current = null;
+            return;
+        }
+
+        const identitySeed = isAuthenticated ? customer?.id || 'authenticated' : 'guest';
+        const nextSeed = `${cart.code}:${identitySeed}`;
+        if (buyerDataSeedRef.current === nextSeed) {
             return;
         }
 
@@ -63,8 +72,14 @@ export default function CartPageContent() {
         setFullName(snapshot?.fullName || customerFullName || '');
         setEmail(isAuthenticated ? customer?.emailAddress || snapshot?.email || '' : snapshot?.email || '');
         setPhone(snapshot?.phone || customer?.phoneNumber || '');
-        setBuyerDataInitialized(true);
-    }, [buyerDataInitialized, cart, customer, isAuthenticated]);
+        setBuyerError(null);
+        setBuyerMessage(null);
+        buyerDataSeedRef.current = nextSeed;
+    }, [
+        cart,
+        customer,
+        isAuthenticated,
+    ]);
 
     function validateBuyerData(): string | null {
         if (fullName.trim().length < 3) {
@@ -398,7 +413,7 @@ export default function CartPageContent() {
                                     <Button
                                         variant="outlined"
                                         onClick={() => void persistBuyerData(true)}
-                                        disabled={isSavingBuyer}
+                                        disabled={isCheckoutContextBusy}
                                     >
                                         {isSavingBuyer ? 'Guardando...' : 'Guardar datos del comprador'}
                                     </Button>
@@ -413,11 +428,18 @@ export default function CartPageContent() {
                         )}
                         <Divider />
                         {isAuthenticated ? (
-                            <GetnetCheckoutButton
-                                cart={cart}
-                                onBeforeCheckout={() => persistBuyerData(false)}
-                                disabled={isCustomerLoading}
-                            />
+                            <>
+                                {isCheckoutContextBusy ? (
+                                    <Alert severity="info" icon={<CircularProgress size={18} />}>
+                                        Estamos actualizando tu sesión y tu carrito antes de enviarte al pago.
+                                    </Alert>
+                                ) : null}
+                                <GetnetCheckoutButton
+                                    cart={cart}
+                                    onBeforeCheckout={() => persistBuyerData(false)}
+                                    disabled={isCheckoutContextBusy}
+                                />
+                            </>
                         ) : (
                             <Alert severity="warning">
                                 El pago queda bloqueado hasta que verifiques tu cuenta e inicies sesión.

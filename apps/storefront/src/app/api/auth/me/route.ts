@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchActiveCustomer } from '../utils';
+import { appendVendureSetCookieHeaders } from '@/lib/vendure/client';
+import { fetchActiveCustomerWithHeaders } from '../utils';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
     try {
-        const customer = await fetchActiveCustomer(request.headers.get('cookie') || undefined);
-        return NextResponse.json({
+        const result = await fetchActiveCustomerWithHeaders(request.headers.get('cookie') || undefined);
+        const response = NextResponse.json({
             success: true,
-            customer,
+            customer: result.customer,
         });
+        appendVendureSetCookieHeaders(result.headers, response.headers);
+        return response;
     } catch {
         return NextResponse.json({
             success: true,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchActiveCustomer } from '@/app/api/auth/utils';
+import { fetchActiveCustomerWithHeaders } from '@/app/api/auth/utils';
+import { appendVendureSetCookieHeaders } from '@/lib/vendure/client';
 
 // Getnet standalone server URL (port 4003)
 const GETNET_API_URL = process.env.GETNET_INTERNAL_API_URL || 'http://localhost:4003/payments/getnet';
@@ -14,29 +15,46 @@ function getErrorMessage(error: unknown): string {
 export async function POST(request: NextRequest) {
     try {
         const cookieHeader = request.headers.get('cookie') || undefined;
-        const activeCustomer = await fetchActiveCustomer(cookieHeader).catch(() => null);
+        const customerResult = await fetchActiveCustomerWithHeaders(cookieHeader).catch(() => null);
+        const activeCustomer = customerResult?.customer ?? null;
         if (!activeCustomer) {
-            return NextResponse.json(
+            const response = NextResponse.json(
                 { error: 'Necesitás iniciar sesión para iniciar el pago.' },
                 { status: 401 },
             );
+            if (customerResult) {
+                appendVendureSetCookieHeaders(customerResult.headers, response.headers);
+            }
+            return response;
         }
 
         const body = await request.json();
         
         // Validate required fields
         if (!body.orderCode) {
-            return NextResponse.json({ error: 'Falta el código de orden' }, { status: 400 });
+            const response = NextResponse.json({ error: 'Falta el código de orden' }, { status: 400 });
+            if (customerResult) {
+                appendVendureSetCookieHeaders(customerResult.headers, response.headers);
+            }
+            return response;
         }
         
         if (!body.items || body.items.length === 0) {
-            return NextResponse.json({ error: 'El carrito está vacío' }, { status: 400 });
+            const response = NextResponse.json({ error: 'El carrito está vacío' }, { status: 400 });
+            if (customerResult) {
+                appendVendureSetCookieHeaders(customerResult.headers, response.headers);
+            }
+            return response;
         }
         
         // Validate each item
         for (const item of body.items) {
             if (!item.name || typeof item.quantity !== 'number' || typeof item.unitPrice !== 'number') {
-                return NextResponse.json({ error: 'Datos de producto inválidos' }, { status: 400 });
+                const response = NextResponse.json({ error: 'Datos de producto inválidos' }, { status: 400 });
+                if (customerResult) {
+                    appendVendureSetCookieHeaders(customerResult.headers, response.headers);
+                }
+                return response;
             }
         }
         
@@ -47,6 +65,7 @@ export async function POST(request: NextRequest) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...(cookieHeader ? { cookie: cookieHeader } : {}),
             },
             body: JSON.stringify(body),
         });
@@ -54,13 +73,23 @@ export async function POST(request: NextRequest) {
         const data = await response.json();
         
         if (!response.ok) {
-            return NextResponse.json(
+            const errorResponse = NextResponse.json(
                 { error: data.error || 'Error al crear checkout' },
                 { status: response.status }
             );
+            appendVendureSetCookieHeaders(response.headers, errorResponse.headers);
+            if (customerResult) {
+                appendVendureSetCookieHeaders(customerResult.headers, errorResponse.headers);
+            }
+            return errorResponse;
         }
-        
-        return NextResponse.json(data);
+
+        const successResponse = NextResponse.json(data);
+        appendVendureSetCookieHeaders(response.headers, successResponse.headers);
+        if (customerResult) {
+            appendVendureSetCookieHeaders(customerResult.headers, successResponse.headers);
+        }
+        return successResponse;
     } catch (error) {
         console.error('[api/payments/getnet] Error:', error);
         return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });

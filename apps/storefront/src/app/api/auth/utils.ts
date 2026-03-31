@@ -494,6 +494,16 @@ interface VendureProxyHeadersInput {
     referer?: string;
 }
 
+function getRequestProtocol(request: NextRequest): string | undefined {
+    return request.headers.get('x-forwarded-proto')
+        || request.nextUrl.protocol.replace(':', '')
+        || undefined;
+}
+
+export function isSecureRequest(request: NextRequest): boolean {
+    return getRequestProtocol(request) === 'https';
+}
+
 function buildVendureProxyHeaders(input: VendureProxyHeadersInput): HeadersInit | undefined {
     const headers: Record<string, string> = {};
 
@@ -518,6 +528,27 @@ function buildVendureProxyHeaders(input: VendureProxyHeadersInput): HeadersInit 
     }
 
     return Object.keys(headers).length > 0 ? headers : undefined;
+}
+
+export function buildAuthProxyContext(request: NextRequest): VendureProxyHeadersInput {
+    const forwardedProto = getRequestProtocol(request);
+    const forwardedHost = request.headers.get('x-forwarded-host')
+        || request.headers.get('host')
+        || request.nextUrl.host
+        || undefined;
+    const forwardedFor = request.headers.get('x-forwarded-for') || undefined;
+    const origin = forwardedProto && forwardedHost
+        ? `${forwardedProto}://${forwardedHost}`
+        : request.nextUrl.origin;
+
+    return {
+        cookieHeader: request.headers.get('cookie') || undefined,
+        forwardedProto,
+        forwardedHost,
+        forwardedFor,
+        origin,
+        referer: request.headers.get('referer') || origin,
+    };
 }
 
 function extractUnionError(result: ErrorResult): string {
@@ -734,12 +765,23 @@ function sortOrdersDesc(orders: CustomerOrderSummary[]): CustomerOrderSummary[] 
     });
 }
 
-export async function fetchActiveCustomer(cookieHeader?: string): Promise<CustomerSummary | null> {
-    const { data } = await fetchVendureApi<ActiveCustomerData>(ACTIVE_CUSTOMER_QUERY, {
+export async function fetchActiveCustomerWithHeaders(cookieHeader?: string): Promise<{
+    customer: CustomerSummary | null;
+    headers: Headers;
+}> {
+    const result = await fetchVendureApi<ActiveCustomerData>(ACTIVE_CUSTOMER_QUERY, {
         headers: buildVendureHeaders(cookieHeader),
     });
 
-    return data.activeCustomer ? mapCustomer(data.activeCustomer) : null;
+    return {
+        customer: result.data.activeCustomer ? mapCustomer(result.data.activeCustomer) : null,
+        headers: result.headers,
+    };
+}
+
+export async function fetchActiveCustomer(cookieHeader?: string): Promise<CustomerSummary | null> {
+    const result = await fetchActiveCustomerWithHeaders(cookieHeader);
+    return result.customer;
 }
 
 export async function loadCustomerDashboard(cookieHeader?: string): Promise<CustomerDashboardData | null> {
@@ -1039,7 +1081,7 @@ export function buildGoogleAuthRedirect(request: NextRequest): NextResponse {
         name: GOOGLE_STATE_COOKIE_NAME,
         value: stateCookie,
         httpOnly: true,
-        secure: request.nextUrl.protocol === 'https:',
+        secure: isSecureRequest(request),
         sameSite: 'lax',
         path: '/',
         maxAge: Math.floor(GOOGLE_STATE_TTL_MS / 1000),

@@ -2,19 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
     appendVendureCookies,
     authenticateWithGoogleIdToken,
+    buildAuthProxyContext,
     clearGoogleStateCookie,
     exchangeGoogleCode,
+    isSecureRequest,
     parseGoogleState,
 } from '../../utils';
 
 export const dynamic = 'force-dynamic';
 
 function redirectToLogin(request: NextRequest, error: string): NextResponse {
-    const isSecure = request.nextUrl.protocol === 'https:';
     const response = NextResponse.redirect(
         new URL(`/auth/login?error=${encodeURIComponent(error)}`, request.url),
     );
-    clearGoogleStateCookie(response, isSecure);
+    clearGoogleStateCookie(response, isSecureRequest(request));
     return response;
 }
 
@@ -39,12 +40,7 @@ export async function GET(request: NextRequest) {
         const idToken = await exchangeGoogleCode(request, code);
         const authResult = await authenticateWithGoogleIdToken({
             idToken,
-            cookieHeader: request.headers.get('cookie') || undefined,
-            forwardedProto: request.nextUrl.protocol.replace(':', '') || request.headers.get('x-forwarded-proto') || undefined,
-            forwardedHost: request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.host,
-            forwardedFor: request.headers.get('x-forwarded-for') || undefined,
-            origin: request.nextUrl.origin,
-            referer: request.headers.get('referer') || request.nextUrl.origin,
+            ...buildAuthProxyContext(request),
         });
 
         if (!authResult.body.success) {
@@ -52,7 +48,7 @@ export async function GET(request: NextRequest) {
         }
 
         const response = NextResponse.redirect(new URL(parsedState.returnTo, request.url));
-        clearGoogleStateCookie(response, request.nextUrl.protocol === 'https:');
+        clearGoogleStateCookie(response, isSecureRequest(request));
         return appendVendureCookies(authResult.headers, response);
     } catch (error) {
         const message = error instanceof Error ? error.message : 'No se pudo completar el ingreso con Google.';
