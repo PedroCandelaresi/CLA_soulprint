@@ -1,4 +1,4 @@
-import { bootstrap, RequestContextService, SearchService, OrderService, PaymentService, EventBus } from '@vendure/core';
+import { bootstrap, RequestContextService, SearchService, OrderService, PaymentService, EventBus, JobQueueService } from '@vendure/core';
 import { DataSource } from 'typeorm';
 import { config } from '../config/vendure-config';
 import { ensureArgentinaDefaults } from './argentina-defaults';
@@ -258,6 +258,17 @@ bootstrap(config)
         const requestContextService = app.get(RequestContextService);
         const searchService = app.get(SearchService);
         const orderService = app.get(OrderService);
+        const jobQueueService = app.get(JobQueueService);
+
+        try {
+            await jobQueueService.start();
+            console.log('[job-queue] Started job queues in server process');
+            for (const queue of jobQueueService.getJobQueues()) {
+                console.log(`[job-queue]   ${queue.name}: running=${queue.running}`);
+            }
+        } catch (error) {
+            console.error('[job-queue] Failed to start job queues in server process:', error);
+        }
 
         try {
             await ensureArgentinaDefaults(app);
