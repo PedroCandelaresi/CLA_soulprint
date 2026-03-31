@@ -485,6 +485,41 @@ function buildVendureHeaders(cookieHeader?: string): HeadersInit | undefined {
     return { cookie: cookieHeader };
 }
 
+interface VendureProxyHeadersInput {
+    cookieHeader?: string;
+    forwardedProto?: string;
+    forwardedHost?: string;
+    forwardedFor?: string;
+    origin?: string;
+    referer?: string;
+}
+
+function buildVendureProxyHeaders(input: VendureProxyHeadersInput): HeadersInit | undefined {
+    const headers: Record<string, string> = {};
+
+    if (input.cookieHeader) {
+        headers.cookie = input.cookieHeader;
+    }
+    if (input.forwardedProto) {
+        headers['x-forwarded-proto'] = input.forwardedProto;
+    }
+    if (input.forwardedHost) {
+        headers['x-forwarded-host'] = input.forwardedHost;
+        headers.host = input.forwardedHost;
+    }
+    if (input.forwardedFor) {
+        headers['x-forwarded-for'] = input.forwardedFor;
+    }
+    if (input.origin) {
+        headers.origin = input.origin;
+    }
+    if (input.referer) {
+        headers.referer = input.referer;
+    }
+
+    return Object.keys(headers).length > 0 ? headers : undefined;
+}
+
 function extractUnionError(result: ErrorResult): string {
     return result.validationErrorMessage || result.authenticationError || result.message || 'La operación no pudo completarse.';
 }
@@ -739,9 +774,14 @@ export async function performLogin(input: {
     password: string;
     rememberMe?: boolean;
     cookieHeader?: string;
+    forwardedProto?: string;
+    forwardedHost?: string;
+    forwardedFor?: string;
+    origin?: string;
+    referer?: string;
 }): Promise<{ body: AuthActionResponse; headers: Headers }> {
     const result = await fetchVendureApi<LoginData>(LOGIN_MUTATION, {
-        headers: buildVendureHeaders(input.cookieHeader),
+        headers: buildVendureProxyHeaders(input),
         variables: {
             username: input.email,
             password: input.password,
@@ -775,13 +815,18 @@ export async function performRegister(input: {
     lastName?: string;
     phoneNumber?: string;
     cookieHeader?: string;
+    forwardedProto?: string;
+    forwardedHost?: string;
+    forwardedFor?: string;
+    origin?: string;
+    referer?: string;
 }): Promise<{ body: AuthActionResponse; headers: Headers }> {
     console.log(
         `[auth/register] Calling registerCustomerAccount for ${maskEmailForLogs(input.email)} firstName="${input.firstName || ''}" lastName="${input.lastName || ''}" phonePresent=${Boolean(input.phoneNumber)}`,
     );
 
     const registerResult = await fetchVendureApi<RegisterData>(REGISTER_MUTATION, {
-        headers: buildVendureHeaders(input.cookieHeader),
+        headers: buildVendureProxyHeaders(input),
         variables: {
             input: {
                 emailAddress: input.email,
@@ -851,9 +896,16 @@ export async function performUpdateCustomer(input: {
     };
 }
 
-export async function performLogout(cookieHeader?: string): Promise<{ body: AuthActionResponse; headers: Headers }> {
+export async function performLogout(input: {
+    cookieHeader?: string;
+    forwardedProto?: string;
+    forwardedHost?: string;
+    forwardedFor?: string;
+    origin?: string;
+    referer?: string;
+}): Promise<{ body: AuthActionResponse; headers: Headers }> {
     const result = await fetchVendureApi<LogoutData>(LOGOUT_MUTATION, {
-        headers: buildVendureHeaders(cookieHeader),
+        headers: buildVendureProxyHeaders(input),
     });
 
     return {
@@ -865,9 +917,14 @@ export async function performLogout(cookieHeader?: string): Promise<{ body: Auth
 export async function authenticateWithGoogleIdToken(input: {
     idToken: string;
     cookieHeader?: string;
+    forwardedProto?: string;
+    forwardedHost?: string;
+    forwardedFor?: string;
+    origin?: string;
+    referer?: string;
 }): Promise<{ body: AuthActionResponse; headers: Headers }> {
     const result = await fetchVendureApi<AuthenticateGoogleData>(AUTHENTICATE_GOOGLE_MUTATION, {
-        headers: buildVendureHeaders(input.cookieHeader),
+        headers: buildVendureProxyHeaders(input),
         variables: {
             token: input.idToken,
         },
@@ -893,13 +950,18 @@ export async function performVerifyCustomerAccount(input: {
     token: string;
     password: string;
     cookieHeader?: string;
+    forwardedProto?: string;
+    forwardedHost?: string;
+    forwardedFor?: string;
+    origin?: string;
+    referer?: string;
 }): Promise<{ body: AuthActionResponse; headers: Headers }> {
     console.log(
         `[auth/verify] Calling verifyCustomerAccount tokenPrefix="${input.token.slice(0, 12)}..." passwordLength=${input.password.length}`,
     );
 
     const result = await fetchVendureApi<VerifyCustomerAccountData>(VERIFY_CUSTOMER_ACCOUNT_MUTATION, {
-        headers: buildVendureHeaders(input.cookieHeader),
+        headers: buildVendureProxyHeaders(input),
         variables: {
             token: input.token,
             password: input.password,

@@ -72,6 +72,45 @@ export function appendVendureSetCookieHeaders(sourceHeaders: Headers, targetHead
 
     const singleSetCookie = sourceHeaders.get('set-cookie');
     if (singleSetCookie) {
-        targetHeaders.append('set-cookie', singleSetCookie);
+        for (const value of splitCombinedSetCookieHeader(singleSetCookie)) {
+            targetHeaders.append('set-cookie', value);
+        }
     }
+}
+
+function splitCombinedSetCookieHeader(value: string): string[] {
+    const cookies: string[] = [];
+    let current = '';
+    let inExpiresAttribute = false;
+
+    for (let index = 0; index < value.length; index += 1) {
+        const char = value[index];
+        current += char;
+
+        const lowerCurrent = current.toLowerCase();
+        if (!inExpiresAttribute && lowerCurrent.endsWith('expires=')) {
+            inExpiresAttribute = true;
+            continue;
+        }
+
+        if (inExpiresAttribute && char === ';') {
+            inExpiresAttribute = false;
+            continue;
+        }
+
+        if (!inExpiresAttribute && char === ',' && index < value.length - 1) {
+            current = current.slice(0, -1).trim();
+            if (current) {
+                cookies.push(current);
+            }
+            current = '';
+        }
+    }
+
+    const trailing = current.trim();
+    if (trailing) {
+        cookies.push(trailing);
+    }
+
+    return cookies;
 }
