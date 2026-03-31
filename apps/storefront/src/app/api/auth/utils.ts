@@ -462,6 +462,26 @@ function maskEmailForLogs(email: string | undefined | null): string {
     return `${safeLocal}@${domain}`;
 }
 
+function getCookieNames(cookieHeader?: string): string[] {
+    if (!cookieHeader) {
+        return [];
+    }
+
+    return cookieHeader
+        .split(';')
+        .map((item) => item.trim().split('=')[0]?.trim())
+        .filter((name): name is string => Boolean(name));
+}
+
+function getSetCookieCount(headers: Headers): number {
+    const candidate = headers as Headers & { getSetCookie?: () => string[] };
+    if (typeof candidate.getSetCookie === 'function') {
+        return candidate.getSetCookie().length;
+    }
+
+    return headers.get('set-cookie') ? 1 : 0;
+}
+
 function isAuthError(error: unknown): boolean {
     const message = getErrorMessage(error).toLowerCase();
     return message.includes('forbidden')
@@ -769,12 +789,23 @@ export async function fetchActiveCustomerWithHeaders(cookieHeader?: string): Pro
     customer: CustomerSummary | null;
     headers: Headers;
 }> {
+    console.info(
+        `[auth:me] fetchActiveCustomerWithHeaders cookiePresent=${Boolean(cookieHeader)} cookieNames=${
+            getCookieNames(cookieHeader).join(',') || '(none)'
+        }`,
+    );
+
     const result = await fetchVendureApi<ActiveCustomerData>(ACTIVE_CUSTOMER_QUERY, {
         headers: buildVendureHeaders(cookieHeader),
     });
 
+    const customer = result.data.activeCustomer ? mapCustomer(result.data.activeCustomer) : null;
+    console.info(
+        `[auth:me] fetchActiveCustomerWithHeaders vendureCustomer=${customer?.id ?? 'null'} setCookieCount=${getSetCookieCount(result.headers)}`,
+    );
+
     return {
-        customer: result.data.activeCustomer ? mapCustomer(result.data.activeCustomer) : null,
+        customer,
         headers: result.headers,
     };
 }
@@ -822,6 +853,12 @@ export async function performLogin(input: {
     origin?: string;
     referer?: string;
 }): Promise<{ body: AuthActionResponse; headers: Headers }> {
+    console.info(
+        `[auth:login] performLogin email=${maskEmailForLogs(input.email)} rememberMe=${input.rememberMe ?? true} cookiePresent=${Boolean(input.cookieHeader)} cookieNames=${
+            getCookieNames(input.cookieHeader).join(',') || '(none)'
+        }`,
+    );
+
     const result = await fetchVendureApi<LoginData>(LOGIN_MUTATION, {
         headers: buildVendureProxyHeaders(input),
         variables: {
@@ -831,8 +868,15 @@ export async function performLogin(input: {
         },
     });
 
+    console.info(
+        `[auth:login] performLogin vendureTypename=${result.data.login.__typename} setCookieCount=${getSetCookieCount(result.headers)}`,
+    );
+
     if (result.data.login.__typename !== 'CurrentUser') {
         const verificationRequired = result.data.login.__typename === 'NotVerifiedError';
+        console.warn(
+            `[auth:login] performLogin rejected typename=${result.data.login.__typename} verificationRequired=${verificationRequired}`,
+        );
         return {
             body: {
                 success: false,
@@ -844,6 +888,8 @@ export async function performLogin(input: {
             headers: result.headers,
         };
     }
+
+    console.info('[auth:login] performLogin authenticated CurrentUser');
 
     return {
         body: { success: true },

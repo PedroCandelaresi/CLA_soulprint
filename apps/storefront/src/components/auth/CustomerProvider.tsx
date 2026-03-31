@@ -34,27 +34,39 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
     const [error, setError] = useState<string | null>(null);
 
     function setCustomer(nextCustomer: CustomerSummary | null): void {
+        console.info(
+            `[auth:provider] setCustomer nextCustomer=${nextCustomer?.id ?? 'null'} nextStatus=${nextCustomer ? 'authenticated' : 'guest'}`,
+        );
         setCustomerState(nextCustomer);
         setAuthStatus(nextCustomer ? 'authenticated' : 'guest');
     }
 
     const loadCustomer = useEffectEvent(async () => {
+        console.info('[auth:provider] loadCustomer:start');
         try {
             const response = await getActiveCustomer();
+            console.info(
+                `[auth:provider] loadCustomer:response success=${response.success} customer=${response.customer?.id ?? 'null'} error=${response.error || '(none)'}`,
+            );
             if (!response.success) {
                 setCustomerState(null);
                 setAuthStatus('guest');
                 setError(response.error || null);
+                console.info('[auth:provider] loadCustomer:transition guest (response not successful)');
                 return;
             }
 
             setCustomerState(response.customer);
             setAuthStatus(response.customer ? 'authenticated' : 'guest');
             setError(null);
+            console.info(
+                `[auth:provider] loadCustomer:transition ${response.customer ? 'authenticated' : 'guest'}`,
+            );
         } catch (loadError) {
             setCustomerState(null);
             setAuthStatus('guest');
             setError(getErrorMessage(loadError));
+            console.error('[auth:provider] loadCustomer:catch -> guest', loadError);
         }
     });
 
@@ -62,10 +74,18 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         void loadCustomer();
     }, []);
 
+    useEffect(() => {
+        console.info(
+            `[auth:provider] state authStatus=${authStatus} customer=${customer?.id ?? 'null'} error=${error || '(none)'}`,
+        );
+    }, [authStatus, customer?.id, error]);
+
     async function refreshCustomer(): Promise<void> {
+        console.info('[auth:provider] refreshCustomer:start');
         setError(null);
         setAuthStatus('loading');
         await loadCustomer();
+        console.info('[auth:provider] refreshCustomer:end');
     }
 
     async function logout(): Promise<boolean> {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -52,6 +52,17 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
     const router = useRouter();
     const { totalQuantity, refreshCart } = useCart();
     const { customer, authStatus, isAuthenticated, logout } = useCustomer();
+    const headerBranch = authStatus === 'loading'
+        ? 'loading'
+        : isAuthenticated
+            ? 'authenticated'
+            : 'guest';
+
+    useEffect(() => {
+        console.info(
+            `[auth:header] render pathname=${pathname} branch=${headerBranch} authStatus=${authStatus} customer=${customer?.id ?? 'null'}`,
+        );
+    }, [authStatus, customer?.id, headerBranch, pathname]);
 
     async function handleLogout() {
         setIsLoggingOut(true);
