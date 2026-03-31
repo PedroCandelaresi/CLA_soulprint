@@ -89,6 +89,10 @@ const VERIFY_CUSTOMER_ACCOUNT_MUTATION = `
                 errorCode
                 message
             }
+            ... on PasswordAlreadySetError {
+                errorCode
+                message
+            }
             ... on NativeAuthStrategyError {
                 errorCode
                 message
@@ -890,6 +894,10 @@ export async function performVerifyCustomerAccount(input: {
     password: string;
     cookieHeader?: string;
 }): Promise<{ body: AuthActionResponse; headers: Headers }> {
+    console.log(
+        `[auth/verify] Calling verifyCustomerAccount tokenPrefix="${input.token.slice(0, 12)}..." passwordLength=${input.password.length}`,
+    );
+
     const result = await fetchVendureApi<VerifyCustomerAccountData>(VERIFY_CUSTOMER_ACCOUNT_MUTATION, {
         headers: buildVendureHeaders(input.cookieHeader),
         variables: {
@@ -898,13 +906,23 @@ export async function performVerifyCustomerAccount(input: {
         },
     });
 
+    console.log(
+        `[auth/verify] verifyCustomerAccount typename=${result.data.verifyCustomerAccount.__typename} tokenPrefix="${input.token.slice(0, 12)}..."`,
+    );
+
     if (result.data.verifyCustomerAccount.__typename !== 'CurrentUser') {
         const errorType = result.data.verifyCustomerAccount.__typename;
         const defaultMessage = errorType === 'VerificationTokenExpiredError'
             ? 'El link de verificación expiró. Creá la cuenta nuevamente o pedí un nuevo email.'
             : errorType === 'VerificationTokenInvalidError'
                 ? 'El link de verificación no es válido.'
+                : errorType === 'PasswordAlreadySetError'
+                    ? 'Esta cuenta ya fue activada. Ingresá con tu email y contraseña para continuar con la compra.'
                 : extractUnionError(result.data.verifyCustomerAccount);
+
+        console.error(
+            `[auth/verify] Verification failed typename=${errorType} message="${defaultMessage}" tokenPrefix="${input.token.slice(0, 12)}..."`,
+        );
 
         return {
             body: {
