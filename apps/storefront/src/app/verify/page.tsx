@@ -12,9 +12,16 @@ function getSearchParamValue(value: string | string[] | undefined): string | nul
     return value || null;
 }
 
+function normalizeVerificationToken(value: string | null): string | null {
+    if (!value) {
+        return null;
+    }
+    return value.replace(/ /g, '+').trim();
+}
+
 export default async function VerifyPage({ searchParams }: VerifyPageProps) {
     const resolvedSearchParams = searchParams ? await searchParams : undefined;
-    const token = getSearchParamValue(resolvedSearchParams?.token);
+    const token = normalizeVerificationToken(getSearchParamValue(resolvedSearchParams?.token));
     const nextParam = getSearchParamValue(resolvedSearchParams?.next);
 
     return (

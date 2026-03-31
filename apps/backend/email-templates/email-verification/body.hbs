@@ -1,0 +1,79 @@
+{{> header title="Activá tu cuenta para continuar con tu compra" }}
+
+<mj-section background-color="#ffffff" padding="0 32px 6px">
+  <mj-column>
+    <mj-text css-class="cla-copy" font-size="22px" line-height="1.6" padding="0 0 18px">
+      Hola,
+    </mj-text>
+    <mj-text css-class="cla-copy" font-size="20px" line-height="1.8" padding="0 0 18px">
+      Ya recibimos tu registro en <strong>{{ brandName }}</strong>.
+    </mj-text>
+    <mj-text css-class="cla-copy" font-size="20px" line-height="1.8" padding="0 0 18px">
+      Para activar tu cuenta y poder finalizar tu compra, necesitás confirmar tu correo y crear tu contraseña.
+    </mj-text>
+  </mj-column>
+</mj-section>
+
+<mj-section background-color="#fbf8f1" padding="6px 32px 6px">
+  <mj-column>
+    <mj-text
+      align="center"
+      color="#032f1d"
+      font-size="22px"
+      font-weight="700"
+      line-height="1.5"
+      padding="18px 16px 8px"
+    >
+      Paso 1: abrí el enlace
+    </mj-text>
+    <mj-text
+      align="center"
+      color="#1d261f"
+      font-size="19px"
+      line-height="1.8"
+      padding="0 10px 6px"
+    >
+      Paso 2: elegí tu contraseña
+    </mj-text>
+    <mj-text
+      align="center"
+      color="#1d261f"
+      font-size="19px"
+      line-height="1.8"
+      padding="0 10px 20px"
+    >
+      Paso 3: volvés al carrito y seguís con la compra
+    </mj-text>
+  </mj-column>
+</mj-section>
+
+<mj-section background-color="#ffffff" padding="10px 32px 0">
+  <mj-column>
+    <mj-button
+      href="{{ verifyEmailAddressUrl }}?token={{ verificationToken }}"
+      background-color="#004825"
+      color="#ffffff"
+      padding="0 0 20px"
+    >
+      Activar mi cuenta
+    </mj-button>
+    <mj-text css-class="cla-copy" align="center" font-size="17px" line-height="1.8" padding="0 0 8px">
+      Si el botón no abre, copiá y pegá este enlace en tu navegador:
+    </mj-text>
+    <mj-text align="center" font-size="16px" line-height="1.8" padding="0">
+      <a href="{{ verifyEmailAddressUrl }}?token={{ verificationToken }}" style="color:#0b5a34;word-break:break-word;">
+        {{ verifyEmailAddressUrl }}?token={{ verificationToken }}
+      </a>
+    </mj-text>
+  </mj-column>
+</mj-section>
+
+<mj-section background-color="#ffffff" padding="16px 32px 0">
+  <mj-column>
+    <mj-text css-class="cla-copy" font-size="17px" line-height="1.8" padding="0 0 16px">
+      Si vos no intentaste crear esta cuenta, podés ignorar este correo.
+    </mj-text>
+  </mj-column>
+</mj-section>
+
+{{> footer }}

@@ -1,0 +1,77 @@
+<mjml>
+  <mj-head>
+    <mj-title>{{ title }}</mj-title>
+    <mj-preview>{{ title }}</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="'Trebuchet MS', 'Segoe UI', Arial, sans-serif" />
+      <mj-text color="#1d261f" font-size="18px" line-height="1.7" />
+      <mj-button font-size="20px" font-weight="700" line-height="1.2" border-radius="14px" inner-padding="18px 28px" />
+      <mj-section padding="0" />
+      <mj-column padding="0" />
+    </mj-attributes>
+    <mj-style inline="inline">
+      .cla-card {
+        border-radius: 22px;
+      }
+      .cla-title div {
+        letter-spacing: -0.02em;
+      }
+      .cla-copy strong {
+        color: #032f1d;
+      }
+      .cla-muted div,
+      .cla-muted a {
+        color: #5d6d61 !important;
+      }
+    </mj-style>
+  </mj-head>
+
+  <mj-body background-color="#f7f5ef" width="680px">
+    <mj-section background-color="#004825" padding="0">
+      <mj-column padding="28px 24px 24px">
+        {{#if brandLogoUrl}}
+          <mj-image
+            src="{{ brandLogoUrl }}"
+            alt="{{ brandName }}"
+            width="240px"
+            align="center"
+            padding="0 0 14px"
+          />
+        {{/if}}
+        <mj-text
+          align="center"
+          color="#ffffff"
+          font-size="32px"
+          font-weight="700"
+          line-height="1.2"
+          padding="0"
+        >
+          {{ brandName }}
+        </mj-text>
+        <mj-text
+          align="center"
+          color="#f4ead5"
+          font-size="18px"
+          line-height="1.5"
+          padding="10px 8px 0"
+        >
+          Joyas personalizadas con amor, memoria y presencia.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="24px 18px 0" background-color="#f7f5ef">
+      <mj-column background-color="#ffffff" border-radius="22px" padding="0" css-class="cla-card">
+        <mj-text
+          css-class="cla-title"
+          font-size="30px"
+          font-weight="700"
+          line-height="1.2"
+          align="center"
+          color="#032f1d"
+          padding="34px 32px 12px"
+        >
+          {{ title }}
+        </mj-text>
+      </mj-column>
+    </mj-section>

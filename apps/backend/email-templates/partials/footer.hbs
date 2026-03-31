@@ -1,0 +1,31 @@
+        <mj-section background-color="#ffffff" padding="4px 32px 0">
+          <mj-column>
+            <mj-divider border-color="#e6ebdf" border-width="1px" padding="0" />
+          </mj-column>
+        </mj-section>
+
+        <mj-section background-color="#ffffff" padding="18px 32px 32px">
+          <mj-column>
+            <mj-text css-class="cla-muted" align="center" font-size="16px" line-height="1.7" padding="0 0 10px">
+              Si necesitás ayuda, podés volver a tu cuenta y seguir el estado de tu pedido desde la tienda.
+            </mj-text>
+            {{#if shopUrl}}
+              <mj-text align="center" font-size="17px" font-weight="700" padding="0 0 8px">
+                <a href="{{ shopUrl }}" style="color:#004825;text-decoration:none;">Ir a CLA Soulprint</a>
+              </mj-text>
+            {{/if}}
+            <mj-text css-class="cla-muted" align="center" font-size="15px" line-height="1.6" padding="0">
+              Este correo fue enviado por {{ brandName }}.
+            </mj-text>
+          </mj-column>
+        </mj-section>
+
+    <mj-section padding="16px 18px 30px" background-color="#f7f5ef">
+      <mj-column>
+        <mj-text align="center" color="#7c8a80" font-size="14px" line-height="1.6" padding="0 16px">
+          Diseñado para que la información importante se vea clara, simple y fácil de leer.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

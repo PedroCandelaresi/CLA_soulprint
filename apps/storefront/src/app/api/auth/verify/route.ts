@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
         body = null;
     }
 
-    const token = typeof body?.token === 'string' ? body.token.trim() : '';
+    const token = typeof body?.token === 'string' ? body.token.replace(/ /g, '+').trim() : '';
     const password = typeof body?.password === 'string' ? body.password : '';
 
     if (!token || !password) {

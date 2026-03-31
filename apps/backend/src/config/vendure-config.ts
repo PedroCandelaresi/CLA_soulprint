@@ -73,6 +73,7 @@ const COOKIE_SAME_SITE = parseSameSite(process.env.COOKIE_SAME_SITE);
 const COOKIE_SECURE = parseBooleanEnv('COOKIE_SECURE', !IS_DEV);
 const COOKIE_SECURE_PROXY = parseBooleanEnv('COOKIE_SECURE_PROXY', !IS_DEV);
 const SHOP_PUBLIC_URL = process.env.SHOP_PUBLIC_URL || (IS_DEV ? 'http://localhost:4000' : undefined);
+const BRAND_LOGO_URL = SHOP_PUBLIC_URL ? `${SHOP_PUBLIC_URL.replace(/\/$/, '')}/images/logos/CLA.svg` : undefined;
 const SMTP_BOOTSTRAP_FALLBACK = {
     host: '127.0.0.1',
     port: 1025,
@@ -251,6 +252,9 @@ export const config: VendureConfig = {
                       emailSender: new LoggingEmailSender(),
                       globalTemplateVars: {
                           fromAddress: SMTP_FROM,
+                          brandName: 'CLA Soulprint',
+                          brandLogoUrl: BRAND_LOGO_URL,
+                          shopUrl: SHOP_PUBLIC_URL,
                           verifyEmailAddressUrl: `${SHOP_PUBLIC_URL}/verify`,
                           passwordResetUrl: `${SHOP_PUBLIC_URL}/password-reset`,
                           changeEmailAddressUrl: `${SHOP_PUBLIC_URL}/change-email-address`,
@@ -269,6 +273,9 @@ export const config: VendureConfig = {
                         emailSender: new LoggingEmailSender(),
                         globalTemplateVars: {
                             fromAddress: SMTP_FROM,
+                            brandName: 'CLA Soulprint',
+                            brandLogoUrl: BRAND_LOGO_URL,
+                            shopUrl: SHOP_PUBLIC_URL,
                             verifyEmailAddressUrl: `${SHOP_PUBLIC_URL}/verify`,
                             passwordResetUrl: `${SHOP_PUBLIC_URL}/password-reset`,
                             changeEmailAddressUrl: `${SHOP_PUBLIC_URL}/change-email-address`,
