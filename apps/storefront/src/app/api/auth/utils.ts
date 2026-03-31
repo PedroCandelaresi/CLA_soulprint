@@ -505,7 +505,7 @@ function buildVendureHeaders(cookieHeader?: string): HeadersInit | undefined {
     return { cookie: cookieHeader };
 }
 
-interface VendureProxyHeadersInput {
+export interface VendureProxyHeadersInput {
     cookieHeader?: string;
     forwardedProto?: string;
     forwardedHost?: string;
@@ -789,19 +789,26 @@ export async function fetchActiveCustomerWithHeaders(cookieHeader?: string): Pro
     customer: CustomerSummary | null;
     headers: Headers;
 }> {
+    return performGetActiveCustomer({ cookieHeader });
+}
+
+export async function performGetActiveCustomer(input: VendureProxyHeadersInput): Promise<{
+    customer: CustomerSummary | null;
+    headers: Headers;
+}> {
     console.info(
-        `[auth:me] fetchActiveCustomerWithHeaders cookiePresent=${Boolean(cookieHeader)} cookieNames=${
-            getCookieNames(cookieHeader).join(',') || '(none)'
-        }`,
+        `[auth:me] performGetActiveCustomer cookiePresent=${Boolean(input.cookieHeader)} cookieNames=${
+            getCookieNames(input.cookieHeader).join(',') || '(none)'
+        } forwardedProto=${input.forwardedProto || '(none)'} forwardedHost=${input.forwardedHost || '(none)'} origin=${input.origin || '(none)'}`,
     );
 
     const result = await fetchVendureApi<ActiveCustomerData>(ACTIVE_CUSTOMER_QUERY, {
-        headers: buildVendureHeaders(cookieHeader),
+        headers: buildVendureProxyHeaders(input),
     });
 
     const customer = result.data.activeCustomer ? mapCustomer(result.data.activeCustomer) : null;
     console.info(
-        `[auth:me] fetchActiveCustomerWithHeaders vendureCustomer=${customer?.id ?? 'null'} setCookieCount=${getSetCookieCount(result.headers)}`,
+        `[auth:me] performGetActiveCustomer vendureCustomer=${customer?.id ?? 'null'} setCookieCount=${getSetCookieCount(result.headers)}`,
     );
 
     return {

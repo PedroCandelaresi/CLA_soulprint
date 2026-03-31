@@ -51,18 +51,20 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
     const pathname = usePathname();
     const router = useRouter();
     const { totalQuantity, refreshCart } = useCart();
-    const { customer, authStatus, isAuthenticated, logout } = useCustomer();
+    const { customer, authStatus, isAuthenticated, error: customerError, logout } = useCustomer();
     const headerBranch = authStatus === 'loading'
         ? 'loading'
+        : authStatus === 'error'
+            ? 'error'
         : isAuthenticated
             ? 'authenticated'
             : 'guest';
 
     useEffect(() => {
         console.info(
-            `[auth:header] render pathname=${pathname} branch=${headerBranch} authStatus=${authStatus} customer=${customer?.id ?? 'null'}`,
+            `[auth:header] render pathname=${pathname} branch=${headerBranch} authStatus=${authStatus} customer=${customer?.id ?? 'null'} error=${customerError || '(none)'}`,
         );
-    }, [authStatus, customer?.id, headerBranch, pathname]);
+    }, [authStatus, customer?.id, customerError, headerBranch, pathname]);
 
     async function handleLogout() {
         setIsLoggingOut(true);
@@ -168,6 +170,18 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                                 }}
                             >
                                 Cargando cuenta...
+                            </Button>
+                        ) : authStatus === 'error' ? (
+                            <Button
+                                color="inherit"
+                                disabled
+                                sx={{
+                                    display: { xs: "none", md: "inline-flex" },
+                                    textTransform: "none",
+                                    color: "inherit",
+                                }}
+                            >
+                                Cuenta no disponible
                             </Button>
                         ) : (
                             <Button
@@ -280,6 +294,10 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                             {authStatus === 'loading' ? (
                                 <ListItemButton disabled>
                                     <ListItemText primary="Cargando cuenta..." />
+                                </ListItemButton>
+                            ) : authStatus === 'error' ? (
+                                <ListItemButton disabled>
+                                    <ListItemText primary="Cuenta no disponible" secondary={customerError || undefined} />
                                 </ListItemButton>
                             ) : (
                                 <ListItemButton component={Link} href={isAuthenticated ? "/auth/account" : "/auth/login"} prefetch={false}>

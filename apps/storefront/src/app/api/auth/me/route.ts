@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { appendVendureSetCookieHeaders } from '@/lib/vendure/client';
-import { fetchActiveCustomerWithHeaders } from '../utils';
+import { buildAuthProxyContext, performGetActiveCustomer, resolveAuthErrorResponse } from '../utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,15 +25,16 @@ function getSetCookieCount(headers: Headers): number {
 }
 
 export async function GET(request: NextRequest) {
-    const cookieHeader = request.headers.get('cookie');
+    const proxyContext = buildAuthProxyContext(request);
+    const cookieHeader = proxyContext.cookieHeader;
     console.info(
         `[auth:me] route requestReceived cookiePresent=${Boolean(cookieHeader)} cookieNames=${
             getCookieNames(cookieHeader).join(',') || '(none)'
-        }`,
+        } forwardedProto=${proxyContext.forwardedProto || '(none)'} forwardedHost=${proxyContext.forwardedHost || '(none)'}`,
     );
 
     try {
-        const result = await fetchActiveCustomerWithHeaders(cookieHeader || undefined);
+        const result = await performGetActiveCustomer(proxyContext);
         console.info(
             `[auth:me] route vendureCustomer=${result.customer?.id ?? 'null'} vendureSetCookieCount=${getSetCookieCount(result.headers)}`,
         );
@@ -48,9 +49,6 @@ export async function GET(request: NextRequest) {
         return response;
     } catch (error) {
         console.error('[auth:me] route failed', error);
-        return NextResponse.json({
-            success: true,
-            customer: null,
-        });
+        return resolveAuthErrorResponse(error, 'No se pudo validar la sesión.', 502);
     }
 }

@@ -44,7 +44,14 @@ function getDigits(value: string): string {
 export default function CartPageContent() {
     const router = useRouter();
     const { cart, error, clearError, isInitializing, isMutating, updateLineQuantity, removeLine, saveBuyerDetails } = useCart();
-    const { customer, isAuthenticated, isLoading: isCustomerLoading } = useCustomer();
+    const {
+        customer,
+        authStatus,
+        error: customerError,
+        isAuthenticated,
+        isLoading: isCustomerLoading,
+        refreshCustomer,
+    } = useCustomer();
     const [busyLineId, setBusyLineId] = useState<string | null>(null);
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
@@ -348,6 +355,16 @@ export default function CartPageContent() {
                                         Verificando tu sesión para habilitar el pago...
                                     </Typography>
                                 </Stack>
+                            ) : authStatus === 'error' ? (
+                                <Stack spacing={2}>
+                                    <Typography variant="h6" fontWeight={700}>No pudimos validar tu sesión</Typography>
+                                    <Alert severity="warning">
+                                        {customerError || 'Hubo un problema al confirmar tu cuenta. Reintentá antes de seguir al pago.'}
+                                    </Alert>
+                                    <Button variant="outlined" fullWidth onClick={() => void refreshCustomer()}>
+                                        Reintentar sesión
+                                    </Button>
+                                </Stack>
                             ) : !isAuthenticated ? (
                                 <Stack spacing={2}>
                                     <Typography variant="h6" fontWeight={700}>Cuenta requerida para pagar</Typography>
@@ -455,6 +472,17 @@ export default function CartPageContent() {
                                     disabled={isCheckoutContextBusy}
                                 />
                             </>
+                        ) : authStatus === 'error' ? (
+                            <Alert
+                                severity="warning"
+                                action={(
+                                    <Button color="inherit" size="small" onClick={() => void refreshCustomer()}>
+                                        Reintentar
+                                    </Button>
+                                )}
+                            >
+                                No pudimos confirmar la sesión. Reintentá antes de iniciar el pago.
+                            </Alert>
                         ) : (
                             <Alert severity="warning">
                                 El pago queda bloqueado hasta que verifiques tu cuenta e inicies sesión.

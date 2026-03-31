@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useEffectEvent, useState } from '
 import { getActiveCustomer, logout as logoutRequest } from '@/lib/auth/client';
 import type { CustomerSummary } from '@/types/customer-account';
 
-type AuthStatus = 'loading' | 'authenticated' | 'guest';
+type AuthStatus = 'loading' | 'authenticated' | 'guest' | 'error';
 
 interface CustomerContextValue {
     customer: CustomerSummary | null;
@@ -49,10 +49,11 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
                 `[auth:provider] loadCustomer:response success=${response.success} customer=${response.customer?.id ?? 'null'} error=${response.error || '(none)'}`,
             );
             if (!response.success) {
-                setCustomerState(null);
-                setAuthStatus('guest');
-                setError(response.error || null);
-                console.info('[auth:provider] loadCustomer:transition guest (response not successful)');
+                setAuthStatus((currentStatus) => (currentStatus === 'authenticated' && customer ? 'authenticated' : 'error'));
+                setError(response.error || 'No se pudo validar la sesión.');
+                console.info(
+                    `[auth:provider] loadCustomer:transition ${customer ? 'authenticated (stale)' : 'error'} (response not successful)`,
+                );
                 return;
             }
 
@@ -63,10 +64,12 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
                 `[auth:provider] loadCustomer:transition ${response.customer ? 'authenticated' : 'guest'}`,
             );
         } catch (loadError) {
-            setCustomerState(null);
-            setAuthStatus('guest');
+            setAuthStatus((currentStatus) => (currentStatus === 'authenticated' && customer ? 'authenticated' : 'error'));
             setError(getErrorMessage(loadError));
-            console.error('[auth:provider] loadCustomer:catch -> guest', loadError);
+            console.error(
+                `[auth:provider] loadCustomer:catch -> ${customer ? 'authenticated (stale)' : 'error'}`,
+                loadError,
+            );
         }
     });
 
