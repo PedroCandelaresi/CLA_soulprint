@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
     Alert,
     Box,
@@ -41,6 +42,7 @@ function getDigits(value: string): string {
 }
 
 export default function CartPageContent() {
+    const router = useRouter();
     const { cart, error, clearError, isInitializing, isMutating, updateLineQuantity, removeLine, saveBuyerDetails } = useCart();
     const { customer, isAuthenticated, isLoading: isCustomerLoading } = useCustomer();
     const [busyLineId, setBusyLineId] = useState<string | null>(null);
@@ -51,9 +53,20 @@ export default function CartPageContent() {
     const [buyerMessage, setBuyerMessage] = useState<string | null>(null);
     const [isSavingBuyer, setIsSavingBuyer] = useState(false);
     const buyerDataSeedRef = useRef<string | null>(null);
+    const lastCustomerIdRef = useRef<string | null>(customer?.id || null);
     const effectiveEmail = isAuthenticated ? (customer?.emailAddress || email) : email;
     const isCheckoutContextLoading = isCustomerLoading || isInitializing;
     const isCheckoutContextBusy = isCheckoutContextLoading || isMutating || isSavingBuyer;
+
+    useEffect(() => {
+        const nextCustomerId = customer?.id || null;
+        if (lastCustomerIdRef.current === nextCustomerId) {
+            return;
+        }
+
+        lastCustomerIdRef.current = nextCustomerId;
+        router.refresh();
+    }, [customer?.id, router]);
 
     useEffect(() => {
         if (!cart) {

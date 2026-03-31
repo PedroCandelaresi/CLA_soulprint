@@ -37,17 +37,19 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        const authProxyContext = buildAuthProxyContext(request);
         const idToken = await exchangeGoogleCode(request, code);
         const authResult = await authenticateWithGoogleIdToken({
             idToken,
-            ...buildAuthProxyContext(request),
+            ...authProxyContext,
         });
 
         if (!authResult.body.success) {
             return redirectToLogin(request, authResult.body.error || 'No se pudo iniciar sesión con Google.');
         }
 
-        const response = NextResponse.redirect(new URL(parsedState.returnTo, request.url));
+        const origin = authProxyContext.origin || request.nextUrl.origin;
+        const response = NextResponse.redirect(`${origin}/carrito`);
         clearGoogleStateCookie(response, isSecureRequest(request));
         return appendVendureCookies(authResult.headers, response);
     } catch (error) {

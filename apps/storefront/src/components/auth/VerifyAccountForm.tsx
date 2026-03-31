@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
     Alert,
     Button,
@@ -28,7 +27,6 @@ interface VerifyAccountFormProps {
 }
 
 export default function VerifyAccountForm({ token, nextParam }: VerifyAccountFormProps) {
-    const router = useRouter();
     const { refreshCustomer } = useCustomer();
     const { refreshCart } = useCart();
     const [password, setPassword] = useState('');
@@ -71,8 +69,9 @@ export default function VerifyAccountForm({ token, nextParam }: VerifyAccountFor
                 refreshCart(),
             ]);
 
-            router.replace(returnTo);
-            router.refresh();
+            if (typeof window !== 'undefined') {
+                window.location.href = returnTo;
+            }
         } finally {
             setIsSubmitting(false);
         }

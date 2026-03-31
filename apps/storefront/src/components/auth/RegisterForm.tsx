@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
     Alert,
     Button,
@@ -27,7 +26,6 @@ interface RegisterFormProps {
 }
 
 export default function RegisterForm({ nextParam }: RegisterFormProps) {
-    const router = useRouter();
     const { customer, isLoading, refreshCustomer } = useCustomer();
     const { refreshCart } = useCart();
     const [fullName, setFullName] = useState('');
@@ -40,10 +38,10 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
     const returnTo = sanitizeReturnTo(nextParam || null);
 
     useEffect(() => {
-        if (!isLoading && customer) {
-            router.replace(returnTo);
+        if (!isLoading && customer && typeof window !== 'undefined') {
+            window.location.href = returnTo;
         }
-    }, [customer, isLoading, returnTo, router]);
+    }, [customer, isLoading, returnTo]);
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -83,8 +81,9 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
             refreshCart(),
         ]);
 
-        router.replace(returnTo);
-        router.refresh();
+        if (typeof window !== 'undefined') {
+            window.location.href = returnTo;
+        }
     }
 
     return (

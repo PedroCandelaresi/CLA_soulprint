@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
     Alert,
     Box,
@@ -31,7 +30,6 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ nextParam, oauthError }: LoginFormProps) {
-    const router = useRouter();
     const { customer, isLoading, refreshCustomer } = useCustomer();
     const { refreshCart } = useCart();
     const [email, setEmail] = useState('');
@@ -42,10 +40,10 @@ export default function LoginForm({ nextParam, oauthError }: LoginFormProps) {
     const returnTo = sanitizeReturnTo(nextParam || null);
 
     useEffect(() => {
-        if (!isLoading && customer) {
-            router.replace(returnTo);
+        if (!isLoading && customer && typeof window !== 'undefined') {
+            window.location.href = returnTo;
         }
-    }, [customer, isLoading, returnTo, router]);
+    }, [customer, isLoading, returnTo]);
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -69,8 +67,9 @@ export default function LoginForm({ nextParam, oauthError }: LoginFormProps) {
             refreshCart(),
         ]);
 
-        router.replace(returnTo);
-        router.refresh();
+        if (typeof window !== 'undefined') {
+            window.location.href = returnTo;
+        }
     }
 
     return (

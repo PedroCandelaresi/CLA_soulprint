@@ -54,6 +54,8 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     async function refreshCustomer(): Promise<void> {
+        setCustomer(null);
+        setError(null);
         setIsLoading(true);
         await loadCustomer();
     }
