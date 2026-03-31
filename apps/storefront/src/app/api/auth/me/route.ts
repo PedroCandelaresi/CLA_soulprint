@@ -24,6 +24,53 @@ function getSetCookieCount(headers: Headers): number {
     return headers.get('set-cookie') ? 1 : 0;
 }
 
+function splitCombinedSetCookieHeader(value: string): string[] {
+    const cookies: string[] = [];
+    let current = '';
+    let inExpiresAttribute = false;
+
+    for (let index = 0; index < value.length; index += 1) {
+        const char = value[index];
+        current += char;
+
+        const lowerCurrent = current.toLowerCase();
+        if (!inExpiresAttribute && lowerCurrent.endsWith('expires=')) {
+            inExpiresAttribute = true;
+            continue;
+        }
+
+        if (inExpiresAttribute && char === ';') {
+            inExpiresAttribute = false;
+            continue;
+        }
+
+        if (!inExpiresAttribute && char === ',' && index < value.length - 1) {
+            current = current.slice(0, -1).trim();
+            if (current) {
+                cookies.push(current);
+            }
+            current = '';
+        }
+    }
+
+    const trailing = current.trim();
+    if (trailing) {
+        cookies.push(trailing);
+    }
+
+    return cookies;
+}
+
+function getSetCookieValues(headers: Headers): string[] {
+    const candidate = headers as Headers & { getSetCookie?: () => string[] };
+    if (typeof candidate.getSetCookie === 'function') {
+        return candidate.getSetCookie();
+    }
+
+    const combinedHeader = headers.get('set-cookie');
+    return combinedHeader ? splitCombinedSetCookieHeader(combinedHeader) : [];
+}
+
 export async function GET(request: NextRequest) {
     const proxyContext = buildAuthProxyContext(request);
     const cookieHeader = proxyContext.cookieHeader;
@@ -32,11 +79,27 @@ export async function GET(request: NextRequest) {
             getCookieNames(cookieHeader).join(',') || '(none)'
         } forwardedProto=${proxyContext.forwardedProto || '(none)'} forwardedHost=${proxyContext.forwardedHost || '(none)'}`,
     );
+    console.info(
+        `[auth:me] route incomingCookieHeader=${cookieHeader || '(none)'}`,
+    );
+    console.info(
+        `[auth:me] route forwardingHeaders=${JSON.stringify({
+            cookie: proxyContext.cookieHeader || null,
+            'x-forwarded-proto': proxyContext.forwardedProto || null,
+            'x-forwarded-host': proxyContext.forwardedHost || null,
+            'x-forwarded-for': proxyContext.forwardedFor || null,
+            origin: proxyContext.origin || null,
+            referer: proxyContext.referer || null,
+        })}`,
+    );
 
     try {
         const result = await performGetActiveCustomer(proxyContext);
         console.info(
             `[auth:me] route vendureCustomer=${result.customer?.id ?? 'null'} vendureSetCookieCount=${getSetCookieCount(result.headers)}`,
+        );
+        console.info(
+            `[auth:me] route vendureSetCookie=${JSON.stringify(getSetCookieValues(result.headers))}`,
         );
         const response = NextResponse.json({
             success: true,
@@ -45,6 +108,9 @@ export async function GET(request: NextRequest) {
         appendVendureSetCookieHeaders(result.headers, response.headers);
         console.info(
             `[auth:me] route responseSent success=true customer=${result.customer?.id ?? 'null'} forwardedSetCookieCount=${getSetCookieCount(response.headers)}`,
+        );
+        console.info(
+            `[auth:me] route forwardedSetCookie=${JSON.stringify(getSetCookieValues(response.headers))}`,
         );
         return response;
     } catch (error) {
