@@ -78,6 +78,7 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                         key={opcion.ruta}
                         component={Link}
                         href={opcion.ruta}
+                        prefetch={false}
                         color="inherit"
                         sx={{
                             fontWeight: activa ? 700 : 500,
@@ -114,6 +115,7 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                     <Box
                         component={Link}
                         href="/"
+                        prefetch={false}
                         sx={{
                             position: "relative",
                             display: "inline-flex",
@@ -253,7 +255,7 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                     <List sx={{ py: 1 }}>
                         {opcionesMenu.map((opcion) => (
                             <ListItem key={opcion.ruta} disablePadding>
-                                <ListItemButton component={Link} href={opcion.ruta}>
+                                <ListItemButton component={Link} href={opcion.ruta} prefetch={false}>
                                     <ListItemText primary={opcion.etiqueta} />
                                 </ListItemButton>
                             </ListItem>

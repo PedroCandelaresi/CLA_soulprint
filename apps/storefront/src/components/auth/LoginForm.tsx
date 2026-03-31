@@ -131,6 +131,7 @@ export default function LoginForm({ nextParam, oauthError }: LoginFormProps) {
                 <Button
                     component={Link}
                     href={`/auth/google?next=${encodeURIComponent(returnTo)}`}
+                    prefetch={false}
                     variant="outlined"
                     size="large"
                     startIcon={<GoogleIcon />}
