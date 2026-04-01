@@ -16,6 +16,8 @@ import { getAdminUiApp } from '../admin-ui/config';
 import { adminUiConfig, adminUiPort, adminUiRoute } from '../admin-ui/admin-ui-options';
 import { GetnetPlugin, initGetnetPlugin, getGetnetMiddleware, getGetnetConfigFromEnv, getnetPaymentHandler } from '../plugins/payments/getnet';
 import { GetnetPaymentTransaction } from '../plugins/payments/getnet/getnet-transaction.entity';
+import { MockPaymentsPlugin } from '../plugins/payments/mock-payments';
+import { MockLogisticsPlugin } from '../plugins/logistics/mock-logistics';
 import { GoogleAuthPlugin, getGoogleAuthConfigFromEnv, GoogleAuthenticationStrategy } from '../plugins/auth/google-auth';
 import { BuyerCheckoutPlugin } from '../plugins/checkout/buyer';
 import { PersonalizationPlugin } from '../plugins/logistics/personalization';
@@ -200,6 +202,7 @@ export const config: VendureConfig = {
             { name: 'documentNumber', type: 'string', nullable: true, public: true },
         ],
         Order: [
+            // Andreani (real carrier - fields kept for production use)
             { name: 'andreaniCarrier', type: 'string', nullable: true },
             { name: 'andreaniServiceCode', type: 'string', nullable: true },
             { name: 'andreaniServiceName', type: 'string', nullable: true },
@@ -216,18 +219,32 @@ export const config: VendureConfig = {
             { name: 'andreaniShipmentId', type: 'string', nullable: true },
             { name: 'andreaniShipmentStatus', type: 'string', nullable: true },
             { name: 'andreaniShipmentRawResponse', type: 'string', nullable: true },
+            // Shipping mock / provider-agnostic snapshot (usado por MockLogisticsPlugin y futuro Andreani real)
+            { name: 'shippingQuoteCode', type: 'string', nullable: true },
+            { name: 'shippingMethodLabel', type: 'string', nullable: true },
+            { name: 'shippingPriceCents', type: 'int', nullable: true },
+            { name: 'shippingSnapshotJson', type: 'text', nullable: true },
+            // Buyer snapshot
             { name: 'buyerFullName', type: 'string', nullable: true, public: true },
             { name: 'buyerEmail', type: 'string', nullable: true, public: true },
             { name: 'buyerPhone', type: 'string', nullable: true, public: true },
+            // Production workflow
             { name: 'productionStatus', type: 'string', nullable: false, defaultValue: 'not-started', public: true },
             { name: 'productionUpdatedAt', type: 'datetime', nullable: true, public: true },
-            { name: 'personalizationRequired', type: 'boolean', defaultValue: false, public: false },
+            // Personalización: estado global derivado de las líneas
+            // 'not-required' | 'pending' | 'partial' | 'complete'
+            { name: 'personalizationOverallStatus', type: 'string', nullable: false, defaultValue: 'not-required', public: false },
+        ],
+        OrderLine: [
+            // Personalización por línea (reemplaza campos que estaban en Order)
+            // 'not-required' | 'pending-upload' | 'uploaded' | 'approved' | 'rejected'
             { name: 'personalizationStatus', type: 'string', nullable: false, defaultValue: 'not-required', public: false },
-            { name: 'personalizationAsset', type: 'relation', entity: Asset, nullable: true, public: false },
-            { name: 'personalizationAssetPreviewUrl', type: 'text', nullable: true, public: false },
-            { name: 'personalizationOriginalFilename', type: 'string', nullable: true, public: false },
-            { name: 'personalizationUploadedAt', type: 'datetime', nullable: true, public: false },
+            { name: 'personalizationAsset', type: 'relation', entity: Asset, nullable: true, public: false, eager: true },
             { name: 'personalizationNotes', type: 'text', nullable: true, public: false },
+            { name: 'personalizationUploadedAt', type: 'datetime', nullable: true, public: false },
+            { name: 'personalizationApprovedAt', type: 'datetime', nullable: true, public: false },
+            { name: 'personalizationRejectedReason', type: 'string', nullable: true, public: false },
+            { name: 'personalizationSnapshotFileName', type: 'string', nullable: true, public: false },
         ],
         ProductVariant: [
             { name: 'requiresPersonalization', type: 'boolean', defaultValue: false, public: true },
@@ -301,6 +318,8 @@ export const config: VendureConfig = {
             adminUiConfig,
         }),
         GetnetPlugin,
+        MockPaymentsPlugin,
+        MockLogisticsPlugin,
         GoogleAuthPlugin,
         BuyerCheckoutPlugin,
         PersonalizationPlugin,

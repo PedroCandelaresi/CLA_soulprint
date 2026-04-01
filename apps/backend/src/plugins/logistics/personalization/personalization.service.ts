@@ -1,13 +1,24 @@
 import { Readable } from 'node:stream';
 import { Inject, Injectable } from '@nestjs/common';
-import { Asset, AssetService, EventBus, Order, OrderService, Payment, RequestContextService } from '@vendure/core';
+import {
+    Asset,
+    AssetService,
+    EventBus,
+    Order,
+    OrderLine,
+    OrderService,
+    RequestContextService,
+    TransactionalConnection,
+} from '@vendure/core';
 import type { GetnetService } from '../../payments/getnet';
 import { PersonalizationConfig, PERSONALIZATION_CONFIG_OPTIONS } from './personalization.config';
 import {
-    PersonalizationOrderAccess,
+    PersonalizationLineStatus,
     PersonalizationOrderData,
-    PersonalizationStatus,
+    PersonalizationLineData,
+    PersonalizationOrderAccess,
     PersonalizationUploadInput,
+    PersonalizationLineUploadInput,
 } from './personalization.types';
 import {
     buildPersonalizationToken,
@@ -17,7 +28,9 @@ import {
 } from './personalization.utils';
 import { PersonalizationReceivedEvent } from '../../orders/business-status/personalization-received.event';
 
-const PERSONALIZATION_ORDER_RELATIONS = [
+const LOG_PREFIX = '[personalization]';
+
+const ORDER_RELATIONS = [
     'customer',
     'customer.user',
     'lines',
@@ -25,7 +38,6 @@ const PERSONALIZATION_ORDER_RELATIONS = [
     'lines.productVariant.product',
     'payments',
     'fulfillments',
-    'customFields.personalizationAsset',
 ] as const;
 
 const PAID_PAYMENT_STATES = new Set(['Authorized', 'Settled']);
@@ -39,9 +51,14 @@ export class PersonalizationService {
         private readonly requestContextService: RequestContextService,
         private readonly assetService: AssetService,
         private readonly eventBus: EventBus,
+        private readonly connection: TransactionalConnection,
         @Inject(PERSONALIZATION_CONFIG_OPTIONS)
         private readonly config: PersonalizationConfig,
     ) {}
+
+    setGetnetService(service: GetnetService | null): void {
+        this.getnetService = service;
+    }
 
     getUploadConstraints(): Pick<PersonalizationConfig, 'allowedMimeTypes' | 'maxFileSizeBytes'> {
         return {
@@ -50,253 +67,293 @@ export class PersonalizationService {
         };
     }
 
-    setGetnetService(service: GetnetService | null): void {
-        this.getnetService = service;
-    }
+    // ─────────────────────────────────────────────────────────────────────────
+    // Public API
+    // ─────────────────────────────────────────────────────────────────────────
 
     async syncOrderAfterPayment(orderCode: string): Promise<void> {
         const ctx = await this.requestContextService.create({ apiType: 'admin' });
-        const order = await this.loadOrderByCode(ctx, orderCode);
-        if (!order) {
-            return;
-        }
-        await this.syncDerivedFields(ctx, order);
+        const order = await this.loadOrder(ctx, orderCode);
+        if (!order) return;
+        await this.syncLineStatuses(ctx, order);
+        await this.syncOverallStatus(ctx, order);
     }
 
+    /** Returns personalization data for the whole order (all lines). */
     async getOrderPersonalization(access: PersonalizationOrderAccess): Promise<PersonalizationOrderData> {
         const ctx = await this.requestContextService.create({ apiType: 'admin' });
-        let order = await this.loadOrderByCode(ctx, access.orderCode);
+        const order = await this.loadOrder(ctx, access.orderCode);
+        if (!order) throw new Error('La orden no existe.');
 
-        if (!order) {
-            throw new Error('La orden no existe.');
-        }
+        await this.authorize(access, order, false);
 
-        const authorization = await this.authorize(access, order, false);
-        order = await this.syncDerivedFields(ctx, order);
+        const refreshed = await this.syncLineStatuses(ctx, order);
+        await this.syncOverallStatus(ctx, refreshed ?? order);
+        const finalOrder = await this.loadOrder(ctx, access.orderCode) ?? order;
 
-        return this.mapOrderToResponse(order, authorization.accessToken, authorization.transactionStatus);
+        const token = buildPersonalizationToken(order.code, this.config.tokenSecret);
+        return this.mapToResponse(finalOrder, token);
     }
 
-    async uploadPersonalization(input: PersonalizationUploadInput): Promise<PersonalizationOrderData> {
+    /** Uploads a file for a specific OrderLine. */
+    async uploadForLine(input: PersonalizationLineUploadInput): Promise<PersonalizationOrderData> {
         this.validateFile(input.file);
 
         const ctx = await this.requestContextService.create({ apiType: 'admin' });
-        let order = await this.loadOrderByCode(ctx, input.orderCode);
-
-        if (!order) {
-            throw new Error('La orden no existe.');
-        }
+        const order = await this.loadOrder(ctx, input.orderCode);
+        if (!order) throw new Error('La orden no existe.');
 
         const authorization = await this.authorize(input, order, true);
-        order = await this.syncDerivedFields(ctx, order);
 
-        if (!this.requiresPersonalization(order)) {
-            throw new Error('La orden no requiere personalización.');
+        // Find the target line
+        const line = this.getLines(order).find(l => String(l.id) === String(input.orderLineId));
+        if (!line) throw new Error('Línea de orden no encontrada.');
+        if (!this.lineRequiresPersonalization(line)) {
+            throw new Error('Este producto no requiere personalización.');
         }
 
-        const currentAsset = this.getOrderAsset(order);
-        const fileStream = Readable.from(input.file.buffer);
-        const assetResult = await this.assetService.createFromFileStream(fileStream, input.file.originalname, ctx);
+        // Upload new asset
+        const stream = Readable.from(input.file.buffer);
+        const assetResult = await this.assetService.createFromFileStream(stream, input.file.originalname, ctx);
+        if (!('id' in assetResult)) throw new Error('Vendure no pudo procesar el archivo subido.');
 
-        if (!('id' in assetResult)) {
-            throw new Error('Vendure no pudo procesar el archivo subido.');
-        }
-
-        const nextNotes = sanitizeNotes(input.notes) ?? this.getCustomFieldValue<string>(order, 'personalizationNotes') ?? undefined;
-        await this.orderService.updateCustomFields(ctx, order.id, {
-            personalizationRequired: true,
-            personalizationStatus: 'uploaded',
-            personalizationAsset: assetResult.id,
-            personalizationAssetPreviewUrl: assetResult.preview,
-            personalizationOriginalFilename: input.file.originalname,
-            personalizationUploadedAt: new Date(),
-            personalizationNotes: nextNotes,
-        });
-
-        if (currentAsset && currentAsset.id !== assetResult.id) {
+        // Clean up previous asset for this line
+        const prevAsset = this.getLineAsset(line);
+        if (prevAsset?.id && prevAsset.id !== assetResult.id) {
             try {
-                await this.assetService.delete(ctx, [currentAsset.id], true, true);
-            } catch (error) {
-                console.warn('[personalization] previous asset cleanup failed:', error);
+                await this.assetService.delete(ctx, [prevAsset.id], true, true);
+            } catch {
+                console.warn(`${LOG_PREFIX} Cleanup of previous asset failed`);
             }
         }
 
-        order = await this.loadOrderByCode(ctx, input.orderCode);
-        if (!order) {
-            throw new Error('La orden no pudo recargarse después de subir el archivo.');
+        // Persist to OrderLine via TypeORM (Vendure doesn't expose updateOrderLine customFields directly)
+        await this.connection.getRepository(ctx, OrderLine).update(
+            { id: line.id as any },
+            {
+                customFields: {
+                    personalizationStatus: 'uploaded' as PersonalizationLineStatus,
+                    personalizationAsset: { id: assetResult.id } as any,
+                    personalizationNotes: sanitizeNotes(input.notes) ?? null,
+                    personalizationUploadedAt: new Date(),
+                    personalizationSnapshotFileName: input.file.originalname,
+                    personalizationRejectedReason: null,
+                } as any,
+            }
+        );
+
+        // Re-derive and persist overall status on Order
+        const reloadedOrder = await this.loadOrder(ctx, input.orderCode);
+        if (reloadedOrder) {
+            await this.syncOverallStatus(ctx, reloadedOrder);
         }
 
-        try {
-            await this.eventBus.publish(new PersonalizationReceivedEvent(ctx, order));
-        } catch (error) {
-            console.warn('[personalization] notification event publish failed:', error);
+        // Emit event if all required lines now have uploads
+        const latestOrder = await this.loadOrder(ctx, input.orderCode);
+        if (latestOrder) {
+            const overallStatus = this.deriveOverallStatus(latestOrder);
+            if (overallStatus === 'complete') {
+                try {
+                    await this.eventBus.publish(new PersonalizationReceivedEvent(ctx, latestOrder));
+                } catch {
+                    console.warn(`${LOG_PREFIX} Failed to publish PersonalizationReceivedEvent`);
+                }
+            }
         }
 
-        return this.mapOrderToResponse(order, authorization.accessToken, authorization.transactionStatus);
+        const finalOrder = await this.loadOrder(ctx, input.orderCode) ?? order;
+        const token = buildPersonalizationToken(order.code, this.config.tokenSecret);
+        return this.mapToResponse(finalOrder, token);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Internal helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private async loadOrder(
+        ctx: Awaited<ReturnType<RequestContextService['create']>>,
+        orderCode: string,
+    ): Promise<Order | undefined> {
+        return this.orderService.findOneByCode(ctx, orderCode, [...ORDER_RELATIONS]);
+    }
+
+    /** CORRECCIÓN CRÍTICA: verificar el customField del variant, no solo length > 0 */
+    private lineRequiresPersonalization(line: OrderLine): boolean {
+        const variantCf = (line.productVariant?.customFields ?? {}) as Record<string, unknown>;
+        return variantCf['requiresPersonalization'] === true;
+    }
+
+    private getLines(order: Order): OrderLine[] {
+        return (order.lines ?? []) as OrderLine[];
+    }
+
+    private getLineAsset(line: OrderLine): Asset | undefined {
+        const cf = (line.customFields ?? {}) as Record<string, unknown>;
+        const asset = cf['personalizationAsset'];
+        return asset && typeof asset === 'object' ? (asset as Asset) : undefined;
+    }
+
+    private getLineStatus(line: OrderLine): PersonalizationLineStatus {
+        const cf = (line.customFields ?? {}) as Record<string, unknown>;
+        return (cf['personalizationStatus'] as PersonalizationLineStatus) ?? 'not-required';
+    }
+
+    private deriveOverallStatus(order: Order): string {
+        const lines = this.getLines(order);
+        const required = lines.filter(l => this.lineRequiresPersonalization(l));
+        if (required.length === 0) return 'not-required';
+
+        const uploaded = required.filter(l =>
+            ['uploaded', 'approved'].includes(this.getLineStatus(l))
+        );
+
+        if (uploaded.length === 0) return 'pending';
+        if (uploaded.length < required.length) return 'partial';
+        return 'complete';
+    }
+
+    private async syncLineStatuses(
+        ctx: Awaited<ReturnType<RequestContextService['create']>>,
+        order: Order,
+    ): Promise<Order | null> {
+        const lines = this.getLines(order);
+        let changed = false;
+
+        for (const line of lines) {
+            const shouldRequire = this.lineRequiresPersonalization(line);
+            const currentStatus = this.getLineStatus(line);
+            const expectedStatus: PersonalizationLineStatus = shouldRequire ? 'pending-upload' : 'not-required';
+
+            // Only update if status is default and needs to be set
+            if (!shouldRequire && currentStatus !== 'not-required') {
+                await this.connection.getRepository(ctx, OrderLine).update(
+                    { id: line.id as any },
+                    { customFields: { personalizationStatus: 'not-required' } as any }
+                );
+                changed = true;
+            } else if (shouldRequire && currentStatus === 'not-required') {
+                await this.connection.getRepository(ctx, OrderLine).update(
+                    { id: line.id as any },
+                    { customFields: { personalizationStatus: 'pending-upload' } as any }
+                );
+                changed = true;
+            }
+        }
+
+        return changed ? (await this.loadOrder(ctx, order.code)) ?? null : null;
+    }
+
+    private async syncOverallStatus(
+        ctx: Awaited<ReturnType<RequestContextService['create']>>,
+        order: Order,
+    ): Promise<void> {
+        const newStatus = this.deriveOverallStatus(order);
+        const cf = (order.customFields ?? {}) as Record<string, unknown>;
+        const currentStatus = cf['personalizationOverallStatus'] as string ?? 'not-required';
+
+        if (currentStatus === newStatus) return;
+
+        await this.orderService.updateCustomFields(ctx, order.id, {
+            personalizationOverallStatus: newStatus,
+        });
+    }
+
+    private isPaidOrder(order: Order, transactionStatus?: string): boolean {
+        if ((order.payments ?? []).some(p => PAID_PAYMENT_STATES.has(p.state))) return true;
+        return transactionStatus === 'approved';
+    }
+
+    private isOwnedByCustomer(order: Order, customerUserId?: string): boolean {
+        if (!customerUserId) return false;
+        if (!order.customer?.user?.id) return false;
+        return String(order.customer.user.id) === String(customerUserId);
     }
 
     private async authorize(
         access: PersonalizationOrderAccess,
         order: Order,
-        requirePaidOrder: boolean,
-    ): Promise<{ accessToken?: string; transactionStatus?: string }> {
+        requirePaid: boolean,
+    ): Promise<{ accessToken: string }> {
         const hasValidToken = isValidPersonalizationToken(order.code, access.accessToken, this.config.tokenSecret);
         const transaction = access.transactionId
             ? await this.getnetService?.findTransactionById(access.transactionId)
             : null;
-        const customerOwnsOrder = this.isOwnedByCustomer(order, access.customerUserId);
+        const customerOwns = this.isOwnedByCustomer(order, access.customerUserId);
 
         if (transaction && transaction.vendureOrderCode !== order.code) {
             throw new Error('La transacción no corresponde a la orden indicada.');
         }
 
-        if (!hasValidToken && !transaction && !customerOwnsOrder) {
+        if (!hasValidToken && !transaction && !customerOwns) {
             throw new Error('No autorizado para consultar esta orden.');
         }
 
-        const isPaidOrder = this.isPaidOrder(order, transaction?.status);
-        if (requirePaidOrder && !isPaidOrder) {
+        if (requirePaid && !this.isPaidOrder(order, transaction?.status)) {
             throw new Error('La orden todavía no tiene un pago acreditado.');
         }
 
-        return {
-            accessToken: hasValidToken || isPaidOrder || customerOwnsOrder
-                ? buildPersonalizationToken(order.code, this.config.tokenSecret)
-                : undefined,
-            transactionStatus: transaction?.status,
-        };
+        return { accessToken: buildPersonalizationToken(order.code, this.config.tokenSecret) };
     }
 
-    private async loadOrderByCode(ctx: Awaited<ReturnType<RequestContextService['create']>>, orderCode: string): Promise<Order | undefined> {
-        return this.orderService.findOneByCode(ctx, orderCode, [...PERSONALIZATION_ORDER_RELATIONS]);
-    }
+    private mapToResponse(order: Order, accessToken: string): PersonalizationOrderData {
+        const orderCf = (order.customFields ?? {}) as Record<string, unknown>;
+        const lines = this.getLines(order);
 
-    private async syncDerivedFields(ctx: Awaited<ReturnType<RequestContextService['create']>>, order: Order): Promise<Order> {
-        const requiresPersonalization = this.requiresPersonalization(order);
-        const asset = this.getOrderAsset(order);
-        const nextStatus: PersonalizationStatus = !requiresPersonalization
-            ? 'not-required'
-            : asset
-                ? 'uploaded'
-                : 'pending';
-
-        const currentRequired = Boolean(this.getCustomFieldValue<boolean>(order, 'personalizationRequired'));
-        const currentStatus = this.getCustomFieldValue<string>(order, 'personalizationStatus') ?? 'not-required';
-
-        if (currentRequired === requiresPersonalization && currentStatus === nextStatus) {
-            return order;
-        }
-
-        await this.orderService.updateCustomFields(ctx, order.id, {
-            personalizationRequired: requiresPersonalization,
-            personalizationStatus: nextStatus,
+        const lineItems: PersonalizationLineData[] = lines.map(line => {
+            const cf = (line.customFields ?? {}) as Record<string, unknown>;
+            const asset = this.getLineAsset(line);
+            return {
+                orderLineId: String(line.id),
+                productName: line.productVariant?.product?.name ?? 'Producto',
+                variantName: line.productVariant?.name ?? '',
+                requiresPersonalization: this.lineRequiresPersonalization(line),
+                personalizationStatus: this.getLineStatus(line),
+                asset: asset
+                    ? {
+                        id: String(asset.id),
+                        source: asset.source,
+                        preview: asset.preview,
+                        mimeType: asset.mimeType,
+                        fileSize: asset.fileSize,
+                    }
+                    : null,
+                notes: (cf['personalizationNotes'] as string | undefined) ?? null,
+                uploadedAt: this.formatDate(cf['personalizationUploadedAt'] as Date | string | undefined),
+                snapshotFileName: (cf['personalizationSnapshotFileName'] as string | undefined) ?? null,
+            };
         });
 
-        const reloadedOrder = await this.loadOrderByCode(ctx, order.code);
-        return reloadedOrder ?? order;
-    }
-
-    private mapOrderToResponse(order: Order, accessToken?: string, transactionStatus?: string): PersonalizationOrderData {
-        const asset = this.getOrderAsset(order);
         const lastPayment = order.payments?.[order.payments.length - 1];
-        const status = (this.getCustomFieldValue<string>(order, 'personalizationStatus') ?? 'not-required') as PersonalizationStatus;
+        const fulfillment = order.fulfillments?.[order.fulfillments.length - 1];
 
         return {
             orderCode: order.code,
-            requiresPersonalization: Boolean(this.getCustomFieldValue<boolean>(order, 'personalizationRequired')),
-            personalizationStatus: status,
-            paymentState: this.getPaymentState(lastPayment, transactionStatus, order.state),
-            shipmentState: this.getShipmentState(order),
-            trackingNumber: this.getCustomFieldValue<string>(order, 'andreaniTrackingNumber') ?? null,
-            originalFilename: this.getCustomFieldValue<string>(order, 'personalizationOriginalFilename') ?? null,
-            uploadedAt: this.formatDate(this.getCustomFieldValue<Date | string>(order, 'personalizationUploadedAt')),
-            notes: this.getCustomFieldValue<string>(order, 'personalizationNotes') ?? null,
+            overallPersonalizationStatus: (orderCf['personalizationOverallStatus'] as string) ?? 'not-required',
+            paymentState: lastPayment?.state ?? order.state,
+            shipmentState: (orderCf['andreaniShipmentStatus'] as string) ?? fulfillment?.state ?? null,
+            trackingNumber: (orderCf['andreaniTrackingNumber'] as string) ?? null,
             accessToken,
-            asset: asset
-                ? {
-                    id: String(asset.id),
-                    source: asset.source,
-                    preview: asset.preview,
-                    mimeType: asset.mimeType,
-                    fileSize: asset.fileSize,
-                }
-                : null,
-            requiredItems: (order.lines || [])
-                .map((line) => ({
-                    orderLineId: String(line.id),
-                    productName: line.productVariant?.product?.name || line.productVariant?.name || 'Producto',
-                    variantName: line.productVariant?.name || 'Variante',
-                })),
+            lines: lineItems,
         };
     }
 
-    private requiresPersonalization(order: Order): boolean {
-        return (order.lines || []).length > 0;
-    }
-
-    private getOrderAsset(order: Order): Asset | undefined {
-        const customFields = (order.customFields || {}) as Record<string, unknown>;
-        const asset = customFields.personalizationAsset;
-        return asset && typeof asset === 'object' ? asset as Asset : undefined;
-    }
-
-    private getPaymentState(payment: Payment | undefined, transactionStatus: string | undefined, orderState: string): string {
-        return payment?.state || transactionStatus || orderState;
-    }
-
-    private getShipmentState(order: Order): string | null {
-        const customFieldShipmentState = this.getCustomFieldValue<string>(order, 'andreaniShipmentStatus');
-        if (customFieldShipmentState) {
-            return customFieldShipmentState;
-        }
-        const fulfillment = order.fulfillments?.[order.fulfillments.length - 1];
-        return fulfillment?.state || null;
-    }
-
-    private getCustomFieldValue<T>(order: Order, key: string): T | undefined {
-        const customFields = (order.customFields || {}) as Record<string, unknown>;
-        return customFields[key] as T | undefined;
-    }
-
     private formatDate(value: Date | string | undefined): string | null {
-        if (!value) {
-            return null;
-        }
-        const date = value instanceof Date ? value : new Date(value);
-        return Number.isNaN(date.getTime()) ? null : date.toISOString();
-    }
-
-    private isPaidOrder(order: Order, transactionStatus?: string): boolean {
-        if ((order.payments || []).some((payment) => PAID_PAYMENT_STATES.has(payment.state))) {
-            return true;
-        }
-        return transactionStatus === 'approved';
-    }
-
-    private isOwnedByCustomer(order: Order, customerUserId?: string): boolean {
-        if (!customerUserId) {
-            return false;
-        }
-
-        if (!order.customer?.user?.id) {
-            return false;
-        }
-
-        return String(order.customer.user.id) === String(customerUserId);
+        if (!value) return null;
+        const d = value instanceof Date ? value : new Date(value);
+        return isNaN(d.getTime()) ? null : d.toISOString();
     }
 
     private validateFile(file: PersonalizationUploadInput['file']): void {
         if (!file || !Buffer.isBuffer(file.buffer) || file.buffer.length === 0) {
             throw new Error('Debes seleccionar un archivo.');
         }
-
-        const mimeType = normalizeMimeType(file.mimetype);
-        if (!this.config.allowedMimeTypes.includes(mimeType)) {
+        const mime = normalizeMimeType(file.mimetype);
+        if (!this.config.allowedMimeTypes.includes(mime)) {
             throw new Error('El tipo de archivo no está permitido.');
         }
-
         if (file.size > this.config.maxFileSizeBytes) {
-            throw new Error(`El archivo supera el máximo permitido de ${Math.round(this.config.maxFileSizeBytes / (1024 * 1024))} MB.`);
+            const maxMb = Math.round(this.config.maxFileSizeBytes / (1024 * 1024));
+            throw new Error(`El archivo supera el máximo permitido de ${maxMb} MB.`);
         }
     }
 }

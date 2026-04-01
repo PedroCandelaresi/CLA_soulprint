@@ -380,12 +380,27 @@ export function createGetnetHandlers(getnetService: GetnetService) {
     
     /**
      * POST /webhook
-     * Receive and process webhook notifications from Getnet
+     * Receive and process webhook notifications from Getnet.
+     * Validates a shared-secret token to prevent unauthorized confirmations.
      */
     async function handleWebhook(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
+            // ── Signature / token validation ───────────────────────────────────
+            const webhookSecret = process.env.GETNET_WEBHOOK_SECRET;
+            if (webhookSecret) {
+                const providedToken =
+                    (req.query?.['token'] as string | undefined) ||
+                    ((req.headers as Record<string, string>)['x-webhook-token']);
+
+                if (!providedToken || providedToken !== webhookSecret) {
+                    console.warn(`${LOG_PREFIX} Webhook rejected: invalid or missing token`);
+                    res.status(401).json({ error: 'Unauthorized' });
+                    return;
+                }
+            }
+
             const payload = req.body as GetnetWebhookPayload;
-            
+
             console.log(`${LOG_PREFIX} Webhook received`);
             console.debug(`${LOG_PREFIX} Webhook body: ${JSON.stringify(payload, null, 2)}`);
             

@@ -414,10 +414,51 @@ export class GetnetService {
     }
 
     /**
+     * Validate that the amount in the DTO matches Vendure's authoritative order total.
+     * Prevents clients from manipulating prices by sending lower amounts.
+     */
+    private async validateAmountAgainstVendure(dto: CreateCheckoutDto): Promise<void> {
+        const orderService = (this as any).orderService;
+        const requestContextService = (this as any).requestContextService;
+
+        if (!orderService || !requestContextService) {
+            console.warn(`${this.prefix} Amount validation skipped: Vendure services not injected`);
+            return;
+        }
+
+        const ctx = await requestContextService.create({ apiType: 'admin' });
+        const order = await orderService.findOneByCode(ctx, dto.orderCode);
+
+        if (!order) {
+            throw new Error(`Order not found: ${dto.orderCode}`);
+        }
+
+        const sentTotal = dto.items.reduce((sum: number, item: any) => sum + item.unitPrice * item.quantity, 0)
+            + (dto.shippingCost ?? 0);
+        const vendureTotal: number = order.totalWithTax;
+        const diff = Math.abs(sentTotal - vendureTotal);
+
+        if (diff > 1) {
+            console.error(
+                `${this.prefix} Amount mismatch for ${dto.orderCode}: ` +
+                `sent=${sentTotal} vendure=${vendureTotal} diff=${diff}`
+            );
+            throw new Error(
+                `Monto inválido: el total enviado (${sentTotal}) no coincide con el total de la orden (${vendureTotal})`
+            );
+        }
+
+        console.log(`${this.prefix} Amount validated for ${dto.orderCode}: ${vendureTotal} cents`);
+    }
+
+    /**
      * Create an order/checkout session in Getnet
      * This also persists the transaction to the local database
      */
     async createOrder(dto: CreateCheckoutDto): Promise<CheckoutResponse> {
+        // Always validate amount against Vendure before creating any checkout session
+        await this.validateAmountAgainstVendure(dto);
+
         if (this.isMockModeEnabled()) {
             console.log(`${this.prefix} Checkout resolution: mode=mock for order ${dto.orderCode}`);
             return this.createMockOrder(dto);
@@ -683,106 +724,123 @@ export class GetnetService {
     }
 
     /**
-     * Handle status transitions
-     * Integrates with Vendure's order/payment system when webhooks are received
+     * Handle status transitions after webhook is received.
+     * Uses addManualPaymentToOrder (correct Vendure 2.x API) and handles
+     * idempotency separately for payment registration vs. state transition.
      */
     private async handleStatusTransition(
         transaction: GetnetPaymentTransaction,
         payload: GetnetWebhookPayload
     ): Promise<void> {
         console.log(`${this.prefix} Handling status transition for transaction ${transaction.id}: ${transaction.status}`);
-        
-        // Get Vendure application services (set during initialization)
+
         const orderService = (this as any).orderService;
-        const paymentService = (this as any).paymentService;
         const requestContextService = (this as any).requestContextService;
-        const eventBus = (this as any).eventBus;
-        
-        if (!orderService || !paymentService || !requestContextService) {
-            console.warn(`${this.prefix} Vendure services not available. Skipping order update.`);
-            console.warn(`${this.prefix} To enable Vendure integration, set services via setVendureServices()`);
+
+        if (!orderService || !requestContextService) {
+            console.warn(`${this.prefix} Vendure services not available – skipping order update.`);
+            console.warn(`${this.prefix} Call setVendureServices() during bootstrap to enable this.`);
             return;
         }
-        
+
         try {
-            // Create admin context for operations
             const ctx = await requestContextService.create({ apiType: 'admin' });
-            
+
             if (transaction.status === 'approved') {
-                console.log(`${this.prefix} Processing APPROVED payment for order ${transaction.vendureOrderCode}`);
-                
-                // Find the Vendure order
-                const order = await orderService.findOneByCode(ctx, transaction.vendureOrderCode);
-                
-                if (!order) {
-                    console.error(`${this.prefix} Order not found: ${transaction.vendureOrderCode}`);
-                    return;
-                }
-                
-                // Check if payment already exists (idempotency)
-                const existingPayments = await paymentService.findAll(ctx, {
-                    orderId: order.id,
-                });
-                
-                const alreadyProcessed = existingPayments.items.some(
-                    (payment: any) => payment.transactionId === transaction.providerOrderUuid
-                );
-                
-                if (alreadyProcessed) {
-                    console.log(`${this.prefix} Payment already registered for order ${transaction.vendureOrderCode}, skipping`);
-                    return;
-                }
-                
-                // Add payment to order
-                await paymentService.createManualPayment(ctx, order, transaction.amount, {
-                    method: 'getnet',
-                    transactionId: transaction.providerOrderUuid,
-                    metadata: {
-                        provider: 'getnet',
-                        getnetTransactionId: transaction.id,
-                        currency: transaction.currency,
-                        originalAmount: transaction.amount,
-                    },
-                });
-                
-                console.log(`${this.prefix} Payment added to Vendure order ${transaction.vendureOrderCode}`);
-                
-                // Transition order to PaymentSettled state
-                try {
-                    await orderService.transitionToState(ctx, order.id, 'PaymentSettled');
-                    console.log(`${this.prefix} Order ${transaction.vendureOrderCode} transitioned to PaymentSettled`);
-                    await this.createShipmentForOrder(order);
-                    await this.syncPersonalizationForOrder(order.code);
-                } catch (stateError: any) {
-                    // Order might already be in a terminal state or state transition not available
-                    console.warn(`${this.prefix} Could not transition order state: ${stateError.message}`);
-                    await this.syncPersonalizationForOrder(order.code);
-                }
-                
-            } else if (transaction.status === 'rejected' || transaction.status === 'cancelled' || transaction.status === 'expired') {
-                console.log(`${this.prefix} Processing FAILED payment (${transaction.status}) for order ${transaction.vendureOrderCode}`);
-                
-                // Find the Vendure order
-                const order = await orderService.findOneByCode(ctx, transaction.vendureOrderCode);
-                
-                if (!order) {
-                    console.error(`${this.prefix} Order not found: ${transaction.vendureOrderCode}`);
-                    return;
-                }
-                
-                // Transition order to Cancelled or some failure state
-                // Note: The exact state depends on your Vendure configuration
-                try {
-                    await orderService.transitionToState(ctx, order.id, 'Cancelled');
-                    console.log(`${this.prefix} Order ${transaction.vendureOrderCode} transitioned to Cancelled`);
-                } catch (stateError: any) {
-                    // Order might already be in a terminal state or state transition not available
-                    console.warn(`${this.prefix} Could not transition order state: ${stateError.message}`);
-                }
+                await this.handleApprovedPayment(transaction, ctx, orderService);
+            } else if (['rejected', 'cancelled', 'expired'].includes(transaction.status)) {
+                await this.handleFailedPayment(transaction, ctx, orderService);
             }
         } catch (error: any) {
-            console.error(`${this.prefix} Error handling status transition: ${error.message}`);
+            console.error(`${this.prefix} Error in handleStatusTransition: ${error.message}`);
             console.error(`${this.prefix} Stack: ${error.stack}`);
+        }
+    }
+
+    private async handleApprovedPayment(
+        transaction: GetnetPaymentTransaction,
+        ctx: any,
+        orderService: any,
+    ): Promise<void> {
+        console.log(`${this.prefix} Processing APPROVED for order ${transaction.vendureOrderCode}`);
+
+        const order = await orderService.findOneByCode(ctx, transaction.vendureOrderCode, ['payments', 'lines']);
+        if (!order) {
+            console.error(`${this.prefix} Order not found: ${transaction.vendureOrderCode}`);
+            return;
+        }
+
+        // ── Step 1: Register payment (idempotent by transactionId) ────────────
+        const alreadyHasPayment = (order.payments ?? []).some(
+            (p: any) => p.transactionId === transaction.providerOrderUuid
+        );
+
+        if (!alreadyHasPayment) {
+            // Correct Vendure 2.x API: OrderService.addManualPaymentToOrder
+            const paymentResult = await orderService.addManualPaymentToOrder(ctx, {
+                orderId: order.id,
+                method: 'getnet',
+                transactionId: transaction.providerOrderUuid,
+                metadata: {
+                    provider: 'getnet',
+                    getnetTransactionId: transaction.id,
+                    currency: transaction.currency,
+                    amount: transaction.amount,
+                    approvedAt: transaction.approvedAt?.toISOString(),
+                },
+            });
+
+            if (paymentResult && typeof paymentResult === 'object' && 'message' in paymentResult) {
+                console.error(`${this.prefix} addManualPaymentToOrder error: ${(paymentResult as any).message}`);
+                // Do NOT return here — the state transition may still be needed if payment
+                // was registered in a prior run but the state transition failed.
+            } else {
+                console.log(`${this.prefix} Payment added to order ${transaction.vendureOrderCode}`);
+            }
+        } else {
+            console.log(`${this.prefix} Payment already registered for ${transaction.vendureOrderCode}`);
+        }
+
+        // ── Step 2: Transition state (idempotent: only if not already settled) ─
+        const freshOrder = await orderService.findOneByCode(ctx, transaction.vendureOrderCode);
+        const TERMINAL_STATES = ['PaymentSettled', 'Shipped', 'PartiallyShipped', 'Delivered'];
+        if (freshOrder && !TERMINAL_STATES.includes(freshOrder.state)) {
+            try {
+                await orderService.transitionToState(ctx, freshOrder.id, 'PaymentSettled');
+                console.log(`${this.prefix} Order ${transaction.vendureOrderCode} → PaymentSettled`);
+            } catch (stateErr: any) {
+                console.warn(`${this.prefix} State transition skipped: ${stateErr.message}`);
+            }
+        }
+
+        // ── Step 3: Sync personalization (enable uploads). NO shipment here. ───
+        await this.syncPersonalizationForOrder(transaction.vendureOrderCode);
+    }
+
+    private async handleFailedPayment(
+        transaction: GetnetPaymentTransaction,
+        ctx: any,
+        orderService: any,
+    ): Promise<void> {
+        console.log(`${this.prefix} Processing FAILED (${transaction.status}) for order ${transaction.vendureOrderCode}`);
+
+        const order = await orderService.findOneByCode(ctx, transaction.vendureOrderCode);
+        if (!order) {
+            console.error(`${this.prefix} Order not found: ${transaction.vendureOrderCode}`);
+            return;
+        }
+
+        const ALREADY_CANCELLED = ['Cancelled'];
+        if (ALREADY_CANCELLED.includes(order.state)) {
+            console.log(`${this.prefix} Order already cancelled: ${transaction.vendureOrderCode}`);
+            return;
+        }
+
+        try {
+            await orderService.transitionToState(ctx, order.id, 'Cancelled');
+            console.log(`${this.prefix} Order ${transaction.vendureOrderCode} → Cancelled`);
+        } catch (stateErr: any) {
+            console.warn(`${this.prefix} Could not cancel order: ${stateErr.message}`);
         }
     }
     

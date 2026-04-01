@@ -1,4 +1,11 @@
-export type PersonalizationStatus = 'not-required' | 'pending' | 'uploaded';
+export type PersonalizationLineStatus =
+    | 'not-required'
+    | 'pending-upload'
+    | 'uploaded'
+    | 'approved'
+    | 'rejected';
+
+// ─── Access / Input ───────────────────────────────────────────────────────────
 
 export interface PersonalizationOrderAccess {
     orderCode: string;
@@ -7,7 +14,16 @@ export interface PersonalizationOrderAccess {
     customerUserId?: string;
 }
 
+/** Input for uploading to a specific OrderLine */
+export interface PersonalizationLineUploadInput extends PersonalizationOrderAccess {
+    orderLineId: string;
+    notes?: string;
+    file: UploadedPersonalizationFile;
+}
+
+/** Kept for backward-compat with existing controller; maps to uploadForLine internally */
 export interface PersonalizationUploadInput extends PersonalizationOrderAccess {
+    orderLineId?: string;
     notes?: string;
     file: UploadedPersonalizationFile;
 }
@@ -19,6 +35,8 @@ export interface UploadedPersonalizationFile {
     buffer: Buffer;
 }
 
+// ─── Response ─────────────────────────────────────────────────────────────────
+
 export interface PersonalizationAssetSummary {
     id: string;
     source: string;
@@ -27,21 +45,24 @@ export interface PersonalizationAssetSummary {
     fileSize: number;
 }
 
+export interface PersonalizationLineData {
+    orderLineId: string;
+    productName: string;
+    variantName: string;
+    requiresPersonalization: boolean;
+    personalizationStatus: PersonalizationLineStatus;
+    asset: PersonalizationAssetSummary | null;
+    notes: string | null;
+    uploadedAt: string | null;
+    snapshotFileName: string | null;
+}
+
 export interface PersonalizationOrderData {
     orderCode: string;
-    requiresPersonalization: boolean;
-    personalizationStatus: PersonalizationStatus;
+    overallPersonalizationStatus: string; // 'not-required' | 'pending' | 'partial' | 'complete'
     paymentState: string;
     shipmentState: string | null;
     trackingNumber: string | null;
-    originalFilename: string | null;
-    uploadedAt: string | null;
-    notes: string | null;
-    accessToken?: string;
-    asset: PersonalizationAssetSummary | null;
-    requiredItems: Array<{
-        orderLineId: string;
-        productName: string;
-        variantName: string;
-    }>;
+    accessToken: string;
+    lines: PersonalizationLineData[];
 }

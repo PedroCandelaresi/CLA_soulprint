@@ -26,15 +26,9 @@ function mapError(error: unknown): Error {
 }
 
 function getMappedStatusCode(error: unknown): number {
-    const mapped = mapError(error);
-    const { message } = mapped;
-
-    if (message.includes('No autorizado')) {
-        return 401;
-    }
-    if (message.includes('no existe')) {
-        return 404;
-    }
+    const { message } = mapError(error);
+    if (message.includes('No autorizado')) return 401;
+    if (message.includes('no existe') || message.includes('no encontrada')) return 404;
     return 400;
 }
 
@@ -47,15 +41,16 @@ export class PersonalizationController {
 
     private async getCustomerUserId(req?: Request): Promise<string | undefined> {
         const sessionToken = (req as Request & { session?: { token?: string } })?.session?.token;
-        if (!sessionToken) {
-            return undefined;
-        }
-
+        if (!sessionToken) return undefined;
         const session = await this.sessionService.getSessionFromToken(sessionToken);
         const userId = session?.user?.id;
         return userId ? String(userId) : undefined;
     }
 
+    /**
+     * GET /logistics/personalization/order/:orderCode
+     * Returns overall status + per-line personalization data.
+     */
     @Get('order/:orderCode')
     async getOrderPersonalization(
         @Param('orderCode') orderCode: string,
@@ -72,37 +67,27 @@ export class PersonalizationController {
                 accessToken,
                 customerUserId,
             });
-
-            return res?.status(200).json({
-                success: true,
-                data: {
-                    orderCode: data.orderCode,
-                    requiresPersonalization: data.requiresPersonalization,
-                    personalizationStatus: data.personalizationStatus,
-                    paymentState: data.paymentState,
-                    shipmentState: data.shipmentState,
-                    trackingNumber: data.trackingNumber,
-                    originalFilename: data.originalFilename,
-                    uploadedAt: data.uploadedAt,
-                    notes: data.notes,
-                    accessToken: data.accessToken,
-                    assetId: data.asset?.id ?? null,
-                    assetUrl: data.asset?.source ?? null,
-                    assetPreviewUrl: data.asset?.preview ?? null,
-                    assetMimeType: data.asset?.mimeType ?? null,
-                    assetFileSize: data.asset?.fileSize ?? null,
-                    requiredItems: data.requiredItems,
-                },
-            });
+            return res?.status(200).json({ success: true, data });
         } catch (error) {
-            const mapped = mapError(error);
             return res?.status(getMappedStatusCode(error)).json({
                 success: false,
-                error: mapped.message,
+                error: mapError(error).message,
             });
         }
     }
 
+    /**
+     * POST /logistics/personalization/upload
+     * Upload an image for a specific OrderLine.
+     *
+     * Body (multipart/form-data):
+     *   - file         (required)
+     *   - orderCode    (required)
+     *   - orderLineId  (required)
+     *   - accessToken  (optional)
+     *   - transactionId (optional)
+     *   - notes        (optional)
+     */
     @Post('upload')
     @HttpCode(200)
     @UseInterceptors(FileInterceptor('file', {
@@ -118,57 +103,38 @@ export class PersonalizationController {
         @Req() req?: Request,
         @Res() res?: Response,
     ) {
-        const orderCode = typeof body?.orderCode === 'string' ? body.orderCode : '';
+        const orderCode = typeof body?.orderCode === 'string' ? body.orderCode.trim() : '';
+        const orderLineId = typeof body?.orderLineId === 'string' ? body.orderLineId.trim() : '';
         const notes = typeof body?.notes === 'string' ? body.notes : undefined;
         const transactionId = typeof body?.transactionId === 'string' ? body.transactionId : undefined;
         const accessToken = typeof body?.accessToken === 'string' ? body.accessToken : undefined;
 
         if (!orderCode) {
-            return res?.status(400).json({
-                success: false,
-                error: 'Falta el código de orden.',
-            });
+            return res?.status(400).json({ success: false, error: 'Falta el código de orden.' });
         }
-
+        if (!orderLineId) {
+            return res?.status(400).json({ success: false, error: 'Falta el ID de línea de orden (orderLineId).' });
+        }
         if (!file) {
-            return res?.status(400).json({
-                success: false,
-                error: 'Debes seleccionar un archivo.',
-            });
+            return res?.status(400).json({ success: false, error: 'Debes seleccionar un archivo.' });
         }
 
         try {
             const customerUserId = await this.getCustomerUserId(req);
-            const data = await this.personalizationService.uploadPersonalization({
+            const data = await this.personalizationService.uploadForLine({
                 orderCode,
+                orderLineId,
                 notes,
                 transactionId,
                 accessToken,
                 customerUserId,
                 file,
             });
-
-            return res?.status(200).json({
-                success: true,
-                data: {
-                    orderCode: data.orderCode,
-                    personalizationStatus: data.personalizationStatus,
-                    assetId: data.asset?.id ?? null,
-                    assetUrl: data.asset?.source ?? null,
-                    assetPreviewUrl: data.asset?.preview ?? null,
-                    assetMimeType: data.asset?.mimeType ?? null,
-                    assetFileSize: data.asset?.fileSize ?? null,
-                    originalFilename: data.originalFilename,
-                    uploadedAt: data.uploadedAt,
-                    notes: data.notes,
-                    accessToken: data.accessToken,
-                },
-            });
+            return res?.status(200).json({ success: true, data });
         } catch (error) {
-            const mapped = mapError(error);
             return res?.status(getMappedStatusCode(error)).json({
                 success: false,
-                error: mapped.message,
+                error: mapError(error).message,
             });
         }
     }
