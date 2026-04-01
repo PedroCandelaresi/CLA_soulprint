@@ -15,7 +15,7 @@ function getErrorMessage(error: unknown): string {
 export async function POST(request: NextRequest) {
     try {
         const cookieHeader = request.headers.get('cookie') || undefined;
-        const customerResult = await fetchActiveCustomerWithHeaders(cookieHeader).catch(() => null);
+        const customerResult = await fetchActiveCustomerWithHeaders(cookieHeader);
         const activeCustomer = customerResult?.customer ?? null;
         if (!activeCustomer) {
             const response = NextResponse.json(

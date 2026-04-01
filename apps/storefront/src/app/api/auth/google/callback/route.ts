@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         }
 
         const origin = authProxyContext.origin || request.nextUrl.origin;
-        const response = NextResponse.redirect(`${origin}/carrito`);
+        const response = NextResponse.redirect(`${origin}${parsedState.returnTo}`);
         clearGoogleStateCookie(response, isSecureRequest(request));
         return appendVendureCookies(authResult.headers, response);
     } catch (error) {

@@ -20,6 +20,7 @@ export interface OrderTimelineStep {
     label: string;
     description: string;
     state: OrderTimelineStepState;
+    timestamp?: string | null;
 }
 
 function normalizeText(value: string | null | undefined): string {
@@ -193,12 +194,14 @@ export function buildOrderTimeline(order: CustomerOrderSummary): OrderTimelineSt
             label: 'Pedido recibido',
             description: 'La orden quedó registrada y visible en tu cuenta.',
             state: 'complete',
+            timestamp: order.createdAt,
         },
         {
             key: 'paid',
             label: 'Pago confirmado',
             description: paid ? 'El pago ya fue acreditado correctamente.' : 'Esperando confirmación del pago.',
             state: paid ? 'complete' : 'current',
+            timestamp: order.orderPlacedAt || order.updatedAt,
         },
         {
             key: 'personalization',
@@ -217,6 +220,7 @@ export function buildOrderTimeline(order: CustomerOrderSummary): OrderTimelineSt
                     : paid
                         ? 'action-required'
                         : 'upcoming',
+            timestamp: order.personalization?.uploadedAt || null,
         },
         {
             key: 'production',
@@ -237,6 +241,7 @@ export function buildOrderTimeline(order: CustomerOrderSummary): OrderTimelineSt
                     : paid
                         ? 'upcoming'
                         : 'upcoming',
+            timestamp: order.productionUpdatedAt,
         },
         {
             key: 'shipped',
@@ -253,12 +258,14 @@ export function buildOrderTimeline(order: CustomerOrderSummary): OrderTimelineSt
                 : shipped
                     ? 'current'
                     : 'upcoming',
+            timestamp: null,
         },
         {
             key: 'delivered',
             label: 'Entregado',
             description: delivered ? 'El envío figura como entregado.' : 'Todavía no figura como entregado.',
             state: delivered ? 'complete' : 'upcoming',
+            timestamp: null,
         },
     ];
 }

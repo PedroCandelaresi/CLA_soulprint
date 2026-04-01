@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const customerResult = await fetchActiveCustomerWithHeaders(cookieHeader).catch(() => null);
+        const customerResult = await fetchActiveCustomerWithHeaders(cookieHeader);
         const customer = customerResult?.customer ?? null;
         if (!customer || !EMAIL_REGEX.test(customer.emailAddress.trim())) {
             const response = NextResponse.json({

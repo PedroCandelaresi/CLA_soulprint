@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
-import { login } from '@/lib/auth/client';
+import { login, resendVerificationEmail } from '@/lib/auth/client';
 import { useCustomer } from './CustomerProvider';
 import { useCart } from '@/components/cart/CartProvider';
 
@@ -36,6 +36,9 @@ export default function LoginForm({ nextParam, oauthError }: LoginFormProps) {
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [verificationRequired, setVerificationRequired] = useState(false);
+    const [resendSent, setResendSent] = useState(false);
+    const [isResending, setIsResending] = useState(false);
 
     const returnTo = sanitizeReturnTo(nextParam || null);
 
@@ -58,6 +61,7 @@ export default function LoginForm({ nextParam, oauthError }: LoginFormProps) {
 
         if (!response.success) {
             setError(response.error || 'No se pudo iniciar sesión.');
+            setVerificationRequired(response.verificationRequired === true);
             setIsSubmitting(false);
             return;
         }
@@ -72,6 +76,13 @@ export default function LoginForm({ nextParam, oauthError }: LoginFormProps) {
         }
     }
 
+    async function handleResend() {
+        setIsResending(true);
+        await resendVerificationEmail(email);
+        setIsResending(false);
+        setResendSent(true);
+    }
+
     return (
         <Stack spacing={2.5} component="form" onSubmit={handleSubmit}>
             {oauthError && (
@@ -83,6 +94,24 @@ export default function LoginForm({ nextParam, oauthError }: LoginFormProps) {
             {error && (
                 <Alert severity="error">
                     {error}
+                </Alert>
+            )}
+
+            {verificationRequired && !resendSent && (
+                <Alert
+                    severity="warning"
+                    action={
+                        <Button color="inherit" size="small" disabled={isResending} onClick={() => void handleResend()}>
+                            {isResending ? 'Enviando...' : 'Reenviar'}
+                        </Button>
+                    }
+                >
+                    ¿No recibiste el email de verificación? Podemos reenviártelo.
+                </Alert>
+            )}
+            {verificationRequired && resendSent && (
+                <Alert severity="success">
+                    Te reenviamos el email. Revisá también la carpeta de spam.
                 </Alert>
             )}
 
@@ -103,6 +132,16 @@ export default function LoginForm({ nextParam, oauthError }: LoginFormProps) {
                 onChange={(event) => setPassword(event.target.value)}
                 required
             />
+
+            <Typography variant="body2" textAlign="right">
+                <Link
+                    href="/password-reset"
+                    prefetch={false}
+                    style={{ color: 'var(--cla-brand-green)', fontWeight: 600, textDecoration: 'none', fontSize: '0.875rem' }}
+                >
+                    ¿Olvidaste tu contraseña?
+                </Link>
+            </Typography>
 
             <Button
                 type="submit"

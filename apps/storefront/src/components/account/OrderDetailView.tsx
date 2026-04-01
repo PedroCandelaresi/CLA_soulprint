@@ -19,7 +19,7 @@ import {
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import { getCustomerOrder } from '@/lib/auth/client';
-import { ANDREANI_ENABLED } from '@/lib/andreani/config';
+import { ANDREANI_ENABLED, buildAndreaniTrackingUrl } from '@/lib/andreani/config';
 import {
     deriveOrderBusinessStatus,
     getBusinessStatusPresentation,
@@ -182,7 +182,19 @@ export default function OrderDetailView({ orderCode }: OrderDetailViewProps) {
                                     <Chip color={statusPresentation.tone} label={`Estado: ${statusPresentation.label}`} />
                                     <Chip label={`Pago: ${order.payment.state || order.state}`} />
                                     <Chip label={`Envío: ${order.shipmentState || 'Aún no disponible'}`} />
-                                    <Chip label={`Tracking: ${order.trackingCode || 'No disponible'}`} />
+                                    {order.trackingCode ? (
+                                        <Chip
+                                            label={`Tracking: ${order.trackingCode}`}
+                                            component="a"
+                                            href={buildAndreaniTrackingUrl(order.trackingCode)}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            clickable
+                                            icon={<OpenInNewOutlinedIcon />}
+                                        />
+                                    ) : (
+                                        <Chip label="Tracking: No disponible" />
+                                    )}
                                 </Stack>
 
                                 <Alert severity={statusPresentation.tone === 'default' ? 'info' : statusPresentation.tone}>
@@ -222,6 +234,19 @@ export default function OrderDetailView({ orderCode }: OrderDetailViewProps) {
                                     <Typography color="text.secondary">
                                         Andreani: {order.logistics.serviceName}
                                         {order.logistics.shipmentStatus ? ` · ${order.logistics.shipmentStatus}` : ''}
+                                        {order.logistics.trackingNumber && (
+                                            <>
+                                                {' · '}
+                                                <a
+                                                    href={buildAndreaniTrackingUrl(order.logistics.trackingNumber)}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    style={{ color: 'var(--cla-brand-green)', fontWeight: 600 }}
+                                                >
+                                                    Ver seguimiento
+                                                </a>
+                                            </>
+                                        )}
                                     </Typography>
                                 )}
 

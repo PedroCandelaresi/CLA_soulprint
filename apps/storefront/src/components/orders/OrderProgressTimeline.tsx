@@ -73,6 +73,11 @@ export default function OrderProgressTimeline({ order, compact = false }: OrderP
                             <Typography variant="body2" color="text.secondary">
                                 {step.description}
                             </Typography>
+                            {step.timestamp && (
+                                <Typography variant="caption" color="text.disabled">
+                                    {new Date(step.timestamp).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })}
+                                </Typography>
+                            )}
                         </Box>
                     </Stack>
                 );

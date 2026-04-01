@@ -101,6 +101,137 @@ const VERIFY_CUSTOMER_ACCOUNT_MUTATION = `
     }
 `;
 
+const REQUEST_PASSWORD_RESET_MUTATION = `
+    mutation RequestPasswordReset($emailAddress: String!) {
+        requestPasswordReset(emailAddress: $emailAddress) {
+            __typename
+            ... on Success {
+                success
+            }
+            ... on NativeAuthStrategyError {
+                errorCode
+                message
+            }
+        }
+    }
+`;
+
+const RESET_PASSWORD_MUTATION = `
+    mutation ResetPassword($token: String!, $password: String!) {
+        resetPassword(token: $token, password: $password) {
+            __typename
+            ... on CurrentUser {
+                id
+                identifier
+            }
+            ... on PasswordResetTokenInvalidError {
+                errorCode
+                message
+            }
+            ... on PasswordResetTokenExpiredError {
+                errorCode
+                message
+            }
+            ... on PasswordValidationError {
+                errorCode
+                message
+                validationErrorMessage
+            }
+            ... on NativeAuthStrategyError {
+                errorCode
+                message
+            }
+        }
+    }
+`;
+
+const UPDATE_CUSTOMER_PASSWORD_MUTATION = `
+    mutation UpdateCustomerPassword($currentPassword: String!, $newPassword: String!) {
+        updateCustomerPassword(currentPassword: $currentPassword, newPassword: $newPassword) {
+            __typename
+            ... on Success {
+                success
+            }
+            ... on InvalidCredentialsError {
+                errorCode
+                message
+                authenticationError
+            }
+            ... on PasswordValidationError {
+                errorCode
+                message
+                validationErrorMessage
+            }
+            ... on NativeAuthStrategyError {
+                errorCode
+                message
+            }
+        }
+    }
+`;
+
+const REQUEST_UPDATE_EMAIL_MUTATION = `
+    mutation RequestUpdateCustomerEmailAddress($password: String!, $newEmailAddress: String!) {
+        requestUpdateCustomerEmailAddress(password: $password, newEmailAddress: $newEmailAddress) {
+            __typename
+            ... on Success {
+                success
+            }
+            ... on InvalidCredentialsError {
+                errorCode
+                message
+                authenticationError
+            }
+            ... on EmailAddressConflictError {
+                errorCode
+                message
+            }
+            ... on NativeAuthStrategyError {
+                errorCode
+                message
+            }
+        }
+    }
+`;
+
+const CONFIRM_UPDATE_EMAIL_MUTATION = `
+    mutation UpdateCustomerEmailAddress($token: String!) {
+        updateCustomerEmailAddress(token: $token) {
+            __typename
+            ... on Success {
+                success
+            }
+            ... on IdentifierChangeTokenInvalidError {
+                errorCode
+                message
+            }
+            ... on IdentifierChangeTokenExpiredError {
+                errorCode
+                message
+            }
+            ... on NativeAuthStrategyError {
+                errorCode
+                message
+            }
+        }
+    }
+`;
+
+const RESEND_VERIFICATION_EMAIL_MUTATION = `
+    mutation ResendVerificationEmail($emailAddress: String!) {
+        resendVerificationEmail(emailAddress: $emailAddress) {
+            __typename
+            ... on Success {
+                success
+            }
+            ... on NativeAuthStrategyError {
+                errorCode
+                message
+            }
+        }
+    }
+`;
+
 const LOGOUT_MUTATION = `
     mutation Logout {
         logout {
@@ -171,7 +302,7 @@ const ACTIVE_CUSTOMER_DASHBOARD_QUERY = `
             customFields {
                 documentNumber
             }
-            orders(options: { take: 50 }) {
+            orders(options: { take: 100 }) {
                 totalItems
                 items {
                     id
@@ -293,6 +424,30 @@ interface AuthenticateGoogleData {
 
 interface VerifyCustomerAccountData {
     verifyCustomerAccount: CurrentUserResult | ErrorResult;
+}
+
+interface RequestPasswordResetData {
+    requestPasswordReset: { __typename: 'Success'; success: boolean } | ErrorResult;
+}
+
+interface ResetPasswordData {
+    resetPassword: CurrentUserResult | ErrorResult;
+}
+
+interface UpdateCustomerPasswordData {
+    updateCustomerPassword: { __typename: 'Success'; success: boolean } | ErrorResult;
+}
+
+interface RequestUpdateEmailData {
+    requestUpdateCustomerEmailAddress: { __typename: 'Success'; success: boolean } | ErrorResult;
+}
+
+interface ConfirmUpdateEmailData {
+    updateCustomerEmailAddress: { __typename: 'Success'; success: boolean } | ErrorResult;
+}
+
+interface ResendVerificationEmailData {
+    resendVerificationEmail: { __typename: 'Success'; success: boolean } | ErrorResult;
 }
 
 interface VendureOrderAddress {
@@ -480,53 +635,6 @@ function getSetCookieCount(headers: Headers): number {
     }
 
     return headers.get('set-cookie') ? 1 : 0;
-}
-
-function splitCombinedSetCookieHeader(value: string): string[] {
-    const cookies: string[] = [];
-    let current = '';
-    let inExpiresAttribute = false;
-
-    for (let index = 0; index < value.length; index += 1) {
-        const char = value[index];
-        current += char;
-
-        const lowerCurrent = current.toLowerCase();
-        if (!inExpiresAttribute && lowerCurrent.endsWith('expires=')) {
-            inExpiresAttribute = true;
-            continue;
-        }
-
-        if (inExpiresAttribute && char === ';') {
-            inExpiresAttribute = false;
-            continue;
-        }
-
-        if (!inExpiresAttribute && char === ',' && index < value.length - 1) {
-            current = current.slice(0, -1).trim();
-            if (current) {
-                cookies.push(current);
-            }
-            current = '';
-        }
-    }
-
-    const trailing = current.trim();
-    if (trailing) {
-        cookies.push(trailing);
-    }
-
-    return cookies;
-}
-
-function getSetCookieValues(headers: Headers): string[] {
-    const candidate = headers as Headers & { getSetCookie?: () => string[] };
-    if (typeof candidate.getSetCookie === 'function') {
-        return candidate.getSetCookie();
-    }
-
-    const combinedHeader = headers.get('set-cookie');
-    return combinedHeader ? splitCombinedSetCookieHeader(combinedHeader) : [];
 }
 
 function isAuthError(error: unknown): boolean {
@@ -923,7 +1031,7 @@ export async function performLogin(input: {
     });
 
     console.info(
-        `[auth:login] performLogin vendureStatus=${result.status} vendureStatusText=${result.statusText} vendureTypename=${result.data.login.__typename} setCookieCount=${getSetCookieCount(result.headers)} vendureAuthTokenHeader=${result.headers.get('vendure-auth-token') ? 'present' : '(none)'} vendureSetCookie=${JSON.stringify(getSetCookieValues(result.headers))}`,
+        `[auth:login] performLogin vendureStatus=${result.status} vendureStatusText=${result.statusText} vendureTypename=${result.data.login.__typename} setCookieCount=${getSetCookieCount(result.headers)} vendureAuthTokenHeader=${result.headers.get('vendure-auth-token') ? 'present' : '(none)'}`,
     );
 
     if (result.data.login.__typename !== 'CurrentUser') {
@@ -1146,6 +1254,178 @@ export async function performVerifyCustomerAccount(input: {
     };
 }
 
+export async function performRequestPasswordReset(input: {
+    emailAddress: string;
+    cookieHeader?: string;
+}): Promise<{ body: AuthActionResponse; headers: Headers }> {
+    await fetchVendureApi<RequestPasswordResetData>(REQUEST_PASSWORD_RESET_MUTATION, {
+        headers: buildVendureHeaders(input.cookieHeader),
+        variables: { emailAddress: input.emailAddress },
+    });
+
+    return {
+        body: { success: true },
+        headers: new Headers(),
+    };
+}
+
+export async function performResetPassword(input: {
+    token: string;
+    password: string;
+    cookieHeader?: string;
+    forwardedProto?: string;
+    forwardedHost?: string;
+    forwardedFor?: string;
+    origin?: string;
+    referer?: string;
+}): Promise<{ body: AuthActionResponse; headers: Headers }> {
+    const result = await fetchVendureApi<ResetPasswordData>(RESET_PASSWORD_MUTATION, {
+        headers: buildVendureProxyHeaders(input),
+        variables: {
+            token: input.token,
+            password: input.password,
+        },
+    });
+
+    if (result.data.resetPassword.__typename !== 'CurrentUser') {
+        const errorType = result.data.resetPassword.__typename;
+        const message = errorType === 'PasswordResetTokenExpiredError'
+            ? 'El link de recuperación expiró. Pedí uno nuevo desde la pantalla de ingreso.'
+            : errorType === 'PasswordResetTokenInvalidError'
+                ? 'El link de recuperación no es válido. Pedí uno nuevo.'
+                : extractUnionError(result.data.resetPassword);
+
+        return {
+            body: { success: false, error: message },
+            headers: result.headers,
+        };
+    }
+
+    return {
+        body: { success: true, message: 'Tu contraseña fue actualizada. Ya podés ingresar con tus nuevos datos.' },
+        headers: result.headers,
+    };
+}
+
+export async function performResendVerificationEmail(input: {
+    emailAddress: string;
+    cookieHeader?: string;
+}): Promise<{ body: AuthActionResponse; headers: Headers }> {
+    await fetchVendureApi<ResendVerificationEmailData>(RESEND_VERIFICATION_EMAIL_MUTATION, {
+        headers: buildVendureHeaders(input.cookieHeader),
+        variables: { emailAddress: input.emailAddress },
+    });
+
+    return {
+        body: {
+            success: true,
+            message: 'Si el email está registrado, recibirás el link de verificación en minutos.',
+        },
+        headers: new Headers(),
+    };
+}
+
+export async function performUpdateCustomerPassword(input: {
+    currentPassword: string;
+    newPassword: string;
+    cookieHeader?: string;
+}): Promise<{ body: AuthActionResponse; headers: Headers }> {
+    const result = await fetchVendureApi<UpdateCustomerPasswordData>(UPDATE_CUSTOMER_PASSWORD_MUTATION, {
+        headers: buildVendureHeaders(input.cookieHeader),
+        variables: {
+            currentPassword: input.currentPassword,
+            newPassword: input.newPassword,
+        },
+    });
+
+    if (result.data.updateCustomerPassword.__typename !== 'Success') {
+        return {
+            body: {
+                success: false,
+                error: extractUnionError(result.data.updateCustomerPassword),
+            },
+            headers: result.headers,
+        };
+    }
+
+    return {
+        body: {
+            success: true,
+            message: 'Tu contraseña se actualizó correctamente.',
+        },
+        headers: result.headers,
+    };
+}
+
+export async function performRequestEmailChange(input: {
+    password: string;
+    newEmailAddress: string;
+    cookieHeader?: string;
+}): Promise<{ body: AuthActionResponse; headers: Headers }> {
+    const result = await fetchVendureApi<RequestUpdateEmailData>(REQUEST_UPDATE_EMAIL_MUTATION, {
+        headers: buildVendureHeaders(input.cookieHeader),
+        variables: {
+            password: input.password,
+            newEmailAddress: input.newEmailAddress.trim().toLowerCase(),
+        },
+    });
+
+    if (result.data.requestUpdateCustomerEmailAddress.__typename !== 'Success') {
+        return {
+            body: {
+                success: false,
+                error: extractUnionError(result.data.requestUpdateCustomerEmailAddress),
+            },
+            headers: result.headers,
+        };
+    }
+
+    return {
+        body: {
+            success: true,
+            message: 'Te enviamos un enlace para confirmar el cambio de email.',
+        },
+        headers: result.headers,
+    };
+}
+
+export async function performConfirmEmailChange(input: {
+    token: string;
+    cookieHeader?: string;
+}): Promise<{ body: AuthActionResponse; headers: Headers }> {
+    const result = await fetchVendureApi<ConfirmUpdateEmailData>(CONFIRM_UPDATE_EMAIL_MUTATION, {
+        headers: buildVendureHeaders(input.cookieHeader),
+        variables: {
+            token: input.token,
+        },
+    });
+
+    if (result.data.updateCustomerEmailAddress.__typename !== 'Success') {
+        const errorType = result.data.updateCustomerEmailAddress.__typename;
+        const message = errorType === 'IdentifierChangeTokenExpiredError'
+            ? 'El enlace para cambiar el email expiró. Pedí uno nuevo desde tu cuenta.'
+            : errorType === 'IdentifierChangeTokenInvalidError'
+                ? 'El enlace para cambiar el email no es válido.'
+                : extractUnionError(result.data.updateCustomerEmailAddress);
+
+        return {
+            body: {
+                success: false,
+                error: message,
+            },
+            headers: result.headers,
+        };
+    }
+
+    return {
+        body: {
+            success: true,
+            message: 'Tu email se confirmó correctamente.',
+        },
+        headers: result.headers,
+    };
+}
+
 export function appendVendureCookies(sourceHeaders: Headers, response: NextResponse): NextResponse {
     appendVendureSetCookieHeaders(sourceHeaders, response.headers);
     return response;
@@ -1153,7 +1433,8 @@ export function appendVendureCookies(sourceHeaders: Headers, response: NextRespo
 
 export function buildGoogleAuthRedirect(request: NextRequest): NextResponse {
     const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
-    if (!clientId) {
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+    if (!clientId || !clientSecret) {
         return NextResponse.redirect(new URL('/auth/login?error=Google%20OAuth%20no%20est%C3%A1%20configurado.', request.url));
     }
 

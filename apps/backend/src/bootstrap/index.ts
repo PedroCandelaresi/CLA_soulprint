@@ -201,6 +201,44 @@ function configureAuthTrustProxy(app: Awaited<ReturnType<typeof bootstrap>>): vo
     console.log(`[auth] Enabled Express trust proxy via "${expressEntry.source}" for secure cookie sessions`);
 }
 
+function patchVendurePatchEntityForEmptyCustomFields(): void {
+    const patchEntityModule = require('@vendure/core/dist/service/helpers/utils/patch-entity.js') as {
+        patchEntity?: (entity: Record<string, unknown>, input: Record<string, unknown>) => Record<string, unknown>;
+    };
+
+    const originalPatchEntity = patchEntityModule.patchEntity;
+    if (!originalPatchEntity || (originalPatchEntity as { __claPatched?: boolean }).__claPatched) {
+        return;
+    }
+
+    const patchedPatchEntity = function patchEntitySafe(
+        entity: Record<string, unknown> | null | undefined,
+        input: Record<string, unknown>,
+    ): Record<string, unknown> {
+        const target = entity ?? {};
+        const targetKeys = Object.keys(target);
+        const keys = targetKeys.length > 0 ? targetKeys : Object.keys(input ?? {});
+
+        for (const key of keys) {
+            const value = input?.[key];
+            if (key === 'customFields' && value && typeof value === 'object') {
+                target[key] = patchEntitySafe(
+                    target[key] as Record<string, unknown> | null | undefined,
+                    value as Record<string, unknown>,
+                );
+            } else if (value !== undefined && key !== 'id') {
+                target[key] = value;
+            }
+        }
+
+        return target;
+    };
+
+    (patchedPatchEntity as { __claPatched?: boolean }).__claPatched = true;
+    patchEntityModule.patchEntity = patchedPatchEntity;
+    console.log('[auth] Patched Vendure patchEntity to handle empty customFields objects safely');
+}
+
 /**
  * Try to register middleware on the Express server
  * In Vendure 2, this can be challenging as the Express app is internal
@@ -274,6 +312,7 @@ async function registerAndreaniRoutes(app: Awaited<ReturnType<typeof bootstrap>>
 bootstrap(config)
     .then(async (app) => {
         console.log('[getnet] Vendure bootstrap complete');
+        patchVendurePatchEntityForEmptyCustomFields();
         configureAuthTrustProxy(app);
         const requestContextService = app.get(RequestContextService);
         const searchService = app.get(SearchService);

@@ -40,10 +40,14 @@ export async function login(input: {
     rememberMe?: boolean;
 }): Promise<AuthActionResponse> {
     try {
-        return await requestJson<AuthActionResponse>('/login', {
+        const response = await fetch(`${AUTH_API_BASE}/login`, {
             method: 'POST',
+            cache: 'no-store',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(input),
         });
+        return await response.json() as AuthActionResponse;
     } catch (error) {
         return { success: false, error: getErrorMessage(error) };
     }
@@ -116,6 +120,54 @@ export async function getCustomerOrder(orderCode: string): Promise<CustomerOrder
     }
 }
 
+export async function requestPasswordReset(emailAddress: string): Promise<AuthActionResponse> {
+    try {
+        const response = await fetch(`${AUTH_API_BASE}/password-reset/request`, {
+            method: 'POST',
+            cache: 'no-store',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ emailAddress }),
+        });
+        return await response.json() as AuthActionResponse;
+    } catch (error) {
+        return { success: false, error: getErrorMessage(error) };
+    }
+}
+
+export async function resetPassword(input: {
+    token: string;
+    password: string;
+}): Promise<AuthActionResponse> {
+    try {
+        const response = await fetch(`${AUTH_API_BASE}/password-reset/confirm`, {
+            method: 'POST',
+            cache: 'no-store',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(input),
+        });
+        return await response.json() as AuthActionResponse;
+    } catch (error) {
+        return { success: false, error: getErrorMessage(error) };
+    }
+}
+
+export async function resendVerificationEmail(emailAddress: string): Promise<AuthActionResponse> {
+    try {
+        const response = await fetch(`${AUTH_API_BASE}/resend-verification`, {
+            method: 'POST',
+            cache: 'no-store',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ emailAddress }),
+        });
+        return await response.json() as AuthActionResponse;
+    } catch (error) {
+        return { success: false, error: getErrorMessage(error) };
+    }
+}
+
 export async function updateCustomerProfile(input: {
     firstName?: string;
     lastName?: string;
@@ -125,6 +177,53 @@ export async function updateCustomerProfile(input: {
     try {
         return await requestJson<AuthActionResponse>('/profile', {
             method: 'POST',
+            body: JSON.stringify(input),
+        });
+    } catch (error) {
+        return { success: false, error: getErrorMessage(error) };
+    }
+}
+
+export async function changePassword(input: {
+    currentPassword: string;
+    newPassword: string;
+}): Promise<AuthActionResponse> {
+    try {
+        return await requestJson<AuthActionResponse>('/change-password', {
+            method: 'POST',
+            cache: 'no-store',
+            credentials: 'include',
+            body: JSON.stringify(input),
+        });
+    } catch (error) {
+        return { success: false, error: getErrorMessage(error) };
+    }
+}
+
+export async function requestEmailChange(input: {
+    password: string;
+    newEmailAddress: string;
+}): Promise<AuthActionResponse> {
+    try {
+        return await requestJson<AuthActionResponse>('/change-email/request', {
+            method: 'POST',
+            cache: 'no-store',
+            credentials: 'include',
+            body: JSON.stringify(input),
+        });
+    } catch (error) {
+        return { success: false, error: getErrorMessage(error) };
+    }
+}
+
+export async function confirmEmailChange(input: {
+    token: string;
+}): Promise<AuthActionResponse> {
+    try {
+        return await requestJson<AuthActionResponse>('/change-email/confirm', {
+            method: 'POST',
+            cache: 'no-store',
+            credentials: 'include',
             body: JSON.stringify(input),
         });
     } catch (error) {
