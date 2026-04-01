@@ -9,6 +9,25 @@ interface CreateAndreaniHandlersOptions {
 }
 
 export function createAndreaniHandlers({ enabled, service, selectionService }: CreateAndreaniHandlersOptions) {
+    function resolvePriceCents(body: Record<string, unknown>): number {
+        if (typeof body.priceCents === 'number' && Number.isInteger(body.priceCents)) {
+            return body.priceCents;
+        }
+
+        if (typeof body.priceCents === 'string' && /^\d+$/.test(body.priceCents.trim())) {
+            return Number.parseInt(body.priceCents.trim(), 10);
+        }
+
+        // TODO(migration): remove legacy float payload support once all clients send priceCents.
+        if (typeof body.price === 'number' && Number.isFinite(body.price)) {
+            const converted = Math.round(body.price * 100);
+            console.warn('[andreani] Deprecated selection payload field "price" received. Converting to cents.');
+            return converted;
+        }
+
+        throw new Error('priceCents is required and must be an integer.');
+    }
+
     async function createQuote(req: { body: any }, res: { status(code: number): any; json(data: any): void }): Promise<void> {
         if (!enabled || !service) {
             res.status(503).json({ success: false, error: 'Andreani está deshabilitado.' });
@@ -40,25 +59,28 @@ export function createAndreaniHandlers({ enabled, service, selectionService }: C
             return;
         }
 
-        const payload: AndreaniSelectionPayload = {
-            orderId: req.body.orderId,
-            orderCode: req.body.orderCode,
-            carrier: req.body.carrier,
-            serviceCode: req.body.serviceCode,
-            serviceName: req.body.serviceName,
-            price: Number(req.body.price),
-            currency: req.body.currency,
-            destinationPostalCode: req.body.destinationPostalCode,
-            destinationCity: req.body.destinationCity,
-            metadata: req.body.metadata,
-            weightKg: req.body.weightKg ? Number(req.body.weightKg) : undefined,
-            heightCm: req.body.heightCm ? Number(req.body.heightCm) : undefined,
-            lengthCm: req.body.lengthCm ? Number(req.body.lengthCm) : undefined,
-            widthCm: req.body.widthCm ? Number(req.body.widthCm) : undefined,
-            volume: req.body.volume ? Number(req.body.volume) : undefined,
-        };
-
         try {
+            const providerMode = req.body.providerMode === 'mock' || req.body.isSimulated === true ? 'mock' : 'real';
+            const payload: AndreaniSelectionPayload = {
+                orderId: req.body.orderId,
+                orderCode: req.body.orderCode,
+                carrier: req.body.carrier,
+                serviceCode: req.body.serviceCode,
+                serviceName: req.body.serviceName,
+                priceCents: resolvePriceCents(req.body as Record<string, unknown>),
+                currency: req.body.currency,
+                destinationPostalCode: req.body.destinationPostalCode,
+                destinationCity: req.body.destinationCity,
+                metadata: req.body.metadata,
+                weightKg: req.body.weightKg ? Number(req.body.weightKg) : undefined,
+                heightCm: req.body.heightCm ? Number(req.body.heightCm) : undefined,
+                lengthCm: req.body.lengthCm ? Number(req.body.lengthCm) : undefined,
+                widthCm: req.body.widthCm ? Number(req.body.widthCm) : undefined,
+                volume: req.body.volume ? Number(req.body.volume) : undefined,
+                providerMode,
+                isSimulated: req.body.isSimulated === true || providerMode === 'mock',
+            };
+
             if (!payload.orderId && !payload.orderCode) {
                 throw new Error('orderId or orderCode is required to persist Andreani selection.');
             }

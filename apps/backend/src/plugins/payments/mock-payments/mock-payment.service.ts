@@ -107,7 +107,7 @@ export class MockPaymentService {
         transactionCode: string,
         result: 'approved' | 'rejected',
     ): Promise<{ success: boolean; status: MockPaymentStatus; message: string }> {
-        console.log(`${LOG_PREFIX} confirmPayment called: transactionCode=${transactionCode}, result=${result}`);
+        console.log(`${LOG_PREFIX} [testing] confirmPayment called: transactionCode=${transactionCode}, result=${result}`);
 
         const ctx = await this.requestContextService.create({ apiType: 'admin' });
         const repo = this.connection.getRepository(ctx, MockPaymentTransaction);
@@ -131,7 +131,7 @@ export class MockPaymentService {
         }
 
         // Find the order to validate amount
-        const order = await this.orderService.findOneByCode(ctx, transaction.orderCode);
+        const order = await this.orderService.findOneByCode(ctx, transaction.orderCode, ['payments']);
         if (!order) {
             console.error(`${LOG_PREFIX} Order not found for transaction: ${transaction.orderCode}`);
             throw new Error(`Order not found: ${transaction.orderCode}`);
@@ -139,10 +139,12 @@ export class MockPaymentService {
 
         // Validate amount against fresh order total
         if (order.totalWithTax !== transaction.expectedAmount) {
-            console.warn(
-                `${LOG_PREFIX} Amount mismatch for transaction ${transactionCode}: expected ${transaction.expectedAmount}, order total is ${order.totalWithTax}`,
+            console.error(
+                `${LOG_PREFIX} [testing] Amount mismatch for transaction ${transactionCode}: expected ${transaction.expectedAmount}, order total is ${order.totalWithTax}`,
             );
-            // Non-fatal warning — proceed but log it
+            throw new Error(
+                `Cannot settle mock payment ${transactionCode}: expected ${transaction.expectedAmount} but Vendure order total is ${order.totalWithTax}`,
+            );
         }
 
         if (result === 'rejected') {
@@ -155,33 +157,58 @@ export class MockPaymentService {
         }
 
         // result === 'approved'
-        console.log(`${LOG_PREFIX} Processing approval for transaction ${transactionCode}, order ${transaction.orderCode}`);
+        console.log(`${LOG_PREFIX} [testing] Processing approval for transaction ${transactionCode}, order ${transaction.orderCode}`);
 
-        // Add manual payment to the Vendure order
-        const paymentResult = await this.orderService.addManualPaymentToOrder(ctx, {
-            orderId: order.id,
-            method: 'mock-payment',
-            transactionId: transactionCode,
-            metadata: { provider: 'mock' },
-        });
+        const existingPayment = (order.payments ?? []).some(
+            payment => payment.transactionId === transactionCode,
+        );
 
-        if (isGraphQlErrorResult(paymentResult)) {
-            const errorMessage = (paymentResult as any).message || 'Unknown payment error';
-            console.error(`${LOG_PREFIX} addManualPaymentToOrder failed [${(paymentResult as any).__typename}]: ${errorMessage}`);
-            throw new Error(`Failed to add manual payment: ${errorMessage}`);
+        if (!existingPayment && !['ArrangingPayment', 'ArrangingAdditionalPayment'].includes(order.state)) {
+            throw new Error(
+                `Cannot register mock payment for ${transaction.orderCode}: order state ${order.state} does not allow addManualPaymentToOrder`,
+            );
         }
 
-        console.log(`${LOG_PREFIX} Manual payment added to order ${transaction.orderCode}`);
+        if (!existingPayment) {
+            const paymentResult = await this.orderService.addManualPaymentToOrder(ctx, {
+                orderId: order.id,
+                method: 'mock-payment',
+                transactionId: transactionCode,
+                metadata: { provider: 'mock', transactionCode },
+            });
 
-        // Transition order to PaymentSettled
-        try {
-            await this.orderService.transitionToState(ctx, order.id, 'PaymentSettled');
-            console.log(`${LOG_PREFIX} Order ${transaction.orderCode} transitioned to PaymentSettled`);
-        } catch (stateError: any) {
-            // Order might already be in PaymentSettled or the transition is not available
-            console.warn(
-                `${LOG_PREFIX} Could not transition order ${transaction.orderCode} to PaymentSettled: ${stateError.message}`,
-            );
+            if (isGraphQlErrorResult(paymentResult)) {
+                const errorMessage = (paymentResult as any).message || 'Unknown payment error';
+                console.error(`${LOG_PREFIX} addManualPaymentToOrder failed [${(paymentResult as any).__typename}]: ${errorMessage}`);
+                throw new Error(`Failed to add manual payment: ${errorMessage}`);
+            }
+
+            console.log(`${LOG_PREFIX} [testing] Manual payment added to order ${transaction.orderCode}`);
+        } else {
+            console.log(`${LOG_PREFIX} [testing] Payment already registered for order ${transaction.orderCode}`);
+        }
+
+        const freshOrder = await this.orderService.findOneByCode(ctx, transaction.orderCode, ['payments']);
+        if (!freshOrder) {
+            throw new Error(`Order not found after payment registration: ${transaction.orderCode}`);
+        }
+
+        const paymentVerified = (freshOrder.payments ?? []).some(
+            payment => payment.transactionId === transactionCode,
+        );
+        if (!paymentVerified) {
+            throw new Error(`Mock payment ${transactionCode} was not persisted in Vendure for order ${transaction.orderCode}`);
+        }
+
+        if (!['PaymentSettled', 'PartiallyShipped', 'Shipped', 'Delivered'].includes(freshOrder.state)) {
+            try {
+                await this.orderService.transitionToState(ctx, freshOrder.id, 'PaymentSettled');
+                console.log(`${LOG_PREFIX} [testing] Order ${transaction.orderCode} transitioned to PaymentSettled`);
+            } catch (stateError: any) {
+                throw new Error(`Could not transition order ${transaction.orderCode} to PaymentSettled: ${stateError.message}`);
+            }
+        } else {
+            console.log(`${LOG_PREFIX} [testing] Order ${transaction.orderCode} already settled/beyond settlement`);
         }
 
         transaction.status = 'settled';

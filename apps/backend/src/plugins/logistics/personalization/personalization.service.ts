@@ -14,11 +14,12 @@ import type { GetnetService } from '../../payments/getnet';
 import { PersonalizationConfig, PERSONALIZATION_CONFIG_OPTIONS } from './personalization.config';
 import {
     PersonalizationLineStatus,
+    PersonalizationOverallStatus,
     PersonalizationOrderData,
     PersonalizationLineData,
     PersonalizationOrderAccess,
-    PersonalizationUploadInput,
     PersonalizationLineUploadInput,
+    UploadedPersonalizationFile,
 } from './personalization.types';
 import {
     buildPersonalizationToken,
@@ -41,6 +42,7 @@ const ORDER_RELATIONS = [
 ] as const;
 
 const PAID_PAYMENT_STATES = new Set(['Authorized', 'Settled']);
+const REQUIRED_LINE_PENDING_STATUSES = new Set<PersonalizationLineStatus>(['not-required', 'pending-upload']);
 
 @Injectable()
 export class PersonalizationService {
@@ -87,12 +89,8 @@ export class PersonalizationService {
 
         await this.authorize(access, order, false);
 
-        const refreshed = await this.syncLineStatuses(ctx, order);
-        await this.syncOverallStatus(ctx, refreshed ?? order);
-        const finalOrder = await this.loadOrder(ctx, access.orderCode) ?? order;
-
         const token = buildPersonalizationToken(order.code, this.config.tokenSecret);
-        return this.mapToResponse(finalOrder, token);
+        return this.mapToResponse(order, token);
     }
 
     /** Uploads a file for a specific OrderLine. */
@@ -154,7 +152,7 @@ export class PersonalizationService {
             const overallStatus = this.deriveOverallStatus(latestOrder);
             if (overallStatus === 'complete') {
                 try {
-                    await this.eventBus.publish(new PersonalizationReceivedEvent(ctx, latestOrder));
+                    await this.eventBus.publish(new PersonalizationReceivedEvent(ctx, latestOrder, String(line.id)));
                 } catch {
                     console.warn(`${LOG_PREFIX} Failed to publish PersonalizationReceivedEvent`);
                 }
@@ -183,6 +181,10 @@ export class PersonalizationService {
         return variantCf['requiresPersonalization'] === true;
     }
 
+    private orderRequiresPersonalization(order: Order): boolean {
+        return this.getLines(order).some(line => this.lineRequiresPersonalization(line));
+    }
+
     private getLines(order: Order): OrderLine[] {
         return (order.lines ?? []) as OrderLine[];
     }
@@ -193,18 +195,29 @@ export class PersonalizationService {
         return asset && typeof asset === 'object' ? (asset as Asset) : undefined;
     }
 
-    private getLineStatus(line: OrderLine): PersonalizationLineStatus {
+    private getStoredLineStatus(line: OrderLine): PersonalizationLineStatus {
         const cf = (line.customFields ?? {}) as Record<string, unknown>;
         return (cf['personalizationStatus'] as PersonalizationLineStatus) ?? 'not-required';
     }
 
-    private deriveOverallStatus(order: Order): string {
+    private getEffectiveLineStatus(line: OrderLine): PersonalizationLineStatus {
+        const storedStatus = this.getStoredLineStatus(line);
+        if (!this.lineRequiresPersonalization(line)) {
+            return 'not-required';
+        }
+        if (REQUIRED_LINE_PENDING_STATUSES.has(storedStatus)) {
+            return 'pending-upload';
+        }
+        return storedStatus;
+    }
+
+    private deriveOverallStatus(order: Order): PersonalizationOverallStatus {
         const lines = this.getLines(order);
         const required = lines.filter(l => this.lineRequiresPersonalization(l));
         if (required.length === 0) return 'not-required';
 
         const uploaded = required.filter(l =>
-            ['uploaded', 'approved'].includes(this.getLineStatus(l))
+            ['uploaded', 'approved'].includes(this.getEffectiveLineStatus(l))
         );
 
         if (uploaded.length === 0) return 'pending';
@@ -221,7 +234,7 @@ export class PersonalizationService {
 
         for (const line of lines) {
             const shouldRequire = this.lineRequiresPersonalization(line);
-            const currentStatus = this.getLineStatus(line);
+            const currentStatus = this.getStoredLineStatus(line);
             const expectedStatus: PersonalizationLineStatus = shouldRequire ? 'pending-upload' : 'not-required';
 
             // Only update if status is default and needs to be set
@@ -298,6 +311,7 @@ export class PersonalizationService {
     private mapToResponse(order: Order, accessToken: string): PersonalizationOrderData {
         const orderCf = (order.customFields ?? {}) as Record<string, unknown>;
         const lines = this.getLines(order);
+        const overallPersonalizationStatus = this.deriveOverallStatus(order);
 
         const lineItems: PersonalizationLineData[] = lines.map(line => {
             const cf = (line.customFields ?? {}) as Record<string, unknown>;
@@ -307,7 +321,7 @@ export class PersonalizationService {
                 productName: line.productVariant?.product?.name ?? 'Producto',
                 variantName: line.productVariant?.name ?? '',
                 requiresPersonalization: this.lineRequiresPersonalization(line),
-                personalizationStatus: this.getLineStatus(line),
+                personalizationStatus: this.getEffectiveLineStatus(line),
                 asset: asset
                     ? {
                         id: String(asset.id),
@@ -328,11 +342,12 @@ export class PersonalizationService {
 
         return {
             orderCode: order.code,
-            overallPersonalizationStatus: (orderCf['personalizationOverallStatus'] as string) ?? 'not-required',
+            overallPersonalizationStatus,
             paymentState: lastPayment?.state ?? order.state,
             shipmentState: (orderCf['andreaniShipmentStatus'] as string) ?? fulfillment?.state ?? null,
             trackingNumber: (orderCf['andreaniTrackingNumber'] as string) ?? null,
             accessToken,
+            requiresPersonalization: this.orderRequiresPersonalization(order),
             lines: lineItems,
         };
     }
@@ -343,7 +358,7 @@ export class PersonalizationService {
         return isNaN(d.getTime()) ? null : d.toISOString();
     }
 
-    private validateFile(file: PersonalizationUploadInput['file']): void {
+    private validateFile(file: UploadedPersonalizationFile): void {
         if (!file || !Buffer.isBuffer(file.buffer) || file.buffer.length === 0) {
             throw new Error('Debes seleccionar un archivo.');
         }

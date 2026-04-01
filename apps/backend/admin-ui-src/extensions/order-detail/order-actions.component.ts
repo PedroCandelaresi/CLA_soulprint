@@ -1,80 +1,162 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CustomDetailComponent, DataService, NotificationService } from '@vendure/admin-ui/core';
 import { Observable } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { ORDER_DASHBOARD_QUERY } from './order-detail.module';
+import {
+    buildOrderDashboard,
+    OrderDashboardViewModel,
+    UPDATE_PRODUCTION_STATUS_MUTATION,
+} from './order-detail.helpers';
 
 @Component({
     selector: 'cla-order-actions',
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
-    <ng-container *ngIf="actionState$ | async as state">
-
-        <!-- Acciones disponibles según el estado actual -->
-        <div class="cla-actions-container">
-            <h4 class="cla-actions-title">Acciones disponibles</h4>
-
-            <!-- No hay acciones -->
-            <div *ngIf="state.actions.length === 0" class="cla-no-actions">
-                ✓ No hay acciones pendientes en este momento.
-            </div>
-
-            <!-- Lista de acciones -->
-            <div class="cla-action-list">
-                <div *ngFor="let action of state.actions" class="cla-action-item">
-                    <div class="cla-action-info">
-                        <strong>{{ action.label }}</strong>
-                        <p>{{ action.description }}</p>
-                    </div>
-                    <button
-                        [class]="'cla-btn cla-btn-' + action.variant"
-                        (click)="executeAction(action, state.orderId)"
-                        [disabled]="state.loading">
-                        {{ action.icon }} {{ action.label }}
-                    </button>
+    <ng-container *ngIf="vm$ | async as vm">
+        <section class="cla-next-step">
+            <div class="cla-next-step__header">
+                <div>
+                    <p class="cla-step-label">Próximo paso recomendado</p>
+                    <h3>{{ vm.nextStepTitle }}</h3>
                 </div>
+                <div class="cla-step-state">{{ vm.businessStatusLabel }}</div>
             </div>
-        </div>
 
+            <p class="cla-step-copy">{{ vm.nextStepDescription }}</p>
+
+            <ul class="cla-step-checklist" *ngIf="vm.nextStepChecklist.length > 0">
+                <li *ngFor="let item of vm.nextStepChecklist">{{ item }}</li>
+            </ul>
+
+            <div class="cla-step-actions" *ngIf="vm.primaryActionLabel || vm.secondaryActionLabel">
+                <button
+                    *ngIf="vm.primaryActionLabel"
+                    type="button"
+                    [class]="'cla-btn cla-btn--' + vm.primaryActionVariant"
+                    [disabled]="loadingOrderId === vm.id"
+                    (click)="runAction(vm, vm.primaryActionKey)">
+                    {{ vm.primaryActionLabel }}
+                </button>
+
+                <button
+                    *ngIf="vm.secondaryActionLabel"
+                    type="button"
+                    class="cla-btn cla-btn--secondary"
+                    (click)="runAction(vm, vm.secondaryActionKey)">
+                    {{ vm.secondaryActionLabel }}
+                </button>
+            </div>
+        </section>
     </ng-container>
     `,
     styles: [`
-        .cla-actions-container {
-            background: #f9fafb; border-radius: 10px; padding: 16px; margin-top: 8px;
+        .cla-next-step {
+            display: grid;
+            gap: 14px;
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid var(--brand-border-strong);
+            background: linear-gradient(135deg, rgba(0, 72, 37, 0.06), rgba(255, 255, 255, 0.92));
         }
-        .cla-actions-title {
-            font-size: 13px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.06em; color: #6b7280; margin: 0 0 14px;
+        .cla-next-step__header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
         }
-        .cla-no-actions { color: #6b7280; font-size: 13px; text-align: center; padding: 8px; }
-        .cla-action-list { display: flex; flex-direction: column; gap: 12px; }
-        .cla-action-item {
-            display: flex; align-items: center; justify-content: space-between; gap: 12px;
-            background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px;
+        .cla-step-label {
+            margin: 0 0 4px;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--brand-text-soft);
+            font-weight: 700;
         }
-        .cla-action-info { flex: 1; }
-        .cla-action-info strong { font-size: 14px; display: block; }
-        .cla-action-info p { font-size: 12px; color: #6b7280; margin: 2px 0 0; }
+        .cla-next-step h3 {
+            margin: 0;
+            font-size: 22px;
+            line-height: 1.2;
+            color: var(--brand-primary-strong);
+        }
+        .cla-step-state {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid var(--brand-border);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--brand-primary);
+            white-space: nowrap;
+        }
+        .cla-step-copy {
+            margin: 0;
+            color: var(--brand-text-muted);
+            line-height: 1.5;
+        }
+        .cla-step-checklist {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--brand-text);
+            display: grid;
+            gap: 6px;
+        }
+        .cla-step-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
         .cla-btn {
-            padding: 8px 16px; border: none; border-radius: 7px;
-            font-weight: 600; cursor: pointer; font-size: 13px; white-space: nowrap;
-            display: inline-flex; align-items: center; gap: 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            padding: 0 16px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
-        .cla-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .cla-btn-primary { background: #2563eb; color: #fff; }
-        .cla-btn-primary:hover:not(:disabled) { background: #1d4ed8; }
-        .cla-btn-success { background: #16a34a; color: #fff; }
-        .cla-btn-success:hover:not(:disabled) { background: #15803d; }
-        .cla-btn-neutral { background: #e5e7eb; color: #374151; }
-        .cla-btn-neutral:hover:not(:disabled) { background: #d1d5db; }
+        .cla-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .cla-btn--primary {
+            background: var(--brand-primary);
+            color: #fff;
+        }
+        .cla-btn--primary:hover:not(:disabled) {
+            background: var(--brand-primary-hover);
+        }
+        .cla-btn--success {
+            background: var(--brand-success);
+            color: #fff;
+        }
+        .cla-btn--success:hover:not(:disabled) {
+            background: #185236;
+        }
+        .cla-btn--secondary {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: var(--brand-border);
+            color: var(--brand-text);
+        }
+        .cla-btn--secondary:hover {
+            background: var(--brand-primary-soft);
+        }
+        @media (max-width: 720px) {
+            .cla-next-step__header {
+                flex-direction: column;
+            }
+        }
     `],
 })
 export class OrderActionsComponent implements CustomDetailComponent, OnInit {
     entity$!: Observable<any>;
     detailForm: any;
 
-    actionState$!: Observable<any>;
-    private loadingOrderId: string | null = null;
+    vm$!: Observable<OrderDashboardViewModel>;
+    loadingOrderId: string | null = null;
 
     constructor(
         private dataService: DataService,
@@ -82,76 +164,54 @@ export class OrderActionsComponent implements CustomDetailComponent, OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.actionState$ = this.entity$.pipe(
-            switchMap(entity =>
-                this.dataService.query(ORDER_DASHBOARD_QUERY, { id: entity.id }).mapStream(
-                    (data: any) => {
-                        const o = data.order;
-                        if (!o) return { actions: [], orderId: null, loading: false };
-                        const cf = o.customFields ?? {};
-                        const isPaid = ['PaymentAuthorized', 'PaymentSettled'].includes(o.state);
-                        const overall = cf.personalizationOverallStatus ?? 'not-required';
-                        const imagesReady = overall === 'complete' || overall === 'not-required';
-                        const production = cf.productionStatus ?? 'not-started';
-
-                        const actions: any[] = [];
-
-                        if (isPaid && imagesReady && production === 'not-started') {
-                            actions.push({
-                                key: 'start-production',
-                                label: 'Iniciar producción',
-                                description: 'Marcá el pedido como en fabricación.',
-                                icon: '🔨',
-                                variant: 'primary',
-                            });
-                        }
-
-                        if (isPaid && production === 'in-production') {
-                            actions.push({
-                                key: 'mark-ready',
-                                label: 'Marcar listo para enviar',
-                                description: 'El producto está terminado y empaquetado.',
-                                icon: '✅',
-                                variant: 'success',
-                            });
-                        }
-
-                        return {
-                            orderId: o.id,
-                            actions,
-                            loading: this.loadingOrderId === o.id,
-                        };
-                    }
-                )
-            )
+        this.vm$ = this.entity$.pipe(
+            switchMap((entity) =>
+                this.dataService.query(ORDER_DASHBOARD_QUERY, { id: entity.id }).mapSingle(
+                    (data: any) => buildOrderDashboard(data.order),
+                ),
+            ),
         );
     }
 
-    async executeAction(action: any, orderId: string): Promise<void> {
-        this.loadingOrderId = orderId;
+    async runAction(vm: OrderDashboardViewModel, actionKey: string | null): Promise<void> {
+        if (!actionKey) {
+            return;
+        }
 
-        const mutation = `
-            mutation UpdateProductionStatus($id: ID!, $status: String!) {
-                setOrderCustomFields(input: {
-                    id: $id
-                    customFields: { productionStatus: $status }
-                }) {
-                    id
-                    customFields { productionStatus }
-                }
+        if (actionKey === 'open-latest-asset') {
+            if (vm.latestAssetUrl) {
+                window.open(vm.latestAssetUrl, '_blank', 'noopener,noreferrer');
             }
-        `;
+            return;
+        }
 
+        if (!vm.id) {
+            return;
+        }
+
+        const nextStatus = actionKey === 'start-production'
+            ? 'in-production'
+            : actionKey === 'mark-ready'
+                ? 'ready'
+                : null;
+
+        if (!nextStatus) {
+            return;
+        }
+
+        this.loadingOrderId = vm.id;
         try {
-            if (action.key === 'start-production') {
-                await this.dataService.mutate(mutation, { id: orderId, status: 'in-production' }).toPromise();
-                this.notificationService.success('Producción iniciada.');
-            } else if (action.key === 'mark-ready') {
-                await this.dataService.mutate(mutation, { id: orderId, status: 'ready' }).toPromise();
-                this.notificationService.success('Pedido marcado como listo para enviar.');
-            }
+            await this.dataService.mutate(UPDATE_PRODUCTION_STATUS_MUTATION, {
+                id: vm.id,
+                status: nextStatus,
+            }).toPromise();
+            this.notificationService.success(
+                nextStatus === 'in-production'
+                    ? 'El pedido quedó marcado como en producción.'
+                    : 'El pedido quedó marcado como listo para enviar.',
+            );
         } catch {
-            this.notificationService.error('No se pudo ejecutar la acción. Intentá de nuevo.');
+            this.notificationService.error('No se pudo actualizar el próximo paso del pedido.');
         } finally {
             this.loadingOrderId = null;
         }

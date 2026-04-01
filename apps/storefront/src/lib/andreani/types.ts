@@ -13,19 +13,22 @@ export interface AndreaniQuoteRequest {
 }
 
 export interface AndreaniQuoteBreakdown {
-    fleteAereo?: number;
-    seguro?: number;
-    tasaImportacion?: number;
-    ultimaMilla?: number;
+    baseCents?: number;
+    weightSurchargeCents?: number;
+    insuranceCents?: number;
+    taxCents?: number;
+    lastMileCents?: number;
 }
 
 export interface AndreaniQuoteResult {
     carrier: 'andreani';
-    serviceCode?: string;
-    serviceName?: string;
-    price: number;
+    serviceCode: string;
+    serviceName: string;
+    priceCents: number;
     currency: string;
     estimatedDelivery?: string;
+    providerMode: 'real' | 'mock';
+    isSimulated: boolean;
     breakdown?: AndreaniQuoteBreakdown;
     rawResponse?: Record<string, unknown>;
 }
@@ -47,7 +50,7 @@ export interface AndreaniSelectionRequest {
     carrier: string;
     serviceCode: string;
     serviceName: string;
-    price: number;
+    priceCents: number;
     currency: string;
     destinationPostalCode: string;
     destinationCity: string;
@@ -57,6 +60,8 @@ export interface AndreaniSelectionRequest {
     widthCm?: number;
     lengthCm?: number;
     volume?: number;
+    providerMode?: 'real' | 'mock';
+    isSimulated?: boolean;
 }
 
 export interface AndreaniSelectionSuccessResponse {
@@ -67,9 +72,14 @@ export interface AndreaniSelectionSuccessResponse {
 export type AndreaniSelectionResponse = AndreaniSelectionSuccessResponse | AndreaniApiErrorResponse;
 
 export interface AndreaniLogisticsData {
+    shippingQuoteCode?: string;
+    shippingMethodLabel?: string;
+    shippingPriceCents?: number;
+    shippingSnapshotJson?: string | Record<string, unknown>;
     andreaniCarrier?: string;
     andreaniServiceCode?: string;
     andreaniServiceName?: string;
+    // TODO(migration): remove legacy float field after old orders/admin views stop depending on it.
     andreaniPrice?: number;
     andreaniCurrency?: string;
     andreaniDestinationPostalCode?: string;

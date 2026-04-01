@@ -3,83 +3,144 @@ import { CustomDetailComponent, DataService } from '@vendure/admin-ui/core';
 import { Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { ORDER_DASHBOARD_QUERY } from './order-detail.module';
+import { buildOrderDashboard, getToneClass } from './order-detail.helpers';
 
 @Component({
     selector: 'cla-order-payment-panel',
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
-    <ng-container *ngIf="payment$ | async as p">
+    <ng-container *ngIf="payment$ | async as vm">
+        <section class="cla-panel">
+            <header class="cla-panel__header">
+                <div>
+                    <p class="cla-panel__eyebrow">Pago</p>
+                    <h3>{{ vm.paymentLabel }}</h3>
+                </div>
+                <span class="cla-status-pill" [ngClass]="getToneClass(vm.paymentTone)">
+                    {{ vm.paymentState }}
+                </span>
+            </header>
 
-        <!-- Estado general del pago -->
-        <div class="cla-payment-state" [ngClass]="getStateClass(p.orderState)">
-            <span class="cla-state-icon">{{ getStateIcon(p.orderState) }}</span>
-            <div>
-                <strong>{{ getStateLabel(p.orderState) }}</strong>
-                <p>{{ getStateHelp(p.orderState) }}</p>
+            <p class="cla-panel__copy">{{ vm.paymentDescription }}</p>
+
+            <div class="cla-alert cla-alert--danger" *ngIf="vm.hasPaymentMismatch">
+                La orden y el pago muestran estados distintos. Conviene revisar antes de fabricar o despachar.
             </div>
-        </div>
 
-        <!-- Alerta: posible inconsistencia -->
-        <div class="cla-alert cla-alert-warn" *ngIf="p.hasMismatch">
-            ⚠️ La orden sigue en estado "<strong>{{ p.orderState }}</strong>" pero puede haber un pago
-            registrado. Verificar en el panel de pagos o contactar al proveedor.
-        </div>
-
-        <!-- Detalles del pago -->
-        <div class="cla-detail-grid" *ngIf="p.payments && p.payments.length > 0">
-            <ng-container *ngFor="let pay of p.payments">
-                <div class="cla-detail-row">
-                    <span class="cla-detail-label">Monto</span>
-                    <strong>{{ pay.amount / 100 | currency:(p.currencyCode):'symbol':'1.2-2' }}</strong>
+            <div class="cla-grid">
+                <div class="cla-card">
+                    <span class="cla-card__label">Total del pedido</span>
+                    <strong>{{ vm.totalWithTax / 100 | currency:vm.currencyCode:'symbol':'1.2-2' }}</strong>
                 </div>
-                <div class="cla-detail-row">
-                    <span class="cla-detail-label">Método</span>
-                    <span>{{ pay.method }}</span>
+                <div class="cla-card" *ngIf="vm.paymentAmount != null">
+                    <span class="cla-card__label">Monto registrado</span>
+                    <strong>{{ vm.paymentAmount / 100 | currency:vm.currencyCode:'symbol':'1.2-2' }}</strong>
                 </div>
-                <div class="cla-detail-row" *ngIf="pay.transactionId">
-                    <span class="cla-detail-label">ID Transacción</span>
-                    <code class="cla-code">{{ pay.transactionId }}</code>
+                <div class="cla-card" *ngIf="vm.paymentMethod">
+                    <span class="cla-card__label">Medio de pago</span>
+                    <strong>{{ vm.paymentMethod }}</strong>
                 </div>
-                <div class="cla-detail-row">
-                    <span class="cla-detail-label">Estado Pago</span>
-                    <span class="cla-badge" [ngClass]="getPaymentBadgeClass(pay.state)">
-                        {{ pay.state }}
-                    </span>
+                <div class="cla-card" *ngIf="vm.paymentTransactionId">
+                    <span class="cla-card__label">Referencia</span>
+                    <code>{{ vm.paymentTransactionId }}</code>
                 </div>
-            </ng-container>
-        </div>
-
-        <!-- Monto total de la orden -->
-        <div class="cla-total-block">
-            <span>Total del pedido:</span>
-            <strong>{{ p.totalWithTax / 100 | currency:(p.currencyCode):'symbol':'1.2-2' }}</strong>
-        </div>
-
+            </div>
+        </section>
     </ng-container>
     `,
     styles: [`
-        .cla-payment-state {
-            display: flex; align-items: flex-start; gap: 12px;
-            padding: 14px 16px; border-radius: 8px; border-left: 4px solid;
-            margin-bottom: 14px;
+        .cla-panel {
+            display: grid;
+            gap: 14px;
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid var(--brand-border);
+            background: rgba(255, 255, 255, 0.9);
         }
-        .cla-state-pending  { background:#fffbeb; border-color:#f59e0b; }
-        .cla-state-paid     { background:#f0fdf4; border-color:#22c55e; }
-        .cla-state-failed   { background:#fef2f2; border-color:#ef4444; }
-        .cla-state-icon     { font-size: 22px; flex-shrink:0; }
-        .cla-alert { padding: 12px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; }
-        .cla-alert-warn { background:#fffbeb; color:#92400e; border: 1px solid #fcd34d; }
-        .cla-detail-grid { display: grid; gap: 8px; margin-bottom: 14px; }
-        .cla-detail-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
-        .cla-detail-label { font-size: 13px; color: #6b7280; }
-        .cla-code { font-family: monospace; font-size: 12px; background:#f3f4f6; padding: 2px 6px; border-radius: 4px; }
-        .cla-badge { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-        .cla-badge-settled, .cla-badge-authorized { background:#d1fae5; color:#065f46; }
-        .cla-badge-error, .cla-badge-declined { background:#fee2e2; color:#991b1b; }
-        .cla-badge-created { background:#f3f4f6; color:#6b7280; }
-        .cla-total-block {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 0; border-top: 2px solid #e5e7eb; font-size: 15px;
+        .cla-panel__header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+        }
+        .cla-panel__eyebrow {
+            margin: 0 0 4px;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--brand-text-soft);
+        }
+        .cla-panel h3 {
+            margin: 0;
+            color: var(--brand-primary-strong);
+            font-size: 21px;
+        }
+        .cla-panel__copy {
+            margin: 0;
+            color: var(--brand-text-muted);
+            line-height: 1.5;
+        }
+        .cla-status-pill {
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .cla-tone-neutral { background: var(--brand-surface-muted); color: var(--brand-text-muted); }
+        .cla-tone-info { background: rgba(0, 72, 37, 0.1); color: var(--brand-primary); }
+        .cla-tone-success { background: var(--color-success-150); color: var(--brand-success); }
+        .cla-tone-warning { background: var(--color-warning-150); color: var(--brand-warning); }
+        .cla-tone-danger { background: var(--color-error-150); color: var(--brand-error); }
+        .cla-alert {
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .cla-alert--danger {
+            background: var(--color-error-150);
+            border-color: #efc0c0;
+            color: var(--brand-error);
+        }
+        .cla-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .cla-card {
+            display: grid;
+            gap: 6px;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid var(--brand-border);
+            background: var(--brand-surface-alt);
+        }
+        .cla-card__label {
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--brand-text-soft);
+            font-weight: 700;
+        }
+        .cla-card strong,
+        .cla-card code {
+            color: var(--brand-text);
+            font-size: 15px;
+        }
+        .cla-card code {
+            font-family: monospace;
+            word-break: break-all;
+        }
+        @media (max-width: 720px) {
+            .cla-panel__header {
+                flex-direction: column;
+            }
+            .cla-grid {
+                grid-template-columns: 1fr;
+            }
         }
     `],
 })
@@ -93,66 +154,13 @@ export class OrderPaymentPanelComponent implements CustomDetailComponent, OnInit
 
     ngOnInit(): void {
         this.payment$ = this.entity$.pipe(
-            switchMap(entity =>
-                this.dataService.query(ORDER_DASHBOARD_QUERY, { id: entity.id }).mapStream(
-                    (data: any) => {
-                        const o = data.order;
-                        const hasMismatch = o?.state === 'ArrangingPayment' &&
-                            (o?.payments ?? []).some((p: any) => ['Settled', 'Authorized'].includes(p.state));
-                        return {
-                            orderState: o?.state,
-                            totalWithTax: o?.totalWithTax ?? 0,
-                            currencyCode: o?.currencyCode ?? 'ARS',
-                            payments: o?.payments ?? [],
-                            hasMismatch,
-                        };
-                    }
-                )
-            )
+            switchMap((entity) =>
+                this.dataService.query(ORDER_DASHBOARD_QUERY, { id: entity.id }).mapSingle(
+                    (data: any) => buildOrderDashboard(data.order),
+                ),
+            ),
         );
     }
 
-    getStateLabel(state: string): string {
-        const labels: Record<string, string> = {
-            'ArrangingPayment': 'Esperando pago',
-            'PaymentAuthorized': 'Pago autorizado',
-            'PaymentSettled': '✓ Pago confirmado',
-            'Cancelled': 'Pago cancelado',
-        };
-        return labels[state] ?? state;
-    }
-
-    getStateHelp(state: string): string {
-        const help: Record<string, string> = {
-            'ArrangingPayment': 'El cliente todavía no completó el pago.',
-            'PaymentAuthorized': 'El pago fue autorizado pero todavía no acreditado.',
-            'PaymentSettled': 'El dinero fue acreditado correctamente.',
-            'Cancelled': 'El pedido fue cancelado.',
-        };
-        return help[state] ?? '';
-    }
-
-    getStateIcon(state: string): string {
-        const icons: Record<string, string> = {
-            'ArrangingPayment': '⏳',
-            'PaymentAuthorized': '🔐',
-            'PaymentSettled': '✅',
-            'Cancelled': '❌',
-        };
-        return icons[state] ?? '💳';
-    }
-
-    getStateClass(state: string): Record<string, boolean> {
-        const isPaid = ['PaymentAuthorized', 'PaymentSettled'].includes(state);
-        const isFailed = state === 'Cancelled';
-        return {
-            'cla-state-paid': isPaid,
-            'cla-state-failed': isFailed,
-            'cla-state-pending': !isPaid && !isFailed,
-        };
-    }
-
-    getPaymentBadgeClass(state: string): Record<string, boolean> {
-        return { [`cla-badge-${state.toLowerCase()}`]: true };
-    }
+    getToneClass = getToneClass;
 }

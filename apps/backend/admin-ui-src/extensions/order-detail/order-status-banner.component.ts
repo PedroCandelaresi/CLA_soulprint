@@ -1,206 +1,153 @@
-import {
-    ChangeDetectionStrategy,
-    Component,
-    OnInit,
-} from '@angular/core';
-import { DataService, CustomDetailComponent } from '@vendure/admin-ui/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { CustomDetailComponent, DataService } from '@vendure/admin-ui/core';
 import { Observable } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { ORDER_DASHBOARD_QUERY } from './order-detail.module';
-
-interface StatusConfig {
-    label: string;
-    colorClass: string;
-    icon: string;
-    help: string;
-    nextAction?: string;
-}
-
-function deriveBusinessStatus(order: any): string {
-    if (!order) return 'unknown';
-    const cf = order.customFields ?? {};
-    if (order.state === 'Cancelled') return 'cancelled';
-
-    const isPaid = ['PaymentAuthorized', 'PaymentSettled'].includes(order.state) ||
-        (order.payments ?? []).some((p: any) => ['Authorized', 'Settled'].includes(p.state));
-
-    if (!isPaid) return 'pending_payment';
-
-    const shipStatus = (cf.andreaniShipmentStatus ?? '').toLowerCase();
-    if (shipStatus.includes('entreg') || shipStatus.includes('deliver')) return 'delivered';
-    if (cf.andreaniTrackingNumber) return 'shipped';
-    if (cf.productionStatus === 'ready') return 'ready_to_ship';
-    if (cf.productionStatus === 'in-production') return 'in_production';
-
-    const overall = cf.personalizationOverallStatus ?? 'not-required';
-    if (overall === 'pending' || overall === 'partial') return 'awaiting_personalization';
-    if (overall === 'complete') return 'personalization_received';
-    return 'paid';
-}
-
-const STATUS_MAP: Record<string, StatusConfig> = {
-    pending_payment: {
-        label: 'Esperando pago',
-        colorClass: 'cla-status-gray',
-        icon: '⏳',
-        help: 'El cliente todavía no completó el pago. No se requiere ninguna acción.',
-    },
-    paid: {
-        label: 'Pago confirmado',
-        colorClass: 'cla-status-blue',
-        icon: '✅',
-        help: 'El pago fue acreditado correctamente.',
-        nextAction: 'Si el pedido requiere imagen, el cliente recibirá un email para subirla.',
-    },
-    awaiting_personalization: {
-        label: 'Falta imagen del cliente',
-        colorClass: 'cla-status-yellow',
-        icon: '🖼️',
-        help: 'El pedido está pago, pero el cliente todavía no subió su imagen.',
-        nextAction: 'Si lleva más de 24 hs sin imagen, podés contactar al cliente.',
-    },
-    personalization_received: {
-        label: 'Imagen recibida — listo para producción',
-        colorClass: 'cla-status-cyan',
-        icon: '📥',
-        help: 'El cliente ya subió su imagen. Podés revisar el archivo y comenzar la producción.',
-        nextAction: 'Revisá la imagen en la pestaña "Personalización" y hacé clic en "Iniciar producción".',
-    },
-    in_production: {
-        label: 'En producción',
-        colorClass: 'cla-status-purple',
-        icon: '🔨',
-        help: 'El pedido está siendo fabricado.',
-        nextAction: 'Cuando esté listo, hacé clic en "Marcar como listo para enviar".',
-    },
-    ready_to_ship: {
-        label: 'Listo para enviar',
-        colorClass: 'cla-status-orange',
-        icon: '📦',
-        help: 'El pedido terminó de producirse y está esperando ser despachado.',
-        nextAction: 'Preparar el bulto y coordinar el despacho.',
-    },
-    shipped: {
-        label: 'Enviado',
-        colorClass: 'cla-status-teal',
-        icon: '🚚',
-        help: 'El pedido fue despachado y está en camino al cliente.',
-    },
-    delivered: {
-        label: 'Entregado',
-        colorClass: 'cla-status-green',
-        icon: '🏠',
-        help: 'El pedido fue entregado al cliente exitosamente.',
-    },
-    cancelled: {
-        label: 'Cancelado',
-        colorClass: 'cla-status-red',
-        icon: '❌',
-        help: 'Este pedido fue cancelado.',
-    },
-    unknown: {
-        label: 'Estado desconocido',
-        colorClass: 'cla-status-gray',
-        icon: '❓',
-        help: 'No se pudo determinar el estado del pedido.',
-    },
-};
+import { buildOrderDashboard, getToneClass, OrderDashboardViewModel } from './order-detail.helpers';
 
 @Component({
     selector: 'cla-order-status-banner',
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
-    <ng-container *ngIf="statusConfig$ | async as cfg">
-        <div class="cla-status-banner {{ cfg.colorClass }}">
-            <span class="cla-status-icon">{{ cfg.icon }}</span>
-            <div class="cla-status-body">
-                <strong class="cla-status-title">{{ cfg.label }}</strong>
-                <p class="cla-status-help">{{ cfg.help }}</p>
-                <p class="cla-status-action" *ngIf="cfg.nextAction">
-                    👉 {{ cfg.nextAction }}
-                </p>
+    <ng-container *ngIf="vm$ | async as vm">
+        <section class="cla-banner" [ngClass]="getToneClass(vm.businessStatusTone)">
+            <div class="cla-banner__marker"></div>
+            <div class="cla-banner__body">
+                <p class="cla-banner__eyebrow">Estado general del pedido</p>
+                <h3 class="cla-banner__title">{{ vm.businessStatusLabel }}</h3>
+                <p class="cla-banner__copy">{{ vm.businessStatusDescription }}</p>
             </div>
-        </div>
-
-        <div class="cla-order-meta" *ngIf="orderMeta$ | async as meta">
-            <div class="cla-meta-row">
-                <span class="cla-meta-label">Pedido</span>
-                <strong>{{ meta.code }}</strong>
+            <div class="cla-banner__aside">
+                <div class="cla-banner__pill">
+                    <span>Producción</span>
+                    <strong>{{ vm.productionLabel }}</strong>
+                </div>
+                <div class="cla-banner__pill">
+                    <span>Pago</span>
+                    <strong>{{ vm.paymentLabel }}</strong>
+                </div>
             </div>
-            <div class="cla-meta-row" *ngIf="meta.customerName">
-                <span class="cla-meta-label">Cliente</span>
-                <span>{{ meta.customerName }}</span>
-            </div>
-            <div class="cla-meta-row">
-                <span class="cla-meta-label">Total</span>
-                <strong>{{ meta.totalWithTax / 100 | currency:meta.currencyCode:'symbol':'1.2-2' }}</strong>
-            </div>
-            <div class="cla-meta-row">
-                <span class="cla-meta-label">Fecha</span>
-                <span>{{ meta.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
-            </div>
-        </div>
+        </section>
     </ng-container>
     `,
     styles: [`
-        .cla-status-banner {
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            padding: 16px 20px;
-            border-radius: 10px;
-            border-left: 5px solid;
-            margin-bottom: 16px;
+        .cla-banner {
+            display: grid;
+            grid-template-columns: 8px minmax(0, 1fr) auto;
+            gap: 16px;
+            align-items: stretch;
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid var(--brand-border);
+            box-shadow: 0 18px 36px -30px var(--brand-shadow-strong);
+            overflow: hidden;
         }
-        .cla-status-gray   { background:#f9fafb; border-color:#9ca3af; }
-        .cla-status-yellow { background:#fffbeb; border-color:#f59e0b; }
-        .cla-status-blue   { background:#eff6ff; border-color:#3b82f6; }
-        .cla-status-cyan   { background:#ecfeff; border-color:#06b6d4; }
-        .cla-status-purple { background:#faf5ff; border-color:#a855f7; }
-        .cla-status-orange { background:#fff7ed; border-color:#f97316; }
-        .cla-status-teal   { background:#f0fdfa; border-color:#14b8a6; }
-        .cla-status-green  { background:#f0fdf4; border-color:#22c55e; }
-        .cla-status-red    { background:#fef2f2; border-color:#ef4444; }
-        .cla-status-icon   { font-size:28px; flex-shrink:0; line-height:1; }
-        .cla-status-title  { font-size:16px; font-weight:700; display:block; }
-        .cla-status-help   { margin:4px 0 0; color:#4b5563; font-size:13px; line-height:1.4; }
-        .cla-status-action { margin:8px 0 0; color:#1d4ed8; font-weight:500; font-size:13px; }
-        .cla-order-meta    { display:grid; grid-template-columns:1fr 1fr; gap:8px 24px; margin-top:16px; }
-        .cla-meta-row      { display:flex; flex-direction:column; gap:2px; }
-        .cla-meta-label    { font-size:11px; font-weight:600; text-transform:uppercase; color:#6b7280; letter-spacing:0.05em; }
+        .cla-banner__marker {
+            border-radius: 999px;
+            background: currentColor;
+            opacity: 0.95;
+        }
+        .cla-banner__body {
+            display: grid;
+            gap: 6px;
+        }
+        .cla-banner__eyebrow {
+            margin: 0;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--brand-text-soft);
+        }
+        .cla-banner__title {
+            margin: 0;
+            font-size: 24px;
+            line-height: 1.15;
+            color: var(--brand-primary-strong);
+        }
+        .cla-banner__copy {
+            margin: 0;
+            color: var(--brand-text-muted);
+            line-height: 1.5;
+            max-width: 70ch;
+        }
+        .cla-banner__aside {
+            display: grid;
+            gap: 10px;
+            min-width: 180px;
+        }
+        .cla-banner__pill {
+            display: grid;
+            gap: 2px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.76);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+        }
+        .cla-banner__pill span {
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--brand-text-soft);
+            font-weight: 700;
+        }
+        .cla-banner__pill strong {
+            color: var(--brand-primary-strong);
+        }
+        .cla-tone-neutral {
+            color: var(--brand-text-muted);
+            background: linear-gradient(135deg, rgba(237, 241, 233, 0.95), rgba(255, 255, 255, 0.96));
+        }
+        .cla-tone-info {
+            color: var(--brand-primary);
+            background: linear-gradient(135deg, rgba(238, 245, 240, 0.98), rgba(255, 255, 255, 0.96));
+        }
+        .cla-tone-success {
+            color: var(--brand-success);
+            background: linear-gradient(135deg, rgba(237, 247, 241, 0.98), rgba(255, 255, 255, 0.96));
+        }
+        .cla-tone-warning {
+            color: var(--brand-warning);
+            background: linear-gradient(135deg, rgba(255, 245, 219, 0.98), rgba(255, 255, 255, 0.96));
+        }
+        .cla-tone-danger {
+            color: var(--brand-error);
+            background: linear-gradient(135deg, rgba(255, 240, 240, 0.98), rgba(255, 255, 255, 0.96));
+        }
+        @media (max-width: 900px) {
+            .cla-banner {
+                grid-template-columns: 8px 1fr;
+            }
+            .cla-banner__aside {
+                grid-column: 2;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                min-width: 0;
+            }
+        }
+        @media (max-width: 640px) {
+            .cla-banner__aside {
+                grid-template-columns: 1fr;
+            }
+        }
     `],
 })
 export class OrderStatusBannerComponent implements CustomDetailComponent, OnInit {
     entity$!: Observable<any>;
     detailForm: any;
 
-    statusConfig$!: Observable<StatusConfig>;
-    orderMeta$!: Observable<any>;
+    vm$!: Observable<OrderDashboardViewModel>;
 
     constructor(private dataService: DataService) {}
 
     ngOnInit(): void {
-        this.statusConfig$ = this.entity$.pipe(
-            switchMap(entity => this.dataService.query(ORDER_DASHBOARD_QUERY, { id: entity.id }).mapSingle(
-                (data: any) => STATUS_MAP[deriveBusinessStatus(data.order)] ?? STATUS_MAP['unknown']
-            ))
-        );
-
-        this.orderMeta$ = this.entity$.pipe(
-            switchMap(entity => this.dataService.query(ORDER_DASHBOARD_QUERY, { id: entity.id }).mapSingle(
-                (data: any) => {
-                    const o = data.order;
-                    return {
-                        code: o?.code,
-                        customerName: o?.customer
-                            ? `${o.customer.firstName} ${o.customer.lastName}`.trim()
-                            : null,
-                        totalWithTax: o?.totalWithTax ?? 0,
-                        currencyCode: o?.currencyCode ?? 'ARS',
-                        createdAt: o?.createdAt,
-                    };
-                }
-            ))
+        this.vm$ = this.entity$.pipe(
+            switchMap((entity) =>
+                this.dataService.query(ORDER_DASHBOARD_QUERY, { id: entity.id }).mapSingle(
+                    (data: any) => buildOrderDashboard(data.order),
+                ),
+            ),
         );
     }
+
+    getToneClass = getToneClass;
 }

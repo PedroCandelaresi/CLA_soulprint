@@ -4,10 +4,11 @@ import { appendVendureSetCookieHeaders, fetchVendureApi } from '@/lib/vendure/cl
 import type {
     AuthActionResponse,
     CustomerDashboardData,
+    CustomerOrderPersonalizationSummary,
     CustomerOrderSummary,
     CustomerSummary,
 } from '@/types/customer-account';
-import type { PersonalizationOrderResponseData } from '@/types/personalization';
+import type { PersonalizationOrderResponseData, PersonalizationStatusValue } from '@/types/personalization';
 import { ANDREANI_ENABLED } from '@/lib/andreani/config';
 import { buildAndreaniBackendUrl } from '../logistics/andreani/utils';
 import {
@@ -780,6 +781,44 @@ function readBoolean(value: unknown): boolean {
     return value === true;
 }
 
+function lineRequiresPersonalization(line: VendureOrder['lines'][number]): boolean {
+    return line.productVariant?.customFields?.requiresPersonalization === true;
+}
+
+function derivePersonalizationSummary(
+    personalization: PersonalizationOrderResponseData | null,
+    fallbackRequiresPersonalization: boolean,
+): CustomerOrderPersonalizationSummary | null {
+    if (!personalization) {
+        return null;
+    }
+
+    const requiredLines = personalization.lines.filter((line) => line.requiresPersonalization);
+    const preferredLine =
+        requiredLines.find((line) => Boolean(line.asset))
+        ?? requiredLines.find((line) => line.personalizationStatus === 'uploaded' || line.personalizationStatus === 'approved')
+        ?? requiredLines[0]
+        ?? null;
+    const summaryStatus: PersonalizationStatusValue =
+        personalization.overallPersonalizationStatus === 'complete'
+            ? 'uploaded'
+            : personalization.requiresPersonalization
+                ? 'pending'
+                : 'not-required';
+
+    return {
+        requiresPersonalization: personalization.requiresPersonalization || fallbackRequiresPersonalization,
+        personalizationStatus: summaryStatus,
+        assetId: preferredLine?.asset?.id ?? null,
+        assetUrl: preferredLine?.asset?.source ?? null,
+        assetPreviewUrl: preferredLine?.asset?.preview ?? null,
+        originalFilename: preferredLine?.snapshotFileName ?? null,
+        uploadedAt: preferredLine?.uploadedAt ?? null,
+        notes: preferredLine?.notes ?? null,
+        accessToken: personalization.accessToken,
+    };
+}
+
 async function fetchPersonalization(
     orderCode: string,
     cookieHeader?: string,
@@ -860,7 +899,8 @@ function mapOrder(
         || readString(logistics?.andreaniTrackingNumber)
         || lastFulfillment?.trackingCode
         || null;
-    const requiresPersonalization = (order.lines || []).length > 0;
+    const requiresPersonalization = (order.lines || []).some((line) => lineRequiresPersonalization(line));
+    const personalizationSummary = derivePersonalizationSummary(personalization, requiresPersonalization);
 
     return {
         id: order.id,
@@ -906,25 +946,13 @@ function mapOrder(
             variantName: line.productVariant?.name || 'Variante',
             previewUrl: line.featuredAsset?.preview || null,
             linePriceWithTax: line.discountedLinePriceWithTax,
-            requiresPersonalization,
+            requiresPersonalization: lineRequiresPersonalization(line),
         })),
-        personalization: personalization
-            ? {
-                requiresPersonalization: personalization.requiresPersonalization,
-                personalizationStatus: personalization.personalizationStatus,
-                assetId: personalization.assetId,
-                assetUrl: personalization.assetUrl,
-                assetPreviewUrl: personalization.assetPreviewUrl,
-                originalFilename: personalization.originalFilename,
-                uploadedAt: personalization.uploadedAt,
-                notes: personalization.notes,
-                accessToken: personalization.accessToken,
-            }
-            : null,
+        personalization: personalizationSummary,
         logistics: logistics
             ? {
                 carrier: readString(logistics.andreaniCarrier),
-                serviceName: readString(logistics.andreaniServiceName),
+                serviceName: readString(logistics.shippingMethodLabel) || readString(logistics.andreaniServiceName),
                 shipmentStatus: readString(logistics.andreaniShipmentStatus),
                 trackingNumber: readString(logistics.andreaniTrackingNumber),
                 shipmentCreated: readBoolean(logistics.andreaniShipmentCreated),

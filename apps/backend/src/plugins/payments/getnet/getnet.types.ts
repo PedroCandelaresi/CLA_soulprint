@@ -141,12 +141,20 @@ export interface GetnetWebhookPayload {
  */
 export interface CreateCheckoutDto {
     orderCode: string;
-    items: Array<{
+    /**
+     * Optional compatibility payload from the storefront.
+     * The backend never trusts these values for the authoritative amount.
+     */
+    items?: Array<{
         id: string;
         name: string;
         quantity: number;
         unitPrice: number; // in cents
     }>;
+    /**
+     * Optional compatibility field from the storefront.
+     * The backend validates it against Vendure but never uses it as source of truth.
+     */
     shippingCost?: number; // in cents
     customerEmail?: string;
     successUrl?: string;

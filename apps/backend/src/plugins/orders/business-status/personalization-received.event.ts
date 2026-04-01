@@ -4,6 +4,7 @@ export class PersonalizationReceivedEvent extends VendureEvent {
     constructor(
         public ctx: RequestContext,
         public order: Order,
+        public orderLineId: string,
     ) {
         super();
     }

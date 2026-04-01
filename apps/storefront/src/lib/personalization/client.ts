@@ -72,6 +72,7 @@ export async function getOrderPersonalization(input: {
 
 export async function uploadOrderPersonalization(input: {
     orderCode: string;
+    orderLineId: string;
     file: File;
     notes?: string;
     transactionId?: string;
@@ -80,6 +81,7 @@ export async function uploadOrderPersonalization(input: {
     try {
         const formData = new FormData();
         formData.set('orderCode', input.orderCode);
+        formData.set('orderLineId', input.orderLineId);
         formData.set('file', input.file);
         if (input.notes) {
             formData.set('notes', input.notes);

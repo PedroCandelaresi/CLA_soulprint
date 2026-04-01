@@ -2,6 +2,15 @@ import { randomUUID } from 'node:crypto';
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { DataSource } from 'typeorm';
 import {
+    EventBus,
+    isGraphQlErrorResult,
+    Order,
+    OrderService,
+    PaymentService,
+    RequestContext,
+    RequestContextService,
+} from '@vendure/core';
+import {
     GetnetPluginConfig,
     GetnetOAuthConfig,
     GetnetOAuthTokenResponse,
@@ -20,14 +29,23 @@ import {
     isTerminalStatus,
 } from './getnet-transaction.entity';
 import { GetnetTransactionRepository } from './getnet-transaction.repository';
-import { AndreaniShipmentService } from '../../logistics/andreani/andreani-shipment.service';
 import type { PersonalizationService } from '../../logistics/personalization/personalization.service';
-import type { Order } from '@vendure/core';
 
 const GETNET_LOG_PREFIX = '[getnet]';
 
+type VendureServices = {
+    orderService: OrderService;
+    paymentService?: PaymentService;
+    requestContextService: RequestContextService;
+    eventBus?: EventBus;
+};
+
 type GetnetStoredMetadata = {
     itemCount?: number;
+    vendureTotalWithTax?: number;
+    vendureCurrencyCode?: string;
+    vendureOrderState?: string;
+    storefrontAmount?: number | null;
     createdFrom?: string;
     redirectUrls?: {
         success: string;
@@ -54,8 +72,8 @@ export class GetnetService {
     private oauthConfig: GetnetOAuthConfig;
     private pluginConfig: GetnetPluginConfig;
     private transactionRepo: GetnetTransactionRepository;
-    private andreaniShipmentService: AndreaniShipmentService | null = null;
     private personalizationService: PersonalizationService | null = null;
+    private vendureServices: VendureServices | null = null;
     
     // Token cache
     private cachedToken: string | null = null;
@@ -129,9 +147,107 @@ export class GetnetService {
         return { success, failed };
     }
 
-    private buildStoredMetadata(dto: CreateCheckoutDto, extra?: Partial<GetnetStoredMetadata>): string {
+    private getVendureServicesOrThrow(): VendureServices {
+        if (!this.vendureServices?.orderService || !this.vendureServices?.requestContextService) {
+            throw new Error('Vendure services not registered for Getnet payment flow');
+        }
+
+        return this.vendureServices;
+    }
+
+    private async createAdminContext(): Promise<RequestContext> {
+        return this.getVendureServicesOrThrow().requestContextService.create({ apiType: 'admin' });
+    }
+
+    private async getAuthoritativeOrder(orderCode: string, ctx?: RequestContext): Promise<Order> {
+        const context = ctx ?? await this.createAdminContext();
+        const { orderService } = this.getVendureServicesOrThrow();
+        const order = await orderService.findOneByCode(context, orderCode, [
+            'lines',
+            'lines.productVariant',
+            'shippingLines',
+            'payments',
+        ]);
+
+        if (!order) {
+            throw new Error(`Order not found: ${orderCode}`);
+        }
+
+        return order;
+    }
+
+    private assertOrderReadyForCheckout(order: Order): void {
+        const allowedStates = ['ArrangingPayment', 'ArrangingAdditionalPayment'];
+        if (!allowedStates.includes(order.state)) {
+            throw new Error(
+                `Order ${order.code} must be ready for payment (state=${order.state}, expected one of: ${allowedStates.join(', ')})`,
+            );
+        }
+    }
+
+    private calculateStorefrontAmount(dto: CreateCheckoutDto): number | null {
+        if (!dto.items?.length) {
+            return null;
+        }
+
+        return dto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+            + (dto.shippingCost ?? 0);
+    }
+
+    private validateAmountAgainstVendure(order: Order, dto: CreateCheckoutDto): void {
+        const storefrontAmount = this.calculateStorefrontAmount(dto);
+
+        if (storefrontAmount == null) {
+            console.log(
+                `${this.prefix} [testing] Checkout ${order.code}: frontend amount omitted, using Vendure total=${order.totalWithTax}`,
+            );
+            return;
+        }
+
+        const vendureTotal = order.totalWithTax;
+        const diff = Math.abs(storefrontAmount - vendureTotal);
+
+        if (diff > 1) {
+            console.error(
+                `${this.prefix} [testing] Amount mismatch for ${order.code}: storefront=${storefrontAmount} vendure=${vendureTotal} diff=${diff}`,
+            );
+            throw new Error(
+                `Monto inválido: el total enviado (${storefrontAmount}) no coincide con el total de la orden (${vendureTotal})`,
+            );
+        }
+
+        console.log(
+            `${this.prefix} [testing] Checkout ${order.code}: storefront amount validated against Vendure total=${vendureTotal}`,
+        );
+    }
+
+    private assertTransactionAmountMatchesOrder(transaction: GetnetPaymentTransaction, order: Order): void {
+        const diff = Math.abs(transaction.amount - order.totalWithTax);
+        if (diff > 1) {
+            console.error(
+                `${this.prefix} [testing] Approved payment blocked for ${order.code}: stored transaction amount=${transaction.amount}, vendure total=${order.totalWithTax}, diff=${diff}`,
+            );
+            throw new Error(
+                `Cannot register payment for ${order.code}: transaction amount ${transaction.amount} does not match Vendure total ${order.totalWithTax}`,
+            );
+        }
+
+        console.log(
+            `${this.prefix} [testing] Approved payment ${transaction.id}: amount ${transaction.amount} matches Vendure total for ${order.code}`,
+        );
+    }
+
+    private buildStoredMetadata(
+        dto: CreateCheckoutDto,
+        order: Order,
+        extra?: Partial<GetnetStoredMetadata>,
+    ): string {
         const metadata: GetnetStoredMetadata = {
-            itemCount: dto.items.length,
+            itemCount: order.lines?.length ?? 0,
+            vendureTotalWithTax: order.totalWithTax,
+            vendureCurrencyCode: String(order.currencyCode ?? ''),
+            vendureOrderState: order.state,
+            storefrontAmount: this.calculateStorefrontAmount(dto),
             createdFrom: 'createOrder',
             redirectUrls: this.resolveRedirectUrls(dto),
             ...extra,
@@ -153,7 +269,7 @@ export class GetnetService {
         }
     }
 
-    private buildMockCheckoutUrl(_dto: CreateCheckoutDto, orderUuid: string): string {
+    private buildMockCheckoutUrl(orderUuid: string): string {
         const url = new URL(
             `/payments/getnet/mock/checkout/${encodeURIComponent(orderUuid)}`,
             'http://mock.local',
@@ -205,14 +321,13 @@ export class GetnetService {
         };
     }
 
-    private async createMockOrder(dto: CreateCheckoutDto): Promise<CheckoutResponse> {
-        console.log(`${this.prefix} [mock] Creating mock checkout for order ${dto.orderCode}`);
+    private async createMockOrder(dto: CreateCheckoutDto, order: Order): Promise<CheckoutResponse> {
+        console.log(
+            `${this.prefix} [mock] Creating mock checkout for order ${dto.orderCode} using Vendure total=${order.totalWithTax}`,
+        );
 
-        const totalAmount = dto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
-        const shippingCost = dto.shippingCost || 0;
-        const finalAmount = totalAmount + shippingCost;
         const providerOrderUuid = `mock-${randomUUID()}`;
-        const checkoutUrl = this.buildMockCheckoutUrl(dto, providerOrderUuid);
+        const checkoutUrl = this.buildMockCheckoutUrl(providerOrderUuid);
         const expiresAt = this.pluginConfig.expireLimitMinutes
             ? new Date(Date.now() + this.pluginConfig.expireLimitMinutes * 60_000)
             : undefined;
@@ -221,10 +336,10 @@ export class GetnetService {
             vendureOrderCode: dto.orderCode,
             providerOrderUuid,
             checkoutUrl,
-            amount: finalAmount,
+            amount: order.totalWithTax,
             currency: this.pluginConfig.currency,
             expiresAt,
-            metadata: this.buildStoredMetadata(dto, {
+            metadata: this.buildStoredMetadata(dto, order, {
                 mock: {
                     enabled: true,
                     forceStatus: this.getMockForceStatus(),
@@ -414,69 +529,30 @@ export class GetnetService {
     }
 
     /**
-     * Validate that the amount in the DTO matches Vendure's authoritative order total.
-     * Prevents clients from manipulating prices by sending lower amounts.
-     */
-    private async validateAmountAgainstVendure(dto: CreateCheckoutDto): Promise<void> {
-        const orderService = (this as any).orderService;
-        const requestContextService = (this as any).requestContextService;
-
-        if (!orderService || !requestContextService) {
-            console.warn(`${this.prefix} Amount validation skipped: Vendure services not injected`);
-            return;
-        }
-
-        const ctx = await requestContextService.create({ apiType: 'admin' });
-        const order = await orderService.findOneByCode(ctx, dto.orderCode);
-
-        if (!order) {
-            throw new Error(`Order not found: ${dto.orderCode}`);
-        }
-
-        const sentTotal = dto.items.reduce((sum: number, item: any) => sum + item.unitPrice * item.quantity, 0)
-            + (dto.shippingCost ?? 0);
-        const vendureTotal: number = order.totalWithTax;
-        const diff = Math.abs(sentTotal - vendureTotal);
-
-        if (diff > 1) {
-            console.error(
-                `${this.prefix} Amount mismatch for ${dto.orderCode}: ` +
-                `sent=${sentTotal} vendure=${vendureTotal} diff=${diff}`
-            );
-            throw new Error(
-                `Monto inválido: el total enviado (${sentTotal}) no coincide con el total de la orden (${vendureTotal})`
-            );
-        }
-
-        console.log(`${this.prefix} Amount validated for ${dto.orderCode}: ${vendureTotal} cents`);
-    }
-
-    /**
      * Create an order/checkout session in Getnet
      * This also persists the transaction to the local database
      */
     async createOrder(dto: CreateCheckoutDto): Promise<CheckoutResponse> {
-        // Always validate amount against Vendure before creating any checkout session
-        await this.validateAmountAgainstVendure(dto);
+        const ctx = await this.createAdminContext();
+        const order = await this.getAuthoritativeOrder(dto.orderCode, ctx);
+        this.assertOrderReadyForCheckout(order);
+        this.validateAmountAgainstVendure(order, dto);
 
         if (this.isMockModeEnabled()) {
             console.log(`${this.prefix} Checkout resolution: mode=mock for order ${dto.orderCode}`);
-            return this.createMockOrder(dto);
+            return this.createMockOrder(dto, order);
         }
 
         console.log(`${this.prefix} Checkout resolution: mode=real for order ${dto.orderCode}`);
-        console.log(`${this.prefix} Creating order for internal order: ${dto.orderCode}`);
+        console.log(
+            `${this.prefix} [testing] Creating real Getnet checkout for ${dto.orderCode} using Vendure total=${order.totalWithTax}`,
+        );
         
         // Build the order request payload
-        const orderRequest = this.buildOrderRequest(dto);
+        const orderRequest = this.buildOrderRequest(order, dto);
         
         // Get fresh access token
         const accessToken = await this.getAccessToken();
-        
-        // Calculate total amount from items
-        const totalAmount = dto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
-        const shippingCost = dto.shippingCost || 0;
-        const finalAmount = totalAmount + shippingCost;
         
         try {
             console.debug(`${this.prefix} Order request: ${JSON.stringify(orderRequest, null, 2)}`);
@@ -511,12 +587,10 @@ export class GetnetService {
                 vendureOrderCode: dto.orderCode,
                 providerOrderUuid: orderData.id,
                 checkoutUrl,
-                amount: finalAmount,
+                amount: order.totalWithTax,
                 currency: this.pluginConfig.currency,
                 expiresAt,
-                metadata: JSON.stringify({
-                    ...JSON.parse(this.buildStoredMetadata(dto)),
-                }),
+                metadata: this.buildStoredMetadata(dto, order),
             });
             
             // Update with checkout URL
@@ -693,10 +767,20 @@ export class GetnetService {
             const { transaction, isIdempotent } = result;
             
             if (isIdempotent) {
-                console.log(`${this.prefix} Webhook idempotent (already processed): ${transaction.id}`);
+                console.log(`${this.prefix} Webhook idempotent at transaction layer: ${transaction.id}`);
+
+                if (isTerminalStatus(localStatus)) {
+                    console.log(
+                        `${this.prefix} [testing] Re-running Vendure reconciliation for terminal webhook ${transaction.id} (status=${transaction.status})`,
+                    );
+                    await this.handleStatusTransition(transaction, payload);
+                }
+
                 return {
                     success: true,
-                    message: 'Webhook already processed',
+                    message: isTerminalStatus(localStatus)
+                        ? 'Webhook already processed; Vendure reconciliation rechecked'
+                        : 'Webhook already processed',
                     isIdempotent: true,
                 };
             }
@@ -734,100 +818,139 @@ export class GetnetService {
     ): Promise<void> {
         console.log(`${this.prefix} Handling status transition for transaction ${transaction.id}: ${transaction.status}`);
 
-        const orderService = (this as any).orderService;
-        const requestContextService = (this as any).requestContextService;
+        const { orderService } = this.getVendureServicesOrThrow();
+        const ctx = await this.createAdminContext();
 
-        if (!orderService || !requestContextService) {
-            console.warn(`${this.prefix} Vendure services not available – skipping order update.`);
-            console.warn(`${this.prefix} Call setVendureServices() during bootstrap to enable this.`);
-            return;
+        if (transaction.status === 'approved') {
+            await this.handleApprovedPayment(transaction, ctx, orderService, payload);
+        } else if (['rejected', 'cancelled', 'expired'].includes(transaction.status)) {
+            await this.handleFailedPayment(transaction, ctx, orderService);
+        } else {
+            console.log(
+                `${this.prefix} [testing] No Vendure transition needed for transaction ${transaction.id} in status=${transaction.status}`,
+            );
         }
+    }
 
-        try {
-            const ctx = await requestContextService.create({ apiType: 'admin' });
+    private hasRegisteredPayment(order: Order, transaction: GetnetPaymentTransaction): boolean {
+        return (order.payments ?? []).some(payment => {
+            const metadata = (payment.metadata ?? {}) as Record<string, unknown>;
+            return payment.transactionId === transaction.providerOrderUuid
+                || payment.transactionId === transaction.id
+                || metadata['getnetTransactionId'] === transaction.id;
+        });
+    }
 
-            if (transaction.status === 'approved') {
-                await this.handleApprovedPayment(transaction, ctx, orderService);
-            } else if (['rejected', 'cancelled', 'expired'].includes(transaction.status)) {
-                await this.handleFailedPayment(transaction, ctx, orderService);
-            }
-        } catch (error: any) {
-            console.error(`${this.prefix} Error in handleStatusTransition: ${error.message}`);
-            console.error(`${this.prefix} Stack: ${error.stack}`);
-        }
+    private canRegisterManualPayment(order: Order): boolean {
+        return ['ArrangingPayment', 'ArrangingAdditionalPayment'].includes(order.state);
+    }
+
+    private canTransitionOrderToPaymentSettled(order: Order): boolean {
+        return !['PaymentSettled', 'PartiallyShipped', 'Shipped', 'Delivered'].includes(order.state);
     }
 
     private async handleApprovedPayment(
         transaction: GetnetPaymentTransaction,
-        ctx: any,
-        orderService: any,
+        ctx: RequestContext,
+        orderService: OrderService,
+        payload: GetnetWebhookPayload,
     ): Promise<void> {
-        console.log(`${this.prefix} Processing APPROVED for order ${transaction.vendureOrderCode}`);
-
-        const order = await orderService.findOneByCode(ctx, transaction.vendureOrderCode, ['payments', 'lines']);
-        if (!order) {
-            console.error(`${this.prefix} Order not found: ${transaction.vendureOrderCode}`);
-            return;
-        }
-
-        // ── Step 1: Register payment (idempotent by transactionId) ────────────
-        const alreadyHasPayment = (order.payments ?? []).some(
-            (p: any) => p.transactionId === transaction.providerOrderUuid
+        console.log(
+            `${this.prefix} [testing] Processing APPROVED webhook for order ${transaction.vendureOrderCode}, transaction=${transaction.id}`,
         );
 
+        const order = await orderService.findOneByCode(ctx, transaction.vendureOrderCode, [
+            'payments',
+            'lines',
+            'shippingLines',
+        ]);
+        if (!order) {
+            throw new Error(`Order not found: ${transaction.vendureOrderCode}`);
+        }
+
+        const alreadyHasPayment = this.hasRegisteredPayment(order, transaction);
+
         if (!alreadyHasPayment) {
-            // Correct Vendure 2.x API: OrderService.addManualPaymentToOrder
+            this.assertTransactionAmountMatchesOrder(transaction, order);
+
+            if (!this.canRegisterManualPayment(order)) {
+                throw new Error(
+                    `Cannot register payment for ${order.code}: order state ${order.state} does not allow addManualPaymentToOrder`,
+                );
+            }
+
+            console.log(
+                `${this.prefix} [testing] Registering manual payment in Vendure for ${order.code} with providerOrderUuid=${transaction.providerOrderUuid}`,
+            );
+
             const paymentResult = await orderService.addManualPaymentToOrder(ctx, {
                 orderId: order.id,
                 method: 'getnet',
                 transactionId: transaction.providerOrderUuid,
                 metadata: {
                     provider: 'getnet',
+                    webhookEvent: payload.event,
+                    webhookStatus: payload.status,
                     getnetTransactionId: transaction.id,
+                    providerOrderUuid: transaction.providerOrderUuid,
                     currency: transaction.currency,
                     amount: transaction.amount,
                     approvedAt: transaction.approvedAt?.toISOString(),
                 },
             });
 
-            if (paymentResult && typeof paymentResult === 'object' && 'message' in paymentResult) {
-                console.error(`${this.prefix} addManualPaymentToOrder error: ${(paymentResult as any).message}`);
-                // Do NOT return here — the state transition may still be needed if payment
-                // was registered in a prior run but the state transition failed.
-            } else {
-                console.log(`${this.prefix} Payment added to order ${transaction.vendureOrderCode}`);
+            if (isGraphQlErrorResult(paymentResult)) {
+                throw new Error(`addManualPaymentToOrder failed: ${paymentResult.message}`);
             }
+
+            console.log(`${this.prefix} [testing] Payment registered in Vendure for ${transaction.vendureOrderCode}`);
         } else {
-            console.log(`${this.prefix} Payment already registered for ${transaction.vendureOrderCode}`);
+            console.log(
+                `${this.prefix} [testing] Payment already registered for ${transaction.vendureOrderCode}; skipping addManualPaymentToOrder`,
+            );
         }
 
-        // ── Step 2: Transition state (idempotent: only if not already settled) ─
-        const freshOrder = await orderService.findOneByCode(ctx, transaction.vendureOrderCode);
-        const TERMINAL_STATES = ['PaymentSettled', 'Shipped', 'PartiallyShipped', 'Delivered'];
-        if (freshOrder && !TERMINAL_STATES.includes(freshOrder.state)) {
-            try {
-                await orderService.transitionToState(ctx, freshOrder.id, 'PaymentSettled');
-                console.log(`${this.prefix} Order ${transaction.vendureOrderCode} → PaymentSettled`);
-            } catch (stateErr: any) {
-                console.warn(`${this.prefix} State transition skipped: ${stateErr.message}`);
-            }
+        const freshOrder = await orderService.findOneByCode(ctx, transaction.vendureOrderCode, ['payments']);
+        if (!freshOrder) {
+            throw new Error(`Order not found after payment registration: ${transaction.vendureOrderCode}`);
         }
 
-        // ── Step 3: Sync personalization (enable uploads). NO shipment here. ───
+        if (!this.hasRegisteredPayment(freshOrder, transaction)) {
+            throw new Error(`Payment registration could not be verified for order ${transaction.vendureOrderCode}`);
+        }
+
         await this.syncPersonalizationForOrder(transaction.vendureOrderCode);
+
+        if (this.canTransitionOrderToPaymentSettled(freshOrder)) {
+            console.log(
+                `${this.prefix} [testing] Reconciling order state for ${freshOrder.code}; current=${freshOrder.state}, target=PaymentSettled`,
+            );
+            const transitionResult = await orderService.transitionToState(ctx, freshOrder.id, 'PaymentSettled');
+            if (isGraphQlErrorResult(transitionResult)) {
+                throw new Error(`transitionToState(PaymentSettled) failed: ${transitionResult.message}`);
+            }
+            console.log(`${this.prefix} [testing] Order ${transaction.vendureOrderCode} reconciled to PaymentSettled`);
+        } else {
+            console.log(
+                `${this.prefix} [testing] Order ${freshOrder.code} already beyond payment settlement (state=${freshOrder.state}); no transition needed`,
+            );
+        }
+
+        console.log(
+            `${this.prefix} [testing] Shipment creation is intentionally disabled after payment for ${transaction.vendureOrderCode}`,
+        );
     }
 
     private async handleFailedPayment(
         transaction: GetnetPaymentTransaction,
-        ctx: any,
-        orderService: any,
+        ctx: RequestContext,
+        orderService: OrderService,
     ): Promise<void> {
         console.log(`${this.prefix} Processing FAILED (${transaction.status}) for order ${transaction.vendureOrderCode}`);
 
         const order = await orderService.findOneByCode(ctx, transaction.vendureOrderCode);
         if (!order) {
-            console.error(`${this.prefix} Order not found: ${transaction.vendureOrderCode}`);
-            return;
+            throw new Error(`Order not found: ${transaction.vendureOrderCode}`);
         }
 
         const ALREADY_CANCELLED = ['Cancelled'];
@@ -836,12 +959,12 @@ export class GetnetService {
             return;
         }
 
-        try {
-            await orderService.transitionToState(ctx, order.id, 'Cancelled');
-            console.log(`${this.prefix} Order ${transaction.vendureOrderCode} → Cancelled`);
-        } catch (stateErr: any) {
-            console.warn(`${this.prefix} Could not cancel order: ${stateErr.message}`);
+        const transitionResult = await orderService.transitionToState(ctx, order.id, 'Cancelled');
+        if (isGraphQlErrorResult(transitionResult)) {
+            throw new Error(`transitionToState(Cancelled) failed: ${transitionResult.message}`);
         }
+
+        console.log(`${this.prefix} Order ${transaction.vendureOrderCode} → Cancelled`);
     }
     
     /**
@@ -849,38 +972,22 @@ export class GetnetService {
      * Call this during Vendure bootstrap to enable order/payment updates
      */
     public setVendureServices(services: {
-        orderService: any;
-        paymentService: any;
-        requestContextService: any;
-        eventBus?: any;
+        orderService: OrderService;
+        paymentService?: PaymentService;
+        requestContextService: RequestContextService;
+        eventBus?: EventBus;
     }): void {
-        (this as any).orderService = services.orderService;
-        (this as any).paymentService = services.paymentService;
-        (this as any).requestContextService = services.requestContextService;
-        (this as any).eventBus = services.eventBus;
-        console.log(`${this.prefix} Vendure services registered`);
-    }
-
-    public setAndreaniShipmentService(service: AndreaniShipmentService | null): void {
-        this.andreaniShipmentService = service;
+        this.vendureServices = {
+            orderService: services.orderService,
+            paymentService: services.paymentService,
+            requestContextService: services.requestContextService,
+            eventBus: services.eventBus,
+        };
+        console.log(`${this.prefix} Vendure services registered explicitly for checkout/webhook reconciliation`);
     }
 
     public setPersonalizationService(service: PersonalizationService | null): void {
         this.personalizationService = service;
-    }
-
-    private async createShipmentForOrder(order: Order): Promise<void> {
-        if (!this.andreaniShipmentService) {
-            console.log(`${this.prefix} Andreani is disabled or unavailable; skipping shipment creation for order ${order.code}`);
-            return;
-        }
-
-        const result = await this.andreaniShipmentService.createShipment(order);
-        if (!result.success) {
-            console.warn(`${this.prefix} Andreani shipment creation skipped: ${result.error}`);
-        } else {
-            console.log(`${this.prefix} Andreani shipment created for order ${order.code}: ${result.shipmentId}`);
-        }
     }
 
     private async syncPersonalizationForOrder(orderCode: string): Promise<void> {
@@ -919,16 +1026,43 @@ export class GetnetService {
     /**
      * Build order request payload for Getnet API
      */
-    private buildOrderRequest(dto: CreateCheckoutDto): GetnetOrderRequest {
-        const items = dto.items.map((item, index) => ({
-            id: item.id || `item-${index}`,
-            name: item.name,
-            quantity: item.quantity,
+    private buildOrderRequest(order: Order, dto: CreateCheckoutDto): GetnetOrderRequest {
+        const items = order.lines.map((line, index) => ({
+            id: String(line.productVariantId ?? line.id ?? `line-${index}`),
+            name: String(line.productVariant?.name || `Linea ${index + 1}`),
+            quantity: line.quantity,
             unitPrice: {
                 currency: this.pluginConfig.currency,
-                amount: item.unitPrice, // Already in cents
+                amount: line.proratedUnitPriceWithTax ?? line.discountedUnitPriceWithTax ?? line.unitPriceWithTax,
             },
         }));
+
+        if (order.shippingLines?.length) {
+            order.shippingLines.forEach((shippingLine, index) => {
+                const amount = shippingLine.discountedPriceWithTax ?? shippingLine.priceWithTax ?? 0;
+                if (amount > 0) {
+                    items.push({
+                        id: `shipping-${index + 1}`,
+                        name: 'Costo de envío',
+                        quantity: 1,
+                        unitPrice: {
+                            currency: this.pluginConfig.currency,
+                            amount,
+                        },
+                    });
+                }
+            });
+        } else if (order.shippingWithTax > 0) {
+            items.push({
+                id: 'shipping',
+                name: 'Costo de envío',
+                quantity: 1,
+                unitPrice: {
+                    currency: this.pluginConfig.currency,
+                    amount: order.shippingWithTax,
+                },
+            });
+        }
         
         // Build redirect URLs from config or dto
         const redirectUrls: GetnetOrderRequest['redirectUrls'] = {
@@ -951,22 +1085,7 @@ export class GetnetService {
         if (this.pluginConfig.expireLimitMinutes) {
             request.expireLimitMinutes = this.pluginConfig.expireLimitMinutes;
         }
-        
-        // Optional: Add shipping if cost is provided
-        if (dto.shippingCost && dto.shippingCost > 0) {
-            // TODO: Add full shipping address collection in frontend
-            // For now, add a placeholder shipping item
-            items.push({
-                id: 'shipping',
-                name: 'Costo de envío',
-                quantity: 1,
-                unitPrice: {
-                    currency: this.pluginConfig.currency,
-                    amount: dto.shippingCost,
-                },
-            });
-        }
-        
+
         return request;
     }
 }

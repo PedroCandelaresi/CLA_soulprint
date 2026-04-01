@@ -1,318 +1,295 @@
-import {
-    ChangeDetectionStrategy,
-    Component,
-    OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import {
     CustomDetailComponent,
     DataService,
-    NotificationService,
 } from '@vendure/admin-ui/core';
 import { Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { ORDER_DASHBOARD_QUERY } from './order-detail.module';
-
-// Mutation: cambiar estado de personalización de una línea (aprobar / rechazar)
-const UPDATE_LINE_PERSONALIZATION_MUTATION = `
-    mutation UpdateLinePersonalization($orderId: ID!, $lineId: ID!, $status: String!, $rejectedReason: String) {
-        setOrderCustomFields(input: {
-            id: $orderId
-        }) {
-            id
-        }
-    }
-`;
-
-// Mutation: cambiar productionStatus del pedido
-const UPDATE_PRODUCTION_STATUS_MUTATION = `
-    mutation UpdateProductionStatus($id: ID!, $status: String!) {
-        setOrderCustomFields(input: {
-            id: $id
-            customFields: { productionStatus: $status }
-        }) {
-            id
-            customFields { productionStatus }
-        }
-    }
-`;
-
-interface PersonalizationLine {
-    orderLineId: string;
-    productName: string;
-    requiresPersonalization: boolean;
-    status: string;
-    assetPreview: string | null;
-    assetSource: string | null;
-    notes: string | null;
-    uploadedAt: string | null;
-    fileName: string | null;
-}
+import {
+    buildOrderDashboard,
+    getPersonalizationLineStatusLabel,
+    getPersonalizationLineStatusTone,
+    getToneClass,
+    OrderDashboardLine,
+    OrderDashboardViewModel,
+} from './order-detail.helpers';
 
 @Component({
     selector: 'cla-order-personalization-panel',
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
-    <ng-container *ngIf="lines$ | async as lines">
-
-        <!-- Sin personalización en este pedido -->
-        <div *ngIf="lines.length === 0" class="cla-empty-notice">
-            <span>Este pedido no tiene productos que requieran personalización.</span>
-        </div>
-
-        <!-- Una card por línea que requiere personalización -->
-        <div *ngFor="let line of lines" class="cla-personalization-line">
-            <div class="cla-line-header">
-                <span class="cla-product-name">{{ line.productName }}</span>
-                <span class="cla-badge" [ngClass]="getBadgeClass(line.status)">
-                    {{ getStatusLabel(line.status) }}
+    <ng-container *ngIf="vm$ | async as vm">
+        <section class="cla-panel">
+            <header class="cla-panel__header">
+                <div>
+                    <p class="cla-panel__eyebrow">Personalización</p>
+                    <h3>{{ vm.personalizationLabel }}</h3>
+                </div>
+                <span class="cla-status-pill" [ngClass]="getToneClass(vm.personalizationTone)">
+                    {{ vm.personalizationRequired ? (vm.personalizationCompletedCount + '/' + vm.personalizationRequiredCount + ' listas') : 'No aplica' }}
                 </span>
+            </header>
+
+            <p class="cla-panel__copy">{{ vm.personalizationDescription }}</p>
+
+            <div class="cla-alert cla-alert--warning" *ngIf="vm.personalizationRequired && vm.personalizationPendingCount > 0">
+                Todavía falta al menos un archivo. El pedido no debería pasar a producción hasta completar lo pendiente.
             </div>
 
-            <!-- Imagen subida: preview grande + acciones -->
-            <div *ngIf="line.assetPreview" class="cla-image-block">
-                <img
-                    [src]="line.assetPreview + '?preset=medium'"
-                    [alt]="'Imagen de ' + line.productName"
-                    class="cla-image-thumb"
-                    (click)="openFullSize(line.assetSource)"
-                    title="Clic para ver en tamaño completo">
-
-                <div class="cla-image-actions">
-                    <a [href]="line.assetSource" target="_blank" class="cla-btn cla-btn-ghost">
-                        🔍 Ver en tamaño completo
-                    </a>
-                    <a [href]="line.assetSource" [download]="line.fileName ?? 'imagen'" class="cla-btn cla-btn-ghost">
-                        ⬇️ Descargar
-                    </a>
-                </div>
-
-                <div class="cla-image-meta">
-                    <span *ngIf="line.fileName" class="cla-filename">📎 {{ line.fileName }}</span>
-                    <span *ngIf="line.uploadedAt" class="cla-upload-date">
-                        Subida el {{ line.uploadedAt | date:'dd/MM/yyyy \'a las\' HH:mm' }}
-                    </span>
-                </div>
-
-                <!-- Notas del cliente -->
-                <div *ngIf="line.notes" class="cla-notes-block">
-                    <strong>Notas del cliente:</strong>
-                    <p>{{ line.notes }}</p>
-                </div>
+            <div class="cla-empty" *ngIf="!vm.personalizationRequired">
+                Ninguna línea de este pedido necesita imagen del cliente.
             </div>
 
-            <!-- Sin imagen todavía -->
-            <div *ngIf="!line.assetPreview" class="cla-awaiting-upload">
-                <span class="cla-await-icon">⏳</span>
-                <p>El cliente todavía no subió la imagen para este producto.</p>
+            <div class="cla-line-list" *ngIf="vm.personalizationRequired">
+                <article class="cla-line-card" *ngFor="let line of requiredLines(vm)">
+                    <div class="cla-line-card__header">
+                        <div>
+                            <h4>{{ line.productName }}</h4>
+                            <p>{{ line.variantName }} · Cantidad {{ line.quantity }}</p>
+                        </div>
+                        <span class="cla-status-pill" [ngClass]="getToneClass(getPersonalizationLineStatusTone(line.personalizationStatus))">
+                            {{ getPersonalizationLineStatusLabel(line.personalizationStatus) }}
+                        </span>
+                    </div>
+
+                    <div class="cla-line-grid">
+                        <div class="cla-preview" *ngIf="line.personalizationAssetPreview; else noPreview">
+                            <img
+                                [src]="line.personalizationAssetPreview"
+                                [alt]="line.personalizationSnapshotFileName || line.productName"
+                                class="cla-preview__image">
+                        </div>
+                        <ng-template #noPreview>
+                            <div class="cla-preview cla-preview--empty">
+                                <span *ngIf="line.personalizationAssetSource; else noAssetText">Hay archivo, pero sin miniatura</span>
+                                <ng-template #noAssetText>El cliente todavía no cargó un archivo para esta línea.</ng-template>
+                            </div>
+                        </ng-template>
+
+                        <div class="cla-line-meta">
+                            <div class="cla-detail-row">
+                                <span>Archivo</span>
+                                <strong>{{ line.personalizationSnapshotFileName || 'Sin archivo todavía' }}</strong>
+                            </div>
+                            <div class="cla-detail-row" *ngIf="line.personalizationUploadedAt">
+                                <span>Subido el</span>
+                                <strong>{{ line.personalizationUploadedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+                            </div>
+                            <div class="cla-detail-row" *ngIf="line.personalizationApprovedAt">
+                                <span>Aprobado el</span>
+                                <strong>{{ line.personalizationApprovedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+                            </div>
+                            <div class="cla-notes" *ngIf="line.personalizationNotes">
+                                <span class="cla-notes__label">Indicaciones del cliente</span>
+                                <p>{{ line.personalizationNotes }}</p>
+                            </div>
+                            <div class="cla-link-row" *ngIf="line.personalizationAssetSource">
+                                <a [href]="line.personalizationAssetSource" target="_blank" rel="noreferrer noopener">
+                                    Abrir archivo completo
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </article>
             </div>
-        </div>
-
-        <!-- Acciones de producción -->
-        <div class="cla-production-actions" *ngIf="productionState$ | async as ps">
-            <div class="cla-action-divider">Acciones de producción</div>
-
-            <button
-                *ngIf="ps.canStart"
-                class="cla-btn cla-btn-primary"
-                (click)="startProduction(ps.orderId)"
-                [disabled]="ps.loading">
-                🔨 Iniciar producción
-            </button>
-            <p *ngIf="ps.canStart" class="cla-action-help">
-                Hacé clic cuando hayas revisado la imagen y estés listo para fabricar el pedido.
-            </p>
-
-            <button
-                *ngIf="ps.canMarkReady"
-                class="cla-btn cla-btn-success"
-                (click)="markReady(ps.orderId)"
-                [disabled]="ps.loading">
-                ✅ Marcar como listo para enviar
-            </button>
-            <p *ngIf="ps.canMarkReady" class="cla-action-help">
-                Hacé clic cuando el pedido esté terminado y empaquetado.
-            </p>
-
-            <div *ngIf="!ps.canStart && !ps.canMarkReady && !ps.isShipped" class="cla-info-notice">
-                <ng-container [ngSwitch]="ps.productionStatus">
-                    <span *ngSwitchCase="'in-production'">🔨 El pedido está actualmente en producción.</span>
-                    <span *ngSwitchCase="'ready'">✅ El pedido está listo y esperando despacho.</span>
-                    <span *ngSwitchDefault>ℹ️ No hay acciones de producción disponibles en este momento.</span>
-                </ng-container>
-            </div>
-        </div>
-
+        </section>
     </ng-container>
     `,
     styles: [`
-        .cla-empty-notice {
-            padding: 16px; background: #f9fafb; border-radius: 8px;
-            color: #6b7280; text-align: center;
+        .cla-panel {
+            display: grid;
+            gap: 14px;
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid var(--brand-border);
+            background: rgba(255, 255, 255, 0.9);
         }
-        .cla-personalization-line {
-            border: 1px solid #e5e7eb; border-radius: 10px;
-            padding: 16px; margin-bottom: 14px;
+        .cla-panel__header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
         }
-        .cla-line-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+        .cla-panel__eyebrow {
+            margin: 0 0 4px;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--brand-text-soft);
         }
-        .cla-product-name { font-weight: 700; font-size: 15px; }
-        .cla-badge { padding: 3px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-        .cla-badge-not-required { background:#f3f4f6; color:#6b7280; }
-        .cla-badge-pending      { background:#fef3c7; color:#92400e; }
-        .cla-badge-pending-upload { background:#fef3c7; color:#92400e; }
-        .cla-badge-uploaded     { background:#dbeafe; color:#1e40af; }
-        .cla-badge-approved     { background:#d1fae5; color:#065f46; }
-        .cla-badge-rejected     { background:#fee2e2; color:#991b1b; }
-        .cla-image-block { margin-top: 8px; }
-        .cla-image-thumb {
-            width: 200px; height: 200px; object-fit: cover;
-            border-radius: 8px; cursor: zoom-in;
-            border: 2px solid #e5e7eb; transition: border-color 0.2s;
+        .cla-panel h3 {
+            margin: 0;
+            color: var(--brand-primary-strong);
+            font-size: 21px;
         }
-        .cla-image-thumb:hover { border-color: #3b82f6; }
-        .cla-image-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-        .cla-image-meta { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
-        .cla-filename { font-size: 12px; color: #6b7280; }
-        .cla-upload-date { font-size: 12px; color: #9ca3af; }
-        .cla-notes-block {
-            margin-top: 10px; background: #f9fafb; padding: 10px 12px; border-radius: 6px;
+        .cla-panel__copy {
+            margin: 0;
+            color: var(--brand-text-muted);
+            line-height: 1.5;
+        }
+        .cla-status-pill {
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .cla-tone-neutral { background: var(--brand-surface-muted); color: var(--brand-text-muted); }
+        .cla-tone-info { background: rgba(0, 72, 37, 0.1); color: var(--brand-primary); }
+        .cla-tone-success { background: var(--color-success-150); color: var(--brand-success); }
+        .cla-tone-warning { background: var(--color-warning-150); color: var(--brand-warning); }
+        .cla-tone-danger { background: var(--color-error-150); color: var(--brand-error); }
+        .cla-alert {
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .cla-alert--warning {
+            background: var(--color-warning-150);
+            color: var(--brand-warning);
+            border: 1px solid #ecd08a;
+        }
+        .cla-empty {
+            padding: 16px;
+            border-radius: 14px;
+            background: var(--brand-surface-alt);
+            color: var(--brand-text-muted);
+        }
+        .cla-line-list {
+            display: grid;
+            gap: 14px;
+        }
+        .cla-line-card {
+            display: grid;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid var(--brand-border);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(251, 248, 241, 0.98));
+        }
+        .cla-line-card__header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+        }
+        .cla-line-card__header h4 {
+            margin: 0;
+            color: var(--brand-primary-strong);
+            font-size: 17px;
+        }
+        .cla-line-card__header p {
+            margin: 4px 0 0;
+            color: var(--brand-text-muted);
             font-size: 13px;
         }
-        .cla-notes-block p { margin: 4px 0 0; color: #374151; }
-        .cla-awaiting-upload {
-            display: flex; align-items: center; gap: 10px;
-            background: #fffbeb; padding: 12px; border-radius: 6px; color: #92400e;
+        .cla-line-grid {
+            display: grid;
+            grid-template-columns: 220px minmax(0, 1fr);
+            gap: 16px;
         }
-        .cla-await-icon { font-size: 20px; }
-        .cla-production-actions { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
-        .cla-action-divider {
-            font-size: 11px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.08em; color: #6b7280; margin-bottom: 12px;
+        .cla-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 220px;
+            border-radius: 14px;
+            background: var(--brand-surface-alt);
+            border: 1px dashed var(--brand-border-strong);
+            color: var(--brand-text-muted);
+            text-align: center;
+            padding: 16px;
         }
-        .cla-action-help { font-size: 12px; color: #6b7280; margin: 6px 0 12px; }
-        .cla-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 10px 18px; border-radius: 8px; border: none;
-            font-weight: 600; cursor: pointer; font-size: 14px; text-decoration: none;
-            transition: opacity 0.15s;
+        .cla-preview--empty {
+            font-size: 14px;
+            line-height: 1.45;
         }
-        .cla-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .cla-btn-ghost { background: #f3f4f6; color: #374151; }
-        .cla-btn-ghost:hover { background: #e5e7eb; }
-        .cla-btn-primary { background: #2563eb; color: #fff; }
-        .cla-btn-primary:hover:not(:disabled) { background: #1d4ed8; }
-        .cla-btn-success { background: #16a34a; color: #fff; }
-        .cla-btn-success:hover:not(:disabled) { background: #15803d; }
-        .cla-info-notice { color: #6b7280; font-size: 13px; padding: 10px; background: #f9fafb; border-radius: 6px; }
+        .cla-preview__image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        .cla-line-meta {
+            display: grid;
+            gap: 10px;
+        }
+        .cla-detail-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding-top: 8px;
+            border-top: 1px solid var(--brand-border);
+            color: var(--brand-text-muted);
+        }
+        .cla-detail-row strong {
+            color: var(--brand-text);
+            text-align: right;
+        }
+        .cla-notes {
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(0, 72, 37, 0.06);
+            color: var(--brand-text);
+        }
+        .cla-notes__label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--brand-text-soft);
+        }
+        .cla-notes p {
+            margin: 0;
+            line-height: 1.45;
+        }
+        .cla-link-row a {
+            color: var(--brand-primary);
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .cla-link-row a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 840px) {
+            .cla-panel__header,
+            .cla-line-card__header {
+                flex-direction: column;
+            }
+            .cla-line-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     `],
 })
 export class OrderPersonalizationPanelComponent implements CustomDetailComponent, OnInit {
     entity$!: Observable<any>;
     detailForm: any;
 
-    lines$!: Observable<PersonalizationLine[]>;
-    productionState$!: Observable<any>;
-    private loadingProductionId: string | null = null;
+    vm$!: Observable<OrderDashboardViewModel>;
 
-    constructor(
-        private dataService: DataService,
-        private notificationService: NotificationService,
-    ) {}
+    constructor(private dataService: DataService) {}
 
     ngOnInit(): void {
-        const order$ = this.entity$.pipe(
-            switchMap(entity =>
-                this.dataService.query(ORDER_DASHBOARD_QUERY, { id: entity.id }).mapStream(
-                    (data: any) => data.order
-                )
-            )
-        );
-
-        this.lines$ = order$.pipe(
-            map((order: any) =>
-                (order?.lines ?? [])
-                    .filter((l: any) => l.productVariant?.customFields?.requiresPersonalization === true)
-                    .map((l: any) => ({
-                        orderLineId: l.id,
-                        productName: l.productVariant?.product?.name ?? 'Producto',
-                        requiresPersonalization: true,
-                        status: l.customFields?.personalizationStatus ?? 'pending-upload',
-                        assetPreview: l.customFields?.personalizationAsset?.preview ?? null,
-                        assetSource: l.customFields?.personalizationAsset?.source ?? null,
-                        notes: l.customFields?.personalizationNotes ?? null,
-                        uploadedAt: l.customFields?.personalizationUploadedAt ?? null,
-                        fileName: l.customFields?.personalizationSnapshotFileName ?? null,
-                    }))
-            )
-        );
-
-        this.productionState$ = order$.pipe(
-            map((order: any) => {
-                if (!order) return { canStart: false, canMarkReady: false, isShipped: false };
-                const cf = order.customFields ?? {};
-                const overallStatus = cf.personalizationOverallStatus ?? 'not-required';
-                const productionStatus = cf.productionStatus ?? 'not-started';
-                const isShipped = Boolean(cf.andreaniTrackingNumber);
-                const isPaid = ['PaymentAuthorized', 'PaymentSettled'].includes(order.state);
-                const imagesReady = overallStatus === 'complete' || overallStatus === 'not-required';
-
-                return {
-                    orderId: order.id,
-                    productionStatus,
-                    isShipped,
-                    loading: this.loadingProductionId === order.id,
-                    canStart: isPaid && imagesReady && productionStatus === 'not-started',
-                    canMarkReady: isPaid && productionStatus === 'in-production',
-                };
-            })
+        this.vm$ = this.entity$.pipe(
+            switchMap((entity) =>
+                this.dataService.query(ORDER_DASHBOARD_QUERY, { id: entity.id }).mapSingle(
+                    (data: any) => buildOrderDashboard(data.order),
+                ),
+            ),
         );
     }
 
-    getStatusLabel(status: string): string {
-        const labels: Record<string, string> = {
-            'not-required': 'No requerida',
-            'pending-upload': '⏳ Pendiente',
-            'uploaded': '📁 Cargada',
-            'approved': '✅ Aprobada',
-            'rejected': '❌ Rechazada',
-        };
-        return labels[status] ?? status;
+    requiredLines(vm: OrderDashboardViewModel): OrderDashboardLine[] {
+        return vm.lines.filter((line) => line.requiresPersonalization);
     }
 
-    getBadgeClass(status: string): Record<string, boolean> {
-        return { [`cla-badge-${status}`]: true };
-    }
-
-    openFullSize(url: string | null): void {
-        if (url) window.open(url, '_blank');
-    }
-
-    async startProduction(orderId: string): Promise<void> {
-        this.loadingProductionId = orderId;
-        try {
-            await this.dataService
-                .mutate(UPDATE_PRODUCTION_STATUS_MUTATION, { id: orderId, status: 'in-production' })
-                .toPromise();
-            this.notificationService.success('Producción iniciada correctamente.');
-        } catch {
-            this.notificationService.error('No se pudo iniciar la producción.');
-        } finally {
-            this.loadingProductionId = null;
-        }
-    }
-
-    async markReady(orderId: string): Promise<void> {
-        this.loadingProductionId = orderId;
-        try {
-            await this.dataService
-                .mutate(UPDATE_PRODUCTION_STATUS_MUTATION, { id: orderId, status: 'ready' })
-                .toPromise();
-            this.notificationService.success('Pedido marcado como listo para enviar.');
-        } catch {
-            this.notificationService.error('No se pudo actualizar el estado.');
-        } finally {
-            this.loadingProductionId = null;
-        }
-    }
+    getToneClass = getToneClass;
+    getPersonalizationLineStatusLabel = getPersonalizationLineStatusLabel;
+    getPersonalizationLineStatusTone = getPersonalizationLineStatusTone;
 }

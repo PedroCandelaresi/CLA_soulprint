@@ -1,18 +1,48 @@
 import fs from 'fs';
 import path from 'path';
+import { spawn } from 'child_process';
 import type { AdminUiPluginOptions } from '@vendure/admin-ui-plugin';
+import type { AdminUiExtension } from '@vendure/ui-devkit/compiler';
 import { adminUiConfig, adminUiRoute } from './admin-ui-options';
 
 type AdminUiApp = NonNullable<AdminUiPluginOptions['app']>;
 
 const ADMIN_ROUTE = adminUiRoute;
-const ADMIN_UI_OUTPUT_PATH = path.join(__dirname, '../../admin-ui');
+const ADMIN_UI_BUILD_PATH = path.join(__dirname, '../../admin-ui');
+const ADMIN_UI_OUTPUT_PATH = path.join(ADMIN_UI_BUILD_PATH, 'dist');
 const ADMIN_UI_SOURCE_PATH = path.join(__dirname, '../../admin-ui-src');
-const DEFAULT_ADMIN_UI_PATH = path.join(path.dirname(require.resolve('@vendure/admin-ui-plugin/package.json')), 'lib/admin-ui');
+const ORDER_DETAIL_EXTENSION_PATH = path.join(ADMIN_UI_SOURCE_PATH, 'extensions/order-detail');
 const BRAND_LOGO_SOURCE_CANDIDATES = [
     path.join(ADMIN_UI_SOURCE_PATH, 'assets/cla-logo-source.svg'),
     path.resolve(ADMIN_UI_SOURCE_PATH, '../../storefront/public/images/logos/CLA.svg'),
 ];
+const ADMIN_UI_EXTENSION: AdminUiExtension = {
+    extensionPath: ORDER_DETAIL_EXTENSION_PATH,
+    ngModules: [
+        {
+            type: 'shared',
+            ngModuleFileName: 'order-detail.module.ts',
+            ngModuleName: 'OrderDetailExtensionModule',
+        },
+    ],
+};
+const UI_DEVKIT_ROOT = path.dirname(require.resolve('@vendure/ui-devkit/package.json'));
+const VENDURE_ADMIN_UI_PACKAGE_PATH = require.resolve('@vendure/admin-ui/package.json');
+const VENDURE_ADMIN_UI_PACKAGE = JSON.parse(fs.readFileSync(VENDURE_ADMIN_UI_PACKAGE_PATH, 'utf8')) as {
+    version: string;
+    dependencies?: Record<string, string>;
+};
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { setBaseHref, setupScaffold } = require(path.join(UI_DEVKIT_ROOT, 'compiler/scaffold.js')) as {
+    setBaseHref: (outputPath: string, baseHref: string) => Promise<void>;
+    setupScaffold: (outputPath: string, extensions: AdminUiExtension[]) => Promise<void>;
+};
+const ADMIN_UI_BUILD_TOOLING = {
+    '@angular/cli': '^17.3.17',
+    '@angular-devkit/build-angular': '^17.3.17',
+    '@angular/compiler-cli': '^17.3.12',
+    typescript: '5.4.2',
+};
 
 function copyFile(sourcePath: string, destinationPath: string): void {
     fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
@@ -36,6 +66,18 @@ function resolveBrandLogoSourcePath(): string {
     }
 
     return existingSourcePath;
+}
+
+function getAdminUiBaseHref(): string {
+    return `/${ADMIN_ROUTE.replace(/^\/+|\/+$/g, '')}/`;
+}
+
+function resolveGeneratedAngularCliPath(): string {
+    const ngCompilerPath = path.join(ADMIN_UI_BUILD_PATH, 'node_modules/@angular/cli/bin/ng.js');
+    if (!fs.existsSync(ngCompilerPath)) {
+        throw new Error(`Unable to find Angular CLI compiler at ${ngCompilerPath}`);
+    }
+    return ngCompilerPath;
 }
 
 function buildThemeableBrandSvg(sourcePath: string): string {
@@ -151,10 +193,70 @@ function copyBrandingAssets(): void {
     );
 }
 
-export async function buildAdminUi(): Promise<void> {
-    fs.rmSync(ADMIN_UI_OUTPUT_PATH, { recursive: true, force: true });
-    fs.cpSync(DEFAULT_ADMIN_UI_PATH, ADMIN_UI_OUTPUT_PATH, { recursive: true });
+function synchronizeGeneratedAdminUiPackageJson(): void {
+    const packageJsonPath = path.join(ADMIN_UI_BUILD_PATH, 'package.json');
+    const currentPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as Record<string, unknown>;
+    const nextPackageJson = {
+        ...currentPackageJson,
+        private: true,
+        dependencies: {
+            '@vendure/admin-ui': `^${VENDURE_ADMIN_UI_PACKAGE.version}`,
+            ...(VENDURE_ADMIN_UI_PACKAGE.dependencies ?? {}),
+        },
+        devDependencies: {
+            ...(currentPackageJson.devDependencies as Record<string, string> | undefined ?? {}),
+            ...ADMIN_UI_BUILD_TOOLING,
+        },
+    };
 
+    fs.writeFileSync(packageJsonPath, `${JSON.stringify(nextPackageJson, null, 2)}\n`, 'utf8');
+}
+
+function updateGeneratedAngularWorkspaceConfig(): void {
+    const angularJsonPath = path.join(ADMIN_UI_BUILD_PATH, 'angular.json');
+    const angularJson = JSON.parse(fs.readFileSync(angularJsonPath, 'utf8')) as Record<string, unknown>;
+    angularJson.cli = {
+        ...((angularJson.cli as Record<string, unknown> | undefined) ?? {}),
+        packageManager: 'pnpm',
+    };
+    fs.writeFileSync(angularJsonPath, `${JSON.stringify(angularJson, null, 2)}\n`, 'utf8');
+}
+
+function ensureGeneratedAdminUiToolchainInstalled(): Promise<void> {
+    const requiredPaths = [
+        path.join(ADMIN_UI_BUILD_PATH, 'node_modules/@angular/cli/bin/ng.js'),
+        path.join(ADMIN_UI_BUILD_PATH, 'node_modules/@angular-devkit/build-angular/package.json'),
+        path.join(ADMIN_UI_BUILD_PATH, 'node_modules/@angular/compiler-cli/package.json'),
+        path.join(ADMIN_UI_BUILD_PATH, 'node_modules/@clr/ui/package.json'),
+        path.join(ADMIN_UI_BUILD_PATH, 'node_modules/typescript/package.json'),
+    ];
+
+    if (requiredPaths.every((requiredPath) => fs.existsSync(requiredPath))) {
+        return Promise.resolve();
+    }
+
+    return runProcess('pnpm', ['install', '--ignore-workspace', '--no-frozen-lockfile'], ADMIN_UI_BUILD_PATH);
+}
+
+function runProcess(command: string, args: string[], cwd: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        const child = spawn(command, args, {
+            cwd,
+            shell: true,
+            stdio: 'inherit',
+        });
+
+        child.on('close', (code) => {
+            if (code !== 0) {
+                reject(code);
+                return;
+            }
+            resolve();
+        });
+    });
+}
+
+async function postProcessBuiltAdminUi(): Promise<void> {
     copyBrandingAssets();
     copyFile(
         path.join(ADMIN_UI_SOURCE_PATH, 'cla-theme.scss'),
@@ -178,6 +280,34 @@ export async function buildAdminUi(): Promise<void> {
     );
 }
 
+async function compileGeneratedAdminUi(): Promise<void> {
+    await setupScaffold(ADMIN_UI_BUILD_PATH, [ADMIN_UI_EXTENSION]);
+    await setBaseHref(ADMIN_UI_BUILD_PATH, getAdminUiBaseHref());
+    synchronizeGeneratedAdminUiPackageJson();
+    updateGeneratedAngularWorkspaceConfig();
+    await ensureGeneratedAdminUiToolchainInstalled();
+    await runProcess(
+        'node',
+        [resolveGeneratedAngularCliPath(), 'build', '--configuration', 'production'],
+        ADMIN_UI_BUILD_PATH,
+    );
+    await postProcessBuiltAdminUi();
+}
+
+function getCompiledAdminUiApp(): AdminUiApp {
+    return {
+        path: ADMIN_UI_OUTPUT_PATH,
+        route: ADMIN_ROUTE,
+        compile: compileGeneratedAdminUi,
+    };
+}
+
+export async function buildAdminUi(): Promise<void> {
+    fs.rmSync(ADMIN_UI_BUILD_PATH, { recursive: true, force: true });
+    const app = getCompiledAdminUiApp();
+    await app.compile?.();
+}
+
 export function hasBuiltAdminUi(): boolean {
     return fs.existsSync(path.join(ADMIN_UI_OUTPUT_PATH, 'index.html'));
 }
@@ -194,14 +324,11 @@ export function getAdminUiApp(options?: {
         };
     }
 
-    return {
-        path: ADMIN_UI_OUTPUT_PATH,
-        route: ADMIN_ROUTE,
-        compile: buildAdminUi,
-    };
+    return getCompiledAdminUiApp();
 }
 
 export const adminUiPaths = {
+    buildPath: ADMIN_UI_BUILD_PATH,
     outputPath: ADMIN_UI_OUTPUT_PATH,
     route: ADMIN_ROUTE,
     sourcePath: ADMIN_UI_SOURCE_PATH,

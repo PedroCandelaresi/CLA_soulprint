@@ -8,7 +8,7 @@ import {
     getGetnetConfigFromEnv,
     getGetnetService,
 } from '../plugins/payments/getnet';
-import { initAndreani, getAndreaniOrderService, getAndreaniService, getAndreaniShipmentService } from '../plugins/logistics/andreani';
+import { initAndreani, getAndreaniOrderService, getAndreaniService } from '../plugins/logistics/andreani';
 import { createAndreaniHandlers } from '../plugins/logistics/andreani/andreani.controller';
 import { getAndreaniConfigFromEnv } from '../plugins/logistics/andreani/andreani.config';
 import {
@@ -362,11 +362,7 @@ bootstrap(config)
                 console.warn('[getnet] WARNING: REST endpoints not mounted via middleware');
                 console.warn('[getnet] INFO: Use standalone server or frontend /api/payments/getnet routes');
             }
-            const getnetService = getGetnetService();
-            const shipmentService = getAndreaniShipmentService();
-            if (getnetService && shipmentService) {
-                getnetService.setAndreaniShipmentService(shipmentService);
-            }
+            console.log('[getnet] Automatic shipment creation after payment is disabled for testing flows');
         } else {
             console.warn('[getnet] Plugin not enabled - endpoints unavailable');
         }

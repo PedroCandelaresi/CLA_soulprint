@@ -1,4 +1,4 @@
-import { AndreaniQuoteResult } from './andreani.types';
+import { AndreaniProviderMode, AndreaniQuoteResult } from './andreani.types';
 
 export interface AndreaniQuoteRequest {
     destinationPostalCode: string;
@@ -34,7 +34,7 @@ export interface AndreaniSelectionPayload {
     carrier: string;
     serviceCode: string;
     serviceName: string;
-    price: number;
+    priceCents: number;
     currency: string;
     destinationPostalCode: string;
     destinationCity: string;
@@ -44,12 +44,34 @@ export interface AndreaniSelectionPayload {
     widthCm?: number;
     lengthCm?: number;
     volume?: number;
+    providerMode?: AndreaniProviderMode;
+    isSimulated?: boolean;
 }
 
 export interface AndreaniSelectionResponse {
     success: boolean;
     orderId?: string;
     error?: string;
+}
+
+export interface AndreaniSelectionSnapshot {
+    orderCode: string;
+    carrier: string;
+    quoteCode: string;
+    methodLabel: string;
+    priceCents: number;
+    currency: string;
+    destinationPostalCode: string;
+    destinationCity: string;
+    weightKg?: number;
+    heightCm?: number;
+    widthCm?: number;
+    lengthCm?: number;
+    volume?: number;
+    providerMode: AndreaniProviderMode;
+    isSimulated: boolean;
+    metadata?: Record<string, unknown> | null;
+    selectedAt: string;
 }
 
 export interface AndreaniShipmentRequest {

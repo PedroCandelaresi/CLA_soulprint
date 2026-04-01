@@ -5,6 +5,12 @@ export type PersonalizationLineStatus =
     | 'approved'
     | 'rejected';
 
+export type PersonalizationOverallStatus =
+    | 'not-required'
+    | 'pending'
+    | 'partial'
+    | 'complete';
+
 // ─── Access / Input ───────────────────────────────────────────────────────────
 
 export interface PersonalizationOrderAccess {
@@ -17,13 +23,6 @@ export interface PersonalizationOrderAccess {
 /** Input for uploading to a specific OrderLine */
 export interface PersonalizationLineUploadInput extends PersonalizationOrderAccess {
     orderLineId: string;
-    notes?: string;
-    file: UploadedPersonalizationFile;
-}
-
-/** Kept for backward-compat with existing controller; maps to uploadForLine internally */
-export interface PersonalizationUploadInput extends PersonalizationOrderAccess {
-    orderLineId?: string;
     notes?: string;
     file: UploadedPersonalizationFile;
 }
@@ -59,7 +58,8 @@ export interface PersonalizationLineData {
 
 export interface PersonalizationOrderData {
     orderCode: string;
-    overallPersonalizationStatus: string; // 'not-required' | 'pending' | 'partial' | 'complete'
+    requiresPersonalization: boolean;
+    overallPersonalizationStatus: PersonalizationOverallStatus;
     paymentState: string;
     shipmentState: string | null;
     trackingNumber: string | null;

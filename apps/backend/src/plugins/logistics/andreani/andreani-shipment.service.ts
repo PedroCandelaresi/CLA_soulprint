@@ -64,7 +64,7 @@ export class AndreaniShipmentService {
             destinoPostalCode: selection['andreaniDestinationPostalCode'] as string,
             destinoCiudad: selection['andreaniDestinationCity'] as string,
             pesoKg: pesoKg || 1,
-            valorDeclarado: Number(selection['andreaniPrice'] ?? 0) || undefined,
+            valorDeclarado: order.totalWithTax ? Number((order.totalWithTax / 100).toFixed(2)) : undefined,
             numeroBultos: 1,
             categoria: selection['andreaniServiceCode'] as string,
             volumen: dimensions.volume,

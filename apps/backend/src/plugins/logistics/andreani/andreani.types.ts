@@ -1,12 +1,16 @@
+export type AndreaniProviderMode = 'real' | 'mock';
+
 export interface AndreaniQuoteResult {
     carrier: 'andreani';
-    serviceCode?: string;
-    serviceName?: string;
-    price: number;
+    serviceCode: string;
+    serviceName: string;
+    priceCents: number;
     currency: string;
     estimatedDelivery?: string;
+    providerMode: AndreaniProviderMode;
+    isSimulated: boolean;
     breakdown?: AndreaniQuoteBreakdown;
-    rawResponse?: AndreaniQuoteResponsePayload;
+    rawResponse?: Record<string, unknown>;
 }
 
 export interface AndreaniQuoteResponsePayload {
@@ -22,10 +26,11 @@ export interface AndreaniQuoteResponsePayload {
 }
 
 export interface AndreaniQuoteBreakdown {
-    fleteAereo?: number;
-    seguro?: number;
-    tasaImportacion?: number;
-    ultimaMilla?: number;
+    baseCents?: number;
+    weightSurchargeCents?: number;
+    insuranceCents?: number;
+    taxCents?: number;
+    lastMileCents?: number;
 }
 
 export interface AndreaniShipmentResponsePayload {

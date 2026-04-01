@@ -62,9 +62,9 @@ describe('GetnetService', () => {
             const service = new GetnetService(mockConfig, mockDataSource);
             expect(() => {
                 service.setVendureServices({
-                    orderService: {},
-                    paymentService: {},
-                    requestContextService: {},
+                    orderService: {} as any,
+                    paymentService: {} as any,
+                    requestContextService: {} as any,
                 });
             }).not.toThrow();
         });
@@ -90,7 +90,7 @@ describe('GetnetService', () => {
 
             expect(dto.orderCode).toBe('ORD-00001');
             expect(dto.items).toHaveLength(1);
-            expect(dto.items[0].unitPrice).toBe(1000);
+            expect(dto.items?.[0].unitPrice).toBe(1000);
             expect(dto.shippingCost).toBe(500);
         });
     });

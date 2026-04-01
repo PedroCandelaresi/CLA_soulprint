@@ -8,6 +8,7 @@ interface Request {
     body: any;
     params: Record<string, string>;
     query?: Record<string, unknown>;
+    headers?: Record<string, string | string[] | undefined>;
 }
 
 interface Response {
@@ -181,14 +182,14 @@ export function createGetnetHandlers(getnetService: GetnetService) {
                 res.status(400).json({ error: 'Missing required field: orderCode' });
                 return;
             }
-            
-            if (!body.items || body.items.length === 0) {
-                res.status(400).json({ error: 'Missing required field: items (must have at least one item)' });
+
+            if (body.items !== undefined && !Array.isArray(body.items)) {
+                res.status(400).json({ error: 'items must be an array when provided' });
                 return;
             }
-            
-            // Validate items structure
-            for (const item of body.items) {
+
+            // Validate compatibility payload if the frontend still sends line pricing.
+            for (const item of body.items ?? []) {
                 if (!item.name) {
                     res.status(400).json({ error: 'Each item must have a name' });
                     return;
@@ -219,8 +220,14 @@ export function createGetnetHandlers(getnetService: GetnetService) {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error(`${LOG_PREFIX} Checkout creation failed: ${errorMessage}`);
+
+            const statusCode = errorMessage.includes('Order not found')
+                ? 404
+                : errorMessage.includes('Monto inválido') || errorMessage.includes('must be ready for payment')
+                    ? 400
+                    : 500;
             
-            res.status(500).json({
+            res.status(statusCode).json({
                 success: false,
                 error: errorMessage,
             });
@@ -390,7 +397,9 @@ export function createGetnetHandlers(getnetService: GetnetService) {
             if (webhookSecret) {
                 const providedToken =
                     (req.query?.['token'] as string | undefined) ||
-                    ((req.headers as Record<string, string>)['x-webhook-token']);
+                    (Array.isArray(req.headers?.['x-webhook-token'])
+                        ? req.headers?.['x-webhook-token']?.[0]
+                        : req.headers?.['x-webhook-token']);
 
                 if (!providedToken || providedToken !== webhookSecret) {
                     console.warn(`${LOG_PREFIX} Webhook rejected: invalid or missing token`);

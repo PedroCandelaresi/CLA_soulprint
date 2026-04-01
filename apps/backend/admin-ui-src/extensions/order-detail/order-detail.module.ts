@@ -7,6 +7,7 @@ import {
 } from '@vendure/admin-ui/core';
 
 import { OrderStatusBannerComponent } from './order-status-banner.component';
+import { OrderOverviewPanelComponent } from './order-overview-panel.component';
 import { OrderPersonalizationPanelComponent } from './order-personalization-panel.component';
 import { OrderPaymentPanelComponent } from './order-payment-panel.component';
 import { OrderShippingPanelComponent } from './order-shipping-panel.component';
@@ -73,6 +74,7 @@ export const ORDER_DASHBOARD_QUERY = `
 @NgModule({
     imports: [SharedModule],
     declarations: [
+        OrderOverviewPanelComponent,
         OrderStatusBannerComponent,
         OrderPersonalizationPanelComponent,
         OrderPaymentPanelComponent,
@@ -81,6 +83,11 @@ export const ORDER_DASHBOARD_QUERY = `
     ],
     providers: [
         // Slots de extensión en la pantalla de detalle de orden de Vendure
+        registerCustomDetailComponent({
+            locationId: 'order-detail',
+            component: OrderOverviewPanelComponent,
+            tab: 'Resumen operativo',
+        }),
         registerCustomDetailComponent({
             locationId: 'order-detail',
             component: OrderStatusBannerComponent,

@@ -26,14 +26,27 @@ interface AndreaniShippingPanelProps {
 const formatCurrency = (value: number, currency: string) =>
     new Intl.NumberFormat('es-AR', { style: 'currency', currency }).format(value);
 
+const formatCurrencyFromCents = (value: number, currency: string) =>
+    new Intl.NumberFormat('es-AR', { style: 'currency', currency }).format(value / 100);
+
+const BREAKDOWN_LABELS: Record<string, string> = {
+    baseCents: 'Base',
+    weightSurchargeCents: 'Recargo por peso',
+    insuranceCents: 'Seguro',
+    taxCents: 'Impuestos',
+    lastMileCents: 'Ultima milla',
+};
+
 interface SavedSelection {
     carrier?: string;
     serviceCode?: string;
     serviceName?: string;
-    price?: number;
+    priceCents?: number;
     currency?: string;
     destinationPostalCode?: string;
     destinationCity?: string;
+    providerMode?: 'real' | 'mock';
+    isSimulated?: boolean;
 }
 
 interface SavedShipment {
@@ -60,26 +73,65 @@ function toNumber(value: unknown): number | undefined {
     return undefined;
 }
 
+function parseObject(value: unknown): Record<string, unknown> | null {
+    if (!value) {
+        return null;
+    }
+    if (typeof value === 'string') {
+        try {
+            const parsed = JSON.parse(value);
+            return parsed && typeof parsed === 'object' ? parsed as Record<string, unknown> : null;
+        } catch {
+            return null;
+        }
+    }
+    return typeof value === 'object' ? value as Record<string, unknown> : null;
+}
+
 function mapSavedSelection(data: AndreaniLogisticsData | null | undefined): SavedSelection | null {
     if (!data) {
         return null;
     }
 
+    const snapshot = parseObject(data.shippingSnapshotJson);
+    const snapshotSelection: SavedSelection | null = snapshot
+        ? {
+            carrier: toString(snapshot.carrier),
+            serviceCode: toString(snapshot.quoteCode),
+            serviceName: toString(snapshot.methodLabel),
+            priceCents: toNumber(snapshot.priceCents),
+            currency: toString(snapshot.currency),
+            destinationPostalCode: toString(snapshot.destinationPostalCode),
+            destinationCity: toString(snapshot.destinationCity),
+            providerMode: toString(snapshot.providerMode) === 'real' ? 'real' : 'mock',
+            isSimulated: snapshot.isSimulated === true,
+        }
+        : null;
+
+    if (snapshotSelection?.serviceCode || snapshotSelection?.priceCents !== undefined) {
+        return snapshotSelection;
+    }
+
     const selection: SavedSelection = {
         carrier: toString(data.andreaniCarrier),
-        serviceCode: toString(data.andreaniServiceCode),
-        serviceName: toString(data.andreaniServiceName),
-        price: toNumber(data.andreaniPrice),
+        serviceCode: toString(data.shippingQuoteCode) ?? toString(data.andreaniServiceCode),
+        serviceName: toString(data.shippingMethodLabel) ?? toString(data.andreaniServiceName),
+        priceCents: toNumber(data.shippingPriceCents) ?? (
+            // TODO(migration): remove legacy float fallback once old orders no longer rely on andreaniPrice.
+            toNumber(data.andreaniPrice) !== undefined ? Math.round((toNumber(data.andreaniPrice) ?? 0) * 100) : undefined
+        ),
         currency: toString(data.andreaniCurrency),
         destinationPostalCode: toString(data.andreaniDestinationPostalCode),
         destinationCity: toString(data.andreaniDestinationCity),
+        providerMode: undefined,
+        isSimulated: undefined,
     };
 
     if (
         !selection.carrier &&
         !selection.serviceCode &&
         !selection.serviceName &&
-        selection.price === undefined &&
+        selection.priceCents === undefined &&
         !selection.destinationPostalCode &&
         !selection.destinationCity
     ) {
@@ -266,11 +318,11 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
         setSelectionError(null);
         try {
             const response = await saveAndreaniSelection({
-            orderCode: cart.code,
+                orderCode: cart.code,
                 carrier: quote.carrier,
                 serviceCode: quote.serviceCode,
-                serviceName: quote.serviceName ?? 'Andreani',
-                price: quote.price,
+                serviceName: quote.serviceName,
+                priceCents: quote.priceCents,
                 currency: quote.currency,
                 destinationPostalCode: postalCode.trim(),
                 destinationCity: city.trim(),
@@ -278,6 +330,8 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
                     breakdown: quote.breakdown,
                 },
                 weightKg,
+                providerMode: quote.providerMode,
+                isSimulated: quote.isSimulated,
             });
 
             if (response.success) {
@@ -287,14 +341,15 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
                 setSavedSelection({
                     carrier: quote.carrier,
                     serviceCode: quote.serviceCode,
-                    serviceName: quote.serviceName ?? 'Andreani',
-                    price: quote.price,
+                    serviceName: quote.serviceName,
+                    priceCents: quote.priceCents,
                     currency: quote.currency,
                     destinationPostalCode: postalCode.trim(),
                     destinationCity: city.trim(),
+                    providerMode: quote.providerMode,
+                    isSimulated: quote.isSimulated,
                 });
                 setSavedShipment(null);
-                userEditedDestinationRef.current = false;
                 userEditedDestinationRef.current = false;
             } else {
                 setSelectionSuccess(false);
@@ -366,7 +421,12 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
                             <CardContent sx={{ p: 2 }}>
                                 <Stack spacing={1.5}>
                                     <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
-                                        <Chip label="Envío Andreani seleccionado" color="success" size="small" />
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Chip label="Envío Andreani seleccionado" color="success" size="small" />
+                                            {savedSelection.isSimulated ? (
+                                                <Chip label="Mock" color="warning" size="small" variant="outlined" />
+                                            ) : null}
+                                        </Stack>
                                         <Button variant="text" size="small" onClick={handleResetQuote}>
                                             Recotizar
                                         </Button>
@@ -375,8 +435,8 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
                                         {savedSelection.serviceName ?? savedSelection.serviceCode ?? 'Servicio Andreani'}
                                     </Typography>
                                     <Typography variant="h6">
-                                        {savedSelection.price !== undefined
-                                            ? formatCurrency(savedSelection.price, savedSelection.currency ?? cart.currencyCode)
+                                        {savedSelection.priceCents !== undefined
+                                            ? formatCurrencyFromCents(savedSelection.priceCents, savedSelection.currency ?? cart.currencyCode)
                                             : 'Precio no disponible'}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
@@ -448,11 +508,16 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
                         <Card variant="outlined" sx={{ backgroundColor: 'background.paper' }}>
                             <CardContent>
                                 <Stack spacing={1}>
-                                    <Typography variant="subtitle1" fontWeight={600}>
-                                        {quote.serviceName ?? 'Servicio Andreani'}
-                                    </Typography>
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                        <Typography variant="subtitle1" fontWeight={600}>
+                                            {quote.serviceName}
+                                        </Typography>
+                                        {quote.isSimulated ? (
+                                            <Chip label="Mock" color="warning" size="small" variant="outlined" />
+                                        ) : null}
+                                    </Stack>
                                     <Typography variant="h5">
-                                        {formatCurrency(quote.price, quote.currency)}
+                                        {formatCurrencyFromCents(quote.priceCents, quote.currency)}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
                                         Entrega estimada: {quote.estimatedDelivery ?? 'No especificada'}
@@ -464,7 +529,7 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
                                             {Object.entries(quote.breakdown).map(([label, value]) =>
                                                 value !== null && value !== undefined ? (
                                                     <Typography key={label} variant="body2" color="text.secondary">
-                                                        {label}: {formatCurrency(value, quote.currency)}
+                                                        {BREAKDOWN_LABELS[label] ?? label}: {formatCurrencyFromCents(value, quote.currency)}
                                                     </Typography>
                                                 ) : null,
                                             )}

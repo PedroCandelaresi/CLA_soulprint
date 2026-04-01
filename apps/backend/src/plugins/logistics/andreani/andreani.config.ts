@@ -1,7 +1,9 @@
 export type AndreaniEnvironment = 'production' | 'qa';
+export type AndreaniMode = 'real' | 'mock';
 
 export interface AndreaniConfig {
     enabled: boolean;
+    mode: AndreaniMode;
     environment: AndreaniEnvironment;
     baseUrl: string;
     authToken: string;
@@ -35,14 +37,28 @@ function parseEnvironment(value: string | undefined): AndreaniEnvironment {
     throw new Error('ANDREANI_ENVIRONMENT must be either "production" or "qa".');
 }
 
+function parseMode(value: string | undefined): AndreaniMode {
+    const normalized = value?.trim().toLowerCase();
+    if (!normalized) {
+        const appEnv = (process.env.APP_ENV || process.env.NODE_ENV || '').trim().toLowerCase();
+        return ['local', 'dev', 'development', 'test', 'testing'].includes(appEnv) ? 'mock' : 'real';
+    }
+    if (normalized === 'real' || normalized === 'mock') {
+        return normalized;
+    }
+    throw new Error('ANDREANI_MODE must be either "real" or "mock".');
+}
+
 export function getAndreaniConfigFromEnv(): AndreaniConfig {
     const enabled = (process.env.ANDREANI_ENABLED || 'false').toLowerCase() === 'true';
     const environment = parseEnvironment(process.env.ANDREANI_ENVIRONMENT);
+    const mode = parseMode(process.env.ANDREANI_MODE);
     const token = process.env.ANDREANI_AUTH_TOKEN || '';
 
     if (!enabled) {
         return {
             enabled: false,
+            mode,
             environment,
             baseUrl: '',
             authToken: '',
@@ -50,6 +66,23 @@ export function getAndreaniConfigFromEnv(): AndreaniConfig {
             shipmentBaseUrl: '',
             originPostalCode: '',
             originCity: '',
+        };
+    }
+
+    if (mode === 'mock') {
+        return {
+            enabled,
+            mode,
+            environment,
+            baseUrl: '',
+            authToken: '',
+            timeoutMs: Number(process.env.ANDREANI_TIMEOUT_MS || '15000'),
+            shipmentBaseUrl: '',
+            originPostalCode: process.env.ANDREANI_ORIGIN_POSTAL_CODE || '',
+            originCity: process.env.ANDREANI_ORIGIN_CITY || '',
+            originProvince: process.env.ANDREANI_ORIGIN_PROVINCE,
+            originCountry: process.env.ANDREANI_ORIGIN_COUNTRY,
+            originAddress: process.env.ANDREANI_ORIGIN_ADDRESS,
         };
     }
 
@@ -66,6 +99,7 @@ export function getAndreaniConfigFromEnv(): AndreaniConfig {
 
     return {
         enabled,
+        mode,
         environment,
         baseUrl,
         authToken: token,

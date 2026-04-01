@@ -8,6 +8,7 @@ import {
     Button,
     Card,
     CardContent,
+    Chip,
     CircularProgress,
     Divider,
     Stack,
@@ -18,7 +19,7 @@ import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
-import type { PersonalizationOrderResponseData } from '@/types/personalization';
+import type { PersonalizationLineSummary, PersonalizationOrderResponseData } from '@/types/personalization';
 import {
     getOrderPersonalization,
     personalizationStorage,
@@ -46,12 +47,66 @@ function formatDate(value: string | null): string | null {
     }
 }
 
-function isImageMimeType(value: string | null): boolean {
+function isImageMimeType(value: string | null | undefined): boolean {
     return typeof value === 'string' && value.startsWith('image/');
 }
 
 function canUploadForPaymentState(value: string): boolean {
     return ['Authorized', 'Settled', 'approved', 'PaymentAuthorized', 'PaymentSettled'].includes(value);
+}
+
+function getOverallStatusCopy(data: PersonalizationOrderResponseData): string {
+    switch (data.overallPersonalizationStatus) {
+        case 'complete':
+            return 'todos los archivos requeridos fueron recibidos';
+        case 'partial':
+            return 'faltan archivos para algunas líneas';
+        case 'pending':
+            return 'faltan archivos obligatorios';
+        default:
+            return 'no requiere personalización';
+    }
+}
+
+function getLineStatusLabel(status: PersonalizationLineSummary['personalizationStatus']): string {
+    switch (status) {
+        case 'uploaded':
+            return 'Archivo cargado';
+        case 'approved':
+            return 'Aprobado';
+        case 'rejected':
+            return 'Rechazado';
+        case 'pending-upload':
+            return 'Pendiente';
+        default:
+            return 'No requerida';
+    }
+}
+
+function getLineStatusColor(status: PersonalizationLineSummary['personalizationStatus']): 'default' | 'warning' | 'success' | 'error' {
+    switch (status) {
+        case 'uploaded':
+        case 'approved':
+            return 'success';
+        case 'rejected':
+            return 'error';
+        case 'pending-upload':
+            return 'warning';
+        default:
+            return 'default';
+    }
+}
+
+function getDefaultSelectedLineId(data: PersonalizationOrderResponseData | null): string | null {
+    if (!data) {
+        return null;
+    }
+    const requiredLines = data.lines.filter((line) => line.requiresPersonalization);
+    return (
+        requiredLines.find((line) => !['uploaded', 'approved'].includes(line.personalizationStatus))?.orderLineId
+        ?? requiredLines[0]?.orderLineId
+        ?? null
+    );
 }
 
 export default function OrderPersonalizationCard({
@@ -64,6 +119,7 @@ export default function OrderPersonalizationCard({
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
+    const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [notes, setNotes] = useState('');
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -73,6 +129,15 @@ export default function OrderPersonalizationCard({
         || initialAccessToken
         || personalizationStorage.getAccessToken(orderCode)
         || undefined;
+
+    const requiredLines = useMemo(
+        () => data?.lines.filter((line) => line.requiresPersonalization) ?? [],
+        [data],
+    );
+    const activeLine = useMemo(
+        () => requiredLines.find((line) => line.orderLineId === selectedLineId) ?? requiredLines[0] ?? null,
+        [requiredLines, selectedLineId],
+    );
 
     useEffect(() => {
         if (!selectedFile || !selectedFile.type.startsWith('image/')) {
@@ -88,6 +153,18 @@ export default function OrderPersonalizationCard({
         };
     }, [selectedFile]);
 
+    useEffect(() => {
+        const nextSelectedLineId = getDefaultSelectedLineId(data);
+        if (!selectedLineId || !requiredLines.some((line) => line.orderLineId === selectedLineId)) {
+            setSelectedLineId(nextSelectedLineId);
+        }
+    }, [data, requiredLines, selectedLineId]);
+
+    useEffect(() => {
+        setNotes(activeLine?.notes || '');
+        setSelectedFile(null);
+    }, [activeLine?.orderLineId]);
+
     async function loadStatus() {
         setIsLoading(true);
         const response = await getOrderPersonalization({
@@ -95,20 +172,26 @@ export default function OrderPersonalizationCard({
             transactionId,
             accessToken,
         });
+        const responseData = response.data ?? null;
 
-        if (!response.success || !response.data) {
+        if (!response.success || !responseData) {
             setError(response.error || 'No se pudo consultar la personalización del pedido.');
             setData(null);
             setIsLoading(false);
             return;
         }
 
-        if (response.data.accessToken) {
-            personalizationStorage.setAccessToken(orderCode, response.data.accessToken);
+        if (responseData.accessToken) {
+            personalizationStorage.setAccessToken(orderCode, responseData.accessToken);
         }
 
-        setData(response.data);
-        setNotes(response.data.notes || '');
+        setData(responseData);
+        setSelectedLineId((current) => {
+            if (current && responseData.lines.some((line) => line.orderLineId === current)) {
+                return current;
+            }
+            return getDefaultSelectedLineId(responseData);
+        });
         setError(null);
         setIsLoading(false);
     }
@@ -122,12 +205,17 @@ export default function OrderPersonalizationCard({
             setError('Seleccioná un archivo antes de guardarlo.');
             return;
         }
+        if (!activeLine) {
+            setError('Seleccioná primero una línea que requiera personalización.');
+            return;
+        }
 
         setIsUploading(true);
         setError(null);
 
         const response = await uploadOrderPersonalization({
             orderCode,
+            orderLineId: activeLine.orderLineId,
             file: selectedFile,
             notes,
             transactionId,
@@ -199,10 +287,10 @@ export default function OrderPersonalizationCard({
         return null;
     }
 
-    const formattedUploadDate = formatDate(data.uploadedAt);
-    const hasUploadedAsset = Boolean(data.assetUrl);
     const uploadAllowed = data.requiresPersonalization && canUploadForPaymentState(data.paymentState);
-    const isPendingRequired = data.requiresPersonalization && data.personalizationStatus === 'pending';
+    const hasMissingFiles = ['pending', 'partial'].includes(data.overallPersonalizationStatus);
+    const activeLineHasAsset = Boolean(activeLine?.asset?.source);
+    const activeLineUploadedAt = formatDate(activeLine?.uploadedAt ?? null);
 
     return (
         <Card variant="outlined" sx={{ borderRadius: 3 }}>
@@ -213,13 +301,13 @@ export default function OrderPersonalizationCard({
                             {title}
                         </Typography>
                         <Typography color="text.secondary">
-                            Pedido {data.orderCode}. Estado actual: {data.personalizationStatus === 'uploaded' ? 'foto subida' : data.personalizationStatus === 'pending' ? 'pendiente' : 'no requerida'}.
+                            Pedido {data.orderCode}. Estado actual: {getOverallStatusCopy(data)}.
                         </Typography>
                     </Box>
 
-                    {isPendingRequired && (
+                    {data.requiresPersonalization && hasMissingFiles && (
                         <Alert severity="warning">
-                            Acción requerida: este pedido necesita una foto para poder fabricarse. La orden seguirá pendiente hasta que recibamos el archivo.
+                            Acción requerida: faltan archivos de personalización para una o más líneas del pedido.
                         </Alert>
                     )}
 
@@ -237,69 +325,24 @@ export default function OrderPersonalizationCard({
                                         Tracking Andreani: {data.trackingNumber}
                                     </Typography>
                                 )}
-                                {data.requiredItems.length > 0 && (
+                                {requiredLines.length > 0 && (
                                     <Typography variant="body2" color="text.secondary">
-                                        Productos que requieren foto: {data.requiredItems.map((item) => item.productName).join(', ')}
+                                        Productos que requieren archivo: {requiredLines.map((line) => line.productName).join(', ')}
                                     </Typography>
                                 )}
                             </Stack>
                         </Box>
-
-                        {hasUploadedAsset && (
-                            <Box
-                                sx={{
-                                    width: { xs: '100%', md: 180 },
-                                    flexShrink: 0,
-                                }}
-                            >
-                                {isImageMimeType(data.assetMimeType) && data.assetPreviewUrl ? (
-                                    <Box
-                                        component="img"
-                                        src={data.assetPreviewUrl}
-                                        alt={data.originalFilename || 'Archivo subido'}
-                                        sx={{
-                                            width: '100%',
-                                            height: 180,
-                                            objectFit: 'cover',
-                                            borderRadius: 2,
-                                            border: '1px solid',
-                                            borderColor: 'divider',
-                                        }}
-                                    />
-                                ) : (
-                                    <Box
-                                        sx={{
-                                            borderRadius: 2,
-                                            border: '1px dashed',
-                                            borderColor: 'divider',
-                                            p: 3,
-                                            textAlign: 'center',
-                                        }}
-                                    >
-                                        <Typography variant="body2">Archivo cargado</Typography>
-                                    </Box>
-                                )}
-                            </Box>
-                        )}
                     </Stack>
 
-                    {data.personalizationStatus === 'not-required' && (
+                    {!data.requiresPersonalization && (
                         <Alert severity="info">
-                            Esta orden todavía no tiene una foto pendiente de carga.
+                            Esta orden no requiere archivos de personalización.
                         </Alert>
                     )}
 
-                    {data.requiresPersonalization && data.personalizationStatus === 'pending' && !uploadAllowed && (
+                    {data.requiresPersonalization && !uploadAllowed && hasMissingFiles && (
                         <Alert severity="info">
-                            Tu pago todavía se está confirmando. Cuando quede acreditado vas a poder subir la foto desde esta misma pantalla.
-                        </Alert>
-                    )}
-
-                    {hasUploadedAsset && (
-                        <Alert severity="success">
-                            Archivo recibido.
-                            {data.originalFilename ? ` Actual: ${data.originalFilename}.` : ''}
-                            {formattedUploadDate ? ` Subido el ${formattedUploadDate}.` : ' La foto ya fue subida.'}
+                            Tu pago todavía se está confirmando. Cuando quede acreditado vas a poder subir los archivos pendientes desde esta pantalla.
                         </Alert>
                     )}
 
@@ -309,18 +352,122 @@ export default function OrderPersonalizationCard({
                         </Alert>
                     )}
 
-                    {data.requiresPersonalization && (
+                    {requiredLines.length > 0 && (
+                        <>
+                            <Divider />
+                            <Stack spacing={2}>
+                                <Typography fontWeight={600}>
+                                    Líneas que requieren personalización
+                                </Typography>
+
+                                {requiredLines.map((line) => {
+                                    const selected = line.orderLineId === activeLine?.orderLineId;
+                                    return (
+                                        <Card
+                                            key={line.orderLineId}
+                                            variant="outlined"
+                                            sx={{
+                                                borderRadius: 2.5,
+                                                borderColor: selected ? 'primary.main' : 'divider',
+                                                backgroundColor: selected ? 'action.hover' : 'background.paper',
+                                            }}
+                                        >
+                                            <CardContent sx={{ p: 2 }}>
+                                                <Stack
+                                                    direction={{ xs: 'column', md: 'row' }}
+                                                    spacing={2}
+                                                    justifyContent="space-between"
+                                                    alignItems={{ xs: 'flex-start', md: 'center' }}
+                                                >
+                                                    <Stack spacing={0.75}>
+                                                        <Typography fontWeight={600}>
+                                                            {line.productName}
+                                                        </Typography>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {line.variantName || 'Variante estándar'}
+                                                        </Typography>
+                                                        <Stack direction="row" spacing={1} flexWrap="wrap">
+                                                            <Chip
+                                                                size="small"
+                                                                color={getLineStatusColor(line.personalizationStatus)}
+                                                                label={getLineStatusLabel(line.personalizationStatus)}
+                                                            />
+                                                            {line.snapshotFileName ? (
+                                                                <Chip size="small" variant="outlined" label={line.snapshotFileName} />
+                                                            ) : null}
+                                                        </Stack>
+                                                        {line.uploadedAt ? (
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Última carga: {formatDate(line.uploadedAt)}
+                                                            </Typography>
+                                                        ) : null}
+                                                    </Stack>
+
+                                                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                                                        {line.asset?.source ? (
+                                                            <Button
+                                                                component={Link}
+                                                                href={line.asset.source}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                variant="text"
+                                                                startIcon={<OpenInNewOutlinedIcon />}
+                                                            >
+                                                                Ver archivo
+                                                            </Button>
+                                                        ) : null}
+                                                        <Button
+                                                            variant={selected ? 'contained' : 'outlined'}
+                                                            onClick={() => setSelectedLineId(line.orderLineId)}
+                                                        >
+                                                            {selected ? 'Seleccionada' : 'Seleccionar'}
+                                                        </Button>
+                                                    </Stack>
+                                                </Stack>
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                })}
+                            </Stack>
+                        </>
+                    )}
+
+                    {activeLine && (
                         <>
                             <Divider />
 
                             <Stack spacing={2}>
                                 <Typography fontWeight={600}>
-                                    {hasUploadedAsset ? 'Reemplazar archivo obligatorio' : 'Archivo obligatorio para personalizar'}
+                                    {activeLineHasAsset ? 'Reemplazar archivo de la línea seleccionada' : 'Subir archivo para la línea seleccionada'}
                                 </Typography>
 
                                 <Typography variant="body2" color="text.secondary">
-                                    Sin esta imagen el pedido queda pendiente. Si volvés a cargar un archivo nuevo, reemplaza al anterior.
+                                    Línea activa: {activeLine.productName}
+                                    {activeLine.variantName ? ` · ${activeLine.variantName}` : ''}.
                                 </Typography>
+
+                                {activeLineHasAsset && (
+                                    <Alert severity="success">
+                                        Archivo actual registrado
+                                        {activeLine.snapshotFileName ? `: ${activeLine.snapshotFileName}.` : '.'}
+                                        {activeLineUploadedAt ? ` Subido el ${activeLineUploadedAt}.` : ''}
+                                    </Alert>
+                                )}
+
+                                {activeLine.asset?.preview && isImageMimeType(activeLine.asset.mimeType) ? (
+                                    <Box
+                                        component="img"
+                                        src={activeLine.asset.preview}
+                                        alt={activeLine.snapshotFileName || activeLine.productName}
+                                        sx={{
+                                            width: '100%',
+                                            maxWidth: 360,
+                                            borderRadius: 2,
+                                            border: '1px solid',
+                                            borderColor: 'divider',
+                                        }}
+                                    />
+                                ) : null}
 
                                 <Button
                                     component="label"
@@ -376,13 +523,13 @@ export default function OrderPersonalizationCard({
                                         disabled={!selectedFile || isUploading || !uploadAllowed}
                                         startIcon={isUploading ? <CircularProgress size={18} color="inherit" /> : <CloudUploadOutlinedIcon />}
                                     >
-                                        {isUploading ? 'Guardando...' : hasUploadedAsset ? 'Reemplazar archivo' : 'Guardar foto obligatoria'}
+                                        {isUploading ? 'Guardando...' : activeLineHasAsset ? 'Reemplazar archivo' : 'Guardar archivo'}
                                     </Button>
 
-                                    {data.assetUrl && (
+                                    {activeLine.asset?.source && (
                                         <Button
                                             component={Link}
-                                            href={data.assetUrl}
+                                            href={activeLine.asset.source}
                                             target="_blank"
                                             rel="noreferrer"
                                             variant="outlined"
@@ -401,7 +548,7 @@ export default function OrderPersonalizationCard({
                             <Divider />
                             <Stack spacing={1}>
                                 <Typography variant="body2" color="text.secondary">
-                                    Si querés volver más tarde, usá este link seguro para completar la foto del pedido.
+                                    Si querés volver más tarde, usá este link seguro para completar la personalización del pedido.
                                 </Typography>
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                                     <Button

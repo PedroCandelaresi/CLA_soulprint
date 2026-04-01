@@ -114,15 +114,9 @@
   };
   var PERSONALIZATION_PANEL_ID = 'cla-order-personalization-panel';
   var PERSONALIZATION_ORDER_QUERY_FIELDS = [
-    'personalizationRequired',
-    'personalizationStatus',
+    'personalizationOverallStatus',
     'productionStatus',
     'productionUpdatedAt',
-    'personalizationAssetPreviewUrl',
-    'personalizationOriginalFilename',
-    'personalizationUploadedAt',
-    'personalizationNotes',
-    'personalizationAsset'
   ];
   var PERSONALIZATION_INTROSPECTION_QUERY = [
     'query ClaOrderType {',
@@ -989,6 +983,32 @@
         })
         .join('\n'),
       '    }',
+      '    lines {',
+      '      id',
+      '      productVariant {',
+      '        name',
+      '        product {',
+      '          name',
+      '        }',
+      '        customFields {',
+      '          requiresPersonalization',
+      '        }',
+      '      }',
+      '      customFields {',
+      '        personalizationStatus',
+      '        personalizationNotes',
+      '        personalizationUploadedAt',
+      '        personalizationSnapshotFileName',
+      '        personalizationAsset {',
+      '          id',
+      '          name',
+      '          preview',
+      '          source',
+      '          mimeType',
+      '          fileSize',
+      '        }',
+      '      }',
+      '    }',
       '  }',
       '}'
     ].join('\n');
@@ -1236,22 +1256,44 @@
 
   function normalizePersonalizationData(order) {
     var customFields = order && order.customFields && typeof order.customFields === 'object' ? order.customFields : {};
+    var lines = Array.isArray(order && order.lines) ? order.lines : [];
+    var requiredLines = lines.filter(function (line) {
+      return Boolean(
+        line &&
+          line.productVariant &&
+          line.productVariant.customFields &&
+          line.productVariant.customFields.requiresPersonalization === true
+      );
+    });
+    var primaryLine = requiredLines.find(function (line) {
+      return Boolean(line && line.customFields && line.customFields.personalizationAsset);
+    }) || requiredLines[0] || null;
+    var lineCustomFields = primaryLine && primaryLine.customFields && typeof primaryLine.customFields === 'object'
+      ? primaryLine.customFields
+      : {};
     var asset =
-      customFields.personalizationAsset && typeof customFields.personalizationAsset === 'object'
-        ? customFields.personalizationAsset
+      lineCustomFields.personalizationAsset && typeof lineCustomFields.personalizationAsset === 'object'
+        ? lineCustomFields.personalizationAsset
         : null;
-    var required = Boolean(customFields.personalizationRequired);
-    var previewUrl = firstDefinedValue(
-      asset && asset.preview,
-      customFields.personalizationAssetPreviewUrl,
-      asset && asset.source
-    );
+    var required = requiredLines.length > 0;
+    var previewUrl = firstDefinedValue(asset && asset.preview, asset && asset.source);
     var assetUrl = firstDefinedValue(asset && asset.source, previewUrl);
-    var filename = firstDefinedValue(
-      customFields.personalizationOriginalFilename,
-      asset && asset.name
-    );
-    var rawStatus = normalizeText(customFields.personalizationStatus);
+    var filename = firstDefinedValue(lineCustomFields.personalizationSnapshotFileName, asset && asset.name);
+    var overallStatus = normalizeText(customFields.personalizationOverallStatus);
+    var completedLines = requiredLines.filter(function (line) {
+      var lineStatus = normalizeText(line && line.customFields && line.customFields.personalizationStatus);
+      return lineStatus === 'uploaded' || lineStatus === 'approved';
+    }).length;
+    var rawStatus =
+      overallStatus === 'complete'
+        ? 'uploaded'
+        : overallStatus === 'pending' || overallStatus === 'partial'
+          ? 'pending'
+          : !required
+            ? 'not-required'
+            : completedLines === requiredLines.length
+              ? 'uploaded'
+              : 'pending';
     var productionStatus = normalizeText(customFields.productionStatus);
     var lastPayment = getLastItem(order && order.payments);
     var lastFulfillment = getLastItem(order && order.fulfillments);
@@ -1274,7 +1316,7 @@
       businessStatusDescription: businessPresentation.description,
       businessStatusLabel: businessPresentation.label,
       filename: filename,
-      notes: normalizeText(customFields.personalizationNotes),
+      notes: normalizeText(lineCustomFields.personalizationNotes),
       orderCode: normalizeText(order && order.code),
       orderState: normalizeText(order && order.state),
       paymentState: normalizeText(lastPayment && lastPayment.state),
@@ -1289,7 +1331,7 @@
       statusLabel: statusPresentation.label,
       tone: statusPresentation.tone,
       trackingCode: normalizeText(lastFulfillment && lastFulfillment.trackingCode),
-      uploadedAt: formatDateTime(customFields.personalizationUploadedAt)
+      uploadedAt: formatDateTime(lineCustomFields.personalizationUploadedAt)
     };
   }
 
@@ -1581,7 +1623,7 @@
     enhancePasswordField();
     ensureDesktopSidebarToggle();
     enhanceEmptyStates();
-    ensureOrderPersonalizationPanel();
+    removePersonalizationPanel();
   }
 
   if (document.readyState === 'loading') {

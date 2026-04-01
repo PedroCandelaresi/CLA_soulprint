@@ -27,6 +27,52 @@ function getCustomerName(order: Order): string {
     return parts.join(' ').trim() || customer.emailAddress || 'cliente';
 }
 
+function orderNeedsPersonalization(order: Order): boolean {
+    return deriveOrderBusinessStatus(order) === 'awaiting_personalization';
+}
+
+function getLineCustomFieldValue<T>(line: Order['lines'][number] | null, key: string): T | null {
+    const customFields = (line?.customFields || {}) as Record<string, unknown>;
+    return (customFields[key] as T | undefined) ?? null;
+}
+
+function lineRequiresPersonalization(line: Order['lines'][number] | null): boolean {
+    const variantCustomFields = (line?.productVariant?.customFields || {}) as Record<string, unknown>;
+    return variantCustomFields.requiresPersonalization === true;
+}
+
+function getRelevantPersonalizationLine(order: Order, orderLineId: string | null) {
+    const lines = Array.isArray(order.lines) ? order.lines : [];
+    const selectedLine = orderLineId
+        ? lines.find((line) => String(line.id) === String(orderLineId))
+        : null;
+
+    if (selectedLine) {
+        return selectedLine;
+    }
+
+    return (
+        lines.find((line) => Boolean(getLineCustomFieldValue(line, 'personalizationAsset')))
+        ?? lines.find((line) => lineRequiresPersonalization(line))
+        ?? null
+    );
+}
+
+function getLineAssetUrl(line: Order['lines'][number] | null): string | null {
+    const asset = getLineCustomFieldValue<Record<string, unknown>>(line, 'personalizationAsset');
+    if (!asset || typeof asset !== 'object') {
+        return null;
+    }
+
+    const source = (asset as Record<string, unknown>).source;
+    const preview = (asset as Record<string, unknown>).preview;
+    return (typeof source === 'string' && source) || (typeof preview === 'string' && preview) || null;
+}
+
+function getLineUploadedAt(line: Order['lines'][number] | null): Date | string | null {
+    return getLineCustomFieldValue<Date | string>(line, 'personalizationUploadedAt');
+}
+
 export const paymentPersonalizationRequiredHandler = new EmailEventListener('payment-personalization-required')
     .on(OrderStateTransitionEvent)
     .filter(
@@ -34,7 +80,7 @@ export const paymentPersonalizationRequiredHandler = new EmailEventListener('pay
             event.toState === 'PaymentSettled'
             && event.fromState !== 'Modifying'
             && Boolean(event.order.customer?.emailAddress)
-            && Boolean(getCustomFieldValue<boolean>(event.order, 'personalizationRequired')),
+            && orderNeedsPersonalization(event.order),
     )
     .setRecipient((event) => event.order.customer!.emailAddress)
     .setFrom('{{ fromAddress }}')
@@ -52,17 +98,17 @@ export const personalizationReceivedHandler = new EmailEventListener('personaliz
     .setRecipient((event) => event.order.customer!.emailAddress)
     .setFrom('{{ fromAddress }}')
     .setSubject('Recibimos tu archivo para el pedido #{{ order.code }}')
-    .setTemplateVars((event) => ({
-        order: event.order,
-        customerName: getCustomerName(event.order),
-        orderUrl: buildOrderUrl(event.order.code),
-        businessStatusLabel: getBusinessStatusLabel(deriveOrderBusinessStatus(event.order)),
-        uploadedAt: getCustomFieldValue<Date | string>(event.order, 'personalizationUploadedAt'),
-        assetUrl:
-            getCustomFieldValue<string>(event.order, 'personalizationAssetPreviewUrl')
-            || ((getCustomFieldValue<Record<string, unknown>>(event.order, 'personalizationAsset') || {}).source as string | undefined)
-            || null,
-    }));
+    .setTemplateVars((event) => {
+        const line = getRelevantPersonalizationLine(event.order, event.orderLineId);
+        return {
+            order: event.order,
+            customerName: getCustomerName(event.order),
+            orderUrl: buildOrderUrl(event.order.code),
+            businessStatusLabel: getBusinessStatusLabel(deriveOrderBusinessStatus(event.order)),
+            uploadedAt: getLineUploadedAt(line),
+            assetUrl: getLineAssetUrl(line),
+        };
+    });
 
 export const personalizationReceivedOperationsHandler = new EmailEventListener('personalization-received-operations')
     .on(PersonalizationReceivedEvent)
@@ -70,17 +116,17 @@ export const personalizationReceivedOperationsHandler = new EmailEventListener('
     .setRecipient(() => getOperationsEmail()!)
     .setFrom('{{ fromAddress }}')
     .setSubject('Pedido #{{ order.code }} listo para revisar en producción')
-    .setTemplateVars((event) => ({
-        order: event.order,
-        customerName: getCustomerName(event.order),
-        customerEmail: event.order.customer?.emailAddress || getCustomFieldValue<string>(event.order, 'buyerEmail') || '-',
-        businessStatusLabel: getBusinessStatusLabel(deriveOrderBusinessStatus(event.order)),
-        uploadedAt: getCustomFieldValue<Date | string>(event.order, 'personalizationUploadedAt'),
-        assetUrl:
-            getCustomFieldValue<string>(event.order, 'personalizationAssetPreviewUrl')
-            || ((getCustomFieldValue<Record<string, unknown>>(event.order, 'personalizationAsset') || {}).source as string | undefined)
-            || null,
-    }));
+    .setTemplateVars((event) => {
+        const line = getRelevantPersonalizationLine(event.order, event.orderLineId);
+        return {
+            order: event.order,
+            customerName: getCustomerName(event.order),
+            customerEmail: event.order.customer?.emailAddress || getCustomFieldValue<string>(event.order, 'buyerEmail') || '-',
+            businessStatusLabel: getBusinessStatusLabel(deriveOrderBusinessStatus(event.order)),
+            uploadedAt: getLineUploadedAt(line),
+            assetUrl: getLineAssetUrl(line),
+        };
+    });
 
 export const orderBusinessEmailHandlers = [
     paymentPersonalizationRequiredHandler,

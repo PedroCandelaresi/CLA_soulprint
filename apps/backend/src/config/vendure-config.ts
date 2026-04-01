@@ -203,6 +203,7 @@ export const config: VendureConfig = {
         ],
         Order: [
             // Andreani (real carrier - fields kept for production use)
+            // TODO(migration): remove legacy andreaniPrice float once all environments rely on shippingPriceCents.
             { name: 'andreaniCarrier', type: 'string', nullable: true },
             { name: 'andreaniServiceCode', type: 'string', nullable: true },
             { name: 'andreaniServiceName', type: 'string', nullable: true },

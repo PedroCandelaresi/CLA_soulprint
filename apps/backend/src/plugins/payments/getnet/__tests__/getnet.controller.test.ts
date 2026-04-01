@@ -104,20 +104,22 @@ describe('GetnetController', () => {
             });
         });
 
-        it('should return 400 when items are missing', async () => {
+        it('should allow checkout creation without items when backend resolves order totals from Vendure', async () => {
+            mockService.createOrder.mockResolvedValue(validCheckoutResponse);
             mockReq.body = {
                 orderCode: 'ORD-001',
             };
 
             await handlers.createCheckout(mockReq, mockRes, mockNext);
 
-            expect(mockRes.status).toHaveBeenCalledWith(400);
-            expect(mockRes.json).toHaveBeenCalledWith({
-                error: 'Missing required field: items (must have at least one item)',
+            expect(mockService.createOrder).toHaveBeenCalledWith({
+                orderCode: 'ORD-001',
             });
+            expect(mockRes.status).toHaveBeenCalledWith(201);
         });
 
-        it('should return 400 when items array is empty', async () => {
+        it('should allow checkout creation when items array is empty', async () => {
+            mockService.createOrder.mockResolvedValue(validCheckoutResponse);
             mockReq.body = {
                 orderCode: 'ORD-001',
                 items: [],
@@ -125,7 +127,21 @@ describe('GetnetController', () => {
 
             await handlers.createCheckout(mockReq, mockRes, mockNext);
 
+            expect(mockRes.status).toHaveBeenCalledWith(201);
+        });
+
+        it('should return 400 when items is not an array', async () => {
+            mockReq.body = {
+                orderCode: 'ORD-001',
+                items: 'invalid',
+            };
+
+            await handlers.createCheckout(mockReq, mockRes, mockNext);
+
             expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'items must be an array when provided',
+            });
         });
 
         it('should return 400 when item has invalid quantity', async () => {
@@ -165,6 +181,17 @@ describe('GetnetController', () => {
                 success: false,
                 error: 'Service error',
             });
+        });
+
+        it('should return 400 when service reports invalid amount', async () => {
+            mockService.createOrder.mockRejectedValue(
+                new Error('Monto inválido: el total enviado (100) no coincide con el total de la orden (200)'),
+            );
+            mockReq.body = validCheckoutDto;
+
+            await handlers.createCheckout(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
         });
     });
 
