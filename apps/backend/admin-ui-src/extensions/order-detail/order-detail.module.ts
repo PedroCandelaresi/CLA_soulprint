@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
+import { gql } from '@apollo/client/core';
 import {
-    DataService,
-    NotificationService,
     SharedModule,
     registerCustomDetailComponent,
 } from '@vendure/admin-ui/core';
@@ -15,7 +14,7 @@ import { OrderActionsComponent } from './order-actions.component';
 
 // ── Inline GraphQL query ──────────────────────────────────────────────────────
 // Loaded once; each component subscribes to the stream from DataService.
-export const ORDER_DASHBOARD_QUERY = `
+export const ORDER_DASHBOARD_QUERY = gql`
     query GetOrderDashboard($id: ID!) {
         order(id: $id) {
             id
@@ -86,32 +85,26 @@ export const ORDER_DASHBOARD_QUERY = `
         registerCustomDetailComponent({
             locationId: 'order-detail',
             component: OrderOverviewPanelComponent,
-            tab: 'Resumen operativo',
         }),
         registerCustomDetailComponent({
             locationId: 'order-detail',
             component: OrderStatusBannerComponent,
-            tab: 'Resumen operativo',
         }),
         registerCustomDetailComponent({
             locationId: 'order-detail',
             component: OrderPersonalizationPanelComponent,
-            tab: 'Personalización',
         }),
         registerCustomDetailComponent({
             locationId: 'order-detail',
             component: OrderPaymentPanelComponent,
-            tab: 'Pago',
         }),
         registerCustomDetailComponent({
             locationId: 'order-detail',
             component: OrderShippingPanelComponent,
-            tab: 'Envío',
         }),
         registerCustomDetailComponent({
             locationId: 'order-detail',
             component: OrderActionsComponent,
-            tab: 'Resumen operativo',
         }),
     ],
 })

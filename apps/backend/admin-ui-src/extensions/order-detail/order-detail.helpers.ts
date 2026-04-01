@@ -87,18 +87,6 @@ export interface OrderDashboardViewModel {
     secondaryActionLabel: string | null;
 }
 
-export const UPDATE_PRODUCTION_STATUS_MUTATION = `
-    mutation UpdateProductionStatus($id: ID!, $status: String!) {
-        setOrderCustomFields(input: {
-            id: $id
-            customFields: { productionStatus: $status }
-        }) {
-            id
-            customFields { productionStatus }
-        }
-    }
-`;
-
 function normalizeText(value: unknown): string {
     return typeof value === 'string' ? value.trim() : '';
 }

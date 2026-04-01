@@ -6,7 +6,6 @@ import { ORDER_DASHBOARD_QUERY } from './order-detail.module';
 import {
     buildOrderDashboard,
     OrderDashboardViewModel,
-    UPDATE_PRODUCTION_STATUS_MUTATION,
 } from './order-detail.helpers';
 
 @Component({
@@ -201,9 +200,9 @@ export class OrderActionsComponent implements CustomDetailComponent, OnInit {
 
         this.loadingOrderId = vm.id;
         try {
-            await this.dataService.mutate(UPDATE_PRODUCTION_STATUS_MUTATION, {
+            await this.dataService.order.updateOrderCustomFields({
                 id: vm.id,
-                status: nextStatus,
+                customFields: { productionStatus: nextStatus },
             }).toPromise();
             this.notificationService.success(
                 nextStatus === 'in-production'

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
+import { createRequire } from 'module';
 import type { AdminUiPluginOptions } from '@vendure/admin-ui-plugin';
 import type { AdminUiExtension } from '@vendure/ui-devkit/compiler';
 import { adminUiConfig, adminUiRoute } from './admin-ui-options';
@@ -27,7 +28,8 @@ const ADMIN_UI_EXTENSION: AdminUiExtension = {
     ],
 };
 const UI_DEVKIT_ROOT = path.dirname(require.resolve('@vendure/ui-devkit/package.json'));
-const VENDURE_ADMIN_UI_PACKAGE_PATH = require.resolve('@vendure/admin-ui/package.json');
+const vendureUiDevkitRequire = createRequire(path.join(UI_DEVKIT_ROOT, 'package.json'));
+const VENDURE_ADMIN_UI_PACKAGE_PATH = vendureUiDevkitRequire.resolve('@vendure/admin-ui/package.json');
 const VENDURE_ADMIN_UI_PACKAGE = JSON.parse(fs.readFileSync(VENDURE_ADMIN_UI_PACKAGE_PATH, 'utf8')) as {
     version: string;
     dependencies?: Record<string, string>;
