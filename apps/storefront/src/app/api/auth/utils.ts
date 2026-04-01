@@ -860,6 +860,7 @@ function mapOrder(
         || readString(logistics?.andreaniTrackingNumber)
         || lastFulfillment?.trackingCode
         || null;
+    const requiresPersonalization = (order.lines || []).length > 0;
 
     return {
         id: order.id,
@@ -905,7 +906,7 @@ function mapOrder(
             variantName: line.productVariant?.name || 'Variante',
             previewUrl: line.featuredAsset?.preview || null,
             linePriceWithTax: line.discountedLinePriceWithTax,
-            requiresPersonalization: Boolean(line.productVariant?.customFields?.requiresPersonalization),
+            requiresPersonalization,
         })),
         personalization: personalization
             ? {

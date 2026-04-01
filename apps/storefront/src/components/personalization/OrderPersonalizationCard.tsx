@@ -219,7 +219,7 @@ export default function OrderPersonalizationCard({
 
                     {isPendingRequired && (
                         <Alert severity="warning">
-                            Acción requerida: este pedido incluye productos personalizables y la imagen es obligatoria. La orden seguirá pendiente hasta que recibamos el archivo.
+                            Acción requerida: este pedido necesita una foto para poder fabricarse. La orden seguirá pendiente hasta que recibamos el archivo.
                         </Alert>
                     )}
 
@@ -285,7 +285,7 @@ export default function OrderPersonalizationCard({
 
                     {data.personalizationStatus === 'not-required' && (
                         <Alert severity="info">
-                            Esta orden no tiene productos marcados como personalizables.
+                            Esta orden todavía no tiene una foto pendiente de carga.
                         </Alert>
                     )}
 

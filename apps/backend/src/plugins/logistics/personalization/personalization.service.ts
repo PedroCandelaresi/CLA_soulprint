@@ -222,10 +222,6 @@ export class PersonalizationService {
                 }
                 : null,
             requiredItems: (order.lines || [])
-                .filter((line) => {
-                    const customFields = (line.productVariant?.customFields || {}) as Record<string, unknown>;
-                    return Boolean(customFields.requiresPersonalization);
-                })
                 .map((line) => ({
                     orderLineId: String(line.id),
                     productName: line.productVariant?.product?.name || line.productVariant?.name || 'Producto',
@@ -235,10 +231,7 @@ export class PersonalizationService {
     }
 
     private requiresPersonalization(order: Order): boolean {
-        return (order.lines || []).some((line) => {
-            const customFields = (line.productVariant?.customFields || {}) as Record<string, unknown>;
-            return Boolean(customFields.requiresPersonalization);
-        });
+        return (order.lines || []).length > 0;
     }
 
     private getOrderAsset(order: Order): Asset | undefined {
