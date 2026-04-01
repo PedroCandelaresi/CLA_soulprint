@@ -31,26 +31,30 @@ export async function POST(request: NextRequest) {
     }
 
     const email = typeof body?.email === 'string' ? body.email.trim() : '';
+    const rawFirstName = typeof body?.firstName === 'string' ? body.firstName.trim() : '';
+    const rawLastName = typeof body?.lastName === 'string' ? body.lastName.trim() : '';
     const fullName = typeof body?.fullName === 'string' ? body.fullName.trim() : '';
     const phoneNumber = typeof body?.phoneNumber === 'string' ? body.phoneNumber.trim() : '';
-    const { firstName, lastName } = splitFullName(fullName);
+    const fallbackName = splitFullName(fullName);
+    const firstName = rawFirstName || fallbackName.firstName;
+    const lastName = rawLastName || fallbackName.lastName;
 
     console.log(
-        `[api/auth/register] Incoming registration request email=${email ? `${email.slice(0, 2)}***@${email.split('@')[1] || ''}` : '(empty)'} fullNamePresent=${Boolean(fullName)} phonePresent=${Boolean(phoneNumber)}`,
+        `[api/auth/register] Incoming registration request email=${email ? `${email.slice(0, 2)}***@${email.split('@')[1] || ''}` : '(empty)'} firstNamePresent=${Boolean(firstName)} lastNamePresent=${Boolean(lastName)} phonePresent=${Boolean(phoneNumber)}`,
     );
 
-    if (!fullName || !email || !phoneNumber) {
+    if (!firstName || !lastName || !email || !phoneNumber) {
         console.warn('[api/auth/register] Validation failed: missing required fields');
         return toJsonResponse({
             success: false,
-            error: 'Nombre completo, email y teléfono son obligatorios.',
+            error: 'Nombre, apellido, email y teléfono son obligatorios.',
         }, 400);
     }
-    if (fullName.length < 3) {
-        console.warn('[api/auth/register] Validation failed: fullName too short');
+    if (firstName.length < 2 || lastName.length < 2) {
+        console.warn('[api/auth/register] Validation failed: invalid firstName/lastName');
         return toJsonResponse({
             success: false,
-            error: 'Ingresá nombre y apellido completos.',
+            error: 'Ingresá nombre y apellido válidos.',
         }, 400);
     }
     if (!EMAIL_REGEX.test(email)) {

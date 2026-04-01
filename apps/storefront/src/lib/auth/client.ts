@@ -55,7 +55,8 @@ export async function login(input: {
 
 export async function register(input: {
     email: string;
-    fullName: string;
+    firstName: string;
+    lastName: string;
     phoneNumber?: string;
 }): Promise<AuthActionResponse> {
     try {

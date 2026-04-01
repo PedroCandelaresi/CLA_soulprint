@@ -28,7 +28,8 @@ interface RegisterFormProps {
 export default function RegisterForm({ nextParam }: RegisterFormProps) {
     const { customer, isLoading, refreshCustomer } = useCustomer();
     const { refreshCart } = useCart();
-    const [fullName, setFullName] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [email, setEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,14 +52,16 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
 
         console.log('[RegisterForm] Submitting registration request', {
             email,
-            hasFullName: Boolean(fullName.trim()),
+            hasFirstName: Boolean(firstName.trim()),
+            hasLastName: Boolean(lastName.trim()),
             hasPhoneNumber: Boolean(phoneNumber.trim()),
             next: returnTo,
         });
 
         const response = await register({
             email,
-            fullName,
+            firstName,
+            lastName,
             phoneNumber,
         });
 
@@ -101,10 +104,18 @@ export default function RegisterForm({ nextParam }: RegisterFormProps) {
             )}
 
             <TextField
-                label="Nombre completo"
-                autoComplete="name"
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
+                label="Nombre"
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+                required
+            />
+
+            <TextField
+                label="Apellido"
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
                 required
             />
 

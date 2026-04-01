@@ -1125,17 +1125,29 @@ export async function performUpdateCustomer(input: {
     documentNumber?: string;
     cookieHeader?: string;
 }): Promise<{ body: AuthActionResponse; headers: Headers; customer?: CustomerSummary | null }> {
+    const customerInput: {
+        firstName: string | null;
+        lastName: string | null;
+        phoneNumber: string | null;
+        customFields?: {
+            documentNumber: string | null;
+        };
+    } = {
+        firstName: input.firstName?.trim() ? input.firstName.trim() : null,
+        lastName: input.lastName?.trim() ? input.lastName.trim() : null,
+        phoneNumber: input.phoneNumber?.trim() ? input.phoneNumber.trim() : null,
+    };
+
+    if (input.documentNumber !== undefined) {
+        customerInput.customFields = {
+            documentNumber: input.documentNumber?.trim() ? input.documentNumber.trim() : null,
+        };
+    }
+
     const result = await fetchVendureApi<UpdateCustomerData>(UPDATE_CUSTOMER_MUTATION, {
         headers: buildVendureHeaders(input.cookieHeader),
         variables: {
-            input: {
-                firstName: input.firstName?.trim() ? input.firstName.trim() : null,
-                lastName: input.lastName?.trim() ? input.lastName.trim() : null,
-                phoneNumber: input.phoneNumber?.trim() ? input.phoneNumber.trim() : null,
-                customFields: {
-                    documentNumber: input.documentNumber?.trim() ? input.documentNumber.trim() : null,
-                },
-            },
+            input: customerInput,
         },
     });
 
