@@ -7,6 +7,14 @@ import type { AdminUiExtension } from '@vendure/ui-devkit/compiler';
 import { adminUiConfig, adminUiRoute } from './admin-ui-options';
 
 type AdminUiApp = NonNullable<AdminUiPluginOptions['app']>;
+type AdminUiBuildTooling = {
+    vendureAdminUiPackage: {
+        version: string;
+        dependencies?: Record<string, string>;
+    };
+    setBaseHref: (outputPath: string, baseHref: string) => Promise<void>;
+    setupScaffold: (outputPath: string, extensions: AdminUiExtension[]) => Promise<void>;
+};
 
 const ADMIN_ROUTE = adminUiRoute;
 const ADMIN_UI_BUILD_PATH = path.join(__dirname, '../../admin-ui');
@@ -26,18 +34,6 @@ const ADMIN_UI_EXTENSION: AdminUiExtension = {
             ngModuleName: 'OrderDetailExtensionModule',
         },
     ],
-};
-const UI_DEVKIT_ROOT = path.dirname(require.resolve('@vendure/ui-devkit/package.json'));
-const vendureUiDevkitRequire = createRequire(path.join(UI_DEVKIT_ROOT, 'package.json'));
-const VENDURE_ADMIN_UI_PACKAGE_PATH = vendureUiDevkitRequire.resolve('@vendure/admin-ui/package.json');
-const VENDURE_ADMIN_UI_PACKAGE = JSON.parse(fs.readFileSync(VENDURE_ADMIN_UI_PACKAGE_PATH, 'utf8')) as {
-    version: string;
-    dependencies?: Record<string, string>;
-};
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { setBaseHref, setupScaffold } = require(path.join(UI_DEVKIT_ROOT, 'compiler/scaffold.js')) as {
-    setBaseHref: (outputPath: string, baseHref: string) => Promise<void>;
-    setupScaffold: (outputPath: string, extensions: AdminUiExtension[]) => Promise<void>;
 };
 const ADMIN_UI_BUILD_TOOLING = {
     '@angular/cli': '^17.3.17',
@@ -72,6 +68,34 @@ function resolveBrandLogoSourcePath(): string {
 
 function getAdminUiBaseHref(): string {
     return `/${ADMIN_ROUTE.replace(/^\/+|\/+$/g, '')}/`;
+}
+
+function getAdminUiBuildTooling(): AdminUiBuildTooling {
+    try {
+        const uiDevkitPackagePath = require.resolve('@vendure/ui-devkit/package.json');
+        const uiDevkitRoot = path.dirname(uiDevkitPackagePath);
+        const vendureUiDevkitRequire = createRequire(uiDevkitPackagePath);
+        const vendureAdminUiPackagePath = vendureUiDevkitRequire.resolve('@vendure/admin-ui/package.json');
+        const vendureAdminUiPackage = JSON.parse(fs.readFileSync(vendureAdminUiPackagePath, 'utf8')) as {
+            version: string;
+            dependencies?: Record<string, string>;
+        };
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { setBaseHref, setupScaffold } = require(path.join(uiDevkitRoot, 'compiler/scaffold.js')) as {
+            setBaseHref: (outputPath: string, baseHref: string) => Promise<void>;
+            setupScaffold: (outputPath: string, extensions: AdminUiExtension[]) => Promise<void>;
+        };
+
+        return {
+            vendureAdminUiPackage,
+            setBaseHref,
+            setupScaffold,
+        };
+    } catch (error) {
+        throw new Error(
+            `Unable to load Vendure Admin UI build tooling. Install @vendure/ui-devkit in the build environment before compiling the Admin UI. Original error: ${error instanceof Error ? error.message : String(error)}`,
+        );
+    }
 }
 
 function resolveGeneratedAngularCliPath(): string {
@@ -195,15 +219,15 @@ function copyBrandingAssets(): void {
     );
 }
 
-function synchronizeGeneratedAdminUiPackageJson(): void {
+function synchronizeGeneratedAdminUiPackageJson(tooling: AdminUiBuildTooling): void {
     const packageJsonPath = path.join(ADMIN_UI_BUILD_PATH, 'package.json');
     const currentPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as Record<string, unknown>;
     const nextPackageJson = {
         ...currentPackageJson,
         private: true,
         dependencies: {
-            '@vendure/admin-ui': `^${VENDURE_ADMIN_UI_PACKAGE.version}`,
-            ...(VENDURE_ADMIN_UI_PACKAGE.dependencies ?? {}),
+            '@vendure/admin-ui': `^${tooling.vendureAdminUiPackage.version}`,
+            ...(tooling.vendureAdminUiPackage.dependencies ?? {}),
         },
         devDependencies: {
             ...(currentPackageJson.devDependencies as Record<string, string> | undefined ?? {}),
@@ -283,9 +307,10 @@ async function postProcessBuiltAdminUi(): Promise<void> {
 }
 
 async function compileGeneratedAdminUi(): Promise<void> {
-    await setupScaffold(ADMIN_UI_BUILD_PATH, [ADMIN_UI_EXTENSION]);
-    await setBaseHref(ADMIN_UI_BUILD_PATH, getAdminUiBaseHref());
-    synchronizeGeneratedAdminUiPackageJson();
+    const tooling = getAdminUiBuildTooling();
+    await tooling.setupScaffold(ADMIN_UI_BUILD_PATH, [ADMIN_UI_EXTENSION]);
+    await tooling.setBaseHref(ADMIN_UI_BUILD_PATH, getAdminUiBaseHref());
+    synchronizeGeneratedAdminUiPackageJson(tooling);
     updateGeneratedAngularWorkspaceConfig();
     await ensureGeneratedAdminUiToolchainInstalled();
     await runProcess(
