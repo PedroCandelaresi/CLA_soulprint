@@ -3,7 +3,7 @@ import { Column, Entity, Index, CreateDateColumn, UpdateDateColumn } from 'typeo
 
 export type MockPaymentStatus = 'created' | 'pending' | 'approved' | 'rejected' | 'settled';
 
-@Entity()
+@Entity('mock_payment_transaction')
 export class MockPaymentTransaction extends VendureEntity {
     constructor(input?: DeepPartial<MockPaymentTransaction>) {
         super(input);
@@ -29,7 +29,7 @@ export class MockPaymentTransaction extends VendureEntity {
     @Column({ nullable: true, type: 'text' })
     webhookPayload!: string | null;
 
-    @Column({ nullable: true })
+    @Column({ type: 'datetime', nullable: true })
     settledAt!: Date | null;
 
     @CreateDateColumn()
