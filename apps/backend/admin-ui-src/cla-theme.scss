@@ -827,7 +827,7 @@ body[data-theme="dark"] .collapse-menu button {
 
 .left-nav {
   background: var(--nav-bg) !important;
-  border-inline-end: 1px solid var(--nav-border);
+  border-inline-end: 0;
   box-shadow: none;
   display: flex;
   flex-direction: column;
@@ -845,7 +845,7 @@ body[data-theme="dark"] .collapse-menu button {
 .branding {
   align-items: center;
   background: var(--nav-bg) !important;
-  border-bottom: 1px solid var(--nav-divider);
+  border-bottom: 0;
   flex-shrink: 0;
   gap: 12px;
   padding: 20px 18px 18px;
@@ -860,7 +860,7 @@ body[data-theme="dark"] .collapse-menu button {
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgba(244, 234, 213, 0.18) transparent;
+  scrollbar-color: rgba(244, 234, 213, 0.18) var(--nav-bg);
 }
 
 .left-nav .sidenav-content {
@@ -874,7 +874,7 @@ body[data-theme="dark"] .collapse-menu button {
 }
 
 .left-nav .sidenav::-webkit-scrollbar-track {
-  background-color: transparent;
+  background-color: var(--nav-bg);
 }
 
 .left-nav .sidenav::-webkit-scrollbar-thumb {
@@ -944,7 +944,7 @@ body[data-theme="dark"] .collapse-menu button {
 }
 
 .settings-nav-container {
-  border-top: 1px solid var(--nav-divider);
+  border-top: 0;
   margin-top: auto;
   padding-top: 12px;
 }
@@ -1067,7 +1067,7 @@ body[data-theme="dark"] .collapse-menu button {
 .main-nav .nav-group .nav-link.active a {
   background: var(--nav-active-bg);
   border-color: rgba(244, 234, 213, 0.08);
-  box-shadow: inset 2px 0 0 var(--nav-active-accent);
+  box-shadow: none;
   color: var(--nav-active-text);
   font-weight: 600;
 }
@@ -1143,13 +1143,6 @@ vdr-channel-switcher .active-channel:hover {
   color: var(--nav-text);
 }
 
-.main-nav .nav-group.cla-accordion .cla-accordion-panel {
-  max-height: var(--cla-accordion-panel-height, 480px);
-  opacity: 1;
-  overflow: hidden;
-  transition: max-height 0.24s ease, opacity 0.18s ease;
-}
-
 .cla-accordion-toggle {
   color: var(--nav-muted);
   display: inline-flex;
@@ -1173,9 +1166,17 @@ vdr-channel-switcher .active-channel:hover {
   transform: rotate(-90deg);
 }
 
-.main-nav .nav-group.cla-accordion.cla-collapsed .cla-accordion-panel {
+.main-nav .nav-group.cla-accordion .nav-link {
+  max-height: calc(var(--sidebar-item-height-desktop) + 6px);
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.24s ease, opacity 0.18s ease, margin 0.18s ease;
+}
+
+.main-nav .nav-group.cla-accordion.cla-collapsed .nav-link {
   max-height: 0 !important;
   opacity: 0;
+  margin: 0 !important;
   pointer-events: none;
 }
 
@@ -1185,11 +1186,15 @@ vdr-channel-switcher .active-channel:hover {
     display: none !important;
   }
 
-  body.cla-sidebar-collapsed .main-nav .nav-group.cla-accordion.cla-collapsed .cla-accordion-panel {
-    max-height: none !important;
+  body.cla-sidebar-collapsed .main-nav .nav-group.cla-accordion.cla-collapsed .nav-link {
+    max-height: calc(var(--sidebar-item-height-desktop) + 6px) !important;
     opacity: 1 !important;
     overflow: visible !important;
     pointer-events: auto !important;
+  }
+
+  body.cla-sidebar-collapsed .main-nav .nav-group.cla-accordion.cla-collapsed .nav-link + .nav-link {
+    margin-top: 2px !important;
   }
 }
 
