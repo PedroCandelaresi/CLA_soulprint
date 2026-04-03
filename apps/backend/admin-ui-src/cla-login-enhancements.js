@@ -2,6 +2,29 @@
   var SIDEBAR_COLLAPSED_CLASS = 'cla-sidebar-collapsed';
   var SIDEBAR_STORAGE_KEY = 'cla-admin-sidebar-collapsed';
   var CATALOG_ACCORDION_KEY = 'cla-admin-catalog-collapsed';
+  var SIDEBAR_GROUPS_STORAGE_KEY = 'cla-admin-sidebar-groups';
+  var SIDEBAR_ACCORDION_GROUPS = [
+    {
+      id: 'catalog',
+      labels: ['catalog', 'catalogo', 'catálogo'],
+      routePrefixes: ['catalog']
+    },
+    {
+      id: 'orders',
+      labels: ['orders', 'sales', 'ventas'],
+      routePrefixes: ['orders']
+    },
+    {
+      id: 'customer',
+      labels: ['customer', 'customers', 'cliente', 'clientes'],
+      routePrefixes: ['customer']
+    },
+    {
+      id: 'marketing',
+      labels: ['marketing'],
+      routePrefixes: ['marketing']
+    }
+  ];
   var BRAND_LOGO_ASSET_PATH = 'assets/cla-logo.svg';
   var SIDEBAR_MENU_ICON =
     '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><line x1="2" y1="5" x2="18" y2="5"/><line x1="2" y1="10" x2="18" y2="10"/><line x1="2" y1="15" x2="18" y2="15"/></svg>';
@@ -173,6 +196,7 @@
   var brandLogoInstanceId = 0;
   var personalizationSchemaPromise = null;
   var personalizationLoadToken = 0;
+  var lastActiveSidebarItemKey = null;
 
   function isEnglishLanguage() {
     var lang =
@@ -504,6 +528,15 @@
     return window.matchMedia('(min-width: 992px)').matches;
   }
 
+  function normalizeSidebarText(value) {
+    return (value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function readSidebarState() {
     try {
       return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true';
@@ -518,6 +551,191 @@
     } catch (error) {
       return;
     }
+  }
+
+  function readSidebarGroupsState() {
+    try {
+      var rawValue = window.localStorage.getItem(SIDEBAR_GROUPS_STORAGE_KEY);
+
+      if (!rawValue) {
+        return {};
+      }
+
+      var parsed = JSON.parse(rawValue);
+
+      if (!parsed || typeof parsed !== 'object') {
+        return {};
+      }
+
+      return parsed;
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function writeSidebarGroupsState(nextState) {
+    try {
+      window.localStorage.setItem(SIDEBAR_GROUPS_STORAGE_KEY, JSON.stringify(nextState));
+    } catch (error) {
+      return;
+    }
+  }
+
+  function readSidebarGroupCollapsed(groupId) {
+    var storedState = readSidebarGroupsState();
+
+    if (typeof storedState[groupId] === 'boolean') {
+      return storedState[groupId];
+    }
+
+    if (groupId === 'catalog') {
+      try {
+        return window.localStorage.getItem(CATALOG_ACCORDION_KEY) === 'true';
+      } catch (error) {
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  function writeSidebarGroupCollapsed(groupId, collapsed) {
+    var storedState = readSidebarGroupsState();
+    storedState[groupId] = collapsed;
+    writeSidebarGroupsState(storedState);
+
+    if (groupId === 'catalog') {
+      try {
+        window.localStorage.setItem(CATALOG_ACCORDION_KEY, collapsed ? 'true' : 'false');
+      } catch (error) {
+        return;
+      }
+    }
+  }
+
+  function getCurrentAdminRouteSegment() {
+    var adminBasePath = getAdminBasePath();
+    var pathname = window.location.pathname;
+
+    if (adminBasePath && pathname.indexOf(adminBasePath + '/') === 0) {
+      pathname = pathname.slice(adminBasePath.length + 1);
+    } else {
+      pathname = pathname.replace(/^\/+/, '');
+    }
+
+    return pathname.split('/').filter(Boolean)[0] || '';
+  }
+
+  function getNavGroupHeaderText(navGroup) {
+    var header = navGroup.querySelector('.nav-group-header');
+
+    if (!(header instanceof HTMLElement)) {
+      return '';
+    }
+
+    return normalizeSidebarText(header.textContent);
+  }
+
+  function getNavGroupRoutePrefixes(navGroup) {
+    var links = navGroup.querySelectorAll('.nav-link a[href]');
+    var routePrefixes = {};
+    var adminBasePath = getAdminBasePath();
+
+    for (var i = 0; i < links.length; i += 1) {
+      var link = links[i];
+      var href = link.getAttribute('href') || link.href;
+
+      if (!href) {
+        continue;
+      }
+
+      try {
+        var url = new URL(href, window.location.origin);
+        var pathname = url.pathname;
+
+        if (adminBasePath && pathname.indexOf(adminBasePath + '/') === 0) {
+          pathname = pathname.slice(adminBasePath.length + 1);
+        } else {
+          pathname = pathname.replace(/^\/+/, '');
+        }
+
+        var prefix = pathname.split('/').filter(Boolean)[0];
+
+        if (prefix) {
+          routePrefixes[prefix] = true;
+        }
+      } catch (error) {
+        continue;
+      }
+    }
+
+    return Object.keys(routePrefixes);
+  }
+
+  function getSidebarAccordionGroupConfig(navGroup) {
+    var headerText = getNavGroupHeaderText(navGroup);
+    var routePrefixes = getNavGroupRoutePrefixes(navGroup);
+
+    for (var i = 0; i < SIDEBAR_ACCORDION_GROUPS.length; i += 1) {
+      var config = SIDEBAR_ACCORDION_GROUPS[i];
+
+      for (var j = 0; j < routePrefixes.length; j += 1) {
+        if (config.routePrefixes.indexOf(routePrefixes[j]) !== -1) {
+          return config;
+        }
+      }
+
+      if (config.labels.indexOf(headerText) !== -1) {
+        return config;
+      }
+    }
+
+    return null;
+  }
+
+  function getSidebarScrollContainer(element) {
+    if (element instanceof HTMLElement) {
+      var closestContainer = element.closest('.sidenav');
+
+      if (closestContainer instanceof HTMLElement) {
+        return closestContainer;
+      }
+    }
+
+    var fallbackContainer = document.querySelector('.left-nav .sidenav');
+
+    return fallbackContainer instanceof HTMLElement ? fallbackContainer : null;
+  }
+
+  function scrollElementIntoSidebarView(element, options) {
+    if (!(element instanceof HTMLElement)) {
+      return;
+    }
+
+    var scrollContainer = getSidebarScrollContainer(element);
+
+    if (!(scrollContainer instanceof HTMLElement)) {
+      return;
+    }
+
+    var topPadding = options && typeof options.topPadding === 'number' ? options.topPadding : 12;
+    var bottomPadding = options && typeof options.bottomPadding === 'number' ? options.bottomPadding : 24;
+    var elementRect = element.getBoundingClientRect();
+    var containerRect = scrollContainer.getBoundingClientRect();
+    var nextScrollTop = scrollContainer.scrollTop;
+
+    if (elementRect.top < containerRect.top + topPadding) {
+      nextScrollTop += elementRect.top - containerRect.top - topPadding;
+    } else if (elementRect.bottom > containerRect.bottom - bottomPadding) {
+      nextScrollTop += elementRect.bottom - containerRect.bottom + bottomPadding;
+    } else {
+      return;
+    }
+
+    scrollContainer.scrollTo({
+      top: Math.max(0, Math.round(nextScrollTop)),
+      behavior: 'smooth'
+    });
   }
 
   function setSidebarCollapsedState(value) {
@@ -607,19 +825,123 @@
     updateSidebarToggleButton();
   }
 
-  function isCatalogNavGroup(navGroup) {
-    var header = navGroup.querySelector('.nav-group-header');
-
-    if (!(header instanceof HTMLElement)) {
-      return false;
-    }
-
-    var text = (header.textContent || '').trim().toLowerCase();
-
-    return text === 'catálogo' || text === 'catalogo' || text === 'catalog';
+  function navGroupHasActiveItem(navGroup) {
+    return !!navGroup.querySelector(
+      '.nav-link.active, .nav-link a.active, .nav-link a[aria-current="page"], .nav-link a.router-link-active'
+    );
   }
 
-  function ensureCatalogAccordion() {
+  function isSidebarAccordionGroupActive(navGroup, config) {
+    if (navGroupHasActiveItem(navGroup)) {
+      return true;
+    }
+
+    return config.routePrefixes.indexOf(getCurrentAdminRouteSegment()) !== -1;
+  }
+
+  function ensureSidebarAccordionPanel(navGroup) {
+    var existingPanel = navGroup.querySelector(':scope > .cla-accordion-panel');
+
+    if (existingPanel instanceof HTMLElement) {
+      return existingPanel;
+    }
+
+    var sectionHeader = navGroup.querySelector(':scope > .section-header');
+
+    if (!(sectionHeader instanceof HTMLElement)) {
+      return null;
+    }
+
+    var panel = document.createElement('div');
+    panel.className = 'cla-accordion-panel';
+
+    if (!panel.id) {
+      panel.id = 'cla-accordion-panel-' + (navGroup.dataset.claAccordionGroupId || 'group');
+    }
+
+    if (sectionHeader.nextSibling) {
+      navGroup.insertBefore(panel, sectionHeader.nextSibling);
+    } else {
+      navGroup.appendChild(panel);
+    }
+
+    var directChildren = Array.prototype.slice.call(navGroup.children);
+
+    for (var i = 0; i < directChildren.length; i += 1) {
+      var child = directChildren[i];
+
+      if (child === sectionHeader || child === panel) {
+        continue;
+      }
+
+      if (child instanceof HTMLElement && child.classList.contains('nav-link')) {
+        panel.appendChild(child);
+      }
+    }
+
+    return panel;
+  }
+
+  function updateSidebarAccordionPanelHeight(navGroup) {
+    var panel = navGroup.querySelector('.cla-accordion-panel');
+
+    if (!(panel instanceof HTMLElement)) {
+      return;
+    }
+
+    navGroup.style.setProperty('--cla-accordion-panel-height', panel.scrollHeight + 'px');
+  }
+
+  function updateSidebarAccordionAccessibility(navGroup, expanded) {
+    var sectionHeader = navGroup.querySelector('.section-header');
+    var panel = navGroup.querySelector('.cla-accordion-panel');
+
+    if (!(sectionHeader instanceof HTMLElement)) {
+      return;
+    }
+
+    sectionHeader.setAttribute('role', 'button');
+    sectionHeader.setAttribute('tabindex', '0');
+    sectionHeader.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+
+    if (panel instanceof HTMLElement) {
+      sectionHeader.setAttribute('aria-controls', panel.id);
+      panel.setAttribute('aria-hidden', expanded ? 'false' : 'true');
+    }
+  }
+
+  function setSidebarAccordionCollapsed(navGroup, config, collapsed, options) {
+    var shouldCollapse = collapsed;
+
+    if (isDesktopViewport() && document.body instanceof HTMLBodyElement && document.body.classList.contains(SIDEBAR_COLLAPSED_CLASS)) {
+      shouldCollapse = false;
+    }
+
+    navGroup.classList.toggle('cla-collapsed', shouldCollapse);
+    updateSidebarAccordionPanelHeight(navGroup);
+    updateSidebarAccordionAccessibility(navGroup, !shouldCollapse);
+
+    if (!(options && options.skipPersist)) {
+      writeSidebarGroupCollapsed(config.id, collapsed);
+    }
+  }
+
+  function toggleSidebarAccordion(navGroup, config) {
+    if (isDesktopViewport() && document.body instanceof HTMLBodyElement && document.body.classList.contains(SIDEBAR_COLLAPSED_CLASS)) {
+      return;
+    }
+
+    var nextCollapsed = !navGroup.classList.contains('cla-collapsed');
+    setSidebarAccordionCollapsed(navGroup, config, nextCollapsed);
+
+    if (!nextCollapsed) {
+      setTimeout(function () {
+        scrollNavGroupIntoView(navGroup);
+      }, 220);
+    }
+  }
+
+  function ensureMainNavAccordions() {
     var mainNav = document.querySelector('.main-nav-container .main-nav');
 
     if (!(mainNav instanceof HTMLElement)) {
@@ -630,28 +952,15 @@
 
     for (var i = 0; i < navGroups.length; i += 1) {
       var navGroup = navGroups[i];
+      var config = getSidebarAccordionGroupConfig(navGroup);
 
-      if (!isCatalogNavGroup(navGroup)) {
+      if (!config) {
         continue;
       }
 
-      if (navGroup.dataset.claAccordionInit === 'true') {
-        return;
-      }
-
-      navGroup.dataset.claAccordionInit = 'true';
+      navGroup.dataset.claAccordionGroupId = config.id;
       navGroup.classList.add('cla-accordion');
-
-      // Restaurar estado guardado
-      try {
-        if (window.localStorage.getItem(CATALOG_ACCORDION_KEY) === 'true') {
-          navGroup.classList.add('cla-collapsed');
-        }
-      } catch (e) {
-        // ignore
-      }
-
-      // Agregar chevron al section-header
+      var panel = ensureSidebarAccordionPanel(navGroup);
       var sectionHeader = navGroup.querySelector('.section-header');
 
       if (sectionHeader instanceof HTMLElement && !sectionHeader.querySelector('.cla-accordion-toggle')) {
@@ -661,58 +970,113 @@
         chevron.innerHTML =
           '<svg viewBox="0 0 24 24" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg>';
         sectionHeader.appendChild(chevron);
-
-        sectionHeader.addEventListener('click', function (e) {
-          // No activar si hicieron click en un botón secundario del header
-          if (e.target instanceof Element && e.target.closest('.button-small')) {
+      }
+      
+      if (sectionHeader instanceof HTMLElement && sectionHeader.dataset.claAccordionBound !== 'true') {
+        sectionHeader.dataset.claAccordionBound = 'true';
+        sectionHeader.addEventListener('click', function (event) {
+          if (event.target instanceof Element && event.target.closest('.button-small')) {
             return;
           }
 
-          var group = sectionHeader.closest('.nav-group');
+          var group = event.currentTarget.closest('.nav-group');
+          var groupId = group instanceof HTMLElement ? group.dataset.claAccordionGroupId : '';
+          var groupConfig = null;
 
-          if (!(group instanceof HTMLElement)) {
+          for (var groupIndex = 0; groupIndex < SIDEBAR_ACCORDION_GROUPS.length; groupIndex += 1) {
+            if (SIDEBAR_ACCORDION_GROUPS[groupIndex].id === groupId) {
+              groupConfig = SIDEBAR_ACCORDION_GROUPS[groupIndex];
+              break;
+            }
+          }
+
+          if (!(group instanceof HTMLElement) || !groupConfig) {
             return;
           }
 
-          var isCollapsed = group.classList.toggle('cla-collapsed');
-
-          try {
-            window.localStorage.setItem(CATALOG_ACCORDION_KEY, isCollapsed ? 'true' : 'false');
-          } catch (err) {
-            // ignore
+          toggleSidebarAccordion(group, groupConfig);
+        });
+        sectionHeader.addEventListener('keydown', function (event) {
+          if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
           }
 
-          // Si se expandió, scrollear para mostrar los ítems
-          if (!isCollapsed) {
-            setTimeout(function () {
-              scrollNavGroupIntoView(group);
-            }, 220);
-          }
+          event.preventDefault();
+          event.currentTarget.click();
         });
       }
 
-      return;
+      if (panel instanceof HTMLElement && !panel.id) {
+        panel.id = 'cla-accordion-panel-' + config.id;
+      }
+
+      var shouldCollapse = readSidebarGroupCollapsed(config.id);
+
+      if (isSidebarAccordionGroupActive(navGroup, config)) {
+        shouldCollapse = false;
+      }
+
+      setSidebarAccordionCollapsed(navGroup, config, shouldCollapse, { skipPersist: true });
     }
   }
 
   function scrollNavGroupIntoView(navGroup) {
-    var scrollEl =
-      navGroup.closest('.sidenav') ||
-      document.querySelector('.left-nav .sidenav');
+    scrollElementIntoSidebarView(navGroup, {
+      topPadding: 16,
+      bottomPadding: 32
+    });
+  }
 
-    if (!(scrollEl instanceof HTMLElement)) {
+  function ensureSidebarItemTitles() {
+    var interactiveElements = document.querySelectorAll(
+      '.left-nav .nav-link a, .left-nav .setting-link, .left-nav vdr-channel-switcher .active-channel'
+    );
+
+    for (var i = 0; i < interactiveElements.length; i += 1) {
+      var element = interactiveElements[i];
+
+      if (!(element instanceof HTMLElement)) {
+        continue;
+      }
+
+      var label = (element.textContent || '').replace(/\s+/g, ' ').trim();
+
+      if (!label) {
+        continue;
+      }
+
+      if (!element.getAttribute('title')) {
+        element.setAttribute('title', label);
+      }
+
+      if (!element.getAttribute('aria-label')) {
+        element.setAttribute('aria-label', label);
+      }
+    }
+  }
+
+  function ensureActiveSidebarItemVisible() {
+    var activeItem = document.querySelector(
+      '.left-nav .nav-link.active, .left-nav .nav-link a.active, .left-nav .nav-link a[aria-current="page"], .left-nav .nav-link a.router-link-active'
+    );
+
+    if (!(activeItem instanceof HTMLElement)) {
+      lastActiveSidebarItemKey = null;
       return;
     }
 
-    var groupRect = navGroup.getBoundingClientRect();
-    var containerRect = scrollEl.getBoundingClientRect();
+    var activeItemKey = activeItem.getAttribute('href') || (activeItem.textContent || '').replace(/\s+/g, ' ').trim();
 
-    if (groupRect.bottom > containerRect.bottom - 8) {
-      scrollEl.scrollBy({
-        top: Math.round(groupRect.bottom - containerRect.bottom + 32),
-        behavior: 'smooth'
-      });
+    if (!activeItemKey || activeItemKey === lastActiveSidebarItemKey) {
+      return;
     }
+
+    lastActiveSidebarItemKey = activeItemKey;
+
+    scrollElementIntoSidebarView(activeItem, {
+      topPadding: 24,
+      bottomPadding: 32
+    });
   }
 
   function handleDocumentClick(event) {
@@ -1753,7 +2117,9 @@
     ensureLoginBranding();
     enhancePasswordField();
     ensureDesktopSidebarToggle();
-    ensureCatalogAccordion();
+    ensureMainNavAccordions();
+    ensureSidebarItemTitles();
+    ensureActiveSidebarItemVisible();
     enhanceEmptyStates();
     removePersonalizationPanel();
   }

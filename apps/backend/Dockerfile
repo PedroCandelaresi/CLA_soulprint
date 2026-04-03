@@ -24,6 +24,17 @@ COPY apps/backend ./apps/backend
 
 WORKDIR /usr/src/app/apps/backend
 RUN pnpm build
+RUN rm -rf \
+    ./admin-ui/.angular \
+    ./admin-ui/node_modules \
+    ./admin-ui/src \
+    ./admin-ui/static-assets \
+    ./admin-ui/README.md \
+    ./admin-ui/angular.json \
+    ./admin-ui/package.json \
+    ./admin-ui/pnpm-lock.yaml \
+    ./admin-ui/tsconfig.json
+RUN node -e "const fs=require('fs'); const packageJsonPath='/usr/src/app/apps/backend/package.json'; const packageJson=JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')); delete packageJson.devDependencies; fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 4) + '\n');"
 
 FROM build AS deploy
 
