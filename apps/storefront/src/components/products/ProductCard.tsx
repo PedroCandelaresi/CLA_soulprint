@@ -58,6 +58,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <Card
             sx={{
                 p: 0,
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 border: (theme) => `1px solid ${theme.palette.divider}`,
                 position: 'relative',
                 transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
@@ -80,12 +83,20 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 />
             </Box>
 
-            <CardContent sx={{ p: 3, pt: 2 }}>
+            <CardContent sx={{ p: 3, pt: 2, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                 <Typography
                     variant="h6"
                     component={Link}
                     href={`/productos/${product.slug}`}
-                    sx={{ textDecoration: 'none', color: 'text.primary', '&:hover': { color: 'primary.main' } }}
+                    sx={{
+                        display: 'block',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        textDecoration: 'none',
+                        color: 'text.primary',
+                        '&:hover': { color: 'primary.main' }
+                    }}
                 >
                     {product.name}
                 </Typography>

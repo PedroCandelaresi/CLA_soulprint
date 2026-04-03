@@ -202,14 +202,15 @@ export function GetnetCheckoutButton({
                             Una vez completado el pago, serás redirigido de vuelta aquí.
                         </Typography>
 
-                        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                            <Button variant="outlined" onClick={handleCloseDialog}>
+                        <Stack direction={{ xs: 'column-reverse', sm: 'row' }} spacing={2} sx={{ mt: 2, width: '100%' }}>
+                            <Button variant="outlined" onClick={handleCloseDialog} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                                 Cancelar
                             </Button>
                             <Button
                                 variant="contained"
                                 onClick={handleRedirectToPayment}
                                 autoFocus
+                                sx={{ width: { xs: '100%', sm: 'auto' } }}
                             >
                                 Ir al pago
                             </Button>

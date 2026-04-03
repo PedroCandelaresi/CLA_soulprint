@@ -22,9 +22,10 @@ interface Collection {
 
 interface ProductFilterProps {
     collections: Collection[];
+    onNavigate?: () => void;
 }
 
-const ProductFilter = ({ collections }: ProductFilterProps) => {
+const ProductFilter = ({ collections, onNavigate }: ProductFilterProps) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const activeCollection = searchParams.get('collection');
@@ -37,10 +38,12 @@ const ProductFilter = ({ collections }: ProductFilterProps) => {
             params.set('collection', slug);
         }
         router.push(`/productos?${params.toString()}`);
+        onNavigate?.();
     };
 
     const handleReset = () => {
         router.push('/productos');
+        onNavigate?.();
     };
 
     return (

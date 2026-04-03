@@ -461,7 +461,7 @@ export default function OrderPersonalizationCard({
                                         alt={activeLine.snapshotFileName || activeLine.productName}
                                         sx={{
                                             width: '100%',
-                                            maxWidth: 360,
+                                            maxWidth: { xs: '100%', sm: 360 },
                                             borderRadius: 2,
                                             border: '1px solid',
                                             borderColor: 'divider',
@@ -499,7 +499,7 @@ export default function OrderPersonalizationCard({
                                         alt={selectedFile?.name || 'Vista previa'}
                                         sx={{
                                             width: '100%',
-                                            maxWidth: 360,
+                                            maxWidth: { xs: '100%', sm: 360 },
                                             borderRadius: 2,
                                             border: '1px solid',
                                             borderColor: 'divider',

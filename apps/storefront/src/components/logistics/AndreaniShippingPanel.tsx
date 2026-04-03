@@ -431,7 +431,16 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
                                             Recotizar
                                         </Button>
                                     </Stack>
-                                    <Typography variant="subtitle1" fontWeight={600}>
+                                    <Typography
+                                        variant="subtitle1"
+                                        fontWeight={600}
+                                        noWrap
+                                        sx={{
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                        }}
+                                    >
                                         {savedSelection.serviceName ?? savedSelection.serviceCode ?? 'Servicio Andreani'}
                                     </Typography>
                                     <Typography variant="h6">
@@ -508,8 +517,18 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
                         <Card variant="outlined" sx={{ backgroundColor: 'background.paper' }}>
                             <CardContent>
                                 <Stack spacing={1}>
-                                    <Stack direction="row" spacing={1} alignItems="center">
-                                        <Typography variant="subtitle1" fontWeight={600}>
+                                    <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                                        <Typography
+                                            variant="subtitle1"
+                                            fontWeight={600}
+                                            sx={{
+                                                flex: 1,
+                                                minWidth: 0,
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                            }}
+                                        >
                                             {quote.serviceName}
                                         </Typography>
                                         {quote.isSimulated ? (
@@ -519,7 +538,16 @@ export default function AndreaniShippingPanel({ cart }: AndreaniShippingPanelPro
                                     <Typography variant="h5">
                                         {formatCurrencyFromCents(quote.priceCents, quote.currency)}
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary">
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        noWrap
+                                        sx={{
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                        }}
+                                    >
                                         Entrega estimada: {quote.estimatedDelivery ?? 'No especificada'}
                                     </Typography>
 

@@ -192,7 +192,15 @@ export default function CartPageContent() {
     }
 
     return (
-        <Stack spacing={3}>
+        <Stack
+            spacing={3}
+            sx={(theme) => ({
+                '--header-height': '64px',
+                [theme.breakpoints.up('md')]: {
+                    '--header-height': '72px',
+                },
+            })}
+        >
             <Box>
                 <Typography variant="h3" fontWeight={700}>Carrito</Typography>
                 <Typography color="text.secondary">
@@ -235,13 +243,18 @@ export default function CartPageContent() {
                                         </Box>
 
                                         <Stack spacing={1.5} flex={1}>
-                                            <Box>
+                                            <Box sx={{ minWidth: 0 }}>
                                                 {line.productVariant.product.slug ? (
                                                     <Typography
                                                         component={Link}
                                                         href={`/productos/${line.productVariant.product.slug}`}
                                                         variant="h5"
+                                                        noWrap
                                                         sx={{
+                                                            display: 'block',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
                                                             textDecoration: 'none',
                                                             color: 'text.primary',
                                                             '&:hover': { color: 'primary.main' },
@@ -250,11 +263,28 @@ export default function CartPageContent() {
                                                         {line.productVariant.product.name}
                                                     </Typography>
                                                 ) : (
-                                                    <Typography variant="h5" color="text.primary">
+                                                    <Typography
+                                                        variant="h5"
+                                                        color="text.primary"
+                                                        noWrap
+                                                        sx={{
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
                                                         {line.productVariant.product.name}
                                                     </Typography>
                                                 )}
-                                                <Typography color="text.secondary">
+                                                <Typography
+                                                    color="text.secondary"
+                                                    noWrap
+                                                    sx={{
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
+                                                    }}
+                                                >
                                                     Variante: {line.productVariant.name}
                                                 </Typography>
                                             </Box>
@@ -326,7 +356,7 @@ export default function CartPageContent() {
                         p: 3,
                         borderRadius: 4,
                         position: { lg: 'sticky' },
-                        top: { lg: 108 },
+                        top: { lg: 'calc(var(--header-height) + 16px)' },
                     }}
                 >
                     <Stack spacing={2}>

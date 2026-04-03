@@ -232,8 +232,13 @@ export default function HeaderClient({ headerLogo, drawerLogo, drawerDecorativeL
                 </Toolbar>
             </Container>
 
-            <Drawer anchor="left" open={menuAbierto} onClose={() => setMenuAbierto(false)}>
-                <Box sx={{ width: 280, height: "100%" }} role="presentation" onClick={() => setMenuAbierto(false)}>
+            <Drawer
+                anchor="left"
+                open={menuAbierto}
+                onClose={() => setMenuAbierto(false)}
+                PaperProps={{ sx: { width: "clamp(240px, 80vw, 280px)" } }}
+            >
+                <Box sx={{ width: "100%", height: "100%" }} role="presentation" onClick={() => setMenuAbierto(false)}>
                     <Box
                         sx={{
                             position: "relative",

@@ -40,7 +40,16 @@ const ProductCarousel = ({ images, alt }: ProductCarouselProps) => {
 
     return (
         <Box sx={{ maxWidth: '100%', flexGrow: 1, position: 'relative' }}>
-            <Box sx={{ position: 'relative', width: '100%', height: '500px', overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
+            <Box
+                sx={{
+                    position: 'relative',
+                    width: '100%',
+                    height: { xs: '260px', sm: '360px', md: '500px' },
+                    overflow: 'hidden',
+                    borderRadius: 2,
+                    border: `1px solid ${theme.palette.divider}`,
+                }}
+            >
                 <Image
                     src={currentImages[activeStep]}
                     alt={`${alt} - Image ${activeStep + 1}`}

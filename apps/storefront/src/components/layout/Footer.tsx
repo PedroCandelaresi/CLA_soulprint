@@ -1,7 +1,6 @@
 'use client';
 import {
     Box,
-    Grid,
     Typography,
     Container,
     Stack,
@@ -14,22 +13,23 @@ const Footer = () => {
     return (
         <Box sx={{ bgcolor: 'background.paper', pt: 6, pb: 2 }}>
             <Container maxWidth="lg">
-                <Grid container spacing={3} justifyContent="center" mb={2}>
-                    <Grid size={{ xs: 12 }} sx={{ textAlign: 'center' }}>
-                        <Stack direction="row" spacing={2} justifyContent="center" mb={3}>
-                            <IconButton href="#" color="primary"><IconBrandInstagram /></IconButton>
-                            <IconButton href="#" color="primary"><IconBrandFacebook /></IconButton>
-                        </Stack>
-                    </Grid>
-                </Grid>
-
-                <Box py={3} textAlign="center">
-                    <Typography variant="body2" color="textSecondary">
+                <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={{ xs: 2, sm: 4 }}
+                    alignItems="center"
+                    justifyContent="center"
+                    sx={{ py: 3, textAlign: { xs: 'center', sm: 'left' } }}
+                >
+                    <Stack direction="row" spacing={2} justifyContent="center">
+                        <IconButton href="#" color="primary"><IconBrandInstagram /></IconButton>
+                        <IconButton href="#" color="primary"><IconBrandFacebook /></IconButton>
+                    </Stack>
+                    <Typography variant="body2" color="textSecondary" sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
                         <Link href="https://intech.nqn.net.ar" target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
                             Power By Intech.nqn
                         </Link>
                     </Typography>
-                </Box>
+                </Stack>
             </Container>
         </Box>
     );

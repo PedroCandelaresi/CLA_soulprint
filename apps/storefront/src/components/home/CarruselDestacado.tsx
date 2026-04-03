@@ -74,21 +74,59 @@ const CarruselDestacado = () => {
                         }}
                     >
                         <Container maxWidth="lg" sx={{ height: '100%', display: 'flex', alignItems: 'center' }}>
-                            <Stack spacing={3} maxWidth={600} px={3} py={6} sx={{ textAlign: { xs: "center", md: "left" }, alignItems: { xs: "center", md: "flex-start" } }}>
-                                <Typography variant="overline" color="primary.light" letterSpacing={4} sx={{ fontSize: '1rem' }}>
+                            <Stack
+                                spacing={3}
+                                maxWidth={600}
+                                sx={{
+                                    px: { xs: 2.5, md: 3 },
+                                    py: { xs: 4, md: 6 },
+                                    textAlign: { xs: "center", md: "left" },
+                                    alignItems: { xs: "center", md: "flex-start" },
+                                }}
+                            >
+                                <Typography
+                                    variant="overline"
+                                    color="primary.light"
+                                    letterSpacing={4}
+                                    sx={{ fontSize: { xs: '0.9rem', md: '1rem' } }}
+                                >
                                     CLA Joyas
                                 </Typography>
                                 <Typography variant="h2" color="common.white" fontWeight={700} sx={{ typography: { xs: 'h3', md: 'h1' } }}>
                                     {slide.titulo}
                                 </Typography>
-                                <Typography variant="h5" color="grey.300" fontWeight={400} sx={{ mb: 2 }}>
+                                <Typography
+                                    variant="h5"
+                                    color="grey.300"
+                                    fontWeight={400}
+                                    sx={{ mb: 2, typography: { xs: 'body1', md: 'h5' } }}
+                                >
                                     {slide.descripcion}
                                 </Typography>
                                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent={{ xs: "center", md: "flex-start" }}>
-                                    <Button variant="contained" color="primary" size="large" href={slide.enlace} sx={{ px: 4, py: 1.5, fontSize: '1.1rem' }}>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        size="large"
+                                        href={slide.enlace}
+                                        sx={{ px: { xs: 2.5, md: 4 }, py: { xs: 1.25, md: 1.5 }, fontSize: { xs: '0.9rem', md: '1.1rem' } }}
+                                    >
                                         Ver colección
                                     </Button>
-                                    <Button variant="outlined" color="inherit" size="large" href="/productos" sx={{ px: 4, py: 1.5, fontSize: '1.1rem', borderColor: 'white', color: 'white', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}>
+                                    <Button
+                                        variant="outlined"
+                                        color="inherit"
+                                        size="large"
+                                        href="/productos"
+                                        sx={{
+                                            px: { xs: 2.5, md: 4 },
+                                            py: { xs: 1.25, md: 1.5 },
+                                            fontSize: { xs: '0.9rem', md: '1.1rem' },
+                                            borderColor: 'white',
+                                            color: 'white',
+                                            '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' },
+                                        }}
+                                    >
                                         Explorar tienda
                                     </Button>
                                 </Stack>

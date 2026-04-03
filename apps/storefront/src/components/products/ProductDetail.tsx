@@ -70,9 +70,9 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
                 <Stack spacing={2}>
-                    <Typography variant="h3" fontWeight="bold">{product.name}</Typography>
+                    <Typography fontWeight="bold" sx={{ typography: { xs: 'h5', md: 'h3' } }}>{product.name}</Typography>
 
-                    <Typography variant="h4" color="primary.main" fontWeight="bold">
+                    <Typography color="primary.main" fontWeight="bold" sx={{ typography: { xs: 'h6', md: 'h4' } }}>
                         {price}
                     </Typography>
 
