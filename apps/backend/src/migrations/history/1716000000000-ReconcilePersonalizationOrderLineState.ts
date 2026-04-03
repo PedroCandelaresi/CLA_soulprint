@@ -12,12 +12,11 @@ export class ReconcilePersonalizationOrderLineState1716000000000 implements Migr
     name = 'ReconcilePersonalizationOrderLineState1716000000000';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const hasOrderLineCustomFields = await this.tableExists(queryRunner, 'order_line_custom_fields');
-        const hasOrderCustomFields = await this.tableExists(queryRunner, 'order_custom_fields');
+        const hasOrder = await this.tableExists(queryRunner, 'order');
         const hasOrderLine = await this.tableExists(queryRunner, 'order_line');
         const hasProductVariant = await this.tableExists(queryRunner, 'product_variant');
 
-        if (!hasOrderLineCustomFields || !hasOrderCustomFields || !hasOrderLine || !hasProductVariant) {
+        if (!hasOrder || !hasOrderLine || !hasProductVariant) {
             return;
         }
 
@@ -31,21 +30,20 @@ export class ReconcilePersonalizationOrderLineState1716000000000 implements Migr
             return;
         }
 
-        const hasLineStatus = await this.columnExists(queryRunner, 'order_line_custom_fields', 'personalizationStatus');
-        const hasLineAssetId = await this.columnExists(queryRunner, 'order_line_custom_fields', 'personalizationAssetId');
-        const hasLineUploadedAt = await this.columnExists(queryRunner, 'order_line_custom_fields', 'personalizationUploadedAt');
-        const hasOverallStatus = await this.columnExists(queryRunner, 'order_custom_fields', 'personalizationOverallStatus');
+        const hasLineStatus = await this.columnExists(queryRunner, 'order_line', 'customFieldsPersonalizationstatus');
+        const hasLineAssetId = await this.columnExists(queryRunner, 'order_line', 'customFieldsPersonalizationassetid');
+        const hasLineUploadedAt = await this.columnExists(queryRunner, 'order_line', 'customFieldsPersonalizationuploadedat');
+        const hasOverallStatus = await this.columnExists(queryRunner, 'order', 'customFieldsPersonalizationoverallstatus');
 
         if (hasLineStatus) {
             await queryRunner.query(`
-                UPDATE order_line_custom_fields olcf
-                INNER JOIN order_line ol ON ol.id = olcf.orderLineId
-                INNER JOIN product_variant pv ON pv.id = ol.productVariantId
-                SET olcf.personalizationStatus = CASE
+                UPDATE \`order_line\` ol
+                INNER JOIN \`product_variant\` pv ON pv.id = ol.productVariantId
+                SET ol.\`customFieldsPersonalizationstatus\` = CASE
                     WHEN COALESCE(pv.\`${variantRequiresPersonalizationColumn}\`, 0) = 0 THEN 'not-required'
-                    WHEN olcf.personalizationStatus IN ('uploaded', 'approved', 'rejected') THEN olcf.personalizationStatus
-                    ${hasLineAssetId ? "WHEN olcf.personalizationAssetId IS NOT NULL THEN 'uploaded'" : ''}
-                    ${hasLineUploadedAt ? "WHEN olcf.personalizationUploadedAt IS NOT NULL THEN 'uploaded'" : ''}
+                    WHEN ol.\`customFieldsPersonalizationstatus\` IN ('uploaded', 'approved', 'rejected') THEN ol.\`customFieldsPersonalizationstatus\`
+                    ${hasLineAssetId ? "WHEN ol.`customFieldsPersonalizationassetid` IS NOT NULL THEN 'uploaded'" : ''}
+                    ${hasLineUploadedAt ? "WHEN ol.`customFieldsPersonalizationuploadedat` IS NOT NULL THEN 'uploaded'" : ''}
                     ELSE 'pending-upload'
                 END
             `);
@@ -53,7 +51,7 @@ export class ReconcilePersonalizationOrderLineState1716000000000 implements Migr
 
         if (hasOverallStatus) {
             await queryRunner.query(`
-                UPDATE order_custom_fields ocf
+                UPDATE \`order\` o
                 LEFT JOIN (
                     SELECT
                         ol.orderId AS orderId,
@@ -61,17 +59,16 @@ export class ReconcilePersonalizationOrderLineState1716000000000 implements Migr
                         SUM(
                             CASE
                                 WHEN COALESCE(pv.\`${variantRequiresPersonalizationColumn}\`, 0) = 1
-                                     AND COALESCE(olcf.personalizationStatus, 'not-required') IN ('uploaded', 'approved')
+                                     AND COALESCE(ol.\`customFieldsPersonalizationstatus\`, 'not-required') IN ('uploaded', 'approved')
                                 THEN 1
                                 ELSE 0
                             END
                         ) AS completedCount
-                    FROM order_line ol
-                    INNER JOIN product_variant pv ON pv.id = ol.productVariantId
-                    LEFT JOIN order_line_custom_fields olcf ON olcf.orderLineId = ol.id
+                    FROM \`order_line\` ol
+                    INNER JOIN \`product_variant\` pv ON pv.id = ol.productVariantId
                     GROUP BY ol.orderId
-                ) summary ON summary.orderId = ocf.orderId
-                SET ocf.personalizationOverallStatus = CASE
+                ) summary ON summary.orderId = o.id
+                SET o.\`customFieldsPersonalizationoverallstatus\` = CASE
                     WHEN COALESCE(summary.requiredCount, 0) = 0 THEN 'not-required'
                     WHEN COALESCE(summary.completedCount, 0) = 0 THEN 'pending'
                     WHEN summary.completedCount < summary.requiredCount THEN 'partial'

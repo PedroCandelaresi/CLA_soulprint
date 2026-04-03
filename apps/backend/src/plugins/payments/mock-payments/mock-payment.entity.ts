@@ -9,11 +9,11 @@ export class MockPaymentTransaction extends VendureEntity {
         super(input);
     }
 
-    @Index()
+    @Index('IDX_mock_payment_order_code')
     @Column()
     orderCode!: string;
 
-    @Index({ unique: true })
+    @Index('IDX_mock_payment_transaction_code', { unique: true })
     @Column()
     transactionCode!: string;
 

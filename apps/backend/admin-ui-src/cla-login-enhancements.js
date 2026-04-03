@@ -1,11 +1,12 @@
 (function () {
   var SIDEBAR_COLLAPSED_CLASS = 'cla-sidebar-collapsed';
   var SIDEBAR_STORAGE_KEY = 'cla-admin-sidebar-collapsed';
+  var CATALOG_ACCORDION_KEY = 'cla-admin-catalog-collapsed';
   var BRAND_LOGO_ASSET_PATH = 'assets/cla-logo.svg';
-  var SIDEBAR_COLLAPSE_ICON =
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"></rect><path d="M8.5 5v14"></path><path d="M14 9.25 10.5 12 14 14.75"></path></svg>';
-  var SIDEBAR_EXPAND_ICON =
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"></rect><path d="M8.5 5v14"></path><path d="M11 9.25 14.5 12 11 14.75"></path></svg>';
+  var SIDEBAR_MENU_ICON =
+    '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><line x1="2" y1="5" x2="18" y2="5"/><line x1="2" y1="10" x2="18" y2="10"/><line x1="2" y1="15" x2="18" y2="15"/></svg>';
+  var SIDEBAR_COLLAPSE_ICON = SIDEBAR_MENU_ICON;
+  var SIDEBAR_EXPAND_ICON = SIDEBAR_MENU_ICON;
   var eyeOpenIcon =
     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.8-6 10-6 10 6 10 6-3.8 6-10 6-10-6-10-6Z"></path><circle cx="12" cy="12" r="3.2"></circle></svg>';
   var eyeClosedIcon =
@@ -606,6 +607,114 @@
     updateSidebarToggleButton();
   }
 
+  function isCatalogNavGroup(navGroup) {
+    var header = navGroup.querySelector('.nav-group-header');
+
+    if (!(header instanceof HTMLElement)) {
+      return false;
+    }
+
+    var text = (header.textContent || '').trim().toLowerCase();
+
+    return text === 'catálogo' || text === 'catalogo' || text === 'catalog';
+  }
+
+  function ensureCatalogAccordion() {
+    var mainNav = document.querySelector('.main-nav-container .main-nav');
+
+    if (!(mainNav instanceof HTMLElement)) {
+      return;
+    }
+
+    var navGroups = mainNav.querySelectorAll('.nav-group');
+
+    for (var i = 0; i < navGroups.length; i += 1) {
+      var navGroup = navGroups[i];
+
+      if (!isCatalogNavGroup(navGroup)) {
+        continue;
+      }
+
+      if (navGroup.dataset.claAccordionInit === 'true') {
+        return;
+      }
+
+      navGroup.dataset.claAccordionInit = 'true';
+      navGroup.classList.add('cla-accordion');
+
+      // Restaurar estado guardado
+      try {
+        if (window.localStorage.getItem(CATALOG_ACCORDION_KEY) === 'true') {
+          navGroup.classList.add('cla-collapsed');
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // Agregar chevron al section-header
+      var sectionHeader = navGroup.querySelector('.section-header');
+
+      if (sectionHeader instanceof HTMLElement && !sectionHeader.querySelector('.cla-accordion-toggle')) {
+        var chevron = document.createElement('span');
+        chevron.className = 'cla-accordion-toggle';
+        chevron.setAttribute('aria-hidden', 'true');
+        chevron.innerHTML =
+          '<svg viewBox="0 0 24 24" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+        sectionHeader.appendChild(chevron);
+
+        sectionHeader.addEventListener('click', function (e) {
+          // No activar si hicieron click en un botón secundario del header
+          if (e.target instanceof Element && e.target.closest('.button-small')) {
+            return;
+          }
+
+          var group = sectionHeader.closest('.nav-group');
+
+          if (!(group instanceof HTMLElement)) {
+            return;
+          }
+
+          var isCollapsed = group.classList.toggle('cla-collapsed');
+
+          try {
+            window.localStorage.setItem(CATALOG_ACCORDION_KEY, isCollapsed ? 'true' : 'false');
+          } catch (err) {
+            // ignore
+          }
+
+          // Si se expandió, scrollear para mostrar los ítems
+          if (!isCollapsed) {
+            setTimeout(function () {
+              scrollNavGroupIntoView(group);
+            }, 220);
+          }
+        });
+      }
+
+      return;
+    }
+  }
+
+  function scrollNavGroupIntoView(navGroup) {
+    var scrollEl =
+      navGroup.closest('.sidenav') ||
+      document.querySelector('.left-nav .sidenav');
+
+    if (!(scrollEl instanceof HTMLElement)) {
+      return;
+    }
+
+    var groupRect = navGroup.getBoundingClientRect();
+    var containerRect = scrollEl.getBoundingClientRect();
+
+    if (groupRect.bottom > containerRect.bottom - 8) {
+      scrollEl.scrollBy({
+        top: Math.round(groupRect.bottom - containerRect.bottom + 32),
+        behavior: 'smooth'
+      });
+    }
+  }
+
   function handleDocumentClick(event) {
     if (!(event.target instanceof Element)) {
       return;
@@ -613,12 +722,34 @@
 
     var desktopToggle = event.target.closest('.cla-desktop-nav-toggle');
 
-    if (!(desktopToggle instanceof HTMLButtonElement)) {
+    if (desktopToggle instanceof HTMLButtonElement) {
+      event.preventDefault();
+      toggleDesktopSidebar();
       return;
     }
 
-    event.preventDefault();
-    toggleDesktopSidebar();
+    // Scroll automático al expandir acordeones de Ajustes / Sistema
+    var navGroupTrigger = event.target.closest(
+      '.left-nav .nav-group .nav-group-trigger,' +
+      '.left-nav .nav-group .nav-trigger,' +
+      '.left-nav .nav-group [clrverticalnavgrouphandle]'
+    );
+
+    if (navGroupTrigger instanceof HTMLElement) {
+      var navGroup = navGroupTrigger.closest('.nav-group');
+
+      if (navGroup instanceof HTMLElement) {
+        setTimeout(function () {
+          var isExpanded =
+            !navGroup.classList.contains('collapsed') &&
+            !navGroup.classList.contains('cla-collapsed');
+
+          if (isExpanded) {
+            scrollNavGroupIntoView(navGroup);
+          }
+        }, 280);
+      }
+    }
   }
 
   function isVisible(element) {
@@ -1622,6 +1753,7 @@
     ensureLoginBranding();
     enhancePasswordField();
     ensureDesktopSidebarToggle();
+    ensureCatalogAccordion();
     enhanceEmptyStates();
     removePersonalizationPanel();
   }

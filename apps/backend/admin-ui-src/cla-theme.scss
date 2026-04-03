@@ -719,8 +719,7 @@ vdr-user-menu .user-circle {
 }
 
 .expand-menu button,
-.collapse-menu button,
-.cla-desktop-nav-toggle {
+.collapse-menu button {
   align-items: center;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--topbar-border);
@@ -738,14 +737,12 @@ vdr-user-menu .user-circle {
 }
 
 body[data-theme="dark"] .expand-menu button,
-body[data-theme="dark"] .collapse-menu button,
-body[data-theme="dark"] .cla-desktop-nav-toggle {
+body[data-theme="dark"] .collapse-menu button {
   background: rgba(255, 255, 255, 0.05);
 }
 
 .expand-menu button:hover,
-.collapse-menu button:hover,
-.cla-desktop-nav-toggle:hover {
+.collapse-menu button:hover {
   background: var(--topbar-surface-hover);
   border-color: rgba(244, 234, 213, 0.26);
   color: #ffffff;
@@ -753,23 +750,38 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
 }
 
 .cla-desktop-nav-toggle {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--topbar-text);
+  cursor: pointer;
+  display: inline-flex;
+  height: 44px;
+  justify-content: center;
   margin-inline-end: 4px;
+  opacity: 0.8;
+  padding: 0 10px;
+  transition: opacity 0.18s ease, color 0.18s ease;
+}
+
+.cla-desktop-nav-toggle:hover {
+  color: #ffffff;
+  opacity: 1;
 }
 
 .cla-desktop-nav-toggle svg {
   display: block;
   flex-shrink: 0;
+  fill: none;
   height: 18px;
+  pointer-events: none;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.8;
+  stroke-width: 2;
   width: 18px;
-}
-
-.cla-desktop-nav-toggle span {
-  font-size: 13px;
-  font-weight: 600;
 }
 
 @media screen and (max-width: 991px) {
@@ -811,10 +823,13 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
   background: var(--nav-bg) !important;
   border-inline-end: 1px solid var(--nav-border);
   box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
   width: var(--left-nav-width) !important;
   min-width: var(--left-nav-width) !important;
   max-width: var(--left-nav-width) !important;
-  overflow: hidden;
   transition:
     width 0.22s ease,
     min-width 0.22s ease,
@@ -825,9 +840,45 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
   align-items: center;
   background: var(--nav-bg) !important;
   border-bottom: 1px solid var(--nav-divider);
+  flex-shrink: 0;
   gap: 12px;
   padding: 20px 18px 18px;
   position: relative;
+  z-index: 2;
+}
+
+/* Área de nav scrolleable — la marca siempre queda visible arriba */
+.left-nav .sidenav {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(244, 234, 213, 0.18) transparent;
+}
+
+.left-nav .sidenav-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.left-nav .sidenav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.left-nav .sidenav::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.left-nav .sidenav::-webkit-scrollbar-thumb {
+  background-color: rgba(244, 234, 213, 0.18);
+  border: none;
+  border-radius: 999px;
+}
+
+.left-nav .sidenav::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(244, 234, 213, 0.34);
 }
 
 .cla-branding-shell {
@@ -883,13 +934,13 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
 }
 
 .main-nav-container {
-  padding-top: 14px;
+  padding-top: 8px;
 }
 
 .settings-nav-container {
   border-top: 1px solid var(--nav-divider);
   margin-top: auto;
-  padding-top: 18px;
+  padding-top: 12px;
 }
 
 .settings-nav-container hr {
@@ -898,7 +949,7 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
 
 .main-nav .nav-group {
   border: none;
-  margin-bottom: 20px;
+  margin-bottom: 6px;
   padding: 0;
 }
 
@@ -909,8 +960,8 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
 
 .main-nav .nav-group .section-header {
   align-items: center;
-  min-height: 28px;
-  padding: 0 10px 12px 14px;
+  min-height: 22px;
+  padding: 0 8px 6px 10px;
 }
 
 .main-nav .nav-group .nav-group-header {
@@ -942,7 +993,7 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
 }
 
 .main-nav .nav-group .nav-link+.nav-link {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .main-nav .nav-group .nav-link a {
@@ -953,8 +1004,8 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
   display: flex;
   gap: 12px;
   font-weight: 500;
-  min-height: 42px;
-  padding: 0 14px;
+  min-height: 36px;
+  padding: 0 10px;
   transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
   width: 100%;
 }
@@ -1010,8 +1061,8 @@ body[data-theme="dark"] .cla-desktop-nav-toggle {
   color: var(--nav-text);
   display: flex;
   gap: 12px;
-  min-height: 42px;
-  padding: 0 14px;
+  min-height: 36px;
+  padding: 0 10px;
   transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
@@ -1031,8 +1082,8 @@ vdr-channel-switcher .active-channel {
   border: 1px solid var(--nav-border);
   border-radius: 12px;
   color: var(--nav-text);
-  min-height: 42px;
-  padding: 0 14px;
+  min-height: 36px;
+  padding: 0 10px;
 }
 
 vdr-channel-switcher .active-channel:hover {
@@ -1041,6 +1092,62 @@ vdr-channel-switcher .active-channel:hover {
 
 .version {
   color: var(--nav-muted);
+}
+
+/* ===== Acordeón de Catálogo ===== */
+.main-nav .nav-group.cla-accordion .section-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.main-nav .nav-group.cla-accordion .section-header:hover .cla-accordion-toggle {
+  color: var(--nav-text);
+}
+
+.cla-accordion-toggle {
+  color: var(--nav-muted);
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+  margin-inline-start: auto;
+  transition: transform 0.2s ease, color 0.18s ease;
+}
+
+.cla-accordion-toggle svg {
+  display: block;
+  height: 13px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+  width: 13px;
+}
+
+.main-nav .nav-group.cla-accordion.cla-collapsed .cla-accordion-toggle {
+  transform: rotate(-90deg);
+}
+
+.main-nav .nav-group.cla-accordion.cla-collapsed .nav-link {
+  height: 0;
+  margin: 0 !important;
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* En modo colapsado de sidebar, el acordeón no aplica (solo íconos visibles) */
+@media screen and (min-width: 992px) {
+  body.cla-sidebar-collapsed .main-nav .nav-group.cla-accordion .cla-accordion-toggle {
+    display: none !important;
+  }
+
+  body.cla-sidebar-collapsed .main-nav .nav-group.cla-accordion.cla-collapsed .nav-link {
+    height: auto !important;
+    margin-top: 2px !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+  }
 }
 
 @media screen and (min-width: 992px) {

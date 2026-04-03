@@ -16,10 +16,10 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
  * - pending → processing → expired (terminal failure)
  */
 @Entity('getnet_payment_transaction')
-@Index(['providerOrderUuid'], { unique: true })
-@Index(['vendureOrderCode'])
-@Index(['status'])
-@Index(['createdAt'])
+@Index('IDX_getnet_provider_order', ['providerOrderUuid'], { unique: true })
+@Index('IDX_getnet_vendure_order', ['vendureOrderCode'])
+@Index('IDX_getnet_status', ['status'])
+@Index('IDX_getnet_created', ['createdAt'])
 export class GetnetPaymentTransaction {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
@@ -28,7 +28,6 @@ export class GetnetPaymentTransaction {
      * The internal Vendure order code (e.g., "ORD-00001")
      */
     @Column({ type: 'varchar', length: 255 })
-    @Index()
     vendureOrderCode!: string;
 
     /**
@@ -101,7 +100,14 @@ export class GetnetPaymentTransaction {
     /**
      * Whether we've processed a terminal state (no more updates expected)
      */
-    @Column({ type: 'boolean', default: false })
+    @Column({
+        type: 'tinyint',
+        default: () => '0',
+        transformer: {
+            to: (value?: boolean) => (value ? 1 : 0),
+            from: (value: number | boolean | null) => Boolean(value),
+        },
+    })
     isTerminal!: boolean;
 
     /**
