@@ -533,6 +533,24 @@ export class GetnetService {
      * This also persists the transaction to the local database
      */
     async createOrder(dto: CreateCheckoutDto): Promise<CheckoutResponse> {
+        // Standalone mock mode: no Vendure DI available (standalone server process).
+        // Build a synthetic order from the DTO and skip Vendure validation.
+        if (this.isMockModeEnabled() && !this.vendureServices?.orderService) {
+            console.log(`${this.prefix} [mock] Standalone mode: building synthetic order from DTO for ${dto.orderCode}`);
+            const storefrontAmount = this.calculateStorefrontAmount(dto);
+            if (storefrontAmount == null) {
+                throw new Error('[mock] items with unitPrice and quantity are required in standalone mock mode');
+            }
+            const syntheticOrder = {
+                code: dto.orderCode,
+                state: 'ArrangingPayment',
+                totalWithTax: storefrontAmount,
+                lines: dto.items?.map(() => ({})) ?? [],
+                currencyCode: 'ARS',
+            } as unknown as Order;
+            return this.createMockOrder(dto, syntheticOrder);
+        }
+
         const ctx = await this.createAdminContext();
         const order = await this.getAuthoritativeOrder(dto.orderCode, ctx);
         this.assertOrderReadyForCheckout(order);
