@@ -1,3 +1,5 @@
+name: cla
+
 x-backend-image: &backend-image
   image: tienda-backend:${APP_ENV:-local}
   build:
