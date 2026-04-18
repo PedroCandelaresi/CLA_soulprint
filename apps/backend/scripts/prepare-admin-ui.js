@@ -48,6 +48,10 @@ const extensions = [
                 rename: 'assets/admin-login-hero.svg',
             },
             {
+                path: path.join(brandingDir, 'cla-logo.svg'),
+                rename: 'assets/cla-logo.svg',
+            },
+            {
                 path: path.join(brandingDir, 'marca-ejemplo.svg'),
                 rename: 'assets/marca-ejemplo.svg',
             },
@@ -159,6 +163,47 @@ async function finalizeBuild() {
     await fsp.mkdir(path.dirname(outputPath), { recursive: true });
     await fsp.cp(distPath, outputPath, { recursive: true });
     await fsp.rm(buildWorkspacePath, { recursive: true, force: true });
+
+    await applyClaBrandingPostBuild();
+}
+
+/**
+ * CLA Soulprint post-build:
+ *  - copia cla-admin-enhancements.js al output
+ *  - parchea index.html: título, favicon, script de enhancements
+ */
+async function applyClaBrandingPostBuild() {
+    const enhancementsSrc = path.join(brandingDir, 'cla-admin-enhancements.js');
+    const enhancementsDst = path.join(outputPath, 'cla-admin-enhancements.js');
+    if (fs.existsSync(enhancementsSrc)) {
+        await fsp.copyFile(enhancementsSrc, enhancementsDst);
+    }
+
+    const indexHtmlPath = path.join(outputPath, 'index.html');
+    if (!fs.existsSync(indexHtmlPath)) {
+        return;
+    }
+
+    let html = await fsp.readFile(indexHtmlPath, 'utf8');
+
+    html = html.replace(
+        /<title>[^<]*<\/title>/i,
+        '<title>CLA Soulprint — Panel de administración</title>',
+    );
+    html = html.replace(
+        /<link rel="icon"[^>]*>/i,
+        '<link rel="icon" type="image/svg+xml" href="assets/cla-logo.svg"/>',
+    );
+
+    if (!html.includes('cla-admin-enhancements.js')) {
+        html = html.replace(
+            /<\/body>/i,
+            '    <script src="cla-admin-enhancements.js" defer></script>\n</body>',
+        );
+    }
+
+    await fsp.writeFile(indexHtmlPath, html, 'utf8');
+    process.stdout.write('[cla] branding post-build applied\n');
 }
 
 async function main() {

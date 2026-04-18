@@ -13,6 +13,7 @@
         "migration:generate": "ts-node src/migrations/generate-migration.ts",
         "migration:run": "ts-node src/migrations/run-migrations.ts",
         "migration:run:prod": "node dist/migrations/run-migrations.js",
+        "reset:db": "node scripts/reset-database.js",
         "migration:revert": "ts-node src/migrations/revert-last-migration.ts",
         "migration:revert:prod": "node dist/migrations/revert-last-migration.js"
     },

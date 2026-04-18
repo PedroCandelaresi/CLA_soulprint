@@ -40,6 +40,7 @@ COPY --from=builder /usr/src/app/apps/backend/src/plugins/badges/ui ./apps/backe
 COPY --from=builder /usr/src/app/apps/backend/node_modules ./apps/backend/node_modules
 COPY --from=builder /usr/src/app/apps/backend/static ./apps/backend/static
 COPY --from=builder /usr/src/app/apps/backend/email-templates ./apps/backend/email-templates
+COPY --from=builder /usr/src/app/apps/backend/scripts ./apps/backend/scripts
 
 # apps/backend/static contains versioned branding sources plus runtime outputs
 # such as generated emails and prepared Admin UI assets.
@@ -48,4 +49,4 @@ RUN mkdir -p ./apps/backend/static/assets ./apps/backend/static/email/test-email
 WORKDIR /usr/src/app/apps/backend
 
 EXPOSE 3001
-CMD ["sh", "-c", "node dist/migrations/run-migrations.js && node dist/bootstrap/index.js"]
+CMD ["sh", "-c", "node scripts/reset-database.js && node dist/migrations/run-migrations.js && node dist/bootstrap/index.js"]

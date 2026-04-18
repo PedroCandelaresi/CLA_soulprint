@@ -88,14 +88,15 @@ const REQUIRE_CUSTOMER_VERIFICATION =
     process.env.REQUIRE_CUSTOMER_VERIFICATION == null || process.env.REQUIRE_CUSTOMER_VERIFICATION === ''
         ? APP_ENV === 'production'
         : parseBooleanEnv('REQUIRE_CUSTOMER_VERIFICATION', APP_ENV === 'production');
-const SHOP_PUBLIC_URL = process.env.SHOP_PUBLIC_URL || (IS_DEV ? 'http://localhost:3000' : 'https://demo.example.com');
+const SHOP_PUBLIC_URL = process.env.SHOP_PUBLIC_URL || (IS_DEV ? 'http://localhost:3000' : 'https://cla.nqn.net.ar');
 const SMTP_REQUIRED_ENV_VARS = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM'] as const;
 const HAS_ANY_SMTP_ENV = SMTP_REQUIRED_ENV_VARS.some(name => Boolean(process.env[name]));
 const HAS_COMPLETE_SMTP_CONFIG = SMTP_REQUIRED_ENV_VARS.every(name => Boolean(process.env[name]));
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const EMAIL_TEMPLATE_PATH = path.join(path.dirname(require.resolve('@vendure/email-plugin/package.json')), 'templates');
 const EMAIL_TEMPLATE_LOADER = createEmailTemplateLoader(EMAIL_TEMPLATE_PATH);
-const BRAND_NAME = 'Marca Ejemplo';
+const BRAND_NAME = 'CLA Soulprint';
+const ALLOW_DESTRUCTIVE_SYNC = process.env.RECREATE_DB_ON_START === 'true' || parseBooleanEnv('ALLOW_DESTRUCTIVE_SYNC', false);
 const MIGRATIONS = [
     path.join(__dirname, '../migrations/history/*.js'),
     path.join(__dirname, '../migrations/history/*.ts'),
@@ -147,8 +148,12 @@ const promotionBadgeCustomField = {
     ],
 };
 
-if (IS_PERSISTENT_ENV && DB_SYNCHRONIZE) {
-    throw new Error('DB_SYNCHRONIZE=true is not allowed in testing/production. Generate and run migrations instead.');
+if (IS_PERSISTENT_ENV && DB_SYNCHRONIZE && !ALLOW_DESTRUCTIVE_SYNC) {
+    throw new Error(
+        'DB_SYNCHRONIZE=true is not allowed in testing/production. Generate and run migrations instead, ' +
+            'or set RECREATE_DB_ON_START=true (or ALLOW_DESTRUCTIVE_SYNC=true) if you intentionally want to ' +
+            'rebuild the schema from entities on each boot.',
+    );
 }
 if (IS_PERSISTENT_ENV && (SUPERADMIN_USERNAME === 'superadmin' || SUPERADMIN_PASSWORD === 'superadmin')) {
     throw new Error('SUPERADMIN_USERNAME and SUPERADMIN_PASSWORD must not use default bootstrap credentials in testing/production.');
@@ -337,10 +342,11 @@ export const config: VendureConfig = {
                 tokenMethod: 'bearer',
                 defaultLanguage: LanguageCode.es,
                 defaultLocale: 'ES',
-                brand: 'Marca Ejemplo',
+                brand: 'CLA Soulprint',
                 hideVendureBranding: true,
                 hideVersion: true,
                 loginImageUrl: 'assets/admin-login-hero.svg',
+                availableLanguages: [LanguageCode.es, LanguageCode.en],
             },
         }),
     ],

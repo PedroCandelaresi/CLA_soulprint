@@ -1,63 +1,46 @@
-<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">Panel Marca Ejemplo</title>
-  <desc id="desc">Hero para el login del panel administrativo de Marca Ejemplo.</desc>
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cla-hero-title cla-hero-desc">
+  <title id="cla-hero-title">CLA Soulprint — Panel de administración</title>
+  <desc id="cla-hero-desc">Hero con la paleta CLA (verde profundo, crema y dorado) para el login del panel administrativo.</desc>
   <defs>
-    <linearGradient id="bg" x1="120" y1="80" x2="1420" y2="920" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#121212"/>
-      <stop offset="0.52" stop-color="#212121"/>
-      <stop offset="1" stop-color="#30343A"/>
+    <linearGradient id="cla-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#022c18"/>
+      <stop offset="55%" stop-color="#004825"/>
+      <stop offset="100%" stop-color="#0b5a31"/>
     </linearGradient>
-    <linearGradient id="accent" x1="221" y1="218" x2="1136" y2="815" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFB347"/>
-      <stop offset="1" stop-color="#E16A00"/>
-    </linearGradient>
-    <linearGradient id="metal" x1="482" y1="278" x2="1148" y2="742" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F5F7FA"/>
-      <stop offset="0.48" stop-color="#B9C1CA"/>
-      <stop offset="1" stop-color="#7C8793"/>
-    </linearGradient>
+    <radialGradient id="cla-gold" cx="0.82" cy="0.22" r="0.7">
+      <stop offset="0%" stop-color="#c7a46b" stop-opacity="0.55"/>
+      <stop offset="55%" stop-color="#c7a46b" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#c7a46b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cla-cream" cx="0.1" cy="0.9" r="0.7">
+      <stop offset="0%" stop-color="#f4ead5" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#f4ead5" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="cla-dots" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#f4ead5" fill-opacity="0.08"/>
+    </pattern>
   </defs>
-  <rect width="1600" height="1000" rx="48" fill="url(#bg)"/>
-  <g opacity="0.12">
-    <path d="M0 112H1600" stroke="white"/>
-    <path d="M0 272H1600" stroke="white"/>
-    <path d="M0 432H1600" stroke="white"/>
-    <path d="M0 592H1600" stroke="white"/>
-    <path d="M0 752H1600" stroke="white"/>
-    <path d="M0 912H1600" stroke="white"/>
-    <path d="M160 0V1000" stroke="white"/>
-    <path d="M420 0V1000" stroke="white"/>
-    <path d="M680 0V1000" stroke="white"/>
-    <path d="M940 0V1000" stroke="white"/>
-    <path d="M1200 0V1000" stroke="white"/>
-    <path d="M1460 0V1000" stroke="white"/>
+
+  <rect width="1600" height="1000" fill="url(#cla-bg)"/>
+  <rect width="1600" height="1000" fill="url(#cla-dots)"/>
+  <rect width="1600" height="1000" fill="url(#cla-gold)"/>
+  <rect width="1600" height="1000" fill="url(#cla-cream)"/>
+
+  <g opacity="0.18" stroke="#f4ead5" stroke-width="1" fill="none">
+    <circle cx="1180" cy="260" r="260"/>
+    <circle cx="1180" cy="260" r="340"/>
+    <circle cx="1180" cy="260" r="420"/>
   </g>
-  <circle cx="1220" cy="208" r="134" fill="url(#accent)" opacity="0.16"/>
-  <circle cx="1380" cy="300" r="48" fill="white" opacity="0.08"/>
-  <circle cx="260" cy="786" r="162" fill="url(#accent)" opacity="0.1"/>
-  <circle cx="1170" cy="666" r="228" stroke="rgba(255,255,255,0.14)" stroke-width="24"/>
-  <circle cx="1170" cy="666" r="156" stroke="rgba(255,255,255,0.08)" stroke-width="12"/>
-  <path d="M1002 666H1338" stroke="url(#accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="28 32" opacity="0.72"/>
-  <path d="M490 246C598 290 691 385 728 512C760 622 847 713 953 748" stroke="url(#metal)" stroke-width="26" stroke-linecap="round" opacity="0.82"/>
-  <path d="M444 286C551 324 643 414 689 532C728 631 812 714 908 768" stroke="white" stroke-opacity="0.22" stroke-width="8" stroke-linecap="round"/>
-  <g transform="translate(194 192)">
-    <circle cx="120" cy="120" r="110" fill="#111418"/>
-    <circle cx="120" cy="120" r="86" stroke="url(#accent)" stroke-width="10"/>
-    <circle cx="120" cy="120" r="42" fill="#0B0D10" stroke="#7C8793" stroke-width="6"/>
-    <g fill="url(#accent)">
-      <rect x="108" y="-18" width="24" height="54" rx="8"/>
-      <rect x="108" y="204" width="24" height="54" rx="8"/>
-      <rect x="-18" y="108" width="54" height="24" rx="8"/>
-      <rect x="204" y="108" width="54" height="24" rx="8"/>
-      <rect x="108" y="-18" width="24" height="54" rx="8" transform="rotate(45 120 120)"/>
-      <rect x="108" y="204" width="24" height="54" rx="8" transform="rotate(45 120 120)"/>
-      <rect x="108" y="-18" width="24" height="54" rx="8" transform="rotate(90 120 120)"/>
-      <rect x="108" y="204" width="24" height="54" rx="8" transform="rotate(90 120 120)"/>
-    </g>
+
+  <g transform="translate(120 380)">
+    <text font-family="Georgia, 'Times New Roman', serif" font-size="108" font-weight="500" fill="#f4ead5" letter-spacing="8">CLA Soulprint</text>
+    <text y="70" font-family="'Helvetica Neue', Arial, sans-serif" font-size="28" fill="#c7a46b" letter-spacing="12" font-weight="300">PANEL DE ADMINISTRACIÓN</text>
+    <line x1="0" y1="130" x2="220" y2="130" stroke="#c7a46b" stroke-width="2"/>
+    <text y="200" font-family="Georgia, 'Times New Roman', serif" font-size="34" fill="#f9f5ed" font-style="italic" opacity="0.85">La impronta que da alma a cada pieza.</text>
   </g>
-  <text x="208" y="596" fill="url(#metal)" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="116" font-weight="800" letter-spacing="4">MARCA</text>
-  <text x="208" y="706" fill="white" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="116" font-weight="800" letter-spacing="4">EJEMPLO</text>
-  <rect x="214" y="748" width="384" height="10" rx="5" fill="url(#accent)"/>
-  <text x="214" y="818" fill="#C7CFD7" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="34" font-weight="600" letter-spacing="10">PANEL DE GESTION</text>
-  <text x="214" y="882" fill="#9CA3AF" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="24" font-weight="500" letter-spacing="3">Catalogo, pedidos y operaciones desde una sola vista.</text>
+
+  <g transform="translate(1320 860)" opacity="0.75">
+    <circle r="32" fill="none" stroke="#c7a46b" stroke-width="2"/>
+    <circle r="14" fill="#c7a46b"/>
+  </g>
 </svg>

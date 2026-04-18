@@ -1,45 +1,98 @@
+/* =========================================================================
+   CLA Soulprint — Admin UI branding overlay
+   Paleta (idéntica al storefront):
+     --cla-green     #004825   verde profundo, superficie principal oscura
+     --cla-green-dk  #022c18   sombras / fondos dramáticos
+     --cla-green-lt  #0b5a31   hover verde más luminoso
+     --cla-cream     #f4ead5   superficies claras, texto sobre verde
+     --cla-sand      #e8d8b3   bordes suaves, divisores
+     --cla-gold      #c7a46b   acentos, links, botones secundarios
+     --cla-mist      #f9f5ed   fondo general del admin
+     --cla-ink       #173428   texto principal sobre claro
+   ========================================================================= */
+
 :root {
-    --admin-brand-ink: #212121;
-    --admin-brand-ink-soft: #2f343a;
-    --admin-brand-accent: #e16a00;
-    --admin-brand-accent-soft: #ffb347;
-    --admin-brand-surface: #f5f5f5;
-    --admin-brand-surface-strong: #ffffff;
-    --admin-brand-border: #e0e0e0;
-    --admin-brand-shadow: 0 24px 60px rgba(17, 24, 39, 0.14);
+    --cla-green: #004825;
+    --cla-green-dk: #022c18;
+    --cla-green-lt: #0b5a31;
+    --cla-cream: #f4ead5;
+    --cla-sand: #e8d8b3;
+    --cla-gold: #c7a46b;
+    --cla-gold-soft: rgba(199, 164, 107, 0.32);
+    --cla-mist: #f9f5ed;
+    --cla-ink: #173428;
+    --cla-ink-soft: #2c4c3c;
+    --cla-muted: #6b7f72;
+    --cla-border: rgba(0, 72, 37, 0.14);
+    --cla-border-strong: rgba(0, 72, 37, 0.24);
+    --cla-shadow-sm: 0 2px 6px rgba(2, 44, 24, 0.08);
+    --cla-shadow-md: 0 12px 30px rgba(2, 44, 24, 0.12);
+    --cla-shadow-lg: 0 28px 64px rgba(2, 44, 24, 0.18);
+    --cla-radius: 12px;
+    --cla-radius-sm: 8px;
+
+    /* Override de variables Clarity en todo el documento */
+    --clr-color-action-600: var(--cla-green);
+    --clr-color-action-700: var(--cla-green-dk);
+    --clr-btn-primary-bg-color: var(--cla-green);
+    --clr-btn-primary-hover-bg-color: var(--cla-green-lt);
+    --clr-btn-primary-color: #ffffff;
+    --clr-link-color: var(--cla-green);
+    --clr-link-hover-color: var(--cla-green-lt);
+    --clr-link-active-color: var(--cla-green-dk);
+}
+
+/* ---------- Tipografía + fondo global ---------- */
+html, body {
+    background: var(--cla-mist);
+    color: var(--cla-ink);
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 body {
-    background: linear-gradient(180deg, #f9fafb 0%, #f1f3f5 100%);
-    color: var(--admin-brand-ink);
+    background:
+        radial-gradient(circle at top left, rgba(244, 234, 213, 0.55), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(199, 164, 107, 0.12), transparent 28%),
+        linear-gradient(180deg, #fffdf8 0%, var(--cla-mist) 100%) !important;
 }
 
-.left-nav {
-    background: linear-gradient(180deg, #151515 0%, #212121 55%, #2c3137 100%);
-    color: #fff;
+h1, h2, h3, h4, .page-title {
+    color: var(--cla-green-dk);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
 
-    /* Variables Clarity — heredadas por todos los hijos del nav */
+/* ======================================================================
+   NAV IZQUIERDO — verde profundo CLA
+   ====================================================================== */
+.left-nav {
+    background: linear-gradient(180deg, var(--cla-green-dk) 0%, var(--cla-green) 55%, var(--cla-green-lt) 100%);
+    color: var(--cla-cream);
+    border-right: 1px solid rgba(199, 164, 107, 0.12);
+
     --clr-vertical-nav-bg-color:                     transparent;
-    --clr-vertical-nav-item-color:                   rgba(255, 255, 255, 0.68);
+    --clr-vertical-nav-item-color:                   rgba(244, 234, 213, 0.72);
     --clr-vertical-nav-item-active-color:            #ffffff;
-    --clr-vertical-nav-selected-bg-color:            rgba(255, 255, 255, 0.12);
-    --clr-vertical-nav-hover-bg-color:               rgba(255, 255, 255, 0.07);
-    --clr-vertical-nav-active-bg-color:              rgba(255, 255, 255, 0.12);
+    --clr-vertical-nav-selected-bg-color:            rgba(199, 164, 107, 0.18);
+    --clr-vertical-nav-hover-bg-color:               rgba(244, 234, 213, 0.08);
+    --clr-vertical-nav-active-bg-color:              rgba(199, 164, 107, 0.18);
     --clr-vertical-nav-active-color:                 #ffffff;
-    --clr-vertical-nav-icon-color:                   rgba(255, 255, 255, 0.58);
-    --clr-vertical-nav-icon-active-color:            #ffffff;
-    --clr-vertical-nav-group-title-color:            rgba(255, 255, 255, 0.36);
-    --clr-vertical-nav-trigger-divider-border-color: rgba(255, 255, 255, 0.10);
-    --clr-vertical-nav-toggle-icon-color:            rgba(255, 255, 255, 0.48);
-    --clr-vertical-nav-toggle-icon-hover-color:      #ffffff;
-    --clr-nav-link-color:                            rgba(255, 255, 255, 0.68);
+    --clr-vertical-nav-icon-color:                   rgba(244, 234, 213, 0.62);
+    --clr-vertical-nav-icon-active-color:            var(--cla-gold);
+    --clr-vertical-nav-group-title-color:            rgba(244, 234, 213, 0.38);
+    --clr-vertical-nav-trigger-divider-border-color: rgba(244, 234, 213, 0.10);
+    --clr-vertical-nav-toggle-icon-color:            rgba(244, 234, 213, 0.48);
+    --clr-vertical-nav-toggle-icon-hover-color:      var(--cla-gold);
+    --clr-nav-link-color:                            rgba(244, 234, 213, 0.72);
     --clr-nav-link-active-color:                     #ffffff;
     --clr-nav-box-shadow-color:                      transparent;
-    --clr-nav-active-bg-color:                       rgba(255, 255, 255, 0.12);
-    --clr-nav-selected-hover-background-color:       rgba(255, 255, 255, 0.17);
+    --clr-nav-active-bg-color:                       rgba(199, 164, 107, 0.18);
+    --clr-nav-selected-hover-background-color:       rgba(199, 164, 107, 0.24);
 }
 
-/* Hard overrides: Angular encapsula estilos así que las variables solas no alcanzan */
 .left-nav .clr-vertical-nav,
 .left-nav .nav-content,
 .left-nav .nav-group,
@@ -51,45 +104,61 @@ body {
 
 .left-nav .nav-link,
 .left-nav .nav-group-content {
-    color: rgba(255, 255, 255, 0.68) !important;
+    color: rgba(244, 234, 213, 0.76) !important;
     background-color: transparent !important;
     box-shadow: none !important;
-}
-
-.left-nav .nav-link.active,
-.left-nav .nav-group-content.active {
-    background-color: rgba(255, 255, 255, 0.12) !important;
-    color: #ffffff !important;
+    transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
 .left-nav .nav-link:hover,
 .left-nav .nav-group-content:hover {
-    background-color: rgba(255, 255, 255, 0.07) !important;
+    background-color: rgba(244, 234, 213, 0.08) !important;
     color: #ffffff !important;
+}
+
+.left-nav .nav-link.active,
+.left-nav .nav-group-content.active {
+    background-color: rgba(199, 164, 107, 0.18) !important;
+    color: #ffffff !important;
+    border-left: 3px solid var(--cla-gold);
+    padding-left: calc(1rem - 3px);
 }
 
 .left-nav cds-icon,
 .left-nav clr-icon {
-    color: rgba(255, 255, 255, 0.58) !important;
+    color: rgba(244, 234, 213, 0.60) !important;
 }
 
 .left-nav .nav-link.active cds-icon,
 .left-nav .nav-link.active clr-icon,
 .left-nav .nav-group-content.active cds-icon,
 .left-nav .nav-group-content.active clr-icon {
-    color: #ffffff !important;
+    color: var(--cla-gold) !important;
 }
 
+.left-nav .nav-group-text {
+    color: rgba(244, 234, 213, 0.40) !important;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.left-nav hr {
+    border-color: rgba(244, 234, 213, 0.08);
+}
+
+/* Branding / logo arriba del nav */
 .left-nav .branding {
-    min-height: 118px;
+    min-height: 132px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem 1.25rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1.75rem 1.25rem 1.25rem;
+    border-bottom: 1px solid rgba(199, 164, 107, 0.18);
     background:
-        radial-gradient(circle at top right, rgba(255, 179, 71, 0.28), transparent 36%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 70%);
+        radial-gradient(circle at top right, rgba(199, 164, 107, 0.30), transparent 40%),
+        linear-gradient(180deg, rgba(244, 234, 213, 0.04), transparent 70%);
 }
 
 .left-nav .branding a {
@@ -99,112 +168,292 @@ body {
 .left-nav .branding::before {
     content: '';
     display: block;
-    width: min(13rem, 100%);
-    height: 3.5rem;
-    background: url('../../static-assets/assets/marca-ejemplo.svg') center / contain no-repeat;
+    width: min(15rem, 100%);
+    height: 3.75rem;
+    background: url('assets/cla-logo.svg') center / contain no-repeat;
+    filter: brightness(0) invert(1);
+    opacity: 0.95;
 }
 
-/* Las variables de Clarity en .left-nav ya cubren colores de texto e íconos.
-   Solo necesitamos forzar el color del nav-group-text (cabeceras de sección). */
-.left-nav .nav-group-text {
-    color: rgba(255, 255, 255, 0.38) !important;
-    font-size: 0.6rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.left-nav hr {
-    border-color: rgba(255, 255, 255, 0.08);
-}
-
-.surface {
-    box-shadow: var(--admin-brand-shadow);
-}
-
+/* ======================================================================
+   TOP BAR
+   ====================================================================== */
 .top-bar {
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--admin-brand-border);
+    background: rgba(255, 253, 248, 0.96);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--cla-border);
+    box-shadow: var(--cla-shadow-sm);
 }
 
 .top-bar .bars,
 .top-bar button,
 .top-bar .icon-button {
-    color: var(--admin-brand-ink);
+    color: var(--cla-green-dk);
 }
 
+.top-bar .icon-button:hover {
+    color: var(--cla-green);
+    background: rgba(0, 72, 37, 0.06);
+    border-radius: var(--cla-radius-sm);
+}
+
+/* ======================================================================
+   SURFACES / CARDS
+   ====================================================================== */
 .content-area {
     background: transparent;
 }
 
+.card,
+clr-card,
+.surface,
+.details-card,
+.form-grid-list,
+vdr-data-table-2,
+vdr-data-table {
+    background: #ffffff !important;
+    border: 1px solid var(--cla-border) !important;
+    border-radius: var(--cla-radius) !important;
+    box-shadow: var(--cla-shadow-sm) !important;
+}
+
+.card:hover {
+    box-shadow: var(--cla-shadow-md) !important;
+}
+
+.card-header,
+.details-card-header {
+    border-bottom: 1px solid var(--cla-border) !important;
+    background: linear-gradient(180deg, var(--cla-mist), #ffffff) !important;
+    color: var(--cla-green-dk) !important;
+    font-weight: 600;
+}
+
+/* ======================================================================
+   BOTONES
+   ====================================================================== */
+.btn {
+    border-radius: var(--cla-radius-sm) !important;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: transform 120ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
 .btn.btn-primary,
+.btn-primary,
 .login-button {
-    background: linear-gradient(135deg, var(--admin-brand-ink) 0%, var(--admin-brand-ink-soft) 100%) !important;
+    background: linear-gradient(135deg, var(--cla-green) 0%, var(--cla-green-lt) 100%) !important;
     border-color: transparent !important;
-    box-shadow: none !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0, 72, 37, 0.25) !important;
 }
 
 .btn.btn-primary:hover,
-.btn.btn-primary:focus,
+.btn-primary:hover,
 .login-button:hover,
+.btn.btn-primary:focus,
 .login-button:focus {
-    background: linear-gradient(135deg, #141414 0%, #20242a 100%) !important;
+    background: linear-gradient(135deg, var(--cla-green-dk) 0%, var(--cla-green) 100%) !important;
+    box-shadow: 0 6px 18px rgba(0, 72, 37, 0.35) !important;
+    transform: translateY(-1px);
+}
+
+.btn.btn-secondary,
+.btn-outline {
+    border: 1px solid var(--cla-green) !important;
+    color: var(--cla-green) !important;
+    background: transparent !important;
+}
+
+.btn.btn-secondary:hover,
+.btn-outline:hover {
+    background: rgba(0, 72, 37, 0.06) !important;
 }
 
 .btn.btn-link {
-    color: var(--admin-brand-accent) !important;
+    color: var(--cla-green) !important;
 }
 
+.btn.btn-link:hover {
+    color: var(--cla-green-lt) !important;
+    text-decoration: underline;
+}
+
+.btn.btn-warning {
+    background: var(--cla-gold) !important;
+    color: var(--cla-green-dk) !important;
+    border-color: transparent !important;
+}
+
+.btn.btn-danger {
+    background: #9e2a2a !important;
+    border-color: transparent !important;
+}
+
+/* ======================================================================
+   INPUTS
+   ====================================================================== */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+textarea,
+select,
+.clr-input,
+.clr-textarea,
+.clr-select {
+    border: 1px solid var(--cla-border-strong) !important;
+    border-radius: var(--cla-radius-sm) !important;
+    background: #ffffff !important;
+    color: var(--cla-ink) !important;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.clr-input:focus,
+.clr-textarea:focus,
+.clr-select:focus {
+    border-color: var(--cla-green) !important;
+    box-shadow: 0 0 0 3px rgba(0, 72, 37, 0.12) !important;
+    outline: none !important;
+}
+
+.clr-control-label,
+label,
+.checkbox label {
+    color: var(--cla-ink) !important;
+    font-weight: 500;
+}
+
+/* ======================================================================
+   TABLES / DATA LISTS
+   ====================================================================== */
+table,
+.datagrid,
+.datagrid-table {
+    background: #ffffff;
+    border-radius: var(--cla-radius);
+    overflow: hidden;
+}
+
+.datagrid-header,
+thead {
+    background: var(--cla-mist) !important;
+    color: var(--cla-green-dk) !important;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.datagrid-row:hover,
+tbody tr:hover {
+    background: rgba(244, 234, 213, 0.45) !important;
+}
+
+/* ======================================================================
+   TABS
+   ====================================================================== */
+.nav .nav-link,
+.tabs .tab-link {
+    color: var(--cla-muted);
+    border-bottom: 2px solid transparent;
+    transition: color 140ms ease, border-color 140ms ease;
+}
+
+.nav .nav-link.active,
+.tabs .tab-link.active,
+.nav .nav-link:hover {
+    color: var(--cla-green-dk) !important;
+    border-bottom-color: var(--cla-gold);
+}
+
+/* ======================================================================
+   BADGES / LABELS
+   ====================================================================== */
+.label,
+.badge {
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+
+.label-success { background: rgba(0, 72, 37, 0.12) !important; color: var(--cla-green-dk) !important; }
+.label-warning { background: rgba(199, 164, 107, 0.22) !important; color: #7a5a1d !important; }
+.label-danger  { background: rgba(158, 42, 42, 0.12) !important; color: #7a1e1e !important; }
+.label-info    { background: rgba(0, 72, 37, 0.08) !important; color: var(--cla-green) !important; }
+
+/* ======================================================================
+   LOGIN
+   ====================================================================== */
 .login-wrapper {
     background:
-        radial-gradient(circle at top left, rgba(255, 179, 71, 0.16), transparent 30%),
-        linear-gradient(180deg, #f4f4f5 0%, #eceff2 100%);
+        radial-gradient(circle at top left, rgba(199, 164, 107, 0.18), transparent 30%),
+        linear-gradient(180deg, var(--cla-mist) 0%, #ece3cc 100%) !important;
 }
 
 .login-wrapper .login-wrapper-inner {
     border: none !important;
-    box-shadow: 0 32px 80px rgba(17, 24, 39, 0.18);
+    box-shadow: var(--cla-shadow-lg) !important;
     overflow: hidden;
+    border-radius: 18px !important;
 }
 
 .login-wrapper .login-wrapper-image .login-wrapper-image-content {
-    background: linear-gradient(180deg, rgba(17, 17, 17, 0.04) 0%, rgba(17, 17, 17, 0.78) 100%) !important;
+    background: linear-gradient(180deg, rgba(2, 44, 24, 0.04) 0%, rgba(2, 44, 24, 0.82) 100%) !important;
 }
 
 .login-wrapper .login-wrapper-form {
     position: relative;
-    background: rgba(255, 255, 255, 0.96);
-    width: 440px !important;
-    padding-top: 132px !important;
+    background: rgba(255, 253, 248, 0.98);
+    width: 460px !important;
+    padding-top: 152px !important;
 }
 
 .login-wrapper .login-wrapper-form::before {
     content: '';
     position: absolute;
-    top: 32px;
-    left: 40px;
-    right: 40px;
-    height: 62px;
-    background: url('../../static-assets/assets/marca-ejemplo.svg') center / contain no-repeat;
+    top: 42px;
+    left: 48px;
+    right: 48px;
+    height: 70px;
+    background: url('assets/cla-logo.svg') center / contain no-repeat;
+    filter: none;
 }
 
 .login-wrapper .login-title {
-    color: var(--admin-brand-ink) !important;
-    font-size: 1.35rem !important;
+    color: var(--cla-green-dk) !important;
+    font-size: 1.4rem !important;
     margin-bottom: 1.5rem !important;
+    font-weight: 600 !important;
+    text-align: center;
+}
+
+.login-wrapper .login-title::after {
+    content: 'Ingresá con tu usuario y contraseña de administrador.';
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--cla-muted);
+    letter-spacing: 0;
 }
 
 .login-wrapper input.username,
 .login-wrapper input.password {
-    border: 1px solid var(--admin-brand-border);
-    border-radius: 12px;
-    color: var(--admin-brand-ink) !important;
+    border: 1px solid var(--cla-border-strong) !important;
+    border-radius: 10px !important;
+    color: var(--cla-ink) !important;
     box-shadow: none !important;
+    padding: 0.65rem 0.85rem !important;
 }
 
 .login-wrapper input.username:focus,
 .login-wrapper input.password:focus {
-    border-color: var(--admin-brand-accent-soft);
+    border-color: var(--cla-green) !important;
+    box-shadow: 0 0 0 3px rgba(0, 72, 37, 0.12) !important;
 }
 
 .login-wrapper .creator,
@@ -213,7 +462,114 @@ body {
     display: none !important;
 }
 
-.clr-control-label,
-.checkbox label {
-    color: var(--admin-brand-ink);
+/* ======================================================================
+   CLA HELP HINT (banner superior en páginas de admin)
+   Se inyecta via cla-admin-enhancements.js
+   ====================================================================== */
+.cla-help-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    margin: 0 0 1rem 0;
+    background: linear-gradient(90deg, rgba(199, 164, 107, 0.16), rgba(244, 234, 213, 0.55));
+    border: 1px solid var(--cla-border);
+    border-left: 4px solid var(--cla-gold);
+    border-radius: var(--cla-radius-sm);
+    color: var(--cla-ink);
+    font-size: 0.88rem;
+}
+
+.cla-help-banner::before {
+    content: '💡';
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.cla-help-banner strong {
+    color: var(--cla-green-dk);
+    font-weight: 600;
+}
+
+/* ======================================================================
+   TOOLTIPS CLA (agregados via data-cla-tip desde cla-admin-enhancements.js)
+   Se muestran al pasar el puntero encima de cualquier elemento marcado.
+   ====================================================================== */
+[data-cla-tip] {
+    position: relative;
+}
+
+[data-cla-tip]::after {
+    content: attr(data-cla-tip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: var(--cla-green-dk);
+    color: var(--cla-cream);
+    padding: 0.45rem 0.7rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    max-width: 280px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 140ms ease, transform 140ms ease;
+    box-shadow: 0 8px 24px rgba(2, 44, 24, 0.28);
+    z-index: 9999;
+}
+
+[data-cla-tip]::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--cla-green-dk);
+    opacity: 0;
+    transition: opacity 140ms ease;
+    z-index: 9999;
+}
+
+[data-cla-tip]:hover::after,
+[data-cla-tip]:focus::after,
+[data-cla-tip]:hover::before,
+[data-cla-tip]:focus::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+[data-cla-tip-wrap]::after {
+    white-space: normal;
+    width: 240px;
+    text-align: left;
+    line-height: 1.35;
+}
+
+/* ======================================================================
+   SCROLLBARS (toque final prolijo)
+   ====================================================================== */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--cla-sand);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--cla-gold);
+    background-clip: padding-box;
+    border: 2px solid transparent;
 }
