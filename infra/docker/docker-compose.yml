@@ -11,7 +11,7 @@ services:
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "127.0.0.1:3006:3306"
+      - "127.0.0.1:3406:3306"
     volumes:
       - cla_soulprint_mysql_data:/var/lib/mysql
     healthcheck:
@@ -67,9 +67,9 @@ services:
       MERCADOPAGO_PUBLIC_BASE_URL: ${MERCADOPAGO_PUBLIC_BASE_URL:-}
     ports:
       # Primary backend loopback upstream for the recommended host-level Nginx.
-      - "127.0.0.1:3002:3001"
+      - "127.0.0.1:3402:3001"
       # Direct/debug access to the Shop API. Not the primary public entrypoint.
-      - "127.0.0.1:3001:3001"
+      - "127.0.0.1:3401:3001"
     volumes:
       - cla_soulprint_vendure_assets:/usr/src/app/apps/backend/static/assets
     networks:
@@ -103,7 +103,7 @@ services:
       VENDURE_INTERNAL_API_URL: http://backend:3001/shop-api
     ports:
       # Loopback and direct local access for the storefront.
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3400:3000"
     networks:
       - cla_soulprint_net
     healthcheck:
