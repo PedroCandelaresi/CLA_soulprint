@@ -7,9 +7,10 @@ import Image from 'next/image';
 interface ProductCarouselProps {
     images: string[];
     alt: string;
+    overlay?: React.ReactNode;
 }
 
-const ProductCarousel = ({ images, alt }: ProductCarouselProps) => {
+const ProductCarousel = ({ images, alt, overlay }: ProductCarouselProps) => {
     const theme = useTheme();
     const [activeStep, setActiveStep] = useState(0);
     const [currentImages, setCurrentImages] = useState(images);
@@ -18,6 +19,7 @@ const ProductCarousel = ({ images, alt }: ProductCarouselProps) => {
     // React to props change
     React.useEffect(() => {
         setCurrentImages(images);
+        setActiveStep(0);
     }, [images]);
 
     const handleNext = () => {
@@ -44,20 +46,35 @@ const ProductCarousel = ({ images, alt }: ProductCarouselProps) => {
                 sx={{
                     position: 'relative',
                     width: '100%',
-                    height: { xs: '260px', sm: '360px', md: '500px' },
+                    height: { xs: 360, md: 560 },
                     overflow: 'hidden',
-                    borderRadius: 2,
+                    borderRadius: 4,
                     border: `1px solid ${theme.palette.divider}`,
+                    background: 'linear-gradient(180deg, rgba(244,234,213,0.8) 0%, rgba(255,253,248,1) 100%)',
+                    boxShadow: '0 22px 42px rgba(0,72,37,0.08)',
                 }}
             >
                 <Image
                     src={currentImages[activeStep]}
                     alt={`${alt} - Image ${activeStep + 1}`}
                     fill
-                    style={{ objectFit: 'contain' }}
+                    style={{ objectFit: 'contain', padding: 22 }}
                     priority={activeStep === 0}
                     onError={handleImageError}
                 />
+                {overlay && (
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            zIndex: 1,
+                            p: 2,
+                        }}
+                    >
+                        {overlay}
+                    </Box>
+                )}
             </Box>
 
             {maxSteps > 1 && (
@@ -69,12 +86,22 @@ const ProductCarousel = ({ images, alt }: ProductCarouselProps) => {
                         activeStep={activeStep}
                         sx={{ bgcolor: 'transparent', flexGrow: 1 }}
                         nextButton={
-                            <IconButton size="small" onClick={handleNext} disabled={activeStep === maxSteps - 1} sx={{ bgcolor: 'background.paper', ml: 1 }}>
+                            <IconButton
+                                size="small"
+                                onClick={handleNext}
+                                disabled={activeStep === maxSteps - 1}
+                                sx={{ bgcolor: 'background.paper', ml: 1, border: `1px solid ${theme.palette.divider}` }}
+                            >
                                 <IconChevronRight size={20} />
                             </IconButton>
                         }
                         backButton={
-                            <IconButton size="small" onClick={handleBack} disabled={activeStep === 0} sx={{ bgcolor: 'background.paper', mr: 1 }}>
+                            <IconButton
+                                size="small"
+                                onClick={handleBack}
+                                disabled={activeStep === 0}
+                                sx={{ bgcolor: 'background.paper', mr: 1, border: `1px solid ${theme.palette.divider}` }}
+                            >
                                 <IconChevronLeft size={20} />
                             </IconButton>
                         }

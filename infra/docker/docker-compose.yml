@@ -1,15 +1,9 @@
-name: cla
-
-x-backend-image: &backend-image
-  image: tienda-backend:${APP_ENV:-local}
-  build:
-    context: ../../
-    dockerfile: apps/backend/Dockerfile
+name: demo2
 
 services:
   mysql:
     image: mysql:8.4
-    container_name: tienda_mysql
+    container_name: demo2_mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -17,9 +11,9 @@ services:
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "127.0.0.1:4406:3306"
+      - "127.0.0.1:3006:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - demo2_mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u${DB_USER} -p${DB_PASSWORD} || exit 1"]
       interval: 10s
@@ -27,11 +21,13 @@ services:
       retries: 10
       start_period: 20s
     networks:
-      - tienda_net
+      - demo2_net
 
   backend:
-    <<: *backend-image
-    container_name: tienda_backend
+    build:
+      context: ../../
+      dockerfile: apps/backend/Dockerfile
+    container_name: demo2_backend
     restart: always
     depends_on:
       mysql:
@@ -53,94 +49,37 @@ services:
       COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-}
       COOKIE_SECURE: ${COOKIE_SECURE:-}
       COOKIE_SECURE_PROXY: ${COOKIE_SECURE_PROXY:-}
+      REQUIRE_CUSTOMER_VERIFICATION: ${REQUIRE_CUSTOMER_VERIFICATION:-}
       ASSET_URL_PREFIX: /assets/
       DB_SYNCHRONIZE: ${DB_SYNCHRONIZE}
+      BOOTSTRAP_DEMO_DATA: ${BOOTSTRAP_DEMO_DATA:-}
+      RUN_JOB_QUEUE_IN_MAIN_PROCESS: ${RUN_JOB_QUEUE_IN_MAIN_PROCESS:-}
       SHOP_PUBLIC_URL: ${SHOP_PUBLIC_URL:-}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
       SMTP_SECURE: ${SMTP_SECURE:-}
-      OPERATIONS_NOTIFICATION_EMAIL: ${OPERATIONS_NOTIFICATION_EMAIL:-}
-      # Getnet Payment Configuration
-      GETNET_ENABLED: ${GETNET_ENABLED:-false}
-      GETNET_MODE: ${GETNET_MODE:-real}
-      GETNET_MOCK_FORCE_STATUS: ${GETNET_MOCK_FORCE_STATUS:-interactive}
-      GETNET_PORT: 3002
-      GETNET_AUTH_BASE_URL: ${GETNET_AUTH_BASE_URL:-}
-      GETNET_CHECKOUT_BASE_URL: ${GETNET_CHECKOUT_BASE_URL:-}
-      GETNET_CLIENT_ID: ${GETNET_CLIENT_ID:-}
-      GETNET_CLIENT_SECRET: ${GETNET_CLIENT_SECRET:-}
-      GETNET_SCOPE: ${GETNET_SCOPE:-*}
-      GETNET_CURRENCY: ${GETNET_CURRENCY:-032}
-      GETNET_WEBHOOK_URL: ${GETNET_WEBHOOK_URL:-}
-      GETNET_SUCCESS_URL: ${GETNET_SUCCESS_URL:-}
-      GETNET_FAILED_URL: ${GETNET_FAILED_URL:-}
-      GETNET_EXPIRE_LIMIT_MINUTES: ${GETNET_EXPIRE_LIMIT_MINUTES:-10}
-      GETNET_REQUEST_TIMEOUT: ${GETNET_REQUEST_TIMEOUT:-30000}
-      PERSONALIZATION_MAX_FILE_SIZE_MB: ${PERSONALIZATION_MAX_FILE_SIZE_MB:-10}
-      PERSONALIZATION_ALLOWED_MIME_TYPES: ${PERSONALIZATION_ALLOWED_MIME_TYPES:-image/jpeg,image/png,image/webp,application/pdf}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
+      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-}
+      MERCADOPAGO_ENV: ${MERCADOPAGO_ENV:-testing}
+      MERCADOPAGO_PUBLIC_BASE_URL: ${MERCADOPAGO_PUBLIC_BASE_URL:-}
     ports:
       # Primary backend loopback upstream for the recommended host-level Nginx.
-      - "127.0.0.1:4002:3001"
+      - "127.0.0.1:3002:3001"
       # Direct/debug access to the Shop API. Not the primary public entrypoint.
-      - "127.0.0.1:4001:3001"
+      - "127.0.0.1:3001:3001"
     volumes:
-      - vendure_assets:/usr/src/app/apps/backend/static/assets
+      - demo2_vendure_assets:/usr/src/app/apps/backend/static/assets
     networks:
-      - tienda_net
+      - demo2_net
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 10
       start_period: 40s
-
-  getnet:
-    <<: *backend-image
-    container_name: tienda_getnet
-    restart: always
-    command: ["pnpm", "start:getnet:prod"]
-    depends_on:
-      mysql:
-        condition: service_healthy
-    environment:
-      NODE_ENV: production
-      APP_ENV: ${APP_ENV}
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      GETNET_MODE: ${GETNET_MODE:-real}
-      GETNET_MOCK_FORCE_STATUS: ${GETNET_MOCK_FORCE_STATUS:-interactive}
-      GETNET_PORT: 4003
-      GETNET_AUTH_BASE_URL: ${GETNET_AUTH_BASE_URL:-}
-      GETNET_CHECKOUT_BASE_URL: ${GETNET_CHECKOUT_BASE_URL:-}
-      GETNET_CLIENT_ID: ${GETNET_CLIENT_ID:-}
-      GETNET_CLIENT_SECRET: ${GETNET_CLIENT_SECRET:-}
-      GETNET_SCOPE: ${GETNET_SCOPE:-*}
-      GETNET_CURRENCY: ${GETNET_CURRENCY:-032}
-      GETNET_WEBHOOK_URL: ${GETNET_WEBHOOK_URL:-}
-      GETNET_SUCCESS_URL: ${GETNET_SUCCESS_URL:-}
-      GETNET_FAILED_URL: ${GETNET_FAILED_URL:-}
-      GETNET_EXPIRE_LIMIT_MINUTES: ${GETNET_EXPIRE_LIMIT_MINUTES:-10}
-      GETNET_REQUEST_TIMEOUT: ${GETNET_REQUEST_TIMEOUT:-30000}
-    ports:
-      # Getnet standalone server loopback upstream for host-level Nginx
-      - "127.0.0.1:4003:4003"
-    networks:
-      - tienda_net
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:4003/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
 
   storefront:
     build:
@@ -149,8 +88,8 @@ services:
       args:
         NEXT_PUBLIC_VENDURE_API_URL: ${NEXT_PUBLIC_VENDURE_API_URL}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
-        NEXT_PUBLIC_ANDREANI_ENABLED: ${NEXT_PUBLIC_ANDREANI_ENABLED:-false}
-    container_name: tienda_storefront
+        NEXT_PUBLIC_REQUIRE_CUSTOMER_VERIFICATION: ${REQUIRE_CUSTOMER_VERIFICATION}
+    container_name: demo2_storefront
     restart: always
     depends_on:
       backend:
@@ -160,29 +99,27 @@ services:
       PORT: 3000
       NEXT_PUBLIC_VENDURE_API_URL: ${NEXT_PUBLIC_VENDURE_API_URL}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
-      NEXT_PUBLIC_ANDREANI_ENABLED: ${NEXT_PUBLIC_ANDREANI_ENABLED:-false}
-      COOKIE_SECRET: ${COOKIE_SECRET}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-}
+      NEXT_PUBLIC_REQUIRE_CUSTOMER_VERIFICATION: ${REQUIRE_CUSTOMER_VERIFICATION}
       VENDURE_INTERNAL_API_URL: http://backend:3001/shop-api
-      GETNET_INTERNAL_API_URL: http://getnet:4003/payments/getnet
     ports:
-      # Loopback upstream for the recommended host-level Nginx root route.
-      - "127.0.0.1:4000:3000"
+      # Loopback and direct local access for the storefront.
+      - "127.0.0.1:3000:3000"
     networks:
-      - tienda_net
+      - demo2_net
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3000 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 10
-      start_period: 45s
+      start_period: 30s
 
 volumes:
-  mysql_data:
-  vendure_assets:
+  demo2_mysql_data:
+    name: demo2_mysql_data
+  demo2_vendure_assets:
+    name: demo2_vendure_assets
 
 networks:
-  tienda_net:
+  demo2_net:
+    name: demo2_net
     driver: bridge

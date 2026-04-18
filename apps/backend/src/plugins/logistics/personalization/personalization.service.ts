@@ -1,5 +1,5 @@
 import { Readable } from 'node:stream';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import {
     Asset,
     AssetService,
@@ -10,7 +10,6 @@ import {
     RequestContextService,
     TransactionalConnection,
 } from '@vendure/core';
-import type { GetnetService } from '../../payments/getnet';
 import { PersonalizationConfig, PERSONALIZATION_CONFIG_OPTIONS } from './personalization.config';
 import {
     PersonalizationLineStatus,
@@ -27,7 +26,12 @@ import {
     normalizeMimeType,
     sanitizeNotes,
 } from './personalization.utils';
-import { PersonalizationReceivedEvent } from '../../orders/business-status/personalization-received.event';
+import { PersonalizationReceivedEvent } from './personalization.event';
+import {
+    PERSONALIZATION_PSP_RESOLVER,
+    NoopPersonalizationPspResolver,
+    type PersonalizationPspResolver,
+} from './adapters/psp-resolver';
 
 const LOG_PREFIX = '[personalization]';
 
@@ -46,7 +50,7 @@ const REQUIRED_LINE_PENDING_STATUSES = new Set<PersonalizationLineStatus>(['not-
 
 @Injectable()
 export class PersonalizationService {
-    private getnetService: GetnetService | null = null;
+    private readonly pspResolver: PersonalizationPspResolver;
 
     constructor(
         private readonly orderService: OrderService,
@@ -56,10 +60,11 @@ export class PersonalizationService {
         private readonly connection: TransactionalConnection,
         @Inject(PERSONALIZATION_CONFIG_OPTIONS)
         private readonly config: PersonalizationConfig,
-    ) {}
-
-    setGetnetService(service: GetnetService | null): void {
-        this.getnetService = service;
+        @Optional()
+        @Inject(PERSONALIZATION_PSP_RESOLVER)
+        pspResolver?: PersonalizationPspResolver,
+    ) {
+        this.pspResolver = pspResolver ?? NoopPersonalizationPspResolver;
     }
 
     getUploadConstraints(): Pick<PersonalizationConfig, 'allowedMimeTypes' | 'maxFileSizeBytes'> {
@@ -69,10 +74,6 @@ export class PersonalizationService {
         };
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Public API
-    // ─────────────────────────────────────────────────────────────────────────
-
     async syncOrderAfterPayment(orderCode: string): Promise<void> {
         const ctx = await this.requestContextService.create({ apiType: 'admin' });
         const order = await this.loadOrder(ctx, orderCode);
@@ -81,7 +82,6 @@ export class PersonalizationService {
         await this.syncOverallStatus(ctx, order);
     }
 
-    /** Returns personalization data for the whole order (all lines). */
     async getOrderPersonalization(access: PersonalizationOrderAccess): Promise<PersonalizationOrderData> {
         const ctx = await this.requestContextService.create({ apiType: 'admin' });
         const order = await this.loadOrder(ctx, access.orderCode);
@@ -93,7 +93,6 @@ export class PersonalizationService {
         return this.mapToResponse(order, token);
     }
 
-    /** Uploads a file for a specific OrderLine. */
     async uploadForLine(input: PersonalizationLineUploadInput): Promise<PersonalizationOrderData> {
         this.validateFile(input.file);
 
@@ -101,21 +100,18 @@ export class PersonalizationService {
         const order = await this.loadOrder(ctx, input.orderCode);
         if (!order) throw new Error('La orden no existe.');
 
-        const authorization = await this.authorize(input, order, true);
+        await this.authorize(input, order, true);
 
-        // Find the target line
         const line = this.getLines(order).find(l => String(l.id) === String(input.orderLineId));
         if (!line) throw new Error('Línea de orden no encontrada.');
         if (!this.lineRequiresPersonalization(line)) {
             throw new Error('Este producto no requiere personalización.');
         }
 
-        // Upload new asset
         const stream = Readable.from(input.file.buffer);
         const assetResult = await this.assetService.createFromFileStream(stream, input.file.originalname, ctx);
         if (!('id' in assetResult)) throw new Error('Vendure no pudo procesar el archivo subido.');
 
-        // Clean up previous asset for this line
         const prevAsset = this.getLineAsset(line);
         if (prevAsset?.id && prevAsset.id !== assetResult.id) {
             try {
@@ -125,7 +121,6 @@ export class PersonalizationService {
             }
         }
 
-        // Persist to OrderLine via TypeORM (Vendure doesn't expose updateOrderLine customFields directly)
         await this.connection.getRepository(ctx, OrderLine).update(
             { id: line.id as any },
             {
@@ -137,16 +132,14 @@ export class PersonalizationService {
                     personalizationSnapshotFileName: input.file.originalname,
                     personalizationRejectedReason: null,
                 } as any,
-            }
+            },
         );
 
-        // Re-derive and persist overall status on Order
         const reloadedOrder = await this.loadOrder(ctx, input.orderCode);
         if (reloadedOrder) {
             await this.syncOverallStatus(ctx, reloadedOrder);
         }
 
-        // Emit event if all required lines now have uploads
         const latestOrder = await this.loadOrder(ctx, input.orderCode);
         if (latestOrder) {
             const overallStatus = this.deriveOverallStatus(latestOrder);
@@ -164,10 +157,6 @@ export class PersonalizationService {
         return this.mapToResponse(finalOrder, token);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Internal helpers
-    // ─────────────────────────────────────────────────────────────────────────
-
     private async loadOrder(
         ctx: Awaited<ReturnType<RequestContextService['create']>>,
         orderCode: string,
@@ -175,7 +164,6 @@ export class PersonalizationService {
         return this.orderService.findOneByCode(ctx, orderCode, [...ORDER_RELATIONS]);
     }
 
-    /** CORRECCIÓN CRÍTICA: verificar el customField del variant, no solo length > 0 */
     private lineRequiresPersonalization(line: OrderLine): boolean {
         const variantCf = (line.productVariant?.customFields ?? {}) as Record<string, unknown>;
         return variantCf['requiresPersonalization'] === true;
@@ -217,7 +205,7 @@ export class PersonalizationService {
         if (required.length === 0) return 'not-required';
 
         const uploaded = required.filter(l =>
-            ['uploaded', 'approved'].includes(this.getEffectiveLineStatus(l))
+            ['uploaded', 'approved'].includes(this.getEffectiveLineStatus(l)),
         );
 
         if (uploaded.length === 0) return 'pending';
@@ -235,19 +223,17 @@ export class PersonalizationService {
         for (const line of lines) {
             const shouldRequire = this.lineRequiresPersonalization(line);
             const currentStatus = this.getStoredLineStatus(line);
-            const expectedStatus: PersonalizationLineStatus = shouldRequire ? 'pending-upload' : 'not-required';
 
-            // Only update if status is default and needs to be set
             if (!shouldRequire && currentStatus !== 'not-required') {
                 await this.connection.getRepository(ctx, OrderLine).update(
                     { id: line.id as any },
-                    { customFields: { personalizationStatus: 'not-required' } as any }
+                    { customFields: { personalizationStatus: 'not-required' } as any },
                 );
                 changed = true;
             } else if (shouldRequire && currentStatus === 'not-required') {
                 await this.connection.getRepository(ctx, OrderLine).update(
                     { id: line.id as any },
-                    { customFields: { personalizationStatus: 'pending-upload' } as any }
+                    { customFields: { personalizationStatus: 'pending-upload' } as any },
                 );
                 changed = true;
             }
@@ -262,7 +248,7 @@ export class PersonalizationService {
     ): Promise<void> {
         const newStatus = this.deriveOverallStatus(order);
         const cf = (order.customFields ?? {}) as Record<string, unknown>;
-        const currentStatus = cf['personalizationOverallStatus'] as string ?? 'not-required';
+        const currentStatus = (cf['personalizationOverallStatus'] as string) ?? 'not-required';
 
         if (currentStatus === newStatus) return;
 
@@ -289,7 +275,7 @@ export class PersonalizationService {
     ): Promise<{ accessToken: string }> {
         const hasValidToken = isValidPersonalizationToken(order.code, access.accessToken, this.config.tokenSecret);
         const transaction = access.transactionId
-            ? await this.getnetService?.findTransactionById(access.transactionId)
+            ? await this.pspResolver.findTransactionById(access.transactionId)
             : null;
         const customerOwns = this.isOwnedByCustomer(order, access.customerUserId);
 
@@ -344,8 +330,8 @@ export class PersonalizationService {
             orderCode: order.code,
             overallPersonalizationStatus,
             paymentState: lastPayment?.state ?? order.state,
-            shipmentState: (orderCf['andreaniShipmentStatus'] as string) ?? fulfillment?.state ?? null,
-            trackingNumber: (orderCf['andreaniTrackingNumber'] as string) ?? null,
+            shipmentState: (orderCf['shipmentStatus'] as string) ?? fulfillment?.state ?? null,
+            trackingNumber: (orderCf['trackingNumber'] as string) ?? null,
             accessToken,
             requiresPersonalization: this.orderRequiresPersonalization(order),
             lines: lineItems,

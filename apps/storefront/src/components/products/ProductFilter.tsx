@@ -22,10 +22,9 @@ interface Collection {
 
 interface ProductFilterProps {
     collections: Collection[];
-    onNavigate?: () => void;
 }
 
-const ProductFilter = ({ collections, onNavigate }: ProductFilterProps) => {
+const ProductFilter = ({ collections }: ProductFilterProps) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const activeCollection = searchParams.get('collection');
@@ -38,26 +37,42 @@ const ProductFilter = ({ collections, onNavigate }: ProductFilterProps) => {
             params.set('collection', slug);
         }
         router.push(`/productos?${params.toString()}`);
-        onNavigate?.();
     };
 
     const handleReset = () => {
         router.push('/productos');
-        onNavigate?.();
     };
 
     return (
-        <Box p={2}>
+        <Box p={3}>
             <List>
-                <Typography variant="subtitle2" fontWeight={600} px={2} mb={2}>
-                    Colecciones
+                <Typography
+                    variant="overline"
+                    fontWeight={700}
+                    px={1.5}
+                    mb={2}
+                    sx={{ color: 'secondary.dark', letterSpacing: 2.4 }}
+                >
+                    Categorías
                 </Typography>
                 {collections.map((collection) => (
                     <ListItemButton
                         key={collection.id}
                         selected={activeCollection === collection.slug}
                         onClick={() => handleCollectionClick(collection.slug)}
-                        sx={{ borderRadius: 2, mb: 0.5 }}
+                        sx={{
+                            borderRadius: 999,
+                            mb: 1,
+                            border: '1px solid transparent',
+                            px: 1.5,
+                            '&.Mui-selected': {
+                                borderColor: 'rgba(0,72,37,0.14)',
+                                bgcolor: 'rgba(0,72,37,0.06)',
+                            },
+                            '&.Mui-selected:hover': {
+                                bgcolor: 'rgba(0,72,37,0.1)',
+                            },
+                        }}
                     >
                         <ListItemIcon sx={{ minWidth: 32 }}>
                             <IconCategory size={20} />

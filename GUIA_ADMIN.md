@@ -10,9 +10,9 @@ En Vendure, casi todo se organiza usando estos dos conceptos.
 Piensa en las Facetas como **etiquetas** que le pegas a un producto. Sirven para filtrar y organizar, pero **no crean una página automática** en el menú por sí solas.
 
 *   **Ejemplo**:
-    *   Faceta: "Material"
-    *   Valores: "Oro", "Plata", "Acero Quirúrgico".
-    *   Uso: Le asignas al anillo la faceta "Material: Oro".
+    *   Faceta: "Color"
+    *   Valores: "Negro", "Blanco", "Azul".
+    *   Uso: Le asignas al producto la faceta "Color: Azul".
 
 *   **¿Para qué sirven?**:
     *   Para los **Filtros** de la barra lateral en la tienda ("Filtrar por Color", "Filtrar por Material").
@@ -24,9 +24,9 @@ Las Colecciones son lo que el cliente ve como **Categorías** en la tienda. Son 
 *   **Tipos de Colecciones**:
     1.  **Manuales**: Creas la colección "Ofertas de Verano" y agregas los productos uno por uno manualmente.
     2.  **Dinámicas (Inteligentes)**: Aquí es donde brillan las Facetas.
-        *   Creas la colección "Joyería de Oro".
-        *   Le dices a Vendure: *"Mete aquí automáticamente todos los productos que tengan la Faceta 'Material: Oro'"*.
-        *   **Ventaja**: Si mañana subes un anillo nuevo y le pones la etiqueta "Oro", ¡aparece solo en la colección!
+        *   Creas la colección "Productos Azules".
+        *   Le dices a Vendure: *"Mete aquí automáticamente todos los productos que tengan la Faceta 'Color: Azul'"*.
+        *   **Ventaja**: Si mañana subes un producto nuevo y le pones la etiqueta "Azul", ¡aparece solo en la colección!
 
 ## 2. Flujo de Trabajo Recomendado
 
@@ -35,19 +35,19 @@ Para subir productos y que se vean en la tienda:
 1.  **Crea tus Facetas (Una sola vez)**:
     *   Ve a *Catálogo > Facetas*.
     *   Crea una llamada "Categoría" (o "Tipo").
-    *   Agrega valores: "Anillos", "Collares", "Pulseras".
+    *   Agrega valores: "Indumentaria", "Accesorios", "Hogar".
 
 2.  **Crea tus Colecciones (Una sola vez)**:
     *   Ve a *Catálogo > Colecciones*.
-    *   Crea una llamada "Anillos".
-    *   Configura el **Filtro**: "Product has Facet Value" -> Selecciona "Categoría: Anillos".
+    *   Crea una llamada "Accesorios".
+    *   Configura el **Filtro**: "Product has Facet Value" -> Selecciona "Categoría: Accesorios".
     *   (Ahora esta colección se "llenará sola").
 
 3.  **Sube tus Productos (Día a día)**:
     *   Ve a *Catálogo > Productos > Crear Nuevo*.
     *   Sube nombre, precio y **FOTOS**.
-    *   En la sección de Facetas, selecciona "Categoría: Anillos".
-    *   ¡Listo! Al guardar, el producto aparecerá automáticamente en la colección "Anillos" del frontend.
+    *   En la sección de Facetas, selecciona "Categoría: Accesorios".
+    *   ¡Listo! Al guardar, el producto aparecerá automáticamente en la colección "Accesorios" del frontend.
 
 ## 3. Solución de Problemas de Imágenes
 

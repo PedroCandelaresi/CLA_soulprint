@@ -1,0 +1,754 @@
+'use client';
+
+export const dynamic = 'force-dynamic';
+
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+    Alert,
+    Button,
+    Chip,
+    CircularProgress,
+    Container,
+    Divider,
+    Paper,
+    Stack,
+    Typography,
+} from '@mui/material';
+import { formatCurrency } from '@/lib/checkout/demo';
+import {
+    fetchShopApi,
+    GET_ORDER_BY_CODE_QUERY,
+    getOperationResultMessage,
+    RETRY_MERCADOPAGO_PAYMENT_MUTATION,
+    type OrderByCodeResponse,
+    type RetryMercadoPagoPaymentResponse,
+} from '@/lib/vendure/shop';
+import { useStorefront } from '@/components/providers/StorefrontProvider';
+import type {
+    ActiveOrder,
+    StorefrontOrderPayment,
+    StorefrontPaymentMetadata,
+    StorefrontPaymentMetadataPublic,
+} from '@/types/storefront';
+
+const MERCADOPAGO_ORDER_CODE_STORAGE_KEY = 'mercadopago:last-order-code';
+const POLL_INTERVAL_MS = 3000;
+const MAX_POLL_ATTEMPTS = 20;
+
+type ReturnStatus =
+    | 'loading'
+    | 'confirmed'
+    | 'pending'
+    | 'verifying'
+    | 'rejected'
+    | 'cancelled'
+    | 'missing'
+    | 'error';
+
+type ReturnHints = {
+    externalReference: string | null;
+    paymentId: string | null;
+    result: string | null;
+};
+
+type FeedbackState = {
+    severity: 'success' | 'info' | 'warning' | 'error';
+    message: string;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
+function getPaymentMetadata(payment: StorefrontOrderPayment | null | undefined): StorefrontPaymentMetadata | null {
+    if (!isRecord(payment?.metadata)) {
+        return null;
+    }
+
+    return payment.metadata as StorefrontPaymentMetadata;
+}
+
+function getPublicPaymentMetadata(
+    payment: StorefrontOrderPayment | null | undefined,
+): StorefrontPaymentMetadataPublic | null {
+    const metadata = getPaymentMetadata(payment)?.public;
+
+    if (!isRecord(metadata)) {
+        return null;
+    }
+
+    return metadata as StorefrontPaymentMetadataPublic;
+}
+
+function getLatestPayment(order: ActiveOrder | null | undefined): StorefrontOrderPayment | null {
+    const payments = order?.payments ?? [];
+
+    if (payments.length === 0) {
+        return null;
+    }
+
+    return [...payments].sort(
+        (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    )[0] ?? null;
+}
+
+function normalizeStatus(value: string | null | undefined): string | null {
+    const normalizedValue = value?.trim().toLowerCase() || null;
+    return normalizedValue || null;
+}
+
+function isPaymentConfirmed(payment: StorefrontOrderPayment | null): boolean {
+    return payment?.state === 'Settled';
+}
+
+function isPaymentCancelled(payment: StorefrontOrderPayment | null): boolean {
+    return payment?.state === 'Cancelled';
+}
+
+function isPaymentRejected(payment: StorefrontOrderPayment | null): boolean {
+    return payment?.state === 'Declined' || payment?.state === 'Error';
+}
+
+function isPaymentPending(payment: StorefrontOrderPayment | null): boolean {
+    if (payment?.state !== 'Authorized') {
+        return false;
+    }
+
+    const providerStatus = normalizeStatus(getPublicPaymentMetadata(payment)?.status);
+
+    return (
+        providerStatus === 'pending' ||
+        providerStatus === 'in_process' ||
+        providerStatus === 'authorized'
+    );
+}
+
+function isPaymentStillVerifying(payment: StorefrontOrderPayment | null): boolean {
+    return payment?.state === 'Authorized' && !isPaymentPending(payment);
+}
+
+function getMercadoPagoRedirectUrl(order: ActiveOrder | null | undefined): string | null {
+    const payment = getLatestPayment(order);
+    const metadata = getPublicPaymentMetadata(payment);
+    const environment = metadata?.environment;
+
+    if (environment === 'production') {
+        return metadata?.initPoint || metadata?.sandboxInitPoint || null;
+    }
+
+    return metadata?.sandboxInitPoint || metadata?.initPoint || null;
+}
+
+function canRetryPayment(payment: StorefrontOrderPayment | null): boolean {
+    return isPaymentRejected(payment) || isPaymentCancelled(payment);
+}
+
+function canForceRetryPayment(
+    payment: StorefrontOrderPayment | null,
+    pollingTimedOut: boolean,
+): boolean {
+    if (payment?.state !== 'Authorized') {
+        return false;
+    }
+
+    if (isPaymentPending(payment)) {
+        return false;
+    }
+
+    return pollingTimedOut;
+}
+
+function getStatusCopy(status: ReturnStatus): {
+    title: string;
+    severity: 'success' | 'info' | 'warning' | 'error';
+    description: string;
+} {
+    if (status === 'confirmed') {
+        return {
+            title: 'Pago confirmado',
+            severity: 'success',
+            description: 'Vendure ya registró el cobro. En unos segundos te llevamos al detalle de tu pedido.',
+        };
+    }
+
+    if (status === 'pending') {
+        return {
+            title: 'Pago pendiente',
+            severity: 'info',
+            description: 'Mercado Pago ya informó un estado intermedio. Seguimos esperando la confirmación final del webhook.',
+        };
+    }
+
+    if (status === 'rejected') {
+        return {
+            title: 'Pago rechazado',
+            severity: 'error',
+            description: 'Vendure registró que este intento no quedó aprobado. Podés generar un nuevo intento de pago.',
+        };
+    }
+
+    if (status === 'cancelled') {
+        return {
+            title: 'Pago cancelado',
+            severity: 'warning',
+            description: 'El intento de pago fue cancelado y la orden todavía no quedó cobrada.',
+        };
+    }
+
+    if (status === 'verifying') {
+        return {
+            title: 'Verificando pago',
+            severity: 'info',
+            description: 'Todavía estamos esperando que Vendure confirme el estado final con la información real del backend.',
+        };
+    }
+
+    if (status === 'missing') {
+        return {
+            title: 'No pudimos identificar el pedido',
+            severity: 'warning',
+            description: 'Necesitamos el código real de la orden para consultar el estado en Vendure.',
+        };
+    }
+
+    if (status === 'error') {
+        return {
+            title: 'No pudimos confirmar el estado final',
+            severity: 'error',
+            description: 'La URL de retorno no alcanza para validar el pago. Usá la consulta real del pedido o generá un nuevo intento si el link anterior falló.',
+        };
+    }
+
+    return {
+        title: 'Consultando pedido',
+        severity: 'info',
+        description: 'Estamos leyendo el estado real de la orden desde Vendure.',
+    };
+}
+
+export default function CheckoutReturnPage() {
+    return (
+        <Suspense
+            fallback={
+                <Container maxWidth="md" sx={{ py: { xs: 4, md: 6 } }}>
+                    <Stack alignItems="center" py={10} spacing={2}>
+                        <CircularProgress />
+                        <Typography color="text.secondary">Consultando el estado real del pago...</Typography>
+                    </Stack>
+                </Container>
+            }
+        >
+            <CheckoutReturnPageContent />
+        </Suspense>
+    );
+}
+
+const CONFIRMED_REDIRECT_DELAY_MS = 3000;
+
+function CheckoutReturnPageContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const { refreshState } = useStorefront();
+    const pollingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const pollingAttemptsRef = useRef(0);
+    const previousStatusRef = useRef<ReturnStatus>('loading');
+    const [orderCode, setOrderCode] = useState<string | null>(null);
+    const [order, setOrder] = useState<ActiveOrder | null>(null);
+    const [status, setStatus] = useState<ReturnStatus>('loading');
+    const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+    const [refreshing, setRefreshing] = useState(false);
+    const [retrying, setRetrying] = useState(false);
+    const [pollingTimedOut, setPollingTimedOut] = useState(false);
+
+    const hints = useMemo<ReturnHints>(
+        () => ({
+            externalReference: searchParams.get('external_reference'),
+            paymentId: searchParams.get('payment_id') || searchParams.get('collection_id'),
+            result:
+                searchParams.get('result') ||
+                searchParams.get('collection_status') ||
+                searchParams.get('status'),
+        }),
+        [searchParams],
+    );
+
+    const latestPayment = useMemo(() => getLatestPayment(order), [order]);
+    const statusCopy = getStatusCopy(status);
+    const currencyCode = order?.currencyCode || 'ARS';
+    const paymentMetadata = useMemo(
+        () => getPublicPaymentMetadata(latestPayment),
+        [latestPayment],
+    );
+    const retryAvailable = canRetryPayment(latestPayment);
+    const forceRetryAvailable = canForceRetryPayment(latestPayment, pollingTimedOut);
+
+    const applyStatus = useCallback(
+        (nextStatus: ReturnStatus) => {
+            setStatus(nextStatus);
+
+            if (previousStatusRef.current === nextStatus) {
+                return;
+            }
+
+            previousStatusRef.current = nextStatus;
+
+            if (
+                nextStatus === 'confirmed' ||
+                nextStatus === 'rejected' ||
+                nextStatus === 'cancelled'
+            ) {
+                void refreshState();
+            }
+        },
+        [refreshState],
+    );
+
+    const resolveStatus = useCallback((nextOrder: ActiveOrder | null): ReturnStatus => {
+        const payment = getLatestPayment(nextOrder);
+
+        if (isPaymentConfirmed(payment)) {
+            return 'confirmed';
+        }
+
+        if (isPaymentCancelled(payment)) {
+            return 'cancelled';
+        }
+
+        if (isPaymentRejected(payment)) {
+            return 'rejected';
+        }
+
+        if (isPaymentPending(payment)) {
+            return 'pending';
+        }
+
+        if (isPaymentStillVerifying(payment)) {
+            return 'verifying';
+        }
+
+        if (nextOrder) {
+            return 'verifying';
+        }
+
+        return 'error';
+    }, []);
+
+    const stopPolling = useCallback(() => {
+        if (pollingTimeoutRef.current) {
+            clearTimeout(pollingTimeoutRef.current);
+            pollingTimeoutRef.current = null;
+        }
+    }, []);
+
+    const loadOrderStatus = useCallback(
+        async (code: string, options?: { preserveFeedback?: boolean }) => {
+            setRefreshing(true);
+
+            try {
+                const response = await fetchShopApi<OrderByCodeResponse>(GET_ORDER_BY_CODE_QUERY, {
+                    code,
+                });
+                const nextOrder = response.orderByCode ?? null;
+                const nextStatus = resolveStatus(nextOrder);
+
+                setOrder(nextOrder);
+                applyStatus(nextStatus);
+
+                if (!options?.preserveFeedback) {
+                    setFeedback(null);
+                }
+
+                if (
+                    nextStatus === 'confirmed' ||
+                    nextStatus === 'rejected' ||
+                    nextStatus === 'cancelled'
+                ) {
+                    if (typeof window !== 'undefined') {
+                        window.sessionStorage.removeItem(MERCADOPAGO_ORDER_CODE_STORAGE_KEY);
+                    }
+                    stopPolling();
+                    return false;
+                }
+
+                return nextStatus === 'verifying' || nextStatus === 'pending';
+            } catch (error) {
+                const result = getOperationResultMessage(
+                    error,
+                    'No pudimos consultar el estado del pedido en Vendure.',
+                );
+
+                applyStatus('error');
+                setFeedback({
+                    severity: 'error',
+                    message:
+                        result.message || 'No pudimos consultar el estado del pedido en Vendure.',
+                });
+                return false;
+            } finally {
+                setRefreshing(false);
+            }
+        },
+        [applyStatus, resolveStatus, stopPolling],
+    );
+
+    const handleRetryPayment = useCallback(
+        async (force: boolean) => {
+            if (!orderCode) {
+                return;
+            }
+
+            setRetrying(true);
+            stopPolling();
+            setFeedback(null);
+
+            try {
+                const response = await fetchShopApi<RetryMercadoPagoPaymentResponse>(
+                    RETRY_MERCADOPAGO_PAYMENT_MUTATION,
+                    {
+                        orderCode,
+                        force,
+                    },
+                );
+                const nextOrder = response.retryMercadoPagoPayment;
+                const redirectUrl = getMercadoPagoRedirectUrl(nextOrder);
+
+                setOrder(nextOrder);
+                setPollingTimedOut(false);
+                pollingAttemptsRef.current = 0;
+                applyStatus(resolveStatus(nextOrder));
+                await refreshState();
+
+                if (typeof window !== 'undefined') {
+                    window.sessionStorage.setItem(
+                        MERCADOPAGO_ORDER_CODE_STORAGE_KEY,
+                        nextOrder.code,
+                    );
+                }
+
+                if (!redirectUrl) {
+                    setFeedback({
+                        severity: 'warning',
+                        message:
+                            'Generamos un nuevo intento, pero Vendure no devolvió una URL válida de Checkout Pro. Reconsultá el pedido antes de seguir.',
+                    });
+                    return;
+                }
+
+                window.location.href = redirectUrl;
+            } catch (error) {
+                const result = getOperationResultMessage(
+                    error,
+                    'No pudimos generar un nuevo intento de pago con Mercado Pago.',
+                );
+
+                setFeedback({
+                    severity: 'error',
+                    message:
+                        result.message ||
+                        'No pudimos generar un nuevo intento de pago con Mercado Pago.',
+                });
+                void loadOrderStatus(orderCode, { preserveFeedback: true });
+            } finally {
+                setRetrying(false);
+            }
+        },
+        [applyStatus, loadOrderStatus, orderCode, refreshState, resolveStatus, stopPolling],
+    );
+
+    useEffect(() => {
+        const hintedOrderCode = hints.externalReference?.trim() || null;
+
+        if (typeof window === 'undefined') {
+            setOrderCode(hintedOrderCode);
+            return;
+        }
+
+        if (hintedOrderCode) {
+            window.sessionStorage.setItem(MERCADOPAGO_ORDER_CODE_STORAGE_KEY, hintedOrderCode);
+            setOrderCode(hintedOrderCode);
+            return;
+        }
+
+        const storedOrderCode = window.sessionStorage.getItem(MERCADOPAGO_ORDER_CODE_STORAGE_KEY);
+        setOrderCode(storedOrderCode || null);
+    }, [hints.externalReference]);
+
+    useEffect(() => {
+        setPollingTimedOut(false);
+        pollingAttemptsRef.current = 0;
+        previousStatusRef.current = 'loading';
+    }, [orderCode]);
+
+    useEffect(() => {
+        stopPolling();
+        pollingAttemptsRef.current = 0;
+
+        if (!orderCode) {
+            applyStatus('missing');
+            setOrder(null);
+            return;
+        }
+
+        let cancelled = false;
+
+        const poll = async () => {
+            const shouldContinuePolling = await loadOrderStatus(orderCode);
+
+            if (cancelled) {
+                return;
+            }
+
+            if (shouldContinuePolling && pollingAttemptsRef.current < MAX_POLL_ATTEMPTS) {
+                pollingAttemptsRef.current += 1;
+                pollingTimeoutRef.current = setTimeout(() => {
+                    void poll();
+                }, POLL_INTERVAL_MS);
+                return;
+            }
+
+            if (shouldContinuePolling) {
+                setPollingTimedOut(true);
+                setFeedback({
+                    severity: 'warning',
+                    message:
+                        'Seguimos esperando la confirmación final. Si el link quedó inválido o venció, podés generar un nuevo intento de pago.',
+                });
+            }
+        };
+
+        void poll();
+
+        return () => {
+            cancelled = true;
+            stopPolling();
+        };
+    }, [applyStatus, loadOrderStatus, orderCode, stopPolling]);
+
+    useEffect(() => {
+        if (status !== 'confirmed' || !orderCode) {
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.push(`/mi-cuenta/pedidos/${orderCode}`);
+        }, CONFIRMED_REDIRECT_DELAY_MS);
+
+        return () => clearTimeout(timer);
+    }, [status, orderCode, router]);
+
+    return (
+        <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
+            <Stack spacing={3}>
+                <Stack spacing={1}>
+                    <Typography variant="h3" fontWeight={700}>
+                        Retorno de pago
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        Esta pantalla usa la URL solo como pista. La decisión final sale del estado real que Vendure registra para la orden.
+                    </Typography>
+                </Stack>
+
+                <Alert severity={statusCopy.severity}>
+                    <strong>{statusCopy.title}.</strong> {statusCopy.description}
+                </Alert>
+
+                {feedback && <Alert severity={feedback.severity}>{feedback.message}</Alert>}
+
+                <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3} alignItems="stretch">
+                    <Paper variant="outlined" sx={{ flex: 1, p: { xs: 3, md: 4 }, borderRadius: 3 }}>
+                        <Stack spacing={2.5}>
+                            <Stack
+                                direction={{ xs: 'column', sm: 'row' }}
+                                spacing={1.5}
+                                justifyContent="space-between"
+                                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                            >
+                                <Typography variant="h5" fontWeight={700}>
+                                    Estado consultado
+                                </Typography>
+                                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                    {orderCode && <Chip label={`Pedido ${orderCode}`} variant="outlined" />}
+                                    {latestPayment && <Chip label={`Pago ${latestPayment.state}`} variant="outlined" />}
+                                    {order && <Chip label={`Orden ${order.state}`} variant="outlined" />}
+                                </Stack>
+                            </Stack>
+
+                            {(refreshing || retrying) && (
+                                <Stack direction="row" spacing={1.5} alignItems="center">
+                                    <CircularProgress size={18} />
+                                    <Typography color="text.secondary">
+                                        {retrying
+                                            ? 'Generando un nuevo intento de pago...'
+                                            : 'Consultando estado actualizado en Vendure...'}
+                                    </Typography>
+                                </Stack>
+                            )}
+
+                            {!orderCode && (
+                                <Alert severity="warning">
+                                    No llegó `external_reference` y tampoco encontramos una orden previa guardada en la sesión del navegador.
+                                </Alert>
+                            )}
+
+                            {order && (
+                                <Paper
+                                    variant="outlined"
+                                    sx={{
+                                        p: 2.5,
+                                        borderRadius: 3,
+                                        bgcolor: 'grey.50',
+                                    }}
+                                >
+                                    <Stack spacing={1.25}>
+                                        <Stack direction="row" justifyContent="space-between">
+                                            <Typography color="text.secondary">Subtotal</Typography>
+                                            <Typography fontWeight={600}>
+                                                {formatCurrency(order.subTotalWithTax, currencyCode)}
+                                            </Typography>
+                                        </Stack>
+                                        <Stack direction="row" justifyContent="space-between">
+                                            <Typography color="text.secondary">Envío</Typography>
+                                            <Typography fontWeight={600}>
+                                                {formatCurrency(order.shippingWithTax, currencyCode)}
+                                            </Typography>
+                                        </Stack>
+                                        <Stack direction="row" justifyContent="space-between">
+                                            <Typography color="text.secondary">Total</Typography>
+                                            <Typography variant="h6" fontWeight={700}>
+                                                {formatCurrency(order.totalWithTax, currencyCode)}
+                                            </Typography>
+                                        </Stack>
+                                    </Stack>
+                                </Paper>
+                            )}
+
+                            {latestPayment && (
+                                <Stack spacing={1}>
+                                    <Typography variant="subtitle2" color="text.secondary">
+                                        Último pago registrado
+                                    </Typography>
+                                    <Typography>
+                                        Método: <strong>{latestPayment.method}</strong>
+                                    </Typography>
+                                    <Typography>
+                                        Estado real: <strong>{latestPayment.state}</strong>
+                                    </Typography>
+                                    {paymentMetadata?.environment && (
+                                        <Typography color="text.secondary">
+                                            Ambiente: {paymentMetadata.environment}
+                                        </Typography>
+                                    )}
+                                    {latestPayment.errorMessage && (
+                                        <Typography color="error.main">
+                                            Detalle: {latestPayment.errorMessage}
+                                        </Typography>
+                                    )}
+                                    {paymentMetadata?.status && (
+                                        <Typography color="text.secondary">
+                                            Mercado Pago reportó: {paymentMetadata.status}
+                                            {paymentMetadata.statusDetail
+                                                ? ` (${paymentMetadata.statusDetail})`
+                                                : ''}
+                                        </Typography>
+                                    )}
+                                    {paymentMetadata?.lastDecision && (
+                                        <Typography color="text.secondary">
+                                            Última validación backend: {paymentMetadata.lastDecision}
+                                        </Typography>
+                                    )}
+                                </Stack>
+                            )}
+
+                            {!latestPayment && order && (
+                                <Alert severity="info">
+                                    La orden existe, pero todavía no vemos un pago terminal. Si recién volviste desde Mercado Pago, puede seguir en verificación unos instantes.
+                                </Alert>
+                            )}
+                        </Stack>
+                    </Paper>
+
+                    <Paper variant="outlined" sx={{ width: '100%', maxWidth: 380, p: 3, borderRadius: 3 }}>
+                        <Stack spacing={2}>
+                            <Typography variant="h5" fontWeight={700}>
+                                Referencias
+                            </Typography>
+                            <Divider />
+                            <Typography color="text.secondary">
+                                result: {hints.result || 'sin dato'}
+                            </Typography>
+                            <Typography color="text.secondary">
+                                payment_id: {hints.paymentId || 'sin dato'}
+                            </Typography>
+                            <Typography color="text.secondary">
+                                external_reference: {hints.externalReference || 'sin dato'}
+                            </Typography>
+
+                            {forceRetryAvailable && (
+                                <Alert severity="warning">
+                                    El intento actual sigue en verificación local. Si el link anterior venció o quedó inválido, podemos generar una preferencia nueva sin reciclar la URL previa.
+                                </Alert>
+                            )}
+
+                            <Divider />
+
+                            <Button
+                                variant="contained"
+                                onClick={() => {
+                                    if (retryAvailable) {
+                                        void handleRetryPayment(false);
+                                        return;
+                                    }
+
+                                    if (forceRetryAvailable) {
+                                        void handleRetryPayment(true);
+                                    }
+                                }}
+                                disabled={(!retryAvailable && !forceRetryAvailable) || retrying || refreshing}
+                            >
+                                {retryAvailable || forceRetryAvailable
+                                    ? 'Generar nuevo intento'
+                                    : 'Sin reintento disponible'}
+                            </Button>
+
+                            {orderCode && (status === 'confirmed' || status === 'rejected' || status === 'cancelled' || status === 'pending') && (
+                                <Button
+                                    component={Link}
+                                    href={`/mi-cuenta/pedidos/${orderCode}`}
+                                    variant={status === 'confirmed' ? 'contained' : 'outlined'}
+                                    color={status === 'confirmed' ? 'success' : 'primary'}
+                                >
+                                    Ver mi pedido
+                                </Button>
+                            )}
+
+                            <Button
+                                variant="outlined"
+                                onClick={() => {
+                                    if (orderCode) {
+                                        stopPolling();
+                                        pollingAttemptsRef.current = 0;
+                                        setPollingTimedOut(false);
+                                        void loadOrderStatus(orderCode, { preserveFeedback: true });
+                                    }
+                                }}
+                                disabled={!orderCode || refreshing || retrying}
+                            >
+                                Reconsultar estado
+                            </Button>
+
+                            <Button component={Link} href="/checkout" variant="text">
+                                Volver al checkout
+                            </Button>
+
+                            <Button component={Link} href="/carrito" variant="text">
+                                Ir al carrito
+                            </Button>
+                        </Stack>
+                    </Paper>
+                </Stack>
+            </Stack>
+        </Container>
+    );
+}

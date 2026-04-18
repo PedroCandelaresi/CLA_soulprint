@@ -1,77 +1,66 @@
-{{> header title="Activá tu cuenta para continuar con tu compra" }}
+{{> header title="Confirmá tu cuenta" }}
 
-<mj-section background-color="#ffffff" padding="0 32px 6px">
+<mj-section background-color="#ffffff" padding="0 32px 8px">
   <mj-column>
-    <mj-text css-class="cla-copy" font-size="22px" line-height="1.6" padding="0 0 18px">
+    <mj-text font-size="18px" line-height="1.8" padding="0 0 16px">
       Hola,
     </mj-text>
-    <mj-text css-class="cla-copy" font-size="20px" line-height="1.8" padding="0 0 18px">
-      Ya recibimos tu registro en <strong>{{ brandName }}</strong>.
-    </mj-text>
-    <mj-text css-class="cla-copy" font-size="20px" line-height="1.8" padding="0 0 18px">
-      Para activar tu cuenta y poder finalizar tu compra, necesitás confirmar tu correo y crear tu contraseña.
+    <mj-text font-size="17px" line-height="1.8" padding="0 0 16px">
+      Recibimos tu registro en <strong>{{ brandName }}</strong>. Para activar tu cuenta y empezar a comprar, confirmá tu dirección de correo haciendo clic en el botón.
     </mj-text>
   </mj-column>
 </mj-section>
 
-<mj-section background-color="#fbf8f1" padding="6px 32px 6px">
+<mj-section background-color="#f5f5f5" padding="6px 32px 6px">
   <mj-column>
     <mj-text
       align="center"
-      color="#032f1d"
-      font-size="22px"
-      font-weight="700"
+      color="#424242"
+      font-size="15px"
+      font-weight="600"
       line-height="1.5"
-      padding="18px 16px 8px"
+      padding="16px 16px 4px"
     >
-      Paso 1: abrí el enlace
+      ¿Cómo funciona?
     </mj-text>
-    <mj-text
-      align="center"
-      color="#1d261f"
-      font-size="19px"
-      line-height="1.8"
-      padding="0 10px 6px"
-    >
-      Paso 2: elegí tu contraseña
+    <mj-text align="center" color="#424242" font-size="15px" line-height="1.8" padding="0 10px 4px">
+      1 — Hacé clic en el botón de abajo
     </mj-text>
-    <mj-text
-      align="center"
-      color="#1d261f"
-      font-size="19px"
-      line-height="1.8"
-      padding="0 10px 20px"
-    >
-      Paso 3: volvés al carrito y seguís con la compra
+    <mj-text align="center" color="#424242" font-size="15px" line-height="1.8" padding="0 10px 4px">
+      2 — Tu cuenta queda activada
+    </mj-text>
+    <mj-text align="center" color="#424242" font-size="15px" line-height="1.8" padding="0 10px 16px">
+      3 — Ya podés ingresar y comprar
     </mj-text>
   </mj-column>
 </mj-section>
 
-<mj-section background-color="#ffffff" padding="10px 32px 0">
+<mj-section background-color="#ffffff" padding="24px 32px 0">
   <mj-column>
     <mj-button
       href="{{ verifyEmailAddressUrl }}?token={{ verificationToken }}"
-      background-color="#004825"
+      background-color="#1a1a1a"
       color="#ffffff"
+      align="center"
       padding="0 0 20px"
     >
       Activar mi cuenta
     </mj-button>
-    <mj-text css-class="cla-copy" align="center" font-size="17px" line-height="1.8" padding="0 0 8px">
+    <mj-text css-class="me-muted" align="center" font-size="15px" line-height="1.8" padding="0 0 6px">
       Si el botón no abre, copiá y pegá este enlace en tu navegador:
     </mj-text>
-    <mj-text align="center" font-size="16px" line-height="1.8" padding="0">
-      <a href="{{ verifyEmailAddressUrl }}?token={{ verificationToken }}" style="color:#0b5a34;word-break:break-word;">
+    <mj-text css-class="me-link" align="center" font-size="14px" line-height="1.8" padding="0">
+      <a href="{{ verifyEmailAddressUrl }}?token={{ verificationToken }}" style="color:#1a1a1a;word-break:break-all;">
         {{ verifyEmailAddressUrl }}?token={{ verificationToken }}
       </a>
     </mj-text>
   </mj-column>
 </mj-section>
 
-<mj-section background-color="#ffffff" padding="16px 32px 0">
+<mj-section background-color="#ffffff" padding="20px 32px 0">
   <mj-column>
-    <mj-text css-class="cla-copy" font-size="17px" line-height="1.8" padding="0 0 16px">
-      Si vos no intentaste crear esta cuenta, podés ignorar este correo.
+    <mj-text css-class="me-muted" font-size="15px" line-height="1.8" padding="0 0 16px">
+      Si no intentaste crear esta cuenta, podés ignorar este correo sin problema.
     </mj-text>
   </mj-column>
 </mj-section>

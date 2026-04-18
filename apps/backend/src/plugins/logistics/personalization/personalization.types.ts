@@ -11,8 +11,6 @@ export type PersonalizationOverallStatus =
     | 'partial'
     | 'complete';
 
-// ─── Access / Input ───────────────────────────────────────────────────────────
-
 export interface PersonalizationOrderAccess {
     orderCode: string;
     transactionId?: string;
@@ -20,7 +18,6 @@ export interface PersonalizationOrderAccess {
     customerUserId?: string;
 }
 
-/** Input for uploading to a specific OrderLine */
 export interface PersonalizationLineUploadInput extends PersonalizationOrderAccess {
     orderLineId: string;
     notes?: string;
@@ -33,8 +30,6 @@ export interface UploadedPersonalizationFile {
     size: number;
     buffer: Buffer;
 }
-
-// ─── Response ─────────────────────────────────────────────────────────────────
 
 export interface PersonalizationAssetSummary {
     id: string;

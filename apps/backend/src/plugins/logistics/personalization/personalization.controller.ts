@@ -47,10 +47,6 @@ export class PersonalizationController {
         return userId ? String(userId) : undefined;
     }
 
-    /**
-     * GET /logistics/personalization/order/:orderCode
-     * Returns overall status + per-line personalization data.
-     */
     @Get('order/:orderCode')
     async getOrderPersonalization(
         @Param('orderCode') orderCode: string,
@@ -76,18 +72,6 @@ export class PersonalizationController {
         }
     }
 
-    /**
-     * POST /logistics/personalization/upload
-     * Upload an image for a specific OrderLine.
-     *
-     * Body (multipart/form-data):
-     *   - file         (required)
-     *   - orderCode    (required)
-     *   - orderLineId  (required)
-     *   - accessToken  (optional)
-     *   - transactionId (optional)
-     *   - notes        (optional)
-     */
     @Post('upload')
     @HttpCode(200)
     @UseInterceptors(FileInterceptor('file', {

@@ -1,120 +1,78 @@
-const VENDURE_API_URL = process.env.VENDURE_INTERNAL_API_URL || process.env.NEXT_PUBLIC_VENDURE_API_URL || 'http://localhost:3001/shop-api';
+const DEFAULT_BROWSER_VENDURE_API_URL = '/api/shop';
+const DEFAULT_SERVER_VENDURE_API_URL = 'http://localhost:3001/shop-api';
+
+function readEnv(
+    name: 'VENDURE_INTERNAL_API_URL' | 'NEXT_PUBLIC_VENDURE_API_URL' | 'NEXT_PUBLIC_SITE_URL',
+): string | null {
+    const value = process.env[name]?.trim();
+    return value ? value : null;
+}
+
+function resolveServerVendureApiUrlFromPublicValue(publicApiUrl: string | null): string | null {
+    if (!publicApiUrl) {
+        return null;
+    }
+
+    if (!publicApiUrl.startsWith('/')) {
+        return publicApiUrl;
+    }
+
+    const siteUrl = readEnv('NEXT_PUBLIC_SITE_URL');
+    if (!siteUrl) {
+        return null;
+    }
+
+    try {
+        return new URL(publicApiUrl, siteUrl).toString();
+    } catch {
+        return null;
+    }
+}
+
+function resolveVendureApiUrl(): string {
+    const publicApiUrl = readEnv('NEXT_PUBLIC_VENDURE_API_URL');
+
+    if (typeof window !== 'undefined') {
+        return publicApiUrl || DEFAULT_BROWSER_VENDURE_API_URL;
+    }
+
+    return (
+        readEnv('VENDURE_INTERNAL_API_URL') ||
+        resolveServerVendureApiUrlFromPublicValue(publicApiUrl) ||
+        DEFAULT_SERVER_VENDURE_API_URL
+    );
+}
 
 interface GraphQLError {
     message: string;
 }
 
 interface GraphQLResponse<T> {
-    data?: T;
+    data: T;
     errors?: GraphQLError[];
 }
 
-interface VendureRequestOptions {
-    variables?: Record<string, unknown>;
-    headers?: HeadersInit;
-    cache?: RequestCache;
-}
+export async function fetchVendure<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+    const vendureApiUrl = resolveVendureApiUrl();
 
-export interface VendureFetchResult<T> {
-    data: T;
-    headers: Headers;
-    status: number;
-    statusText: string;
-}
-
-export async function fetchVendureApi<T>(query: string, options: VendureRequestOptions = {}): Promise<VendureFetchResult<T>> {
-    const { variables = {}, headers, cache = 'no-store' } = options;
-    const response = await fetch(VENDURE_API_URL, {
+    const res = await fetch(vendureApiUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            ...(headers ?? {}),
         },
         body: JSON.stringify({ query, variables }),
-        cache,
+        cache: 'no-store',
     });
 
-    if (!response.ok) {
-        throw new Error(`Vendure API error: ${response.status} ${response.statusText}`);
+    if (!res.ok) {
+        throw new Error(`Vendure API error: ${res.statusText}`);
     }
 
-    const json: GraphQLResponse<T> = await response.json();
-    if (json.errors?.length) {
+    const json: GraphQLResponse<T> = await res.json();
+    if (json.errors) {
+        console.error('Vendure GraphQL Errors:', json.errors);
         throw new Error(json.errors[0].message);
     }
-    if (!json.data) {
-        throw new Error('Vendure API returned no data.');
-    }
 
-    return {
-        data: json.data,
-        headers: response.headers,
-        status: response.status,
-        statusText: response.statusText,
-    };
-}
-
-export async function fetchVendure<T>(
-    query: string,
-    variables: Record<string, unknown> = {},
-    options: Omit<VendureRequestOptions, 'variables'> = {},
-): Promise<T> {
-    const { data } = await fetchVendureApi<T>(query, { ...options, variables });
-    return data;
-}
-
-export function appendVendureSetCookieHeaders(sourceHeaders: Headers, targetHeaders: Headers): void {
-    const headerBag = sourceHeaders as Headers & { getSetCookie?: () => string[] };
-    const setCookies = headerBag.getSetCookie?.() ?? [];
-
-    if (setCookies.length > 0) {
-        for (const value of setCookies) {
-            targetHeaders.append('set-cookie', value);
-        }
-        return;
-    }
-
-    const singleSetCookie = sourceHeaders.get('set-cookie');
-    if (singleSetCookie) {
-        for (const value of splitCombinedSetCookieHeader(singleSetCookie)) {
-            targetHeaders.append('set-cookie', value);
-        }
-    }
-}
-
-function splitCombinedSetCookieHeader(value: string): string[] {
-    const cookies: string[] = [];
-    let current = '';
-    let inExpiresAttribute = false;
-
-    for (let index = 0; index < value.length; index += 1) {
-        const char = value[index];
-        current += char;
-
-        const lowerCurrent = current.toLowerCase();
-        if (!inExpiresAttribute && lowerCurrent.endsWith('expires=')) {
-            inExpiresAttribute = true;
-            continue;
-        }
-
-        if (inExpiresAttribute && char === ';') {
-            inExpiresAttribute = false;
-            continue;
-        }
-
-        if (!inExpiresAttribute && char === ',' && index < value.length - 1) {
-            current = current.slice(0, -1).trim();
-            if (current) {
-                cookies.push(current);
-            }
-            current = '';
-        }
-    }
-
-    const trailing = current.trim();
-    if (trailing) {
-        cookies.push(trailing);
-    }
-
-    return cookies;
+    return json.data;
 }

@@ -1,0 +1,266 @@
+<vdr-page-body>
+    <div
+        style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;"
+    >
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem;">{{ isNew ? 'Nuevo badge' : 'Editar badge' }}</h2>
+            <p style="margin: 0.25rem 0 0; color: #666;">
+                Configura el asset visual, prioridad, vigencia y fallback de color del badge.
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn btn-secondary" type="button" (click)="cancel()">
+                Cancelar
+            </button>
+            <button
+                class="btn btn-primary"
+                type="button"
+                (click)="save()"
+                [disabled]="form.invalid || saving"
+            >
+                <span *ngIf="saving" class="spinner spinner-inline"></span>
+                {{ isNew ? 'Crear badge' : 'Guardar cambios' }}
+            </button>
+        </div>
+    </div>
+
+    <div *ngIf="loading" style="padding: 2rem; text-align: center;">
+        <span class="spinner spinner-md"></span>
+    </div>
+
+    <ng-container *ngIf="!loading">
+        <div class="clr-row">
+
+            <div class="clr-col-8">
+                <div class="card">
+                    <div class="card-header">Datos del badge</div>
+                    <div class="card-block">
+                        <form [formGroup]="form" clrForm clrLayout="vertical">
+
+                            <clr-input-container>
+                                <label>Nombre <span class="text-danger">*</span></label>
+                                <input
+                                    clrInput
+                                    formControlName="name"
+                                    placeholder="Ej: Novedad, Oferta, Exclusivo"
+                                    style="width: 100%;"
+                                />
+                                <clr-control-error *clrIfError="'required'">
+                                    El nombre es obligatorio
+                                </clr-control-error>
+                            </clr-input-container>
+
+                            <clr-input-container>
+                                <label>Código <span class="text-danger">*</span></label>
+                                <input
+                                    clrInput
+                                    formControlName="code"
+                                    placeholder="Ej: novedad"
+                                    style="width: 100%;"
+                                />
+                                <clr-control-helper>
+                                    Identificador único en minúsculas. No se puede cambiar una vez creado.
+                                </clr-control-helper>
+                                <clr-control-error *clrIfError="'required'">
+                                    El código es obligatorio
+                                </clr-control-error>
+                            </clr-input-container>
+
+                            <clr-input-container>
+                                <label>Prioridad</label>
+                                <input
+                                    clrInput
+                                    type="number"
+                                    formControlName="priority"
+                                    min="0"
+                                    step="1"
+                                    style="width: 120px;"
+                                />
+                                <clr-control-helper>
+                                    Número menor aparece primero. Default: 0.
+                                </clr-control-helper>
+                            </clr-input-container>
+
+                            <clr-input-container>
+                                <label>Fecha y hora de expiración</label>
+                                <input
+                                    clrInput
+                                    type="datetime-local"
+                                    formControlName="expiresAt"
+                                    style="width: 220px;"
+                                />
+                                <clr-control-helper>
+                                    Dejar vacío para que el badge no expire nunca.
+                                </clr-control-helper>
+                            </clr-input-container>
+
+                            <div class="clr-form-control">
+                                <label class="clr-control-label">Visibilidad</label>
+                                <div class="clr-control-container">
+                                    <clr-toggle-wrapper>
+                                        <input
+                                            type="checkbox"
+                                            clrToggle
+                                            formControlName="enabled"
+                                            id="badge-enabled"
+                                        />
+                                        <label for="badge-enabled">
+                                            Activo — mostrar en la tienda
+                                        </label>
+                                    </clr-toggle-wrapper>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="clr-col-4">
+                <div class="card">
+                    <div class="card-header">Imagen del badge</div>
+                    <div class="card-block">
+                        <div
+                            *ngIf="selectedAsset"
+                            style="text-align: center; margin-bottom: 1rem;"
+                        >
+                            <img
+                                [src]="selectedAsset.preview + '?preset=medium'"
+                                style="max-width: 100%; max-height: 120px; object-fit: contain; border-radius: 4px; background: #f5f5f5; padding: 8px;"
+                                [alt]="selectedAsset.name"
+                            />
+                            <div style="font-size: 0.8em; color: #666; margin-top: 4px;">
+                                {{ selectedAsset.name }}
+                            </div>
+                        </div>
+                        <div
+                            *ngIf="!selectedAsset"
+                            style="text-align: center; padding: 1.5rem; background: #f9f9f9; border-radius: 4px; margin-bottom: 1rem; color: #999;"
+                        >
+                            <clr-icon shape="image" size="36"></clr-icon>
+                            <div style="margin-top: 0.5rem; font-size: 0.85em;">
+                                Sin imagen asignada
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button
+                                type="button"
+                                class="btn btn-outline btn-sm"
+                                (click)="openAssetPicker()"
+                            >
+                                <clr-icon shape="folder-open"></clr-icon>
+                                Seleccionar imagen
+                            </button>
+                            <button
+                                *ngIf="selectedAsset"
+                                type="button"
+                                class="btn btn-sm btn-link"
+                                (click)="clearAsset()"
+                            >
+                                Quitar
+                            </button>
+                        </div>
+                        <p style="font-size: 0.8em; color: #888; margin-top: 0.75rem;">
+                            Recomendado: PNG o SVG con fondo transparente.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 1rem;">
+                    <div class="card-header">Colores (sin imagen)</div>
+                    <div class="card-block">
+                        <p style="font-size: 0.8em; color: #888; margin-bottom: 1rem;">
+                            Si el badge no tiene imagen, se muestra como etiqueta de color.
+                        </p>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.85em; font-weight: 600; margin-bottom: 4px;">
+                                Color de fondo
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <ng-container *ngIf="previewBg; else noBgColor">
+                                    <input
+                                        type="color"
+                                        [value]="previewBg"
+                                        (input)="form.get('backgroundColor')!.setValue($any($event.target).value)"
+                                        style="width: 36px; height: 36px; padding: 2px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"
+                                    />
+                                    <span style="font-family: monospace; font-size: 0.85em;">
+                                        {{ previewBg }}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        class="btn btn-link btn-sm"
+                                        (click)="clearColor('backgroundColor')"
+                                    >
+                                        Quitar
+                                    </button>
+                                </ng-container>
+                                <ng-template #noBgColor>
+                                    <span style="color: #999; font-size: 0.85em;">Sin color</span>
+                                    <input
+                                        type="color"
+                                        value="#1a1a1a"
+                                        (input)="form.get('backgroundColor')!.setValue($any($event.target).value)"
+                                        style="width: 28px; height: 28px; padding: 2px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"
+                                    />
+                                    <span style="font-size: 0.75em; color: #999;">Elegir</span>
+                                </ng-template>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-size: 0.85em; font-weight: 600; margin-bottom: 4px;">
+                                Color de texto
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <ng-container *ngIf="previewText; else noTextColor">
+                                    <input
+                                        type="color"
+                                        [value]="previewText"
+                                        (input)="form.get('textColor')!.setValue($any($event.target).value)"
+                                        style="width: 36px; height: 36px; padding: 2px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"
+                                    />
+                                    <span style="font-family: monospace; font-size: 0.85em;">
+                                        {{ previewText }}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        class="btn btn-link btn-sm"
+                                        (click)="clearColor('textColor')"
+                                    >
+                                        Quitar
+                                    </button>
+                                </ng-container>
+                                <ng-template #noTextColor>
+                                    <span style="color: #999; font-size: 0.85em;">Sin color</span>
+                                    <input
+                                        type="color"
+                                        value="#ffffff"
+                                        (input)="form.get('textColor')!.setValue($any($event.target).value)"
+                                        style="width: 28px; height: 28px; padding: 2px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"
+                                    />
+                                    <span style="font-size: 0.75em; color: #999;">Elegir</span>
+                                </ng-template>
+                            </div>
+                        </div>
+
+                        <div *ngIf="previewBg" style="margin-top: 1.5rem;">
+                            <label style="display: block; font-size: 0.85em; font-weight: 600; margin-bottom: 6px;">
+                                Vista previa
+                            </label>
+                            <span
+                                [style.background-color]="previewBg"
+                                [style.color]="previewText || '#ffffff'"
+                                style="display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 0.85em; font-weight: 700;"
+                            >
+                                {{ form.get('name')?.value || 'Badge' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</vdr-page-body>

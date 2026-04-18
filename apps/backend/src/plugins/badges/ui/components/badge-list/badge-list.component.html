@@ -1,0 +1,124 @@
+<vdr-page-body>
+    <div
+        style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;"
+    >
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem;">Badges</h2>
+            <p style="margin: 0.25rem 0 0; color: #666;">
+                Gestiona badges visuales reutilizables para productos y variantes.
+            </p>
+        </div>
+
+        <button class="btn btn-primary" type="button" (click)="navigateToCreate()">
+            <clr-icon shape="plus"></clr-icon>
+            Nuevo badge
+        </button>
+    </div>
+
+    <div *ngIf="loading" style="padding: 2rem; text-align: center;">
+        <span class="spinner spinner-md"></span>
+    </div>
+
+    <ng-container *ngIf="!loading">
+        <table class="table table-noborder table-compact">
+            <thead>
+                <tr>
+                    <th style="width: 64px;">Imagen</th>
+                    <th>Nombre</th>
+                    <th>Código</th>
+                    <th style="width: 80px;">Activo</th>
+                    <th style="width: 90px;">Prioridad</th>
+                    <th style="width: 160px;">Expira</th>
+                    <th style="width: 100px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let badge of badges">
+                    <td>
+                        <img
+                            *ngIf="badge.featuredAsset"
+                            [src]="badge.featuredAsset.preview + '?preset=tiny'"
+                            width="48"
+                            height="48"
+                            style="object-fit: contain; border-radius: 4px; background: #f5f5f5;"
+                            [alt]="badge.name"
+                        />
+                        <span
+                            *ngIf="!badge.featuredAsset && badge.backgroundColor"
+                            style="display: inline-block; width: 48px; height: 24px; border-radius: 12px; vertical-align: middle;"
+                            [style.background-color]="badge.backgroundColor"
+                            [style.color]="badge.textColor || '#fff'"
+                        ></span>
+                        <clr-icon
+                            *ngIf="!badge.featuredAsset && !badge.backgroundColor"
+                            shape="image"
+                            style="color: #ccc;"
+                        ></clr-icon>
+                    </td>
+                    <td>
+                        <strong>{{ badge.name }}</strong>
+                    </td>
+                    <td>
+                        <code style="font-size: 0.8em;">{{ badge.code }}</code>
+                    </td>
+                    <td>
+                        <clr-toggle-wrapper>
+                            <input
+                                type="checkbox"
+                                clrToggle
+                                [checked]="badge.enabled"
+                                (change)="toggleEnabled(badge)"
+                            />
+                        </clr-toggle-wrapper>
+                    </td>
+                    <td>{{ badge.priority }}</td>
+                    <td>
+                        <ng-container *ngIf="badge.expiresAt; else noExpiry">
+                            <span [class.text-danger]="isExpired(badge.expiresAt)">
+                                <clr-icon
+                                    *ngIf="isExpired(badge.expiresAt)"
+                                    shape="warning-standard"
+                                    style="color: #e12200;"
+                                ></clr-icon>
+                                {{ badge.expiresAt | date:'dd/MM/yyyy HH:mm' }}
+                            </span>
+                        </ng-container>
+                        <ng-template #noExpiry>
+                            <span style="color: #999;">Sin vencimiento</span>
+                        </ng-template>
+                    </td>
+                    <td>
+                        <button
+                            class="btn btn-icon btn-sm"
+                            title="Editar"
+                            type="button"
+                            (click)="navigateToEdit(badge.id)"
+                        >
+                            <clr-icon shape="edit"></clr-icon>
+                        </button>
+                        <button
+                            class="btn btn-icon btn-sm btn-danger-outline"
+                            title="Eliminar"
+                            type="button"
+                            (click)="deleteBadge(badge)"
+                        >
+                            <clr-icon shape="trash"></clr-icon>
+                        </button>
+                    </td>
+                </tr>
+                <tr *ngIf="badges.length === 0">
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: #999;">
+                        No hay badges creados todavía.
+                        <button class="btn btn-link" type="button" (click)="navigateToCreate()">
+                            Crear el primero
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="padding: 0.5rem 0; color: #999; font-size: 0.85em;" *ngIf="badges.length > 0">
+            {{ totalItems }} {{ totalItems === 1 ? 'badge' : 'badges' }} en total
+        </div>
+    </ng-container>
+</vdr-page-body>

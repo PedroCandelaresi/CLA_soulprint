@@ -3,63 +3,75 @@
     <mj-title>{{ title }}</mj-title>
     <mj-preview>{{ title }}</mj-preview>
     <mj-attributes>
-      <mj-all font-family="'Trebuchet MS', 'Segoe UI', Arial, sans-serif" />
-      <mj-text color="#1d261f" font-size="18px" line-height="1.7" />
-      <mj-button font-size="20px" font-weight="700" line-height="1.2" border-radius="14px" inner-padding="18px 28px" />
+      <mj-all font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" />
+      <mj-text color="#212121" font-size="17px" line-height="1.7" />
+      <mj-button
+        font-size="16px"
+        font-weight="600"
+        line-height="1.2"
+        border-radius="8px"
+        inner-padding="16px 32px"
+      />
       <mj-section padding="0" />
       <mj-column padding="0" />
     </mj-attributes>
     <mj-style inline="inline">
-      .cla-card {
-        border-radius: 22px;
+      .me-card {
+        border-radius: 16px;
       }
-      .cla-title div {
-        letter-spacing: -0.02em;
+      .me-title div {
+        letter-spacing: -0.01em;
       }
-      .cla-copy strong {
-        color: #032f1d;
+      .me-muted div,
+      .me-muted a {
+        color: #757575 !important;
       }
-      .cla-muted div,
-      .cla-muted a {
-        color: #5d6d61 !important;
+      .me-link a {
+        color: #212121 !important;
+        text-decoration: underline;
       }
     </mj-style>
   </mj-head>
 
-  <mj-body background-color="#f7f5ef" width="680px">
-    <mj-section background-color="#004825" padding="0">
+  <mj-body background-color="#f5f5f5" width="640px">
+
+    <!-- Header -->
+    <mj-section background-color="#1a1a1a" padding="0">
       <mj-column padding="28px 24px 24px">
         {{#if brandLogoUrl}}
           <mj-image
             src="{{ brandLogoUrl }}"
             alt="{{ brandName }}"
-            width="240px"
+            width="180px"
             align="center"
             padding="0"
           />
+        {{else}}
+          <mj-text
+            align="center"
+            color="#ffffff"
+            font-size="22px"
+            font-weight="700"
+            letter-spacing="0.05em"
+            padding="4px 0"
+          >
+            {{ brandName }}
+          </mj-text>
         {{/if}}
-        <mj-text
-          align="center"
-          color="#f4ead5"
-          font-size="18px"
-          line-height="1.5"
-          padding="16px 8px 0"
-        >
-          Joyas personalizadas con amor, memoria y presencia.
-        </mj-text>
       </mj-column>
     </mj-section>
 
-    <mj-section padding="24px 18px 0" background-color="#f7f5ef">
-      <mj-column background-color="#ffffff" border-radius="22px" padding="0" css-class="cla-card">
+    <!-- Card start -->
+    <mj-section padding="28px 16px 0" background-color="#f5f5f5">
+      <mj-column background-color="#ffffff" border-radius="16px" padding="0" css-class="me-card">
         <mj-text
-          css-class="cla-title"
-          font-size="30px"
+          css-class="me-title"
+          font-size="26px"
           font-weight="700"
-          line-height="1.2"
+          line-height="1.25"
           align="center"
-          color="#032f1d"
-          padding="34px 32px 12px"
+          color="#111111"
+          padding="36px 32px 12px"
         >
           {{ title }}
         </mj-text>

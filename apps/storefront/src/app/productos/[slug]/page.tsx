@@ -9,10 +9,14 @@ export const dynamicParams = true;
 
 interface PageProps {
     params: Promise<{ slug: string }>;
+    searchParams?:
+        | Promise<{ [key: string]: string | string[] | undefined }>
+        | { [key: string]: string | string[] | undefined };
 }
 
-export default async function ProductPage({ params }: PageProps) {
+export default async function ProductPage({ params, searchParams }: PageProps) {
     const { slug } = await params;
+    const resolvedSearchParams = await Promise.resolve(searchParams ?? {});
     if (!slug) {
         notFound();
     }
@@ -31,7 +35,7 @@ export default async function ProductPage({ params }: PageProps) {
 
     return (
         <Container maxWidth="lg" sx={{ py: 5 }}>
-            <ProductDetail product={product} />
+            <ProductDetail product={product} initialSearchParams={resolvedSearchParams} />
         </Container>
     );
 }

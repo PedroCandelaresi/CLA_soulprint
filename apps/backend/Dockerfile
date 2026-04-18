@@ -1,65 +1,51 @@
-# syntax=docker/dockerfile:1.7
-
-FROM node:20-slim AS base
-
-ENV PNPM_HOME=/pnpm
-ENV PATH=$PNPM_HOME:$PATH
-
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
-
-FROM base AS build
+FROM node:20-slim AS builder
 
 WORKDIR /usr/src/app
 
+# Enable corepack for pnpm
+RUN corepack enable
+
+# Native modules such as bcrypt may fall back to source builds in CI/local Docker
+# when prebuilt binaries are unavailable.
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml turbo.json ./
-COPY apps/backend/package.json ./apps/backend/package.json
-
-RUN --mount=type=cache,id=backend-pnpm-store,target=/pnpm/store \
-    pnpm fetch --filter backend...
-
-RUN --mount=type=cache,id=backend-pnpm-store,target=/pnpm/store \
-    pnpm install --filter backend... --frozen-lockfile --offline
-
+# Cache bust for backend copy
+ARG CACHEBUST=1
 COPY apps/backend ./apps/backend
+# Copy other apps package.json if needed for workspace resolution, 
+# but mostly we just need the root and backend context.
+# Ideally we should copy only necessary package.jsons to leverage cache.
+
+# For simplicity in this monorepo context without pruning:
+RUN pnpm install --frozen-lockfile
 
 WORKDIR /usr/src/app/apps/backend
 RUN pnpm build
-RUN rm -rf \
-    ./admin-ui/.angular \
-    ./admin-ui/node_modules \
-    ./admin-ui/src \
-    ./admin-ui/static-assets \
-    ./admin-ui/README.md \
-    ./admin-ui/angular.json \
-    ./admin-ui/package.json \
-    ./admin-ui/pnpm-lock.yaml \
-    ./admin-ui/tsconfig.json
-RUN node -e "const fs=require('fs'); const packageJsonPath='/usr/src/app/apps/backend/package.json'; const packageJson=JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')); delete packageJson.devDependencies; fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 4) + '\n');"
 
-FROM build AS deploy
-
+FROM node:20-slim AS runner
 WORKDIR /usr/src/app
 
-RUN --mount=type=cache,id=backend-pnpm-store,target=/pnpm/store \
-    pnpm --filter backend deploy --prod /prod/backend \
-    && rm -rf /prod/backend/src /prod/backend/admin-ui-src /prod/backend/.turbo
+RUN corepack enable
 
-FROM base AS runner
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-ENV NODE_ENV=production
+COPY --from=builder /usr/src/app/package.json ./
+COPY --from=builder /usr/src/app/pnpm-workspace.yaml ./
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/apps/backend/package.json ./apps/backend/
+COPY --from=builder /usr/src/app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder /usr/src/app/apps/backend/src/plugins/badges/ui ./apps/backend/dist/plugins/badges/ui
+COPY --from=builder /usr/src/app/apps/backend/node_modules ./apps/backend/node_modules
+COPY --from=builder /usr/src/app/apps/backend/static ./apps/backend/static
+COPY --from=builder /usr/src/app/apps/backend/email-templates ./apps/backend/email-templates
+
+# apps/backend/static contains versioned branding sources plus runtime outputs
+# such as generated emails and prepared Admin UI assets.
+RUN mkdir -p ./apps/backend/static/assets ./apps/backend/static/email/test-emails
 
 WORKDIR /usr/src/app/apps/backend
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY --from=deploy /prod/backend ./
-
-# The repo no longer versions apps/backend/static, but Vendure still writes
-# runtime assets and dev email output under this path.
-RUN mkdir -p ./static/assets ./static/email/test-emails
-
 EXPOSE 3001
-
-CMD ["pnpm", "start:prod"]
+CMD ["sh", "-c", "node dist/migrations/run-migrations.js && node dist/bootstrap/index.js"]

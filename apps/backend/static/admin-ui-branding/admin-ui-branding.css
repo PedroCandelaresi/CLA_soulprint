@@ -1,0 +1,219 @@
+:root {
+    --admin-brand-ink: #212121;
+    --admin-brand-ink-soft: #2f343a;
+    --admin-brand-accent: #e16a00;
+    --admin-brand-accent-soft: #ffb347;
+    --admin-brand-surface: #f5f5f5;
+    --admin-brand-surface-strong: #ffffff;
+    --admin-brand-border: #e0e0e0;
+    --admin-brand-shadow: 0 24px 60px rgba(17, 24, 39, 0.14);
+}
+
+body {
+    background: linear-gradient(180deg, #f9fafb 0%, #f1f3f5 100%);
+    color: var(--admin-brand-ink);
+}
+
+.left-nav {
+    background: linear-gradient(180deg, #151515 0%, #212121 55%, #2c3137 100%);
+    color: #fff;
+
+    /* Variables Clarity — heredadas por todos los hijos del nav */
+    --clr-vertical-nav-bg-color:                     transparent;
+    --clr-vertical-nav-item-color:                   rgba(255, 255, 255, 0.68);
+    --clr-vertical-nav-item-active-color:            #ffffff;
+    --clr-vertical-nav-selected-bg-color:            rgba(255, 255, 255, 0.12);
+    --clr-vertical-nav-hover-bg-color:               rgba(255, 255, 255, 0.07);
+    --clr-vertical-nav-active-bg-color:              rgba(255, 255, 255, 0.12);
+    --clr-vertical-nav-active-color:                 #ffffff;
+    --clr-vertical-nav-icon-color:                   rgba(255, 255, 255, 0.58);
+    --clr-vertical-nav-icon-active-color:            #ffffff;
+    --clr-vertical-nav-group-title-color:            rgba(255, 255, 255, 0.36);
+    --clr-vertical-nav-trigger-divider-border-color: rgba(255, 255, 255, 0.10);
+    --clr-vertical-nav-toggle-icon-color:            rgba(255, 255, 255, 0.48);
+    --clr-vertical-nav-toggle-icon-hover-color:      #ffffff;
+    --clr-nav-link-color:                            rgba(255, 255, 255, 0.68);
+    --clr-nav-link-active-color:                     #ffffff;
+    --clr-nav-box-shadow-color:                      transparent;
+    --clr-nav-active-bg-color:                       rgba(255, 255, 255, 0.12);
+    --clr-nav-selected-hover-background-color:       rgba(255, 255, 255, 0.17);
+}
+
+/* Hard overrides: Angular encapsula estilos así que las variables solas no alcanzan */
+.left-nav .clr-vertical-nav,
+.left-nav .nav-content,
+.left-nav .nav-group,
+.left-nav .nav-group-children,
+.left-nav .nav-group-content,
+.left-nav vdr-nav-item {
+    background-color: transparent !important;
+}
+
+.left-nav .nav-link,
+.left-nav .nav-group-content {
+    color: rgba(255, 255, 255, 0.68) !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.left-nav .nav-link.active,
+.left-nav .nav-group-content.active {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+}
+
+.left-nav .nav-link:hover,
+.left-nav .nav-group-content:hover {
+    background-color: rgba(255, 255, 255, 0.07) !important;
+    color: #ffffff !important;
+}
+
+.left-nav cds-icon,
+.left-nav clr-icon {
+    color: rgba(255, 255, 255, 0.58) !important;
+}
+
+.left-nav .nav-link.active cds-icon,
+.left-nav .nav-link.active clr-icon,
+.left-nav .nav-group-content.active cds-icon,
+.left-nav .nav-group-content.active clr-icon {
+    color: #ffffff !important;
+}
+
+.left-nav .branding {
+    min-height: 118px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1.25rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+        radial-gradient(circle at top right, rgba(255, 179, 71, 0.28), transparent 36%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 70%);
+}
+
+.left-nav .branding a {
+    display: none !important;
+}
+
+.left-nav .branding::before {
+    content: '';
+    display: block;
+    width: min(13rem, 100%);
+    height: 3.5rem;
+    background: url('../../static-assets/assets/marca-ejemplo.svg') center / contain no-repeat;
+}
+
+/* Las variables de Clarity en .left-nav ya cubren colores de texto e íconos.
+   Solo necesitamos forzar el color del nav-group-text (cabeceras de sección). */
+.left-nav .nav-group-text {
+    color: rgba(255, 255, 255, 0.38) !important;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.left-nav hr {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.surface {
+    box-shadow: var(--admin-brand-shadow);
+}
+
+.top-bar {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--admin-brand-border);
+}
+
+.top-bar .bars,
+.top-bar button,
+.top-bar .icon-button {
+    color: var(--admin-brand-ink);
+}
+
+.content-area {
+    background: transparent;
+}
+
+.btn.btn-primary,
+.login-button {
+    background: linear-gradient(135deg, var(--admin-brand-ink) 0%, var(--admin-brand-ink-soft) 100%) !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.btn.btn-primary:hover,
+.btn.btn-primary:focus,
+.login-button:hover,
+.login-button:focus {
+    background: linear-gradient(135deg, #141414 0%, #20242a 100%) !important;
+}
+
+.btn.btn-link {
+    color: var(--admin-brand-accent) !important;
+}
+
+.login-wrapper {
+    background:
+        radial-gradient(circle at top left, rgba(255, 179, 71, 0.16), transparent 30%),
+        linear-gradient(180deg, #f4f4f5 0%, #eceff2 100%);
+}
+
+.login-wrapper .login-wrapper-inner {
+    border: none !important;
+    box-shadow: 0 32px 80px rgba(17, 24, 39, 0.18);
+    overflow: hidden;
+}
+
+.login-wrapper .login-wrapper-image .login-wrapper-image-content {
+    background: linear-gradient(180deg, rgba(17, 17, 17, 0.04) 0%, rgba(17, 17, 17, 0.78) 100%) !important;
+}
+
+.login-wrapper .login-wrapper-form {
+    position: relative;
+    background: rgba(255, 255, 255, 0.96);
+    width: 440px !important;
+    padding-top: 132px !important;
+}
+
+.login-wrapper .login-wrapper-form::before {
+    content: '';
+    position: absolute;
+    top: 32px;
+    left: 40px;
+    right: 40px;
+    height: 62px;
+    background: url('../../static-assets/assets/marca-ejemplo.svg') center / contain no-repeat;
+}
+
+.login-wrapper .login-title {
+    color: var(--admin-brand-ink) !important;
+    font-size: 1.35rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.login-wrapper input.username,
+.login-wrapper input.password {
+    border: 1px solid var(--admin-brand-border);
+    border-radius: 12px;
+    color: var(--admin-brand-ink) !important;
+    box-shadow: none !important;
+}
+
+.login-wrapper input.username:focus,
+.login-wrapper input.password:focus {
+    border-color: var(--admin-brand-accent-soft);
+}
+
+.login-wrapper .creator,
+.login-wrapper .location,
+.version {
+    display: none !important;
+}
+
+.clr-control-label,
+.checkbox label {
+    color: var(--admin-brand-ink);
+}

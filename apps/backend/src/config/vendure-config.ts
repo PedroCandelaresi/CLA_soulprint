@@ -4,26 +4,24 @@ import {
     DefaultSearchPlugin,
     VendureConfig,
     LanguageCode,
-    Asset,
-    NativeAuthenticationStrategy,
+    defaultShippingCalculator,
+    defaultShippingEligibilityChecker,
 } from '@vendure/core';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
 import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
 import 'dotenv/config';
 import path from 'path';
 import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
-import { getAdminUiApp } from '../admin-ui/config';
-import { adminUiConfig, adminUiPort, adminUiRoute } from '../admin-ui/admin-ui-options';
-import { GetnetPlugin, initGetnetPlugin, getGetnetMiddleware, getGetnetConfigFromEnv, getnetPaymentHandler } from '../plugins/payments/getnet';
-import { GetnetPaymentTransaction } from '../plugins/payments/getnet/getnet-transaction.entity';
-import { MockPaymentsPlugin } from '../plugins/payments/mock-payments';
-import { MockLogisticsPlugin } from '../plugins/logistics/mock-logistics';
-import { GoogleAuthPlugin, getGoogleAuthConfigFromEnv, GoogleAuthenticationStrategy } from '../plugins/auth/google-auth';
-import { BuyerCheckoutPlugin } from '../plugins/checkout/buyer';
-import { PersonalizationPlugin } from '../plugins/logistics/personalization';
+import { LoggingEmailSender } from './logging-email-sender';
 import { createEmailTemplateLoader } from '../email/composite-template-loader';
-import { LoggingEmailSender } from '../email/logging-email-sender';
-import { orderBusinessEmailHandlers } from '../plugins/orders/business-status/order-email-handlers';
+import { CustomerAccessPlugin } from '../plugins/customer-access/customer-access.plugin';
+import { mockPaymentHandler } from '../plugins/payments/mock-payment.plugin';
+import { mercadopagoPaymentHandler } from '../plugins/payments/mercadopago/mercadopago.handler';
+import { MercadoPagoPlugin } from '../plugins/payments/mercadopago/mercadopago.plugin';
+import { transferenciaPaymentHandler } from '../plugins/payments/transferencia-payment.plugin';
+import { Badge } from '../plugins/badges/badge.entity';
+import { BadgesPlugin } from '../plugins/badges/badges.plugin';
+import { PersonalizationPlugin } from '../plugins/logistics/personalization';
 
 function requireEnv(name: string): string {
     const value = process.env[name];
@@ -57,16 +55,27 @@ function parseSameSite(value: string | undefined): 'strict' | 'lax' | 'none' {
     throw new Error('COOKIE_SAME_SITE must be one of: strict, lax, none.');
 }
 
+function parseMercadoPagoEnv(value: string | undefined): 'testing' | 'production' {
+    if (!value || value.trim() === '') {
+        return 'testing';
+    }
+
+    if (value === 'testing' || value === 'production') {
+        return value;
+    }
+
+    throw new Error('MERCADOPAGO_ENV must be "testing" or "production".');
+}
+
 const APP_ENV = process.env.APP_ENV || 'local';
 const IS_DEV = APP_ENV === 'local' || APP_ENV === 'dev';
 const IS_PERSISTENT_ENV = APP_ENV === 'testing' || APP_ENV === 'production';
 const IS_MIGRATION_COMMAND = process.env.VENDURE_RUN_MIGRATIONS === 'true';
-const IS_GETNET_MOCK = (process.env.GETNET_MODE || 'real').toLowerCase() === 'mock';
 const SUPERADMIN_USERNAME = IS_DEV ? (process.env.SUPERADMIN_USERNAME || 'superadmin') : requireEnv('SUPERADMIN_USERNAME');
 const SUPERADMIN_PASSWORD = IS_DEV ? (process.env.SUPERADMIN_PASSWORD || 'superadmin') : requireEnv('SUPERADMIN_PASSWORD');
 const COOKIE_SECRET = IS_DEV ? (process.env.COOKIE_SECRET || 'dev-cookie-secret-change-me') : requireEnv('COOKIE_SECRET');
 const CORS_ORIGINS = IS_DEV
-    ? ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:4000', 'http://localhost:4001', 'http://localhost:4002']
+    ? ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002']
     : requireEnv('CORS_ORIGINS').split(',').map(origin => origin.trim()).filter(Boolean);
 const ASSET_URL_PREFIX = process.env.ASSET_URL_PREFIX || '/assets/';
 const DB_SYNCHRONIZE = process.env.DB_SYNCHRONIZE ? process.env.DB_SYNCHRONIZE === 'true' : IS_DEV;
@@ -74,34 +83,69 @@ const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN?.trim() || undefined;
 const COOKIE_SAME_SITE = parseSameSite(process.env.COOKIE_SAME_SITE);
 const COOKIE_SECURE = parseBooleanEnv('COOKIE_SECURE', !IS_DEV);
 const COOKIE_SECURE_PROXY = parseBooleanEnv('COOKIE_SECURE_PROXY', !IS_DEV);
-const SHOP_PUBLIC_URL = process.env.SHOP_PUBLIC_URL || (IS_DEV ? 'http://localhost:4000' : undefined);
-const BRAND_LOGO_URL = SHOP_PUBLIC_URL ? `${SHOP_PUBLIC_URL.replace(/\/$/, '')}/images/logos/CLA.svg` : undefined;
-const SMTP_BOOTSTRAP_FALLBACK = {
-    host: '127.0.0.1',
-    port: 1025,
-    user: 'cla-bootstrap-user',
-    password: 'cla-bootstrap-password',
-    from: 'CLA Testing <noreply@cla.local>',
-} as const;
-const SMTP_HOST = process.env.SMTP_HOST || SMTP_BOOTSTRAP_FALLBACK.host;
-const SMTP_PORT = Number(process.env.SMTP_PORT || SMTP_BOOTSTRAP_FALLBACK.port);
-const SMTP_USER = process.env.SMTP_USER || SMTP_BOOTSTRAP_FALLBACK.user;
-const SMTP_PASSWORD = process.env.SMTP_PASSWORD || SMTP_BOOTSTRAP_FALLBACK.password;
-const SMTP_FROM = process.env.SMTP_FROM || SMTP_BOOTSTRAP_FALLBACK.from;
-const IS_USING_SMTP_BOOTSTRAP_FALLBACK = !IS_DEV
-    && !IS_MIGRATION_COMMAND
-    && ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM'].some(name => !process.env[name]);
+const MERCADOPAGO_ENV = parseMercadoPagoEnv(process.env.MERCADOPAGO_ENV);
+const REQUIRE_CUSTOMER_VERIFICATION =
+    process.env.REQUIRE_CUSTOMER_VERIFICATION == null || process.env.REQUIRE_CUSTOMER_VERIFICATION === ''
+        ? APP_ENV === 'production'
+        : parseBooleanEnv('REQUIRE_CUSTOMER_VERIFICATION', APP_ENV === 'production');
+const SHOP_PUBLIC_URL = process.env.SHOP_PUBLIC_URL || (IS_DEV ? 'http://localhost:3000' : 'https://demo.example.com');
+const SMTP_REQUIRED_ENV_VARS = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM'] as const;
+const HAS_ANY_SMTP_ENV = SMTP_REQUIRED_ENV_VARS.some(name => Boolean(process.env[name]));
+const HAS_COMPLETE_SMTP_CONFIG = SMTP_REQUIRED_ENV_VARS.every(name => Boolean(process.env[name]));
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const EMAIL_TEMPLATE_PATH = path.join(path.dirname(require.resolve('@vendure/email-plugin/package.json')), 'templates');
 const EMAIL_TEMPLATE_LOADER = createEmailTemplateLoader(EMAIL_TEMPLATE_PATH);
-const EMAIL_HANDLERS = [
-    ...defaultEmailHandlers,
-    ...orderBusinessEmailHandlers,
-];
+const BRAND_NAME = 'Marca Ejemplo';
 const MIGRATIONS = [
     path.join(__dirname, '../migrations/history/*.js'),
     path.join(__dirname, '../migrations/history/*.ts'),
 ];
-const GOOGLE_AUTH_CONFIG = getGoogleAuthConfigFromEnv();
+const ADMIN_UI_APP_PATH = path.join(__dirname, '../../static/admin-ui');
+const badgeRelationCustomField = {
+    name: 'badges',
+    type: 'relation' as const,
+    list: true,
+    entity: Badge,
+    graphQLType: 'Badge',
+    public: true,
+    eager: true,
+    nullable: true,
+    label: [
+        {
+            languageCode: LanguageCode.es,
+            value: 'Badges',
+        },
+    ],
+    description: [
+        {
+            languageCode: LanguageCode.es,
+            value: 'Badges visuales reutilizables para superponer sobre la imagen del producto.',
+        },
+    ],
+};
+
+const promotionBadgeCustomField = {
+    name: 'badge',
+    type: 'relation' as const,
+    list: false,
+    entity: Badge,
+    graphQLType: 'Badge',
+    public: true,
+    eager: true,
+    nullable: true,
+    label: [
+        {
+            languageCode: LanguageCode.es,
+            value: 'Badge',
+        },
+    ],
+    description: [
+        {
+            languageCode: LanguageCode.es,
+            value: 'Badge visual asociado a esta promoción.',
+        },
+    ],
+};
 
 if (IS_PERSISTENT_ENV && DB_SYNCHRONIZE) {
     throw new Error('DB_SYNCHRONIZE=true is not allowed in testing/production. Generate and run migrations instead.');
@@ -124,23 +168,39 @@ if (IS_PERSISTENT_ENV && CORS_ORIGINS.some(origin => origin === '*')) {
 if (APP_ENV === 'production' && CORS_ORIGINS.some(origin => !origin.startsWith('https://'))) {
     throw new Error('Production CORS_ORIGINS must use https:// origins.');
 }
-if (!Number.isFinite(SMTP_PORT) || SMTP_PORT <= 0) {
-    throw new Error('SMTP_PORT must be a positive number.');
+if (HAS_ANY_SMTP_ENV && !HAS_COMPLETE_SMTP_CONFIG) {
+    const missing = SMTP_REQUIRED_ENV_VARS.filter(name => !process.env[name]);
+    throw new Error(`Incomplete SMTP configuration. Missing: ${missing.join(', ')}`);
 }
-if (!IS_DEV && !IS_MIGRATION_COMMAND && !SHOP_PUBLIC_URL) {
-    throw new Error('SHOP_PUBLIC_URL is required when email is enabled outside local/dev.');
+if (HAS_COMPLETE_SMTP_CONFIG && !SHOP_PUBLIC_URL) {
+    throw new Error('SHOP_PUBLIC_URL is required when SMTP email is enabled.');
 }
-if (IS_USING_SMTP_BOOTSTRAP_FALLBACK) {
-    console.warn('[email] Using temporary hardcoded SMTP bootstrap defaults. Replace SMTP_* env vars with real provider values when ready.');
+if (IS_PERSISTENT_ENV && REQUIRE_CUSTOMER_VERIFICATION && !HAS_COMPLETE_SMTP_CONFIG && !IS_MIGRATION_COMMAND) {
+    throw new Error('SMTP configuration is required when REQUIRE_CUSTOMER_VERIFICATION=true in testing/production.');
 }
-console.log('[email] EmailPlugin configuration summary:');
-console.log(`[email]   mode=${IS_DEV ? 'dev/file' : 'smtp'}`);
-console.log(`[email]   shopPublicUrl=${SHOP_PUBLIC_URL || '(unset)'}`);
-console.log(`[email]   smtpHost=${SMTP_HOST || '(unset)'}`);
-console.log(`[email]   smtpPort=${String(SMTP_PORT || '(unset)')}`);
-console.log(`[email]   smtpUser=${SMTP_USER || '(unset)'}`);
-console.log(`[email]   smtpFrom=${SMTP_FROM || '(unset)'}`);
-console.log(`[email]   smtpSecure=${String(parseBooleanEnv('SMTP_SECURE', SMTP_PORT === 465))}`);
+
+if (!IS_MIGRATION_COMMAND) {
+    console.log('[email] EmailPlugin configuration summary:');
+    console.log(`[email]   mode=${IS_DEV ? 'dev/file' : (HAS_COMPLETE_SMTP_CONFIG ? 'smtp' : 'DISABLED (missing SMTP config)')}`);
+    console.log(`[email]   requireVerification=${String(REQUIRE_CUSTOMER_VERIFICATION)}`);
+    console.log(`[email]   hasCompleteSmtpConfig=${String(HAS_COMPLETE_SMTP_CONFIG)}`);
+    console.log(`[mercadopago] env=${MERCADOPAGO_ENV}`);
+    console.log(
+        `[mercadopago] webhookSecretConfigured=${String(Boolean(process.env.MERCADOPAGO_WEBHOOK_SECRET?.trim()))}`,
+    );
+    console.log(
+        `[mercadopago] publicBaseUrl=${process.env.MERCADOPAGO_PUBLIC_BASE_URL || SHOP_PUBLIC_URL || '(unset)'}`,
+    );
+
+    if (IS_DEV) {
+        console.log(`[email]   shopPublicUrl=${SHOP_PUBLIC_URL || '(unset)'}`);
+        console.log(`[email]   smtpHost=${process.env.SMTP_HOST || '(unset)'}`);
+        console.log(`[email]   smtpPort=${process.env.SMTP_PORT || '(unset)'}`);
+        console.log(`[email]   smtpUser=${process.env.SMTP_USER || '(unset)'}`);
+        console.log(`[email]   smtpFrom=${process.env.SMTP_FROM || '(unset)'}`);
+        console.log(`[email]   smtpSecure=${String(parseBooleanEnv('SMTP_SECURE', SMTP_PORT === 465))}`);
+    }
+}
 
 export const config: VendureConfig = {
     defaultLanguageCode: LanguageCode.es,
@@ -152,15 +212,10 @@ export const config: VendureConfig = {
             origin: CORS_ORIGINS,
             credentials: true,
         },
-        middleware: [],
     },
     authOptions: {
         tokenMethod: ['bearer', 'cookie'],
-        requireVerification: true,
-        shopAuthenticationStrategy: [
-            new NativeAuthenticationStrategy(),
-            ...(GOOGLE_AUTH_CONFIG.enabled ? [new GoogleAuthenticationStrategy()] : []),
-        ],
+        requireVerification: REQUIRE_CUSTOMER_VERIFICATION,
         superadminCredentials: {
             identifier: SUPERADMIN_USERNAME,
             password: SUPERADMIN_PASSWORD,
@@ -176,9 +231,8 @@ export const config: VendureConfig = {
     },
     dbConnectionOptions: {
         type: 'mysql',
-        synchronize: IS_DEV && DB_SYNCHRONIZE,
+        synchronize: DB_SYNCHRONIZE && !IS_MIGRATION_COMMAND,
         logging: false,
-        entities: [GetnetPaymentTransaction],
         database: process.env.DB_NAME || 'vendure',
         host: process.env.DB_HOST || 'localhost',
         port: Number(process.env.DB_PORT) || 3306,
@@ -188,68 +242,22 @@ export const config: VendureConfig = {
         migrationsTableName: 'vendure_migrations',
     },
     paymentOptions: {
-        // Payment method handlers configuration
-        // In development: include both dummy (for testing) and Getnet
-        // In production: only include Getnet (when credentials are configured)
-        paymentMethodHandlers: IS_DEV 
-            ? [dummyPaymentHandler, getnetPaymentHandler] 
-            : (process.env.GETNET_ENABLED === 'true' && (IS_GETNET_MOCK || process.env.GETNET_CLIENT_ID !== 'your_client_id') 
-                ? [getnetPaymentHandler] 
-                : []),
+        paymentMethodHandlers: [
+            mercadopagoPaymentHandler,
+            transferenciaPaymentHandler,
+            mockPaymentHandler,
+            ...(APP_ENV !== 'production' ? [dummyPaymentHandler] : []),
+        ],
+    },
+    shippingOptions: {
+        shippingCalculators: [defaultShippingCalculator],
+        shippingEligibilityCheckers: [defaultShippingEligibilityChecker],
     },
     customFields: {
-        Customer: [
-            { name: 'documentNumber', type: 'string', nullable: true, public: true },
-        ],
-        Order: [
-            // Andreani (real carrier - fields kept for production use)
-            // TODO(migration): remove legacy andreaniPrice float once all environments rely on shippingPriceCents.
-            { name: 'andreaniCarrier', type: 'string', nullable: true },
-            { name: 'andreaniServiceCode', type: 'string', nullable: true },
-            { name: 'andreaniServiceName', type: 'string', nullable: true },
-            { name: 'andreaniPrice', type: 'float', nullable: true },
-            { name: 'andreaniCurrency', type: 'string', nullable: true },
-            { name: 'andreaniDestinationPostalCode', type: 'string', nullable: true },
-            { name: 'andreaniDestinationCity', type: 'string', nullable: true },
-            { name: 'andreaniSelectionMetadata', type: 'string', nullable: true },
-            { name: 'andreaniWeightKg', type: 'float', nullable: true },
-            { name: 'andreaniDimensions', type: 'string', nullable: true },
-            { name: 'andreaniShipmentCreated', type: 'boolean', nullable: true },
-            { name: 'andreaniShipmentDate', type: 'datetime', nullable: true },
-            { name: 'andreaniTrackingNumber', type: 'string', nullable: true },
-            { name: 'andreaniShipmentId', type: 'string', nullable: true },
-            { name: 'andreaniShipmentStatus', type: 'string', nullable: true },
-            { name: 'andreaniShipmentRawResponse', type: 'string', nullable: true },
-            // Shipping mock / provider-agnostic snapshot (usado por MockLogisticsPlugin y futuro Andreani real)
-            { name: 'shippingQuoteCode', type: 'string', nullable: true },
-            { name: 'shippingMethodLabel', type: 'string', nullable: true },
-            { name: 'shippingPriceCents', type: 'int', nullable: true },
-            { name: 'shippingSnapshotJson', type: 'text', nullable: true },
-            // Buyer snapshot
-            { name: 'buyerFullName', type: 'string', nullable: true, public: true },
-            { name: 'buyerEmail', type: 'string', nullable: true, public: true },
-            { name: 'buyerPhone', type: 'string', nullable: true, public: true },
-            // Production workflow
-            { name: 'productionStatus', type: 'string', nullable: false, defaultValue: 'not-started', public: true },
-            { name: 'productionUpdatedAt', type: 'datetime', nullable: true, public: true },
-            // Personalización: estado global derivado de las líneas
-            // 'not-required' | 'pending' | 'partial' | 'complete'
-            { name: 'personalizationOverallStatus', type: 'string', nullable: false, defaultValue: 'not-required', public: false },
-        ],
-        OrderLine: [
-            // Personalización por línea (reemplaza campos que estaban en Order)
-            // 'not-required' | 'pending-upload' | 'uploaded' | 'approved' | 'rejected'
-            { name: 'personalizationStatus', type: 'string', nullable: false, defaultValue: 'not-required', public: false },
-            { name: 'personalizationAsset', type: 'relation', entity: Asset, nullable: true, public: false, eager: true },
-            { name: 'personalizationNotes', type: 'text', nullable: true, public: false },
-            { name: 'personalizationUploadedAt', type: 'datetime', nullable: true, public: false },
-            { name: 'personalizationApprovedAt', type: 'datetime', nullable: true, public: false },
-            { name: 'personalizationRejectedReason', type: 'string', nullable: true, public: false },
-            { name: 'personalizationSnapshotFileName', type: 'string', nullable: true, public: false },
-        ],
-        ProductVariant: [
-            { name: 'requiresPersonalization', type: 'boolean', defaultValue: false, public: true },
-        ],
+        Product: [badgeRelationCustomField],
+        ProductVariant: [{ ...badgeRelationCustomField }],
+        Collection: [{ ...badgeRelationCustomField }],
+        Promotion: [promotionBadgeCustomField],
     },
     plugins: [
         AssetServerPlugin.init({
@@ -265,13 +273,12 @@ export const config: VendureConfig = {
                       devMode: true,
                       outputPath: path.join(__dirname, '../../static/email/test-emails'),
                       route: 'mailbox',
-                      handlers: EMAIL_HANDLERS,
-                      templateLoader: EMAIL_TEMPLATE_LOADER,
                       emailSender: new LoggingEmailSender(),
+                      handlers: defaultEmailHandlers,
+                      templateLoader: EMAIL_TEMPLATE_LOADER,
                       globalTemplateVars: {
-                          fromAddress: SMTP_FROM,
-                          brandName: 'CLA Soulprint',
-                          brandLogoUrl: BRAND_LOGO_URL,
+                          fromAddress: process.env.SMTP_FROM || 'noreply@example.com',
+                          brandName: BRAND_NAME,
                           shopUrl: SHOP_PUBLIC_URL,
                           verifyEmailAddressUrl: `${SHOP_PUBLIC_URL}/verify`,
                           passwordResetUrl: `${SHOP_PUBLIC_URL}/password-reset`,
@@ -283,16 +290,15 @@ export const config: VendureConfig = {
                       },
                   }),
               ]
-            : !IS_MIGRATION_COMMAND && SHOP_PUBLIC_URL
+            : !IS_MIGRATION_COMMAND && HAS_COMPLETE_SMTP_CONFIG && SHOP_PUBLIC_URL
               ? [
                     EmailPlugin.init({
-                        handlers: EMAIL_HANDLERS,
-                        templateLoader: EMAIL_TEMPLATE_LOADER,
                         emailSender: new LoggingEmailSender(),
+                        handlers: defaultEmailHandlers,
+                        templateLoader: EMAIL_TEMPLATE_LOADER,
                         globalTemplateVars: {
-                            fromAddress: SMTP_FROM,
-                            brandName: 'CLA Soulprint',
-                            brandLogoUrl: BRAND_LOGO_URL,
+                            fromAddress: process.env.SMTP_FROM!,
+                            brandName: BRAND_NAME,
                             shopUrl: SHOP_PUBLIC_URL,
                             verifyEmailAddressUrl: `${SHOP_PUBLIC_URL}/verify`,
                             passwordResetUrl: `${SHOP_PUBLIC_URL}/password-reset`,
@@ -300,29 +306,42 @@ export const config: VendureConfig = {
                         },
                         transport: {
                             type: 'smtp',
-                            host: SMTP_HOST,
+                            host: process.env.SMTP_HOST!,
                             port: SMTP_PORT,
                             auth: {
-                                user: SMTP_USER,
-                                pass: SMTP_PASSWORD,
+                                user: process.env.SMTP_USER!,
+                                pass: process.env.SMTP_PASSWORD!,
                             },
+                            logging: false,
+                            debug: false,
                             secure: parseBooleanEnv('SMTP_SECURE', SMTP_PORT === 465),
-                            logging: true,
                         },
                     }),
                 ]
             : []),
-        AdminUiPlugin.init({
-            route: adminUiRoute,
-            port: adminUiPort, // Admin UI standalone mode port (internal)
-            app: getAdminUiApp(),
-            adminUiConfig,
-        }),
-        GetnetPlugin,
-        MockPaymentsPlugin,
-        MockLogisticsPlugin,
-        GoogleAuthPlugin,
-        BuyerCheckoutPlugin,
+        CustomerAccessPlugin,
+        MercadoPagoPlugin,
+        BadgesPlugin,
         PersonalizationPlugin,
+        AdminUiPlugin.init({
+            route: 'admin',
+            port: 3002,
+            app: {
+                path: ADMIN_UI_APP_PATH,
+                route: 'admin',
+            },
+            adminUiConfig: {
+                apiHost: 'auto',
+                apiPort: 'auto',
+                adminApiPath: 'admin-api',
+                tokenMethod: 'bearer',
+                defaultLanguage: LanguageCode.es,
+                defaultLocale: 'ES',
+                brand: 'Marca Ejemplo',
+                hideVendureBranding: true,
+                hideVersion: true,
+                loginImageUrl: 'assets/admin-login-hero.svg',
+            },
+        }),
     ],
 };

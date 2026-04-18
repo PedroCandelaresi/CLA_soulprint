@@ -39,10 +39,10 @@ docker compose -f infra/docker/docker-compose.yml up -d --build
 ```
 
 Esto levantará:
-- **MySQL 8.4**: Puerto 4406
-- **Storefront**: Puerto 4000
-- **Backend (Shop API)**: Puerto 4001
-- **Backend (Admin UI / Admin API / Health)**: Puerto 4002
+- **MySQL 8.4**: Puerto 3006
+- **Storefront**: Puerto 3000
+- **Backend (Shop API)**: Puerto 3001
+- **Backend (Admin UI / Admin API / Health)**: Puerto 3002
 
 Wait for the backend to initialize (check logs with `docker compose -f infra/docker/docker-compose.yml logs -f backend`).
 
@@ -62,23 +62,23 @@ Smoke tests mínimos según el alcance del deploy:
 - backend:
 
 ```bash
-curl -fsS http://127.0.0.1:4002/health
+curl -fsS http://127.0.0.1:3002/health
 ```
 
 - storefront:
 
 ```bash
-curl -fsSI http://127.0.0.1:4000
+curl -fsSI http://127.0.0.1:3000
 ```
 
 - infra / stack completo:
 
 ```bash
-curl -fsS http://127.0.0.1:4002/health
-curl -fsSI http://127.0.0.1:4000
+curl -fsS http://127.0.0.1:3002/health
+curl -fsSI http://127.0.0.1:3000
 ```
 
-Ese gate mínimo sigue siendo recomendable para validación manual. El workflow de `testing` del VPS, en cambio, ejecuta el deploy de forma Docker-only.
+El workflow de `testing` sigue ese gate mínimo antes de considerar exitoso el deploy.
 
 ## Deploy automático de testing
 
@@ -102,7 +102,7 @@ Queda fuera del deploy automático:
 
 Alcance actual del workflow `Deploy Testing`:
 
-- sincroniza `/opt/cla_soulprint-testing` al SHA exacto del evento con:
+- sincroniza `/opt/demo2` al SHA exacto del evento con:
   - `git fetch --prune --tags origin`
   - `git checkout -B develop origin/develop`
   - `git reset --hard $GITHUB_SHA`
@@ -118,9 +118,7 @@ Alcance actual del workflow `Deploy Testing`:
     - `turbo.json`
   - `none`: cambios solo en docs, ejemplos manuales de `infra/docker/nginx/**` o archivos de CI
 - exige que exista `infra/docker/.env`
-- no requiere `pnpm` instalado en el host del runner
 - ejecuta siempre `docker compose` con `--env-file infra/docker/.env`
-- construye backend/storefront dentro de Docker usando los `Dockerfile` del repo
 - no usa `git pull`
 - no toca Nginx host-level
 - evita carreras entre workflows porque el deploy de `testing` quedó unificado en un solo workflow
@@ -128,7 +126,7 @@ Alcance actual del workflow `Deploy Testing`:
 ## Reverse Proxy y networking
 
 Modelo principal recomendado:
-- **Nginx host-level** en el servidor host, usando [cla.nqn.net.ar.conf.example](/home/candelaresi/Proyectos/CLA_soulprint/infra/docker/nginx/cla.nqn.net.ar.conf.example) como plantilla principal.
+- **Nginx host-level** en el servidor host, usando [demo.example.com.conf.example](/home/candelaresi/Proyectos/demo2/infra/docker/nginx/demo.example.com.conf.example) como plantilla principal.
 - Docker Compose publica sólo puertos **loopback** (`127.0.0.1`) para que Nginx los consuma de forma privada.
 - Entradas públicas esperadas:
   - `/` → storefront
@@ -139,23 +137,15 @@ Modelo principal recomendado:
   - `/admin-api`
 
 Referencia operativa de infra:
-- Ver [infra/docker/README.md](/home/candelaresi/Proyectos/CLA_soulprint/infra/docker/README.md)
-
-## Admin UI de Vendure
-
-- El panel de administración se sirve en `/admin` como un bundle estático customizado para CLA Soulprint.
-- La causa raíz del login silencioso era una desalineación entre el Admin UI y el backend: el backend estaba devolviendo `vendure-auth-token`, pero el Admin estaba configurado como si persistiera sesión por cookie. El Admin quedó forzado a `tokenMethod: bearer` con `authTokenHeaderKey: vendure-auth-token`.
-- El branding del Admin vive en `apps/backend/admin-ui-src/`.
-- El bundle generado del Admin vive en `apps/backend/admin-ui/` y no se versiona.
-- `pnpm --dir apps/backend build` ahora recompone también el Admin custom antes de empaquetar Docker.
+- Ver [infra/docker/README.md](/home/candelaresi/Proyectos/demo2/infra/docker/README.md)
 
 ## Accesos locales / debug
 
-- **Storefront**: [http://localhost:4000](http://localhost:4000)
-- **Admin Panel**: [http://localhost:4002/admin](http://localhost:4002/admin)
+- **Storefront**: [http://localhost:3000](http://localhost:3000)
+- **Admin Panel**: [http://localhost:3002/admin](http://localhost:3002/admin)
     - Credenciales: definidas por `SUPERADMIN_USERNAME` y `SUPERADMIN_PASSWORD`
-- **Shop API**: [http://localhost:4001/shop-api](http://localhost:4001/shop-api)
-- **Assets**: [http://localhost:4002/assets/](http://localhost:4002/assets/)
+- **Shop API**: [http://localhost:3001/shop-api](http://localhost:3001/shop-api)
+- **Assets**: [http://localhost:3002/assets/](http://localhost:3002/assets/)
 
 Estos puertos no son el camino público principal de despliegue. Son upstreams loopback para el Nginx host-level recomendado y accesos útiles para testing/debug local.
 
@@ -206,9 +196,8 @@ pnpm --dir apps/backend migration:revert
 - Correo:
   - `local/dev`: `EmailPlugin` usa transporte `file` y expone `/mailbox`
   - `testing/production`: `/mailbox` no se expone
-  - en `testing/production`, si faltan `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD` o `SMTP_FROM`, el backend usa un fallback SMTP temporal hardcodeado para poder arrancar
-  - `SHOP_PUBLIC_URL` sigue siendo obligatorio fuera de `local/dev`
-  - ese fallback es solo bootstrap y debe reemplazarse por variables reales antes de depender de emails transaccionales
+  - para habilitar correo real se deben definir `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` y `SHOP_PUBLIC_URL`
+  - si esos valores no están definidos, el backend no simula un proveedor real y no deben asumirse emails transaccionales activos
 - Bootstrap de superadmin:
   - no usar `superadmin/superadmin` fuera de `local/dev`
   - definir credenciales fuertes y temporales para el primer acceso
@@ -216,12 +205,12 @@ pnpm --dir apps/backend migration:revert
 
 ## Creación de Productos y Visualización
 
-1. Ingresa al Admin Panel ([http://localhost:4002/admin](http://localhost:4002/admin)).
+1. Ingresa al Admin Panel ([http://localhost:3002/admin](http://localhost:3002/admin)).
 2. Logueate con las credenciales de superadmin.
 3. Ve a **Catálogo > Productos**.
 4. Crea un nuevo producto, añade nombre, descripción y una imagen.
 5. Asegúrate de añadir (o crear) una variante y habilitar el producto.
-6. Refresca el Storefront ([http://localhost:4000](http://localhost:4000)) y deberías ver el producto en la lista o buscando.
+6. Refresca el Storefront ([http://localhost:3000](http://localhost:3000)) y deberías ver el producto en la lista o buscando.
 
 ## Troubleshooting
 

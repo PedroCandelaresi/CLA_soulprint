@@ -1,0 +1,63 @@
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Panel Marca Ejemplo</title>
+  <desc id="desc">Hero para el login del panel administrativo de Marca Ejemplo.</desc>
+  <defs>
+    <linearGradient id="bg" x1="120" y1="80" x2="1420" y2="920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#121212"/>
+      <stop offset="0.52" stop-color="#212121"/>
+      <stop offset="1" stop-color="#30343A"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="221" y1="218" x2="1136" y2="815" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFB347"/>
+      <stop offset="1" stop-color="#E16A00"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="482" y1="278" x2="1148" y2="742" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5F7FA"/>
+      <stop offset="0.48" stop-color="#B9C1CA"/>
+      <stop offset="1" stop-color="#7C8793"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" rx="48" fill="url(#bg)"/>
+  <g opacity="0.12">
+    <path d="M0 112H1600" stroke="white"/>
+    <path d="M0 272H1600" stroke="white"/>
+    <path d="M0 432H1600" stroke="white"/>
+    <path d="M0 592H1600" stroke="white"/>
+    <path d="M0 752H1600" stroke="white"/>
+    <path d="M0 912H1600" stroke="white"/>
+    <path d="M160 0V1000" stroke="white"/>
+    <path d="M420 0V1000" stroke="white"/>
+    <path d="M680 0V1000" stroke="white"/>
+    <path d="M940 0V1000" stroke="white"/>
+    <path d="M1200 0V1000" stroke="white"/>
+    <path d="M1460 0V1000" stroke="white"/>
+  </g>
+  <circle cx="1220" cy="208" r="134" fill="url(#accent)" opacity="0.16"/>
+  <circle cx="1380" cy="300" r="48" fill="white" opacity="0.08"/>
+  <circle cx="260" cy="786" r="162" fill="url(#accent)" opacity="0.1"/>
+  <circle cx="1170" cy="666" r="228" stroke="rgba(255,255,255,0.14)" stroke-width="24"/>
+  <circle cx="1170" cy="666" r="156" stroke="rgba(255,255,255,0.08)" stroke-width="12"/>
+  <path d="M1002 666H1338" stroke="url(#accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="28 32" opacity="0.72"/>
+  <path d="M490 246C598 290 691 385 728 512C760 622 847 713 953 748" stroke="url(#metal)" stroke-width="26" stroke-linecap="round" opacity="0.82"/>
+  <path d="M444 286C551 324 643 414 689 532C728 631 812 714 908 768" stroke="white" stroke-opacity="0.22" stroke-width="8" stroke-linecap="round"/>
+  <g transform="translate(194 192)">
+    <circle cx="120" cy="120" r="110" fill="#111418"/>
+    <circle cx="120" cy="120" r="86" stroke="url(#accent)" stroke-width="10"/>
+    <circle cx="120" cy="120" r="42" fill="#0B0D10" stroke="#7C8793" stroke-width="6"/>
+    <g fill="url(#accent)">
+      <rect x="108" y="-18" width="24" height="54" rx="8"/>
+      <rect x="108" y="204" width="24" height="54" rx="8"/>
+      <rect x="-18" y="108" width="54" height="24" rx="8"/>
+      <rect x="204" y="108" width="54" height="24" rx="8"/>
+      <rect x="108" y="-18" width="24" height="54" rx="8" transform="rotate(45 120 120)"/>
+      <rect x="108" y="204" width="24" height="54" rx="8" transform="rotate(45 120 120)"/>
+      <rect x="108" y="-18" width="24" height="54" rx="8" transform="rotate(90 120 120)"/>
+      <rect x="108" y="204" width="24" height="54" rx="8" transform="rotate(90 120 120)"/>
+    </g>
+  </g>
+  <text x="208" y="596" fill="url(#metal)" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="116" font-weight="800" letter-spacing="4">MARCA</text>
+  <text x="208" y="706" fill="white" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="116" font-weight="800" letter-spacing="4">EJEMPLO</text>
+  <rect x="214" y="748" width="384" height="10" rx="5" fill="url(#accent)"/>
+  <text x="214" y="818" fill="#C7CFD7" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="34" font-weight="600" letter-spacing="10">PANEL DE GESTION</text>
+  <text x="214" y="882" fill="#9CA3AF" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="24" font-weight="500" letter-spacing="3">Catalogo, pedidos y operaciones desde una sola vista.</text>
+</svg>

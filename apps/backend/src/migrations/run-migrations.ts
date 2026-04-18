@@ -2,6 +2,11 @@ import 'dotenv/config';
 import { runMigrations } from '@vendure/core';
 
 async function main(): Promise<void> {
+    if (process.env.DB_SYNCHRONIZE === 'true') {
+        console.log('Skipping migrations because DB_SYNCHRONIZE=true.');
+        return;
+    }
+
     process.env.VENDURE_RUN_MIGRATIONS = 'true';
     const { config } = await import('../config/vendure-config');
     const appliedMigrations = await runMigrations(config);

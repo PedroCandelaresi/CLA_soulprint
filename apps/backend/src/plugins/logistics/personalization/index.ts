@@ -1,10 +1,115 @@
-import { PluginCommonModule, VendurePlugin } from '@vendure/core';
+import { LanguageCode, PluginCommonModule, VendurePlugin, type PluginConfigurationFn } from '@vendure/core';
 import {
     getPersonalizationConfigFromEnv,
     PERSONALIZATION_CONFIG_OPTIONS,
 } from './personalization.config';
 import { PersonalizationController } from './personalization.controller';
 import { PersonalizationService } from './personalization.service';
+import {
+    PERSONALIZATION_PSP_RESOLVER,
+    NoopPersonalizationPspResolver,
+} from './adapters/psp-resolver';
+
+const configurationHook: PluginConfigurationFn = config => {
+    config.customFields = config.customFields ?? {};
+
+    const existingOrderFields = config.customFields.Order ?? [];
+    if (!existingOrderFields.some(f => f.name === 'personalizationOverallStatus')) {
+        existingOrderFields.push({
+            name: 'personalizationOverallStatus',
+            type: 'string',
+            defaultValue: 'not-required',
+            public: false,
+            nullable: false,
+            label: [{ languageCode: LanguageCode.es, value: 'Estado global de personalización' }],
+        });
+    }
+    config.customFields.Order = existingOrderFields;
+
+    const existingOrderLineFields = config.customFields.OrderLine ?? [];
+    const orderLineFieldsToAdd = [
+        {
+            name: 'personalizationStatus',
+            type: 'string' as const,
+            defaultValue: 'not-required',
+            public: false,
+            nullable: false,
+            label: [{ languageCode: LanguageCode.es, value: 'Estado de personalización de la línea' }],
+        },
+        {
+            name: 'personalizationAsset',
+            type: 'relation' as const,
+            entity: require('@vendure/core').Asset,
+            graphQLType: 'Asset',
+            public: false,
+            nullable: true,
+            eager: true,
+            label: [{ languageCode: LanguageCode.es, value: 'Archivo de personalización' }],
+        },
+        {
+            name: 'personalizationNotes',
+            type: 'text' as const,
+            public: false,
+            nullable: true,
+            label: [{ languageCode: LanguageCode.es, value: 'Notas de personalización' }],
+        },
+        {
+            name: 'personalizationUploadedAt',
+            type: 'datetime' as const,
+            public: false,
+            nullable: true,
+            label: [{ languageCode: LanguageCode.es, value: 'Fecha de subida' }],
+        },
+        {
+            name: 'personalizationApprovedAt',
+            type: 'datetime' as const,
+            public: false,
+            nullable: true,
+            label: [{ languageCode: LanguageCode.es, value: 'Fecha de aprobación' }],
+        },
+        {
+            name: 'personalizationRejectedReason',
+            type: 'string' as const,
+            public: false,
+            nullable: true,
+            label: [{ languageCode: LanguageCode.es, value: 'Motivo de rechazo' }],
+        },
+        {
+            name: 'personalizationSnapshotFileName',
+            type: 'string' as const,
+            public: false,
+            nullable: true,
+            label: [{ languageCode: LanguageCode.es, value: 'Nombre original del archivo' }],
+        },
+    ];
+    for (const field of orderLineFieldsToAdd) {
+        if (!existingOrderLineFields.some(f => f.name === field.name)) {
+            existingOrderLineFields.push(field as any);
+        }
+    }
+    config.customFields.OrderLine = existingOrderLineFields;
+
+    const existingVariantFields = config.customFields.ProductVariant ?? [];
+    if (!existingVariantFields.some(f => f.name === 'requiresPersonalization')) {
+        existingVariantFields.push({
+            name: 'requiresPersonalization',
+            type: 'boolean',
+            defaultValue: false,
+            public: true,
+            nullable: false,
+            label: [{ languageCode: LanguageCode.es, value: 'Requiere personalización' }],
+            description: [
+                {
+                    languageCode: LanguageCode.es,
+                    value: 'Marcá esta opción si la variante necesita que el cliente suba un archivo tras el pago.',
+                },
+            ],
+        });
+    }
+    config.customFields.ProductVariant = existingVariantFields;
+
+    return config;
+};
 
 @VendurePlugin({
     compatibility: '^2.0.0',
@@ -15,12 +120,24 @@ import { PersonalizationService } from './personalization.service';
             provide: PERSONALIZATION_CONFIG_OPTIONS,
             useValue: getPersonalizationConfigFromEnv(),
         },
+        {
+            provide: PERSONALIZATION_PSP_RESOLVER,
+            useValue: NoopPersonalizationPspResolver,
+        },
         PersonalizationService,
     ],
+    configuration: configurationHook,
 })
 export class PersonalizationPlugin {}
 
+export {
+    PERSONALIZATION_PSP_RESOLVER,
+    NoopPersonalizationPspResolver,
+    type PersonalizationPspResolver,
+    type PersonalizationPspTransaction,
+} from './adapters/psp-resolver';
 export * from './personalization.config';
 export * from './personalization.controller';
 export * from './personalization.service';
 export * from './personalization.types';
+export * from './personalization.event';

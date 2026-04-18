@@ -1,132 +1,184 @@
 'use client';
-import { Alert, Button, Card, CardContent, Typography, Stack, Box } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Product } from '@/types/product';
-import { useCart } from '@/components/cart/CartProvider';
+import ProductBadges from './ProductBadges';
+import { resolveBadges } from '@/lib/badges/resolveBadges';
 
 interface ProductCardProps {
     product: Product;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-    const amount = product?.variants?.[0]?.price ?? 0;
+    const variantPrices = product.variants
+        .map((variant) => variant.price)
+        .filter((price) => Number.isFinite(price));
+    const amount = variantPrices.length > 0 ? Math.min(...variantPrices) : 0;
+    const hasPriceRange = variantPrices.length > 1 && new Set(variantPrices).size > 1;
     const currency = product?.variants?.[0]?.currencyCode || 'ARS';
-    const variantId = product?.variants?.[0]?.id;
-    const stockLevel = product?.variants?.[0]?.stockLevel;
     const price = new Intl.NumberFormat('es-AR', {
         style: 'currency',
         currency,
     }).format(amount / 100);
-    const image = product?.featuredAsset?.preview ||
+
+    const image =
+        product?.featuredAsset?.preview ||
         product?.assets?.[0]?.preview ||
         '/images/backgrounds/errorimg.svg';
+
     const productHref = product.slug ? `/productos/${product.slug}` : '/productos';
+    const collectionBadges = useMemo(
+        () => product.collections?.flatMap((c) => c.customFields?.badges ?? []) ?? [],
+        [product.collections],
+    );
+
+    const productBadges = useMemo(
+        () =>
+            resolveBadges({
+                productBadges: product.customFields?.badges,
+                collectionBadges,
+            }),
+        [product.customFields?.badges, collectionBadges],
+    );
 
     const [imgSrc, setImgSrc] = useState(image);
-    const [feedback, setFeedback] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const { addItem } = useCart();
 
     useEffect(() => {
         setImgSrc(image);
     }, [image]);
 
-    async function handleAddToCart() {
-        if (!variantId) {
-            setFeedback('Este producto no tiene una variante disponible para agregar.');
-            return;
-        }
-
-        setIsSubmitting(true);
-        setFeedback(null);
-        try {
-            await addItem(variantId, 1);
-            setFeedback('Producto agregado al carrito.');
-        } catch (error) {
-            setFeedback(error instanceof Error ? error.message : 'No se pudo agregar el producto al carrito.');
-        } finally {
-            setIsSubmitting(false);
-        }
-    }
-
-    const canAddToCart = Boolean(variantId) && stockLevel !== 'OUT_OF_STOCK';
-    const addButtonLabel = stockLevel === 'OUT_OF_STOCK' ? 'Sin stock' : 'Agregar al carrito';
-
     return (
         <Card
+            elevation={0}
             sx={{
-                p: 0,
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                border: (theme) => `1px solid ${theme.palette.divider}`,
                 position: 'relative',
-                transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+                border: '1px solid rgba(0,72,37,0.09)',
+                borderRadius: 4,
+                overflow: 'hidden',
+                background: 'linear-gradient(180deg, #fffdf8 0%, #fff7eb 100%)',
+                transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
+                '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    inset: 0,
+                    background:
+                        'linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0) 28%)',
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                },
                 '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: (theme) => theme.shadows[10],
-                    borderColor: 'transparent'
-                }
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 20px 40px rgba(0,72,37,0.12)',
+                    borderColor: 'rgba(0,72,37,0.16)',
+                },
             }}
-            elevation={0}
         >
-            <Box component={Link} href={productHref} sx={{ display: 'block', overflow: 'hidden' }}>
+            {/* Image area */}
+            <Box
+                component={Link}
+                href={productHref}
+                sx={{
+                    display: 'block',
+                    overflow: 'hidden',
+                    bgcolor: 'rgba(244,234,213,0.72)',
+                    flexShrink: 0,
+                    aspectRatio: '1 / 1',
+                    position: 'relative',
+                }}
+            >
                 <Image
                     src={imgSrc}
                     alt={product.name}
-                    width={250}
-                    height={268}
-                    style={{ width: "100%", height: 'auto', objectFit: 'contain', padding: '20px', background: '#f5f5f5' }}
+                    fill
+                    style={{ objectFit: 'contain', padding: '22px' }}
                     onError={() => setImgSrc('/images/backgrounds/errorimg.svg')}
                 />
+                {productBadges.length > 0 && (
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            zIndex: 1,
+                            p: 1.25,
+                        }}
+                    >
+                        <ProductBadges badges={productBadges} size="sm" />
+                    </Box>
+                )}
             </Box>
 
-            <CardContent sx={{ p: 3, pt: 2, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+            {/* Content */}
+            <CardContent
+                sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    p: 2.75,
+                    pt: 2.25,
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: 1.4,
+                }}
+            >
                 <Typography
-                    variant="h6"
-                    component={Link}
-                    href={`/productos/${product.slug}`}
+                    variant="caption"
                     sx={{
-                        display: 'block',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        textDecoration: 'none',
-                        color: 'text.primary',
-                        '&:hover': { color: 'primary.main' }
+                        color: 'secondary.dark',
+                        letterSpacing: 2.1,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
                     }}
                 >
-                    {product.name}
+                    Selección CLA
                 </Typography>
 
-                <Stack
-                    direction="row"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    mt={1}
-                >
-                    <Stack direction="row" alignItems="center" flex={1}>
-                        <Typography variant="h6" fontWeight="bold">{price}</Typography>
-                    </Stack>
+                <Stack spacing={1.25} sx={{ flexGrow: 1 }}>
+                    <Typography
+                        variant="body1"
+                        fontWeight={600}
+                        component={Link}
+                        href={productHref}
+                        sx={{
+                            textDecoration: 'none',
+                            color: 'text.primary',
+                            lineHeight: 1.45,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            '&:hover': { color: 'primary.main' },
+                            transition: 'color 0.2s ease',
+                        }}
+                    >
+                        {product.name}
+                    </Typography>
                 </Stack>
 
-                <Button
-                    variant="contained"
-                    fullWidth
-                    sx={{ mt: 2 }}
-                    onClick={() => void handleAddToCart()}
-                    disabled={!canAddToCart || isSubmitting}
-                >
-                    {isSubmitting ? 'Agregando...' : addButtonLabel}
-                </Button>
-
-                {feedback ? (
-                    <Alert severity={feedback.includes('agregado') ? 'success' : 'error'} sx={{ mt: 2 }}>
-                        {feedback}
-                    </Alert>
-                ) : null}
+                <Stack spacing={0.8}>
+                    <Typography variant="h6" fontWeight={700} color="primary.main">
+                        {hasPriceRange ? `Desde ${price}` : price}
+                    </Typography>
+                    <Typography
+                        component={Link}
+                        href={productHref}
+                        variant="body2"
+                        sx={{
+                            textDecoration: 'none',
+                            color: 'text.secondary',
+                            fontWeight: 600,
+                            '&:hover': { color: 'primary.main' },
+                        }}
+                    >
+                        Ver detalle
+                    </Typography>
+                </Stack>
             </CardContent>
         </Card>
     );
