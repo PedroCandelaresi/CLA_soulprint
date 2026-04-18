@@ -1,9 +1,9 @@
-name: demo2
+name: cla_soulprint
 
 services:
   mysql:
     image: mysql:8.4
-    container_name: demo2_mysql
+    container_name: cla_soulprint_mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -13,7 +13,7 @@ services:
     ports:
       - "127.0.0.1:3006:3306"
     volumes:
-      - demo2_mysql_data:/var/lib/mysql
+      - cla_soulprint_mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u${DB_USER} -p${DB_PASSWORD} || exit 1"]
       interval: 10s
@@ -21,13 +21,13 @@ services:
       retries: 10
       start_period: 20s
     networks:
-      - demo2_net
+      - cla_soulprint_net
 
   backend:
     build:
       context: ../../
       dockerfile: apps/backend/Dockerfile
-    container_name: demo2_backend
+    container_name: cla_soulprint_backend
     restart: always
     depends_on:
       mysql:
@@ -71,9 +71,9 @@ services:
       # Direct/debug access to the Shop API. Not the primary public entrypoint.
       - "127.0.0.1:3001:3001"
     volumes:
-      - demo2_vendure_assets:/usr/src/app/apps/backend/static/assets
+      - cla_soulprint_vendure_assets:/usr/src/app/apps/backend/static/assets
     networks:
-      - demo2_net
+      - cla_soulprint_net
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
       interval: 15s
@@ -89,7 +89,7 @@ services:
         NEXT_PUBLIC_VENDURE_API_URL: ${NEXT_PUBLIC_VENDURE_API_URL}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
         NEXT_PUBLIC_REQUIRE_CUSTOMER_VERIFICATION: ${REQUIRE_CUSTOMER_VERIFICATION}
-    container_name: demo2_storefront
+    container_name: cla_soulprint_storefront
     restart: always
     depends_on:
       backend:
@@ -105,7 +105,7 @@ services:
       # Loopback and direct local access for the storefront.
       - "127.0.0.1:3000:3000"
     networks:
-      - demo2_net
+      - cla_soulprint_net
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3000 || exit 1"]
       interval: 15s
@@ -114,12 +114,12 @@ services:
       start_period: 30s
 
 volumes:
-  demo2_mysql_data:
-    name: demo2_mysql_data
-  demo2_vendure_assets:
-    name: demo2_vendure_assets
+  cla_soulprint_mysql_data:
+    name: cla_soulprint_mysql_data
+  cla_soulprint_vendure_assets:
+    name: cla_soulprint_vendure_assets
 
 networks:
-  demo2_net:
-    name: demo2_net
+  cla_soulprint_net:
+    name: cla_soulprint_net
     driver: bridge
