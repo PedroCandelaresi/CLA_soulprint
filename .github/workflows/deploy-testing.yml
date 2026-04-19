@@ -158,7 +158,6 @@ jobs:
           cd "$REPO_PATH"
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d mysql
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend
-          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm --no-deps backend pnpm migration:run:prod
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d backend
 
       - name: Build and deploy storefront
@@ -176,7 +175,6 @@ jobs:
           cd "$REPO_PATH"
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d mysql
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend storefront
-          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm --no-deps backend pnpm migration:run:prod
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d backend storefront
 
       - name: Smoke test backend
