@@ -159,7 +159,7 @@ jobs:
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d mysql
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm --no-deps backend pnpm migration:run:prod
-          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d backend getnet
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d backend
 
       - name: Build and deploy storefront
         if: steps.detect.outputs.scope == 'storefront'
@@ -177,7 +177,7 @@ jobs:
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d mysql
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend storefront
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm --no-deps backend pnpm migration:run:prod
-          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d backend getnet storefront
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d backend storefront
 
       - name: Smoke test backend
         if: steps.detect.outputs.scope == 'backend'
@@ -210,42 +210,8 @@ jobs:
             return 1
           }
 
-          wait_for_health tienda_backend 60
-          wait_for_http http://127.0.0.1:4002/health 20
-
-      - name: Smoke test getnet
-        if: steps.detect.outputs.scope == 'backend'
-        run: |
-          set -euo pipefail
-          wait_for_health() {
-            local container="$1"
-            local attempts="${2:-60}"
-            for _ in $(seq 1 "$attempts"); do
-              status="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || true)"
-              case "$status" in
-                healthy) return 0 ;;
-                unhealthy|exited|dead) docker logs "$container" --tail 200 || true; return 1 ;;
-              esac
-              sleep 2
-            done
-            docker logs "$container" --tail 200 || true
-            return 1
-          }
-
-          wait_for_http() {
-            local url="$1"
-            local attempts="${2:-20}"
-            for _ in $(seq 1 "$attempts"); do
-              if curl -fsS "$url" > /dev/null; then
-                return 0
-              fi
-              sleep 2
-            done
-            return 1
-          }
-
-          wait_for_health tienda_getnet 60
-          wait_for_http http://127.0.0.1:4003/health 20
+          wait_for_health cla_soulprint_backend 60
+          wait_for_http http://127.0.0.1:3402/health 20
 
       - name: Smoke test storefront
         if: steps.detect.outputs.scope == 'storefront'
@@ -278,8 +244,8 @@ jobs:
             return 1
           }
 
-          wait_for_health tienda_storefront 90
-          wait_for_http http://127.0.0.1:4000 30
+          wait_for_health cla_soulprint_storefront 90
+          wait_for_http http://127.0.0.1:3400 30
 
       - name: Smoke test stack
         if: steps.detect.outputs.scope == 'stack'
@@ -313,12 +279,10 @@ jobs:
             return 1
           }
 
-          wait_for_health tienda_backend 60
-          wait_for_health tienda_getnet 60
-          wait_for_health tienda_storefront 90
-          wait_for_http http://127.0.0.1:4002/health 20
-          wait_for_http http://127.0.0.1:4003/health 20
-          wait_for_http http://127.0.0.1:4000 30 -I
+          wait_for_health cla_soulprint_backend 60
+          wait_for_health cla_soulprint_storefront 90
+          wait_for_http http://127.0.0.1:3402/health 20
+          wait_for_http http://127.0.0.1:3400 30 -I
 
       - name: Show Docker status
         if: always() && steps.detect.outputs.scope != 'none'
