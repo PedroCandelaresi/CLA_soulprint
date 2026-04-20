@@ -147,12 +147,19 @@ clr-vertical-nav {
 }
 
 .left-nav .nav-link.active,
+.left-nav .nav-link.is-active,
+.left-nav .nav-link[aria-current="page"],
 .left-nav .nav-group-content.active,
-.left-nav .nav-link.active .nav-text,
-.left-nav .nav-group-content.active .nav-text {
-    background-color: rgba(199, 164, 107, 0.18) !important;
+.left-nav .active > .nav-link,
+.left-nav a.active,
+.left-nav a.is-active,
+.left-nav .nav-link.active *,
+.left-nav .nav-link.is-active *,
+.left-nav a.active *,
+.left-nav a.is-active * {
+    background-color: rgba(199, 164, 107, 0.22) !important;
     color: #ffffff !important;
-    font-weight: 600;
+    font-weight: 600 !important;
 }
 
 .left-nav cds-icon,
@@ -181,11 +188,11 @@ clr-vertical-nav {
 
 /* Branding / logo arriba del nav */
 .left-nav .branding {
-    min-height: 132px;
+    min-height: 84px !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.75rem 1.25rem 1.25rem;
+    padding: 0.9rem 1rem 0.7rem !important;
     border-bottom: 1px solid rgba(199, 164, 107, 0.18);
     background: transparent;
 }
@@ -197,8 +204,8 @@ clr-vertical-nav {
 .left-nav .branding::before {
     content: '';
     display: block;
-    width: min(15rem, 100%);
-    height: 4.5rem;
+    width: min(13rem, 100%);
+    height: 3rem;
     background: url('../../static-assets/assets/cla-logo.svg') center / contain no-repeat;
     filter: brightness(0) invert(1);
     opacity: 0.96;
@@ -843,9 +850,22 @@ body > vdr-root {
 
 .left-nav .nav-link,
 .left-nav .nav-group-content {
-    margin: 0.12rem 0.55rem;
-    padding: 0.78rem 0.95rem !important;
-    border-radius: 14px;
+    margin: 0.06rem 0.45rem !important;
+    padding: 0.42rem 0.75rem !important;
+    border-radius: 10px;
+    min-height: 0 !important;
+    line-height: 1.2 !important;
+    font-size: 0.9rem;
+}
+
+.left-nav .nav-group-text {
+    margin-top: 0.4rem !important;
+    margin-bottom: 0.15rem !important;
+    padding: 0.25rem 0.9rem !important;
+}
+
+.left-nav hr {
+    margin: 0.35rem 0.55rem !important;
 }
 
 .left-nav .nav-link:hover,
@@ -863,7 +883,7 @@ body > vdr-root {
 }
 
 .left-nav .branding {
-    min-height: 144px;
+    min-height: 84px;
 }
 
 .content-container,
