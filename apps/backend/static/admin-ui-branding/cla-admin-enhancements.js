@@ -335,6 +335,21 @@
         }, true);
     }
 
+    let currentToast = null;
+    let currentToastTimers = [];
+
+    function clearToast() {
+        currentToastTimers.forEach(function (t) { clearTimeout(t); });
+        currentToastTimers = [];
+        if (currentToast && currentToast.parentNode) {
+            currentToast.parentNode.removeChild(currentToast);
+        }
+        currentToast = null;
+        document.querySelectorAll('.cla-help-banner, .cla-help-toast').forEach(function (el) {
+            el.remove();
+        });
+    }
+
     function injectHelpBanner() {
         const path = window.location.pathname;
         if (path === lastPath) {
@@ -342,9 +357,7 @@
         }
         lastPath = path;
 
-        document.querySelectorAll('.cla-help-banner').forEach(function (banner) {
-            banner.remove();
-        });
+        clearToast();
 
         const match = ROUTE_HELP.find(function (entry) {
             return entry.match.test(path);
@@ -353,19 +366,35 @@
             return;
         }
 
-        const contentArea = document.querySelector('.content-area, router-outlet + *, vdr-app-shell .content-container');
-        if (!contentArea) {
-            return;
-        }
+        const toast = document.createElement('div');
+        toast.className = 'cla-help-toast';
+        toast.innerHTML =
+            '<button type="button" class="cla-help-toast-close" aria-label="Cerrar">×</button>' +
+            '<div>' + match.text + '</div>';
+        document.body.appendChild(toast);
+        currentToast = toast;
 
-        const banner = document.createElement('div');
-        banner.className = 'cla-help-banner';
-        banner.innerHTML = '<div>' + match.text + '</div>';
-        if (contentArea.firstChild) {
-            contentArea.insertBefore(banner, contentArea.firstChild);
-        } else {
-            contentArea.appendChild(banner);
-        }
+        const closeBtn = toast.querySelector('.cla-help-toast-close');
+        closeBtn.addEventListener('click', function () {
+            dismissToast(toast);
+        });
+
+        currentToastTimers.push(setTimeout(function () {
+            toast.classList.add('is-visible');
+        }, 40));
+
+        currentToastTimers.push(setTimeout(function () {
+            dismissToast(toast);
+        }, 6500));
+    }
+
+    function dismissToast(toast) {
+        if (!toast) return;
+        toast.classList.remove('is-visible');
+        setTimeout(function () {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+            if (currentToast === toast) currentToast = null;
+        }, 260);
     }
 
     function runAll() {
