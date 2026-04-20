@@ -22,6 +22,10 @@ export const BadgesUiExtension: AdminUiExtension = {
             rename: 'assets/admin-login-hero.svg',
         },
         {
+            path: path.join(brandingDir, 'cla-logo.svg'),
+            rename: 'assets/cla-logo.svg',
+        },
+        {
             path: path.join(brandingDir, 'marca-ejemplo.svg'),
             rename: 'assets/marca-ejemplo.svg',
         },

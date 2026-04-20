@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import {
     Alert,
     Box,
-    Button,
     CircularProgress,
     Container,
     Divider,
@@ -26,6 +25,9 @@ import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlin
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
+import BrandLogo from '@/components/branding/BrandLogo';
+import TooltipButton from '@/components/ui/TooltipButton';
+import TooltipIconButton from '@/components/ui/TooltipIconButton';
 import {
     ADD_PAYMENT_TO_ORDER_MUTATION,
     GET_ELIGIBLE_PAYMENT_METHODS_QUERY,
@@ -177,10 +179,11 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
             <Stack direction="row" alignItems="center" spacing={1}>
                 <Box
                     sx={{
-                        width: 32,
-                        height: 32,
+                        width: 36,
+                        height: 36,
                         borderRadius: '50%',
                         bgcolor: 'primary.main',
+                        boxShadow: '0 10px 20px rgba(0,72,37,0.18)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -217,10 +220,11 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
             <Stack direction="row" alignItems="center" spacing={1}>
                 <Box
                     sx={{
-                        width: 32,
-                        height: 32,
+                        width: 36,
+                        height: 36,
                         borderRadius: '50%',
                         bgcolor: step >= 2 ? 'primary.main' : 'grey.300',
+                        boxShadow: step >= 2 ? '0 10px 20px rgba(0,72,37,0.18)' : 'none',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -283,15 +287,15 @@ function PaymentMethodCard({
             onClick={onSelect}
             sx={{
                 p: 2,
-                borderRadius: 3,
+                borderRadius: 4,
                 cursor: 'pointer',
                 border: selected ? '2px solid' : '1px solid',
                 borderColor: selected ? 'primary.main' : 'divider',
-                bgcolor: selected ? 'primary.50' : 'background.paper',
+                bgcolor: selected ? 'rgba(0,72,37,0.08)' : 'rgba(255,251,244,0.8)',
                 transition: 'all 0.15s ease',
                 '&:hover': {
                     borderColor: 'primary.light',
-                    bgcolor: selected ? 'primary.50' : 'grey.50',
+                    bgcolor: selected ? 'rgba(0,72,37,0.1)' : 'rgba(255,255,255,0.92)',
                 },
             }}
         >
@@ -336,23 +340,18 @@ function BankTransferDetails() {
                     {value}
                 </Typography>
                 {(copyKey === 'cbu' || copyKey === 'alias') && (
-                    <Box
-                        component="button"
+                    <TooltipIconButton
                         onClick={() => copy(value, copyKey)}
+                        size="small"
+                        tooltip={copied === copyKey ? 'Dato copiado' : `Copiar ${label.toLowerCase()}`}
                         sx={{
-                            border: 'none',
-                            background: 'none',
-                            cursor: 'pointer',
                             p: 0.5,
-                            borderRadius: 1,
-                            display: 'flex',
                             color: copied === copyKey ? 'success.main' : 'text.disabled',
                             '&:hover': { color: 'primary.main' },
                         }}
-                        title="Copiar"
                     >
                         <ContentCopyIcon sx={{ fontSize: 14 }} />
-                    </Box>
+                    </TooltipIconButton>
                 )}
             </Stack>
         </Stack>
@@ -701,7 +700,15 @@ function CheckoutContent() {
                         sx={{ p: { xs: 4, md: 6 }, borderRadius: 4, border: '1px solid', borderColor: 'divider', textAlign: 'center' }}
                     >
                         <Stack spacing={3} alignItems="center">
-                            <Typography fontSize={56}>🛒</Typography>
+                            <Box
+                                sx={{
+                                    width: 220,
+                                    '--brand-logo-fg': 'var(--surface-logo-fg)',
+                                    '--brand-logo-bg': 'transparent',
+                                }}
+                            >
+                                <BrandLogo label="CLA Soulprint" />
+                            </Box>
                             <Stack spacing={1}>
                                 <Typography variant="h5" fontWeight={800}>
                                     Tu carrito está vacío
@@ -711,12 +718,12 @@ function CheckoutContent() {
                                 </Typography>
                             </Stack>
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                                <Button component={Link} href="/productos" variant="contained" sx={{ borderRadius: 2 }}>
+                                <TooltipButton component={Link} href="/productos" variant="contained" tooltip="Ir al catálogo" sx={{ borderRadius: 2 }}>
                                     Ver productos
-                                </Button>
-                                <Button component={Link} href="/carrito" variant="outlined" sx={{ borderRadius: 2 }}>
+                                </TooltipButton>
+                                <TooltipButton component={Link} href="/carrito" variant="outlined" tooltip="Volver al carrito" sx={{ borderRadius: 2 }}>
                                     Ir al carrito
-                                </Button>
+                                </TooltipButton>
                             </Stack>
                         </Stack>
                     </Paper>
@@ -727,28 +734,46 @@ function CheckoutContent() {
 
     // ── Checkout principal ──
     return (
-        <Box sx={{ bgcolor: 'grey.50', minHeight: '100vh', py: { xs: 3, md: 5 } }}>
+        <Box sx={{ minHeight: '100vh', py: { xs: 3, md: 5 } }}>
             <Container maxWidth="lg">
                 <Stack spacing={3}>
-                    {/* Header */}
-                    <Stack spacing={0.5}>
-                        <Typography variant="h4" fontWeight={800}>
-                            Finalizar compra
-                        </Typography>
-                        <Typography color="text.secondary">
-                            Completá tus datos y elegí cómo querés pagar.
-                        </Typography>
-                    </Stack>
-
-                    {/* Step indicator */}
                     <Paper
                         elevation={0}
-                        sx={{ p: 2.5, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}
+                        sx={{
+                            p: { xs: 3, md: 4 },
+                            borderRadius: 5,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            background:
+                                'linear-gradient(135deg, rgba(255,251,244,0.96) 0%, rgba(247,238,224,0.96) 100%)',
+                        }}
+                    >
+                        <Stack spacing={1.25}>
+                            <Box
+                                sx={{
+                                    width: { xs: 180, md: 220 },
+                                    '--brand-logo-fg': 'var(--surface-logo-fg)',
+                                    '--brand-logo-bg': 'transparent',
+                                }}
+                            >
+                                <BrandLogo label="CLA Soulprint" />
+                            </Box>
+                            <Typography variant="h4" fontWeight={800}>
+                                Finalizar compra
+                            </Typography>
+                            <Typography color="text.secondary">
+                                Completá tus datos y elegí cómo querés pagar.
+                            </Typography>
+                        </Stack>
+                    </Paper>
+
+                    <Paper
+                        elevation={0}
+                        sx={{ p: 2.5, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}
                     >
                         <StepIndicator step={step} />
                     </Paper>
 
-                    {/* Error global */}
                     {feedback && (
                         <Alert
                             severity={feedback.severity}
@@ -760,22 +785,19 @@ function CheckoutContent() {
                     )}
 
                     <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3} alignItems="flex-start">
-                        {/* Left column */}
                         <Stack spacing={3} flex={1} width="100%">
-
-                            {/* Step 1 — Datos */}
                             <Paper
                                 elevation={0}
-                                sx={{ p: { xs: 3, md: 4 }, borderRadius: 4, border: '1px solid', borderColor: step === 2 ? 'success.200' : 'divider' }}
+                                sx={{ p: { xs: 3, md: 4 }, borderRadius: 5, border: '1px solid', borderColor: step === 2 ? 'success.200' : 'divider' }}
                             >
                                 <Stack spacing={3}>
                                     <Stack direction="row" spacing={1.5} alignItems="center">
                                         <Box
                                             sx={{
-                                                width: 40,
-                                                height: 40,
-                                                borderRadius: 2,
-                                                bgcolor: step === 2 ? 'success.50' : 'primary.50',
+                                                width: 44,
+                                                height: 44,
+                                                borderRadius: 2.5,
+                                                bgcolor: step === 2 ? 'success.light' : 'primary.light',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
@@ -791,7 +813,7 @@ function CheckoutContent() {
                                             </Typography>
                                             {step === 2 && (
                                                 <Typography variant="caption" color="success.main" fontWeight={600}>
-                                                    ✓ Guardados correctamente
+                                                    Datos guardados correctamente
                                                 </Typography>
                                             )}
                                         </Stack>
@@ -893,11 +915,12 @@ function CheckoutContent() {
                                         />
                                     </Stack>
 
-                                    <Button
+                                    <TooltipButton
                                         variant="contained"
                                         size="large"
                                         onClick={() => void confirmData()}
                                         disabled={busy}
+                                        tooltip="Guardar los datos de entrega y continuar"
                                         sx={{ borderRadius: 2, py: 1.25 }}
                                     >
                                         {savingData ? (
@@ -908,26 +931,25 @@ function CheckoutContent() {
                                         ) : step === 2 ? (
                                             'Actualizar datos'
                                         ) : (
-                                            'Continuar al pago →'
+                                            'Continuar al pago'
                                         )}
-                                    </Button>
+                                    </TooltipButton>
                                 </Stack>
                             </Paper>
 
-                            {/* Step 2 — Pago */}
                             {step === 2 && (
                                 <Paper
                                     elevation={0}
-                                    sx={{ p: { xs: 3, md: 4 }, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}
+                                    sx={{ p: { xs: 3, md: 4 }, borderRadius: 5, border: '1px solid', borderColor: 'divider' }}
                                 >
                                     <Stack spacing={3}>
                                         <Stack direction="row" spacing={1.5} alignItems="center">
                                             <Box
                                                 sx={{
-                                                    width: 40,
-                                                    height: 40,
-                                                    borderRadius: 2,
-                                                    bgcolor: 'primary.50',
+                                                    width: 44,
+                                                    height: 44,
+                                                    borderRadius: 2.5,
+                                                    bgcolor: 'primary.light',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
@@ -956,12 +978,17 @@ function CheckoutContent() {
                                             <BankTransferDetails />
                                         )}
 
-                                        <Button
+                                        <TooltipButton
                                             variant="contained"
                                             color="success"
                                             size="large"
                                             onClick={() => void pay()}
                                             disabled={!selectedPaymentCode || paying}
+                                            tooltip={
+                                                selectedPaymentCode === 'mercadopago'
+                                                    ? 'Ir a Mercado Pago para completar el pago'
+                                                    : 'Confirmar el pedido'
+                                            }
                                             sx={{
                                                 borderRadius: 2,
                                                 py: 1.5,
@@ -975,37 +1002,36 @@ function CheckoutContent() {
                                                     <span>Procesando...</span>
                                                 </Stack>
                                             ) : selectedPaymentCode === 'mercadopago' ? (
-                                                '🔒 Pagar con Mercado Pago'
-                                            ) : selectedPaymentCode === 'transferencia-bancaria' ? (
-                                                '✅ Confirmar pedido'
+                                                'Pagar con Mercado Pago'
                                             ) : (
-                                                '✅ Confirmar pedido'
+                                                'Confirmar pedido'
                                             )}
-                                        </Button>
+                                        </TooltipButton>
 
                                         <Typography
                                             variant="caption"
                                             color="text.secondary"
                                             textAlign="center"
                                         >
-                                            🔒 Tus datos están protegidos y nunca los compartimos con terceros.
+                                            Tus datos están protegidos y nunca los compartimos con terceros.
                                         </Typography>
                                     </Stack>
                                 </Paper>
                             )}
                         </Stack>
 
-                        {/* Order summary */}
                         <Box sx={{ width: '100%', maxWidth: { lg: 360 } }}>
                             <Paper
                                 elevation={0}
                                 sx={{
                                     p: 3,
-                                    borderRadius: 4,
+                                    borderRadius: 5,
                                     border: '1px solid',
                                     borderColor: 'divider',
                                     position: { lg: 'sticky' },
                                     top: { lg: 24 },
+                                    background:
+                                        'linear-gradient(180deg, rgba(255,251,244,0.96) 0%, rgba(246,237,222,0.96) 100%)',
                                 }}
                             >
                                 <Stack spacing={2}>
@@ -1071,7 +1097,7 @@ function CheckoutContent() {
                                         sx={{
                                             p: 2,
                                             borderRadius: 2.5,
-                                            bgcolor: 'primary.50',
+                                            bgcolor: 'primary.light',
                                             border: '1px solid',
                                             borderColor: 'primary.100',
                                         }}
@@ -1084,16 +1110,17 @@ function CheckoutContent() {
                                         </Stack>
                                     </Paper>
 
-                                    <Button
+                                    <TooltipButton
                                         component={Link}
                                         href="/carrito"
                                         variant="text"
                                         fullWidth
                                         size="small"
+                                        tooltip="Volver al carrito"
                                         sx={{ color: 'text.secondary' }}
                                     >
-                                        ← Volver al carrito
-                                    </Button>
+                                        Volver al carrito
+                                    </TooltipButton>
                                 </Stack>
                             </Paper>
                         </Box>

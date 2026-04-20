@@ -7,24 +7,26 @@ import {
     AppBar,
     Badge,
     Box,
-    Button,
     CircularProgress,
     Container,
     Drawer,
-    IconButton,
     List,
     ListItem,
     ListItemButton,
     ListItemText,
     Stack,
+    Typography,
     Toolbar,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import ArrowOutwardRoundedIcon from "@mui/icons-material/ArrowOutwardRounded";
 import { useStorefront } from "@/components/providers/StorefrontProvider";
 import { buildLoginRedirectHref } from "@/lib/auth/redirects";
+import TooltipButton from "@/components/ui/TooltipButton";
+import TooltipIconButton from "@/components/ui/TooltipIconButton";
 
 type OpcionMenu = {
     etiqueta: string;
@@ -72,18 +74,35 @@ export default function HeaderClient({
             position="sticky"
             elevation={0}
             sx={{
-                backdropFilter: "blur(8px)",
-                borderBottom: "1px solid var(--cla-header-border)",
-                backgroundColor: "var(--cla-brand-green)",
+                backdropFilter: "blur(18px)",
+                borderBottom: "1px solid rgba(244,234,213,0.14)",
+                background:
+                    "linear-gradient(180deg, rgba(3,25,15,0.96) 0%, rgba(5,37,23,0.9) 100%)",
                 color: "common.white",
+                overflow: "hidden",
+                "&::after": {
+                    content: '""',
+                    position: "absolute",
+                    insetInline: 0,
+                    bottom: 0,
+                    height: 1,
+                    background:
+                        "linear-gradient(90deg, transparent 0%, rgba(244,234,213,0.12) 14%, rgba(244,234,213,0.42) 50%, rgba(244,234,213,0.12) 86%, transparent 100%)",
+                },
             }}
         >
             <Container maxWidth="xl">
-                <Toolbar sx={{ gap: 2, py: 1.5, px: "0 !important" }}>
+                <Toolbar sx={{ gap: 2, py: 1.25, px: "0 !important" }}>
                     <Box sx={{ display: { xs: "flex", md: "none" } }}>
-                        <IconButton edge="start" onClick={() => setMenuAbierto(true)} aria-label="abrir menú" color="inherit">
+                        <TooltipIconButton
+                            edge="start"
+                            onClick={() => setMenuAbierto(true)}
+                            aria-label="abrir menú"
+                            color="inherit"
+                            tooltip="Abrir navegación"
+                        >
                             <MenuIcon />
-                        </IconButton>
+                        </TooltipIconButton>
                     </Box>
 
                     <Box
@@ -93,17 +112,23 @@ export default function HeaderClient({
                             position: "relative",
                             display: "inline-flex",
                             alignItems: "center",
+                            gap: 1.25,
                             textDecoration: "none",
                             color: "common.white",
                             width: { xs: "clamp(10rem, 44vw, 13rem)", md: "16.25rem" },
+                            px: { xs: 0, md: 1.5 },
+                            py: { xs: 0.35, md: 0.65 },
+                            borderRadius: 999,
+                            backgroundColor: { xs: "transparent", md: "rgba(255,255,255,0.04)" },
+                            border: { xs: "none", md: "1px solid rgba(244,234,213,0.1)" },
                             "--brand-logo-fg": "var(--header-logo-fg)",
                             "--brand-logo-bg": "var(--header-logo-bg)",
                             "&::after": {
                                 content: '""',
                                 position: "absolute",
-                                left: 0,
-                                right: "18%",
-                                bottom: -8,
+                                left: { xs: 0, md: 18 },
+                                right: { xs: "18%", md: 22 },
+                                bottom: { xs: -8, md: -6 },
                                 height: "1px",
                                 background:
                                     "linear-gradient(90deg, rgba(244, 234, 213, 0.75), rgba(244, 234, 213, 0.18), transparent)",
@@ -120,18 +145,30 @@ export default function HeaderClient({
                                 const activa = pathname === opcion.ruta;
 
                                 return (
-                                    <Button
+                                    <TooltipButton
                                         key={opcion.ruta}
                                         component={Link}
                                         href={opcion.ruta}
                                         color="inherit"
+                                        tooltip={`Ir a ${opcion.etiqueta}`}
                                         sx={{
                                             fontWeight: activa ? 700 : 500,
-                                            color: activa ? "var(--cla-brand-cream)" : "inherit",
+                                            color: activa ? "var(--cla-brand-cream)" : "rgba(255,255,255,0.82)",
+                                            px: 2.2,
+                                            py: 1,
+                                            borderRadius: 999,
+                                            backgroundColor: activa ? "rgba(255,255,255,0.08)" : "transparent",
+                                            border: "1px solid",
+                                            borderColor: activa ? "rgba(244,234,213,0.18)" : "transparent",
+                                            "&:hover": {
+                                                backgroundColor: activa
+                                                    ? "rgba(255,255,255,0.12)"
+                                                    : "rgba(255,255,255,0.06)",
+                                            },
                                         }}
                                     >
                                         {opcion.etiqueta}
-                                    </Button>
+                                    </TooltipButton>
                                 );
                             })}
                         </Stack>
@@ -139,43 +176,77 @@ export default function HeaderClient({
 
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: { xs: "auto", md: 0 } }}>
                         {authLoading ? (
-                            <Button
+                            <TooltipButton
                                 color="inherit"
                                 disabled
                                 startIcon={<CircularProgress size={16} color="inherit" />}
+                                tooltip="Sincronizando tu sesión"
                                 sx={{ display: { xs: "none", md: "inline-flex" }, color: "inherit" }}
                             >
                                 Cargando cuenta...
-                            </Button>
+                            </TooltipButton>
                         ) : (
-                            <Button
+                            <TooltipButton
                                 component={Link}
                                 href={customer ? "/mi-cuenta" : loginHref}
                                 color="inherit"
                                 startIcon={<PersonOutlineOutlinedIcon />}
-                                sx={{ display: { xs: "none", md: "inline-flex" }, color: "inherit" }}
+                                endIcon={<ArrowOutwardRoundedIcon sx={{ fontSize: 18 }} />}
+                                tooltip={customer ? "Abrir tu centro de cuenta" : "Ingresar o crear cuenta"}
+                                sx={{
+                                    display: { xs: "none", md: "inline-flex" },
+                                    color: "inherit",
+                                    bgcolor: "rgba(255,255,255,0.05)",
+                                    border: "1px solid rgba(244,234,213,0.12)",
+                                    "&:hover": {
+                                        bgcolor: "rgba(255,255,255,0.1)",
+                                    },
+                                }}
                             >
                                 {customer ? nombreCuenta : "Ingresar"}
-                            </Button>
+                            </TooltipButton>
                         )}
 
                         {customer && (
-                            <Button
+                            <TooltipButton
                                 color="inherit"
                                 onClick={() => void handleLogout()}
                                 disabled={authLoading}
                                 startIcon={<LogoutOutlinedIcon />}
-                                sx={{ display: { xs: "none", md: "inline-flex" }, color: "inherit" }}
+                                tooltip="Cerrar sesión actual"
+                                sx={{
+                                    display: { xs: "none", md: "inline-flex" },
+                                    color: "inherit",
+                                    bgcolor: "rgba(255,255,255,0.03)",
+                                    border: "1px solid rgba(244,234,213,0.1)",
+                                    "&:hover": {
+                                        bgcolor: "rgba(255,255,255,0.08)",
+                                    },
+                                }}
                             >
                                 Salir
-                            </Button>
+                            </TooltipButton>
                         )}
 
-                        <IconButton component={Link} href="/carrito" aria-label="ir al carrito" color="inherit">
+                        <TooltipIconButton
+                            component={Link}
+                            href="/carrito"
+                            aria-label="ir al carrito"
+                            color="inherit"
+                            tooltip={cartQuantity > 0 ? `Ver carrito con ${cartQuantity} producto${cartQuantity === 1 ? "" : "s"}` : "Ver carrito"}
+                            sx={{
+                                bgcolor: "rgba(244,234,213,0.12)",
+                                borderColor: "rgba(244,234,213,0.2)",
+                                "&:hover": {
+                                    bgcolor: "rgba(244,234,213,0.18)",
+                                    borderColor: "rgba(244,234,213,0.34)",
+                                },
+                            }}
+                        >
                             <Badge badgeContent={cartQuantity} color="secondary" invisible={cartQuantity === 0}>
                                 <ShoppingBagOutlinedIcon />
                             </Badge>
-                        </IconButton>
+                        </TooltipIconButton>
                     </Stack>
                 </Toolbar>
             </Container>
@@ -184,7 +255,13 @@ export default function HeaderClient({
                 anchor="left"
                 open={menuAbierto}
                 onClose={() => setMenuAbierto(false)}
-                PaperProps={{ sx: { width: "clamp(240px, 80vw, 280px)" } }}
+                PaperProps={{
+                    sx: {
+                        width: "clamp(240px, 80vw, 300px)",
+                        bgcolor: "rgba(255,250,242,0.94)",
+                        backdropFilter: "blur(18px)",
+                    },
+                }}
             >
                 <Box sx={{ width: "100%", height: "100%" }} role="presentation" onClick={() => setMenuAbierto(false)}>
                     <Box
@@ -196,6 +273,8 @@ export default function HeaderClient({
                             pb: 2.5,
                             borderBottom: "1px solid",
                             borderColor: "divider",
+                            background:
+                                "linear-gradient(180deg, rgba(244,234,213,0.42) 0%, rgba(255,250,242,0.9) 100%)",
                             "--brand-logo-fg": "var(--muted-logo-fg)",
                             "--brand-logo-bg": "transparent",
                         }}
@@ -217,6 +296,10 @@ export default function HeaderClient({
 
                         <Box sx={{ position: "relative", zIndex: 1, width: "10.5rem" }}>{drawerLogo}</Box>
 
+                        <Typography sx={{ position: "relative", zIndex: 1, mt: 1.5, color: "text.secondary" }}>
+                            Navegación curada para explorar la tienda CLA con una experiencia más serena.
+                        </Typography>
+
                         <Box
                             aria-hidden
                             sx={{
@@ -233,18 +316,18 @@ export default function HeaderClient({
                     <List sx={{ py: 1 }}>
                         {opcionesMenu.map((opcion) => (
                             <ListItem key={opcion.ruta} disablePadding>
-                                <ListItemButton component={Link} href={opcion.ruta}>
+                                <ListItemButton component={Link} href={opcion.ruta} sx={{ mx: 1, my: 0.3 }}>
                                     <ListItemText primary={opcion.etiqueta} />
                                 </ListItemButton>
                             </ListItem>
                         ))}
                         <ListItem disablePadding>
-                            <ListItemButton component={Link} href="/carrito">
+                            <ListItemButton component={Link} href="/carrito" sx={{ mx: 1, my: 0.3 }}>
                                 <ListItemText primary={`Carrito${cartQuantity > 0 ? ` (${cartQuantity})` : ""}`} />
                             </ListItemButton>
                         </ListItem>
                         <ListItem disablePadding>
-                            <ListItemButton component={Link} href={customer ? "/mi-cuenta" : loginHref}>
+                            <ListItemButton component={Link} href={customer ? "/mi-cuenta" : loginHref} sx={{ mx: 1, my: 0.3 }}>
                                 <ListItemText
                                     primary={customer ? nombreCuenta : "Ingresar"}
                                     secondary={customer?.emailAddress}
@@ -253,7 +336,7 @@ export default function HeaderClient({
                         </ListItem>
                         {customer && (
                             <ListItem disablePadding>
-                                <ListItemButton onClick={() => void handleLogout()} disabled={authLoading}>
+                                <ListItemButton onClick={() => void handleLogout()} disabled={authLoading} sx={{ mx: 1, my: 0.3 }}>
                                     <ListItemText primary="Cerrar sesión" />
                                 </ListItemButton>
                             </ListItem>

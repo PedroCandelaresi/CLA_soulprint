@@ -1,10 +1,16 @@
 :root {
   --cla-brand-green: #004825;
-  --cla-brand-green-dark: #022c18;
-  --cla-brand-cream: #f4ead5;
-  --cla-brand-sand: #e8d8b3;
+  --cla-brand-green-dark: #062616;
+  --cla-brand-green-deep: #03190f;
+  --cla-brand-cream: #f5ebd9;
+  --cla-brand-cream-strong: #f0e1c3;
+  --cla-brand-sand: #e2cfaa;
   --cla-brand-gold: #c7a46b;
-  --cla-brand-mist: #f9f5ed;
+  --cla-brand-gold-soft: #dcc297;
+  --cla-brand-mist: #f7f1e8;
+  --cla-brand-paper: #fffaf2;
+  --cla-brand-ink: #173428;
+  --cla-brand-muted: #617268;
   --cla-header-border: rgba(244, 234, 213, 0.26);
   --brand-logo-bg: transparent;
   --brand-logo-fg: var(--cla-brand-green);
@@ -19,19 +25,52 @@
 html {
   overflow-y: scroll;
   background: var(--cla-brand-mist);
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  position: relative;
+  isolation: isolate;
   background:
-    radial-gradient(circle at top left, rgba(244, 234, 213, 0.55), transparent 34%),
-    radial-gradient(circle at bottom right, rgba(199, 164, 107, 0.14), transparent 28%),
-    linear-gradient(180deg, #fffdf8 0%, #fbf6ed 100%);
-  color: #173428;
+    radial-gradient(circle at top left, rgba(244, 234, 213, 0.76), transparent 32%),
+    radial-gradient(circle at 82% 18%, rgba(199, 164, 107, 0.18), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(9, 69, 40, 0.08), transparent 30%),
+    linear-gradient(180deg, #fffdf8 0%, #f6eee3 100%);
+  color: var(--cla-brand-ink);
+  font-family: var(--font-cla-sans), Helvetica, Arial, sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: auto;
+  pointer-events: none;
+  z-index: -1;
+}
+
+body::before {
+  top: -12rem;
+  right: -10rem;
+  width: 26rem;
+  height: 26rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(199, 164, 107, 0.16) 0%, rgba(199, 164, 107, 0) 70%);
+  filter: blur(8px);
+}
+
+body::after {
+  bottom: -14rem;
+  left: -12rem;
+  width: 30rem;
+  height: 30rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(0, 72, 37, 0.08) 0%, rgba(0, 72, 37, 0) 72%);
 }
 
 * {
@@ -40,10 +79,22 @@ body {
 
 a {
   color: inherit;
+  text-decoration: none;
 }
 
 img {
   max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+main {
+  position: relative;
 }
 
 ::selection {

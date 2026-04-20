@@ -76,13 +76,14 @@ export default async function ProductosPage({
                         sx={{
                             border: '1px solid rgba(0,72,37,0.08)',
                             bgcolor: '#fffdf8',
-                            position: { md: 'sticky' },
-                            top: { md: 96 },
-                        }}
-                    >
-                        <ProductFilter collections={collections} />
-                    </Paper>
-                </Grid>
+                        position: { md: 'sticky' },
+                        top: { md: 96 },
+                        borderRadius: 5,
+                    }}
+                >
+                    <ProductFilter collections={collections} />
+                </Paper>
+            </Grid>
 
                 <Grid size={{ xs: 12, md: 9 }}>
                     <Paper
@@ -91,6 +92,7 @@ export default async function ProductosPage({
                             p: { xs: 2.5, md: 3.5 },
                             border: '1px solid rgba(0,72,37,0.08)',
                             bgcolor: '#fffdf8',
+                            borderRadius: 5,
                         }}
                     >
                         <ProductList products={products} />

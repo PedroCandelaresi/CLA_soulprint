@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Alert, Button, Chip, Divider, Grid, IconButton, Stack, Typography } from '@mui/material';
+import { Alert, Box, Chip, Divider, Grid, Stack, Typography } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
@@ -20,6 +20,8 @@ import {
 } from './productVariantSelection';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
 import { resolveBadges } from '@/lib/badges/resolveBadges';
+import TooltipButton from '@/components/ui/TooltipButton';
+import TooltipIconButton from '@/components/ui/TooltipIconButton';
 
 interface ProductDetailProps {
     product: Product;
@@ -282,195 +284,243 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
     };
 
     return (
-        <Grid container spacing={4} sx={{ mt: 2 }}>
-            <Grid size={{ xs: 12, md: 6 }}>
-                <ProductCarousel
-                    images={galleryImages}
-                    alt={selectedVariant?.name || product.name}
-                    overlay={<ProductBadges badges={resolvedBadges} size="md" />}
-                />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-                <Stack spacing={2.5}>
-                    <Stack spacing={1}>
-                        <Typography variant="h3" fontWeight="bold">
-                            {product.name}
-                        </Typography>
-                        {selectedVariant?.name && selectedVariant.name !== product.name && (
-                            <Typography variant="h6" color="text.secondary">
-                                {selectedVariant.name}
+        <Box
+            sx={{
+                mt: 2,
+                p: { xs: 2.5, md: 4 },
+                borderRadius: 6,
+                border: '1px solid rgba(0,72,37,0.08)',
+                background: 'linear-gradient(180deg, rgba(255,250,242,0.94) 0%, rgba(255,255,255,0.72) 100%)',
+                boxShadow: '0 22px 44px rgba(0,72,37,0.08)',
+            }}
+        >
+            <Grid container spacing={{ xs: 3, md: 4 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Box sx={{ position: { md: 'sticky' }, top: { md: 108 } }}>
+                        <ProductCarousel
+                            images={galleryImages}
+                            alt={selectedVariant?.name || product.name}
+                            overlay={<ProductBadges badges={resolvedBadges} size="md" />}
+                        />
+                    </Box>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Stack spacing={2.75}>
+                        <Stack spacing={1}>
+                            <Typography variant="overline" color="secondary.dark">
+                                Pieza seleccionada
                             </Typography>
-                        )}
-                        {selectedOptionSummary.length > 0 && (
-                            <Typography variant="body2" color="text.secondary">
-                                {selectedOptionSummary.join(' · ')}
+                            <Typography variant="h3" fontWeight="bold">
+                                {product.name}
                             </Typography>
-                        )}
-                    </Stack>
-
-                    <Stack spacing={0.75}>
-                        <Typography variant="h4" color="primary.main" fontWeight="bold">
-                            {formatCurrency(priceWithTax, currencyCode)}
-                        </Typography>
-                        {showTaxBreakdown && (
-                            <Typography variant="body2" color="text.secondary">
-                                Precio base: {formatCurrency(priceWithoutTax, currencyCode)}. El valor principal incluye
-                                impuestos.
-                            </Typography>
-                        )}
-                    </Stack>
-
-                    <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
-                        <Chip label={stockChip.label} color={stockChip.color} size="small" variant="outlined" />
-                        {selectedVariant?.sku && (
-                            <Chip label={`SKU: ${selectedVariant.sku}`} size="small" variant="outlined" />
-                        )}
-                    </Stack>
-
-                    <Typography variant="body1" color="text.secondary">
-                        {description || 'Descripción no disponible para este producto.'}
-                    </Typography>
-
-                    {selectedVariant && isOutOfStock && (
-                        <Alert severity="warning">
-                            La variante seleccionada está sin stock. Podés elegir otra opción disponible.
-                        </Alert>
-                    )}
-
-                    {!selectedVariant && (
-                        <Alert severity="error">
-                            La combinación seleccionada no existe para este producto. Elegí una opción disponible.
-                        </Alert>
-                    )}
-
-                    {hasOptionGroups && (
-                        <>
-                            <Divider />
-                            <Stack spacing={2.5}>
-                                {optionGroups.map((group) => (
-                                    <Stack key={group.id} spacing={1}>
-                                        <Typography variant="subtitle2" fontWeight={700}>
-                                            {group.name}
-                                        </Typography>
-                                        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                                            {group.options.map((option) => {
-                                                const isSelected = selectedOptions[group.id] === option.id;
-                                                const optionAvailability = optionAvailabilityMap[group.id]?.[option.id];
-                                                const isImpossible = !optionAvailability?.exists;
-                                                const isSoldOut = optionAvailability?.exists && !optionAvailability.inStock;
-
-                                                return (
-                                                    <Button
-                                                        key={option.id}
-                                                        size="small"
-                                                        variant={isSelected ? 'contained' : 'outlined'}
-                                                        aria-pressed={isSelected}
-                                                        disabled={isImpossible}
-                                                        onClick={() => handleOptionSelection(group.id, option.id)}
-                                                        sx={
-                                                            isSoldOut
-                                                                ? {
-                                                                      opacity: 0.65,
-                                                                      textDecoration: 'line-through',
-                                                                  }
-                                                                : undefined
-                                                        }
-                                                    >
-                                                        {option.name}
-                                                    </Button>
-                                                );
-                                            })}
-                                        </Stack>
-                                        <Typography variant="caption" color="text.secondary">
-                                            Las opciones tachadas corresponden a variantes sin stock. Las deshabilitadas
-                                            no existen para la combinación actual.
-                                        </Typography>
-                                    </Stack>
-                                ))}
-                            </Stack>
-                        </>
-                    )}
-
-                    {!hasOptionGroups && hasMultipleVariants && (
-                        <>
-                            <Divider />
-                            <Stack spacing={1.5}>
-                                <Typography variant="subtitle2" fontWeight={700}>
-                                    Variante
+                            {selectedVariant?.name && selectedVariant.name !== product.name && (
+                                <Typography variant="h6" color="text.secondary">
+                                    {selectedVariant.name}
                                 </Typography>
-                                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                                    {product.variants.map((variant) => (
-                                        <Button
-                                            key={variant.id ?? variant.name}
-                                            size="small"
-                                            variant={variant.id === selectedVariant?.id ? 'contained' : 'outlined'}
-                                            aria-pressed={variant.id === selectedVariant?.id}
-                                            onClick={() => handleVariantSelection(variant.id)}
-                                            sx={
-                                                variant.stockLevel === 'OUT_OF_STOCK'
-                                                    ? {
-                                                          opacity: 0.65,
-                                                          textDecoration: 'line-through',
-                                                      }
-                                                    : undefined
-                                            }
-                                        >
-                                            {variant.name || 'Variante'}
-                                        </Button>
-                                    ))}
-                                </Stack>
-                            </Stack>
-                        </>
-                    )}
-
-                    <Divider />
-
-                    <Stack spacing={2.5}>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <IconButton
-                                aria-label="Restar cantidad"
-                                onClick={() => setQuantity((previous) => Math.max(1, previous - 1))}
-                                disabled={cartLoading || quantity <= 1 || !canAddToCart}
-                            >
-                                <RemoveRoundedIcon />
-                            </IconButton>
-                            <Typography minWidth={32} textAlign="center" fontWeight={700}>
-                                {quantity}
-                            </Typography>
-                            <IconButton
-                                aria-label="Sumar cantidad"
-                                onClick={() => setQuantity((previous) => previous + 1)}
-                                disabled={cartLoading || !canAddToCart}
-                            >
-                                <AddRoundedIcon />
-                            </IconButton>
+                            )}
+                            {selectedOptionSummary.length > 0 && (
+                                <Typography variant="body2" color="text.secondary">
+                                    {selectedOptionSummary.join(' · ')}
+                                </Typography>
+                            )}
                         </Stack>
 
-                        <Button
-                            variant="contained"
-                            size="large"
-                            startIcon={<ShoppingBagOutlinedIcon />}
-                            onClick={handleAddToCart}
-                            disabled={!canAddToCart || cartLoading}
-                            sx={{ alignSelf: 'flex-start' }}
-                        >
-                            {!selectedVariant
-                                ? 'Seleccioná una combinación válida'
-                                : isOutOfStock
-                                    ? 'Sin stock'
-                                    : 'Agregar al carrito'}
-                        </Button>
+                        <Stack spacing={0.75}>
+                            <Typography variant="h4" color="primary.main" fontWeight="bold">
+                                {formatCurrency(priceWithTax, currencyCode)}
+                            </Typography>
+                            {showTaxBreakdown && (
+                                <Typography variant="body2" color="text.secondary">
+                                    Precio base: {formatCurrency(priceWithoutTax, currencyCode)}. El valor principal incluye
+                                    impuestos.
+                                </Typography>
+                            )}
+                        </Stack>
 
-                        {feedback && <Alert severity={feedback.severity}>{feedback.message}</Alert>}
+                        <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
+                            <Chip label={stockChip.label} color={stockChip.color} size="small" variant="outlined" />
+                            {selectedVariant?.sku && (
+                                <Chip label={`SKU: ${selectedVariant.sku}`} size="small" variant="outlined" />
+                            )}
+                        </Stack>
 
-                        <Typography variant="body2" color="text.secondary">
-                            El carrito opera siempre con la variante seleccionada. Si iniciás sesión, tu pedido puede
-                            mantenerse asociado a tu cuenta.
+                        <Typography variant="body1" color="text.secondary">
+                            {description || 'Descripción no disponible para este producto.'}
                         </Typography>
+
+                        {selectedVariant && isOutOfStock && (
+                            <Alert severity="warning">
+                                La variante seleccionada está sin stock. Podés elegir otra opción disponible.
+                            </Alert>
+                        )}
+
+                        {!selectedVariant && (
+                            <Alert severity="error">
+                                La combinación seleccionada no existe para este producto. Elegí una opción disponible.
+                            </Alert>
+                        )}
+
+                        {hasOptionGroups && (
+                            <>
+                                <Divider />
+                                <Stack spacing={2.5}>
+                                    {optionGroups.map((group) => (
+                                        <Stack key={group.id} spacing={1}>
+                                            <Typography variant="subtitle2" fontWeight={700}>
+                                                {group.name}
+                                            </Typography>
+                                            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                                                {group.options.map((option) => {
+                                                    const isSelected = selectedOptions[group.id] === option.id;
+                                                    const optionAvailability = optionAvailabilityMap[group.id]?.[option.id];
+                                                    const isImpossible = !optionAvailability?.exists;
+                                                    const isSoldOut = optionAvailability?.exists && !optionAvailability.inStock;
+
+                                                    return (
+                                                        <TooltipButton
+                                                            key={option.id}
+                                                            size="small"
+                                                            variant={isSelected ? 'contained' : 'outlined'}
+                                                            aria-pressed={isSelected}
+                                                            disabled={isImpossible}
+                                                            onClick={() => handleOptionSelection(group.id, option.id)}
+                                                            tooltip={
+                                                                isImpossible
+                                                                    ? 'Esta combinación no existe'
+                                                                    : isSoldOut
+                                                                      ? `${option.name}: variante agotada`
+                                                                      : `Elegir ${option.name}`
+                                                            }
+                                                            sx={
+                                                                isSoldOut
+                                                                    ? {
+                                                                          opacity: 0.65,
+                                                                          textDecoration: 'line-through',
+                                                                      }
+                                                                    : undefined
+                                                            }
+                                                        >
+                                                            {option.name}
+                                                        </TooltipButton>
+                                                    );
+                                                })}
+                                            </Stack>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Las opciones tachadas corresponden a variantes sin stock. Las deshabilitadas
+                                                no existen para la combinación actual.
+                                            </Typography>
+                                        </Stack>
+                                    ))}
+                                </Stack>
+                            </>
+                        )}
+
+                        {!hasOptionGroups && hasMultipleVariants && (
+                            <>
+                                <Divider />
+                                <Stack spacing={1.5}>
+                                    <Typography variant="subtitle2" fontWeight={700}>
+                                        Variante
+                                    </Typography>
+                                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                                        {product.variants.map((variant) => (
+                                            <TooltipButton
+                                                key={variant.id ?? variant.name}
+                                                size="small"
+                                                variant={variant.id === selectedVariant?.id ? 'contained' : 'outlined'}
+                                                aria-pressed={variant.id === selectedVariant?.id}
+                                                onClick={() => handleVariantSelection(variant.id)}
+                                                tooltip={
+                                                    variant.stockLevel === 'OUT_OF_STOCK'
+                                                        ? `${variant.name || 'Variante'} sin stock`
+                                                        : `Elegir ${variant.name || 'variante'}`
+                                                }
+                                                sx={
+                                                    variant.stockLevel === 'OUT_OF_STOCK'
+                                                        ? {
+                                                              opacity: 0.65,
+                                                              textDecoration: 'line-through',
+                                                          }
+                                                        : undefined
+                                                }
+                                            >
+                                                {variant.name || 'Variante'}
+                                            </TooltipButton>
+                                        ))}
+                                    </Stack>
+                                </Stack>
+                            </>
+                        )}
+
+                        <Divider />
+
+                        <Stack spacing={2.5}>
+                            <Box
+                                sx={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    p: 0.75,
+                                    borderRadius: 999,
+                                    border: '1px solid rgba(0,72,37,0.1)',
+                                    bgcolor: 'rgba(255,255,255,0.68)',
+                                    width: 'fit-content',
+                                }}
+                            >
+                                <TooltipIconButton
+                                    aria-label="Restar cantidad"
+                                    onClick={() => setQuantity((previous) => Math.max(1, previous - 1))}
+                                    disabled={cartLoading || quantity <= 1 || !canAddToCart}
+                                    tooltip="Disminuir cantidad"
+                                >
+                                    <RemoveRoundedIcon />
+                                </TooltipIconButton>
+                                <Typography minWidth={32} textAlign="center" fontWeight={700}>
+                                    {quantity}
+                                </Typography>
+                                <TooltipIconButton
+                                    aria-label="Sumar cantidad"
+                                    onClick={() => setQuantity((previous) => previous + 1)}
+                                    disabled={cartLoading || !canAddToCart}
+                                    tooltip="Aumentar cantidad"
+                                >
+                                    <AddRoundedIcon />
+                                </TooltipIconButton>
+                            </Box>
+
+                            <TooltipButton
+                                variant="contained"
+                                size="large"
+                                startIcon={<ShoppingBagOutlinedIcon />}
+                                onClick={handleAddToCart}
+                                disabled={!canAddToCart || cartLoading}
+                                tooltip={
+                                    !selectedVariant
+                                        ? 'Elegí una combinación válida antes de agregar'
+                                        : isOutOfStock
+                                          ? 'La variante seleccionada no tiene stock'
+                                          : 'Agregar esta pieza al carrito'
+                                }
+                                sx={{ alignSelf: 'flex-start' }}
+                            >
+                                {!selectedVariant
+                                    ? 'Seleccioná una combinación válida'
+                                    : isOutOfStock
+                                        ? 'Sin stock'
+                                        : 'Agregar al carrito'}
+                            </TooltipButton>
+
+                            {feedback && <Alert severity={feedback.severity}>{feedback.message}</Alert>}
+
+                            <Typography variant="body2" color="text.secondary">
+                                El carrito opera siempre con la variante seleccionada. Si iniciás sesión, tu pedido puede
+                                mantenerse asociado a tu cuenta.
+                            </Typography>
+                        </Stack>
                     </Stack>
-                </Stack>
+                </Grid>
             </Grid>
-        </Grid>
+        </Box>
     );
 };
 

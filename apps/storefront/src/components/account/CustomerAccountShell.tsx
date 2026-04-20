@@ -6,7 +6,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
     Avatar,
     Box,
-    Button,
     Container,
     List,
     ListItemButton,
@@ -35,6 +34,7 @@ import {
     getCustomerInitials,
     getOrderStatusPresentation,
 } from './accountPresentation';
+import TooltipButton from '@/components/ui/TooltipButton';
 
 const accountNavItems = [
     {
@@ -145,11 +145,13 @@ export function CustomerAccountShell({ children }: { children: React.ReactNode }
                 <AccountSectionCard
                     sx={{
                         overflow: 'hidden',
-                        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.92)} 0%, ${alpha(
+                        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.96)} 0%, ${alpha(
                             theme.palette.primary.main,
-                            0.8,
-                        )} 60%, ${alpha(theme.palette.grey[500], 0.65)} 100%)`,
+                            0.84,
+                        )} 58%, ${alpha(theme.palette.secondary.dark, 0.72)} 100%)`,
                         color: 'common.white',
+                        borderColor: alpha(theme.palette.common.white, 0.08),
+                        boxShadow: '0 28px 56px rgba(6,38,22,0.18)',
                     }}
                 >
                     <Stack
@@ -161,11 +163,12 @@ export function CustomerAccountShell({ children }: { children: React.ReactNode }
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Avatar
                                 sx={{
-                                    width: 58,
-                                    height: 58,
-                                    bgcolor: alpha(theme.palette.common.white, 0.18),
+                                    width: 62,
+                                    height: 62,
+                                    bgcolor: alpha(theme.palette.common.white, 0.16),
                                     color: 'common.white',
                                     fontWeight: 700,
+                                    border: `1px solid ${alpha(theme.palette.common.white, 0.16)}`,
                                 }}
                             >
                                 {getCustomerInitials(customer)}
@@ -245,16 +248,17 @@ export function CustomerAccountShell({ children }: { children: React.ReactNode }
                     {accountNavItems.map((item) => {
                         const selected = matchesPath(pathname, item.href);
                         return (
-                            <Button
+                            <TooltipButton
                                 key={item.href}
                                 component={Link}
                                 href={item.href}
                                 variant={selected ? 'contained' : 'outlined'}
                                 startIcon={item.icon}
+                                tooltip={`Ir a ${item.label}`}
                                 sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
                             >
                                 {item.label}
-                            </Button>
+                            </TooltipButton>
                         );
                     })}
                 </Box>
@@ -310,16 +314,17 @@ export function CustomerAccountShell({ children }: { children: React.ReactNode }
                                 })}
                             </List>
 
-                            <Button
+                            <TooltipButton
                                 variant="text"
                                 color="inherit"
                                 startIcon={<LogoutOutlinedIcon fontSize="small" />}
                                 onClick={handleLogout}
                                 disabled={authLoading}
+                                tooltip="Cerrar la sesión actual"
                                 sx={{ alignSelf: 'flex-start', textTransform: 'none' }}
                             >
                                 Cerrar sesión
-                            </Button>
+                            </TooltipButton>
                         </Stack>
                     </AccountSectionCard>
 

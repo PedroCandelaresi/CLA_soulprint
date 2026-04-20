@@ -1,8 +1,9 @@
 'use client';
 import React, { useState } from 'react';
-import { Box, IconButton, useTheme, MobileStepper } from '@mui/material';
+import { Box, useTheme, MobileStepper } from '@mui/material';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import Image from 'next/image';
+import TooltipIconButton from '@/components/ui/TooltipIconButton';
 
 interface ProductCarouselProps {
     images: string[];
@@ -48,10 +49,18 @@ const ProductCarousel = ({ images, alt, overlay }: ProductCarouselProps) => {
                     width: '100%',
                     height: { xs: 360, md: 560 },
                     overflow: 'hidden',
-                    borderRadius: 4,
+                    borderRadius: 5,
                     border: `1px solid ${theme.palette.divider}`,
                     background: 'linear-gradient(180deg, rgba(244,234,213,0.8) 0%, rgba(255,253,248,1) 100%)',
                     boxShadow: '0 22px 42px rgba(0,72,37,0.08)',
+                    '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        inset: 18,
+                        borderRadius: 28,
+                        border: '1px solid rgba(255,255,255,0.58)',
+                        pointerEvents: 'none',
+                    },
                 }}
             >
                 <Image
@@ -84,26 +93,37 @@ const ProductCarousel = ({ images, alt, overlay }: ProductCarouselProps) => {
                         steps={maxSteps}
                         position="static"
                         activeStep={activeStep}
-                        sx={{ bgcolor: 'transparent', flexGrow: 1 }}
+                        sx={{
+                            bgcolor: 'transparent',
+                            flexGrow: 1,
+                            '& .MuiMobileStepper-dot': {
+                                backgroundColor: 'rgba(0,72,37,0.18)',
+                            },
+                            '& .MuiMobileStepper-dotActive': {
+                                backgroundColor: 'primary.main',
+                            },
+                        }}
                         nextButton={
-                            <IconButton
+                            <TooltipIconButton
                                 size="small"
                                 onClick={handleNext}
                                 disabled={activeStep === maxSteps - 1}
+                                tooltip="Ver siguiente imagen"
                                 sx={{ bgcolor: 'background.paper', ml: 1, border: `1px solid ${theme.palette.divider}` }}
                             >
                                 <IconChevronRight size={20} />
-                            </IconButton>
+                            </TooltipIconButton>
                         }
                         backButton={
-                            <IconButton
+                            <TooltipIconButton
                                 size="small"
                                 onClick={handleBack}
                                 disabled={activeStep === 0}
+                                tooltip="Ver imagen anterior"
                                 sx={{ bgcolor: 'background.paper', mr: 1, border: `1px solid ${theme.palette.divider}` }}
                             >
                                 <IconChevronLeft size={20} />
-                            </IconButton>
+                            </TooltipIconButton>
                         }
                     />
                 </Box>

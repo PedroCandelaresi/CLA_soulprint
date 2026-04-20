@@ -25,8 +25,11 @@ export function AccountSectionCard({
             {...paperProps}
             sx={{
                 p: { xs: 2.5, md: 3 },
-                borderRadius: 4,
+                borderRadius: 5,
                 borderColor: 'divider',
+                background:
+                    'linear-gradient(180deg, rgba(255,251,244,0.94) 0%, rgba(255,255,255,0.74) 100%)',
+                boxShadow: '0 18px 34px rgba(0,72,37,0.06)',
                 ...paperProps.sx,
             }}
         >
@@ -42,7 +45,7 @@ export function AccountStatusChip({
     label: string;
     color: ChipProps['color'];
 }) {
-    return <Chip label={label} color={color} size="small" sx={{ fontWeight: 700 }} />;
+    return <Chip label={label} color={color} size="small" sx={{ fontWeight: 700, px: 0.25 }} />;
 }
 
 export function AccountLoadingState({
@@ -57,7 +60,7 @@ export function AccountLoadingState({
             <Stack spacing={2} alignItems="center" py={4}>
                 <CircularProgress />
                 <Stack spacing={0.5} textAlign="center">
-                    <Typography variant="h6" fontWeight={700}>
+                    <Typography variant="h5" fontWeight={700}>
                         {title}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -98,7 +101,7 @@ export function AccountEmptyState({
     return (
         <AccountSectionCard>
             <Stack spacing={1.5} alignItems={{ xs: 'stretch', md: 'flex-start' }}>
-                <Typography variant="h6" fontWeight={700}>
+                <Typography variant="h5" fontWeight={700}>
                     {title}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -120,8 +123,8 @@ export function AccountMetric({
     helpText?: string;
 }) {
     return (
-        <AccountSectionCard sx={{ height: '100%' }}>
-            <Stack spacing={0.75}>
+        <AccountSectionCard sx={{ height: '100%', position: 'relative', overflow: 'hidden' }}>
+            <Stack spacing={0.75} sx={{ position: 'relative', zIndex: 1 }}>
                 <Typography variant="body2" color="text.secondary">
                     {label}
                 </Typography>

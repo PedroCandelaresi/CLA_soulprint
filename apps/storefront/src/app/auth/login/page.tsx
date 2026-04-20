@@ -4,7 +4,6 @@ import { useMemo, useState, type FormEvent } from 'react';
 import {
     Alert,
     Box,
-    Button,
     Checkbox,
     CircularProgress,
     Collapse,
@@ -18,11 +17,12 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
 import { resolveRedirectTarget } from '@/lib/auth/redirects';
+import BrandLogo from '@/components/branding/BrandLogo';
+import TooltipButton from '@/components/ui/TooltipButton';
 
 const REQUIRE_CUSTOMER_VERIFICATION =
     process.env.NEXT_PUBLIC_REQUIRE_CUSTOMER_VERIFICATION === 'true';
@@ -216,31 +216,49 @@ export default function LoginPage() {
                 py: 4,
             }}
         >
-            <Container maxWidth="sm">
+            <Container maxWidth="md">
                 <Paper
                     elevation={0}
                     sx={{
                         p: { xs: 3, md: 6 },
-                        borderRadius: 4,
+                        borderRadius: 6,
                         border: '1px solid',
                         borderColor: 'rgba(0,72,37,0.08)',
-                        bgcolor: '#fffdf8',
+                        bgcolor: 'rgba(255,253,248,0.94)',
                         boxShadow: '0 24px 46px rgba(0,72,37,0.08)',
+                        overflow: 'hidden',
+                        position: 'relative',
+                        '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: -70,
+                            right: -90,
+                            width: 220,
+                            height: 220,
+                            borderRadius: '50%',
+                            background:
+                                'radial-gradient(circle, rgba(199,164,107,0.18) 0%, rgba(199,164,107,0) 72%)',
+                        },
                     }}
                 >
                     <Stack spacing={3}>
                         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                            <Image
-                                src="/images/logos/marca-ejemplo.svg"
-                                alt="Logo CLA Soulprint"
-                                width={180}
-                                height={60}
-                                style={{ objectFit: 'contain' }}
-                            />
+                            <Box
+                                sx={{
+                                    width: { xs: 210, md: 260 },
+                                    '--brand-logo-fg': 'var(--surface-logo-fg)',
+                                    '--brand-logo-bg': 'transparent',
+                                }}
+                            >
+                                <BrandLogo label="CLA Soulprint" />
+                            </Box>
                         </Box>
 
                         <Stack spacing={1} textAlign="center">
-                            <Typography variant="h4" fontWeight="bold" color="primary">
+                            <Typography variant="overline" color="secondary.dark">
+                                Acceso de cliente
+                            </Typography>
+                            <Typography variant="h3" fontWeight="bold" color="primary">
                                 Acceso a tu cuenta
                             </Typography>
                             <Typography variant="body1" color="text.secondary">
@@ -278,31 +296,33 @@ export default function LoginPage() {
                                 </Paper>
 
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                                    <Button
+                                    <TooltipButton
                                         component={Link}
                                         href={redirectTarget}
                                         variant="contained"
                                         size="large"
                                         fullWidth
+                                        tooltip="Continuar con la sesión actual"
                                     >
                                         {primaryAuthenticatedLabel}
-                                    </Button>
-                                    <Button component={Link} href="/carrito" variant="outlined" size="large" fullWidth>
+                                    </TooltipButton>
+                                    <TooltipButton component={Link} href="/carrito" variant="outlined" size="large" fullWidth tooltip="Ir al carrito">
                                         Ver carrito
-                                    </Button>
+                                    </TooltipButton>
                                 </Stack>
 
                                 <Divider />
 
-                                <Button
+                                <TooltipButton
                                     variant="text"
                                     color="inherit"
                                     onClick={handleLogout}
                                     disabled={authLoading}
+                                    tooltip="Cerrar la sesión actual"
                                     sx={{ alignSelf: 'center' }}
                                 >
                                     Cerrar sesión
-                                </Button>
+                                </TooltipButton>
                             </Stack>
                         ) : (
                             <>
@@ -381,9 +401,15 @@ export default function LoginPage() {
                                                     : 'La cuenta se crea con contraseña y después podés ingresar directamente.'}
                                             </Alert>
 
-                                            <Button type="submit" variant="contained" size="large" disabled={authLoading}>
+                                            <TooltipButton
+                                                type="submit"
+                                                variant="contained"
+                                                size="large"
+                                                disabled={authLoading}
+                                                tooltip="Crear una cuenta nueva"
+                                            >
                                                 Crear cuenta
-                                            </Button>
+                                            </TooltipButton>
                                         </Stack>
                                     </Box>
                                 ) : (
@@ -424,21 +450,28 @@ export default function LoginPage() {
                                                 label="Recordar sesión en este dispositivo"
                                             />
 
-                                            <Button type="submit" variant="contained" size="large" disabled={authLoading}>
+                                            <TooltipButton
+                                                type="submit"
+                                                variant="contained"
+                                                size="large"
+                                                disabled={authLoading}
+                                                tooltip="Ingresar con este email y contraseña"
+                                            >
                                                 Ingresar
-                                            </Button>
+                                            </TooltipButton>
 
-                                            <Button
+                                            <TooltipButton
                                                 type="button"
                                                 variant="text"
                                                 onClick={() => {
                                                     setShowPasswordRecovery((current) => !current);
                                                     setPasswordRecoveryEmail((current) => current || loginForm.emailAddress);
                                                 }}
+                                                tooltip="Mostrar u ocultar el recupero de contraseña"
                                                 sx={{ alignSelf: 'center' }}
                                             >
                                                 Olvidé mi contraseña
-                                            </Button>
+                                            </TooltipButton>
 
                                             <Collapse in={showPasswordRecovery}>
                                                 <Stack spacing={1.5}>
@@ -453,14 +486,15 @@ export default function LoginPage() {
                                                         onChange={(event) => setPasswordRecoveryEmail(event.target.value)}
                                                         fullWidth
                                                     />
-                                                    <Button
+                                                    <TooltipButton
                                                         type="button"
                                                         variant="outlined"
                                                         disabled={authLoading}
                                                         onClick={handlePasswordRecovery}
+                                                        tooltip="Enviar enlace de recupero"
                                                     >
                                                         Enviar enlace de recupero
-                                                    </Button>
+                                                    </TooltipButton>
                                                 </Stack>
                                             </Collapse>
                                         </Stack>

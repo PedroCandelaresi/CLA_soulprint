@@ -10,8 +10,10 @@ import {
     type TouchEvent,
 } from "react";
 import Image from "next/image";
-import { Box, Stack, Typography, Button, Container, IconButton, useMediaQuery } from "@mui/material";
+import { Box, Stack, Typography, Container, useMediaQuery } from "@mui/material";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import TooltipButton from "@/components/ui/TooltipButton";
+import TooltipIconButton from "@/components/ui/TooltipIconButton";
 
 type Diapositiva = {
     id: string;
@@ -339,6 +341,14 @@ const CarruselDestacado = () => {
                                     py: { xs: 5, sm: 6, md: 7 },
                                     textAlign: { xs: "center", md: textAlign },
                                     alignItems: { xs: "center", md: textOnRight ? "flex-end" : "flex-start" },
+                                    position: "relative",
+                                    borderRadius: { xs: 5, md: 6 },
+                                    border: "1px solid rgba(244,234,213,0.12)",
+                                    background:
+                                        "linear-gradient(180deg, rgba(7,31,21,0.56) 0%, rgba(7,31,21,0.22) 100%)",
+                                    backdropFilter: "blur(8px)",
+                                    boxShadow: "0 24px 44px rgba(0,0,0,0.16)",
+                                    px: { xs: 2.5, sm: 3, md: 3.5 },
                                     opacity: isActive ? 1 : 0,
                                     transform: isActive ? "translateY(0)" : "translateY(16px)",
                                     transition: transicionContenido,
@@ -390,11 +400,12 @@ const CarruselDestacado = () => {
                                     width="100%"
                                     pt={{ xs: 0.5, md: 1 }}
                                 >
-                                    <Button
+                                    <TooltipButton
                                         variant="contained"
                                         href={slide.enlace}
                                         size="large"
                                         tabIndex={isActive ? 0 : -1}
+                                        tooltip={`Explorar ${slide.titulo}`}
                                         sx={{
                                             width: { xs: "100%", sm: "auto" },
                                             px: { xs: 3, md: 4 },
@@ -407,13 +418,14 @@ const CarruselDestacado = () => {
                                         }}
                                     >
                                         Explorar colección
-                                    </Button>
+                                    </TooltipButton>
 
-                                    <Button
+                                    <TooltipButton
                                         variant="outlined"
                                         href="/productos"
                                         size="large"
                                         tabIndex={isActive ? 0 : -1}
+                                        tooltip="Ir al catálogo general"
                                         sx={{
                                             width: { xs: "100%", sm: "auto" },
                                             px: { xs: 3, md: 4 },
@@ -428,8 +440,8 @@ const CarruselDestacado = () => {
                                             },
                                         }}
                                     >
-                                        Ver destacados
-                                    </Button>
+                                        Ver catálogo
+                                    </TooltipButton>
                                 </Stack>
                             </Stack>
                         </Container>
@@ -465,33 +477,36 @@ const CarruselDestacado = () => {
                 }}
             />
 
-            <IconButton
+            <TooltipIconButton
                 onClick={goPrev}
                 aria-label="Ver diapositiva anterior"
+                tooltip="Diapositiva anterior"
                 sx={{
                     ...navigationButtonStyles,
                     left: { xs: 8, md: 16 },
                 }}
             >
                 <IconChevronLeft size={22} stroke={2} />
-            </IconButton>
+            </TooltipIconButton>
 
-            <IconButton
+            <TooltipIconButton
                 onClick={goNext}
                 aria-label="Ver diapositiva siguiente"
+                tooltip="Diapositiva siguiente"
                 sx={{
                     ...navigationButtonStyles,
                     right: { xs: 8, md: 16 },
                 }}
             >
                 <IconChevronRight size={22} stroke={2} />
-            </IconButton>
+            </TooltipIconButton>
 
-            <Button
+            <TooltipButton
                 type="button"
                 onClick={toggleManualPause}
                 aria-pressed={estadoPausa.manual}
                 aria-label={estadoPausa.manual ? "Reanudar rotación automática" : "Pausar rotación automática"}
+                tooltip={estadoPausa.manual ? "Reanudar autoplay del carrusel" : "Pausar autoplay del carrusel"}
                 sx={{
                     position: "absolute",
                     right: { xs: 12, md: 24 },
@@ -518,7 +533,7 @@ const CarruselDestacado = () => {
                 }}
             >
                 {estadoPausa.manual ? "Reanudar" : "Pausar"}
-            </Button>
+            </TooltipButton>
 
             <Stack
                 direction="row"

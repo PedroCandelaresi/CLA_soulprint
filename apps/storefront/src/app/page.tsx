@@ -2,9 +2,10 @@ import Image from 'next/image';
 import { listProducts, getFeaturedProducts } from '@/lib/vendure';
 import type { Product } from '@/types/product';
 import ProductCard from '@/components/products/ProductCard';
-import { Grid, Container, Typography, Box, Button, Paper, Stack } from '@mui/material';
+import { Grid, Container, Typography, Box, Paper, Stack, Chip } from '@mui/material';
 import CarruselDestacado from '@/components/home/CarruselDestacado';
 import FeaturedProductsCarrusel from '@/components/home/FeaturedProductsCarrusel';
+import TooltipButton from '@/components/ui/TooltipButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,12 +42,29 @@ export default async function Home() {
                                 sx={{
                                     height: '100%',
                                     p: { xs: 3.5, md: 5 },
+                                    position: 'relative',
+                                    overflow: 'hidden',
                                     border: '1px solid rgba(0,72,37,0.08)',
                                     background:
-                                        'linear-gradient(135deg, rgba(255,253,248,1) 0%, rgba(248,240,225,1) 100%)',
+                                        'linear-gradient(135deg, rgba(255,253,248,1) 0%, rgba(247,239,224,1) 54%, rgba(239,228,209,1) 100%)',
+                                    '&::before': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        top: -72,
+                                        right: -72,
+                                        width: 180,
+                                        height: 180,
+                                        borderRadius: '50%',
+                                        background:
+                                            'radial-gradient(circle, rgba(199,164,107,0.18) 0%, rgba(199,164,107,0) 72%)',
+                                    },
                                 }}
                             >
                                 <Stack spacing={2.2}>
+                                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                                        <Chip label="Identidad CLA" size="small" color="secondary" variant="outlined" />
+                                        <Chip label="Editorial" size="small" color="primary" variant="outlined" />
+                                    </Stack>
                                     <Typography
                                         variant="overline"
                                         sx={{ color: 'secondary.dark', letterSpacing: 3.2, fontWeight: 700 }}
@@ -66,12 +84,22 @@ export default async function Home() {
                                         funcional del storefront actual.
                                     </Typography>
                                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} pt={1}>
-                                        <Button variant="contained" href="/productos" size="large">
+                                        <TooltipButton
+                                            variant="contained"
+                                            href="/productos"
+                                            size="large"
+                                            tooltip="Explorar el catálogo completo"
+                                        >
                                             Explorar tienda
-                                        </Button>
-                                        <Button variant="outlined" href="/sobre-nosotros" size="large">
+                                        </TooltipButton>
+                                        <TooltipButton
+                                            variant="outlined"
+                                            href="/sobre-nosotros"
+                                            size="large"
+                                            tooltip="Conocer la historia y la identidad de CLA Soulprint"
+                                        >
                                             Ver identidad
-                                        </Button>
+                                        </TooltipButton>
                                     </Stack>
                                 </Stack>
                             </Paper>
@@ -85,8 +113,9 @@ export default async function Home() {
                                             position: 'relative',
                                             minHeight: { xs: 300, md: 100 },
                                             height: '100%',
-                                            borderRadius: 5,
+                                            borderRadius: 6,
                                             overflow: 'hidden',
+                                            border: '1px solid rgba(0,72,37,0.08)',
                                             boxShadow: '0 24px 44px rgba(0,72,37,0.1)',
                                         }}
                                     >
@@ -107,7 +136,8 @@ export default async function Home() {
                                             sx={{
                                                 p: 3,
                                                 border: '1px solid rgba(0,72,37,0.08)',
-                                                bgcolor: '#fffdf8',
+                                                bgcolor: 'rgba(255,253,248,0.88)',
+                                                backdropFilter: 'blur(12px)',
                                             }}
                                         >
                                             <Typography variant="overline" sx={{ color: 'secondary.dark', letterSpacing: 2.4 }}>
@@ -127,7 +157,8 @@ export default async function Home() {
                                             sx={{
                                                 p: 3,
                                                 border: '1px solid rgba(0,72,37,0.08)',
-                                                bgcolor: '#fffaf2',
+                                                bgcolor: 'rgba(255,250,242,0.92)',
+                                                backdropFilter: 'blur(12px)',
                                                 flexGrow: 1,
                                             }}
                                         >
@@ -151,7 +182,16 @@ export default async function Home() {
             </Box>
 
             <Container maxWidth="lg" sx={{ pb: { xs: 8, md: 12 } }}>
-                <Box mb={6} textAlign="center">
+                <Box
+                    mb={6}
+                    textAlign="center"
+                    sx={{
+                        p: { xs: 3.5, md: 4.5 },
+                        borderRadius: 5,
+                        border: '1px solid rgba(0,72,37,0.08)',
+                        background: 'linear-gradient(180deg, rgba(255,250,242,0.92) 0%, rgba(255,255,255,0.56) 100%)',
+                    }}
+                >
                     <Typography
                         variant="overline"
                         sx={{ color: 'secondary.dark', letterSpacing: 4, fontSize: '0.72rem', fontWeight: 700 }}

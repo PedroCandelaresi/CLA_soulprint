@@ -82,7 +82,12 @@ import {
                                 <p>{{ line.personalizationNotes }}</p>
                             </div>
                             <div class="cla-link-row" *ngIf="line.personalizationAssetSource">
-                                <a [href]="line.personalizationAssetSource" target="_blank" rel="noreferrer noopener">
+                                <a
+                                    [href]="line.personalizationAssetSource"
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    data-cla-tip="Abrir el archivo del cliente en una pestaña nueva."
+                                >
                                     Abrir archivo completo
                                 </a>
                             </div>
@@ -94,37 +99,37 @@ import {
     </ng-container>
     `,
     styles: [`
-        .cla-panel { display: grid; gap: 14px; padding: 18px; border-radius: 18px; border: 1px solid var(--color-component-border-200); background: #fff; }
+        .cla-panel { display: grid; gap: 16px; padding: 22px; border-radius: 24px; border: 1px solid var(--cla-border); background: linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(255, 255, 255, 0.98)); box-shadow: var(--cla-shadow-sm); }
         .cla-panel__header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
-        .cla-panel__eyebrow { margin: 0 0 4px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--color-grey-600); }
-        .cla-panel h3 { margin: 0; font-size: 21px; }
-        .cla-panel__copy { margin: 0; color: var(--color-grey-700); line-height: 1.5; }
-        .cla-status-pill { padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-        .cla-tone-neutral { background: var(--color-grey-100); color: var(--color-grey-700); }
-        .cla-tone-info { background: var(--color-primary-100); color: var(--color-primary-700); }
-        .cla-tone-success { background: var(--color-success-150); color: var(--color-success-700); }
-        .cla-tone-warning { background: var(--color-warning-150); color: var(--color-warning-700); }
-        .cla-tone-danger { background: var(--color-error-150); color: var(--color-error-700); }
-        .cla-alert { padding: 12px 14px; border-radius: 12px; font-size: 14px; line-height: 1.45; }
-        .cla-alert--warning { background: var(--color-warning-150); color: var(--color-warning-700); }
-        .cla-empty { padding: 16px; border-radius: 14px; background: var(--color-grey-100); color: var(--color-grey-700); }
+        .cla-panel__eyebrow { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--cla-muted); }
+        .cla-panel h3 { margin: 0; font-size: 22px; color: var(--cla-green-dk); }
+        .cla-panel__copy { margin: 0; color: var(--cla-ink-soft); line-height: 1.6; }
+        .cla-status-pill { display: inline-flex; align-items: center; justify-content: center; padding: 7px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; border: 1px solid transparent; }
+        .cla-tone-neutral { background: rgba(23, 52, 40, 0.08); color: var(--cla-ink-soft); border-color: rgba(23, 52, 40, 0.10); }
+        .cla-tone-info { background: rgba(199, 164, 107, 0.16); color: #7a5a1d; border-color: rgba(199, 164, 107, 0.22); }
+        .cla-tone-success { background: rgba(0, 72, 37, 0.12); color: var(--cla-green-dk); border-color: rgba(0, 72, 37, 0.14); }
+        .cla-tone-warning { background: rgba(199, 164, 107, 0.18); color: #7a5a1d; border-color: rgba(199, 164, 107, 0.24); }
+        .cla-tone-danger { background: rgba(158, 42, 42, 0.12); color: #7a1e1e; border-color: rgba(158, 42, 42, 0.18); }
+        .cla-alert { padding: 14px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; border: 1px solid transparent; }
+        .cla-alert--warning { background: linear-gradient(135deg, rgba(199, 164, 107, 0.18), rgba(244, 234, 213, 0.72)); color: #73561d; border-color: rgba(199, 164, 107, 0.24); }
+        .cla-empty { padding: 16px; border-radius: 16px; background: linear-gradient(180deg, rgba(249, 245, 237, 0.92), rgba(255, 255, 255, 0.98)); color: var(--cla-ink-soft); border: 1px dashed var(--cla-border-strong); }
         .cla-line-list { display: grid; gap: 14px; }
-        .cla-line-card { display: grid; gap: 12px; padding: 16px; border-radius: 16px; border: 1px solid var(--color-component-border-200); background: #fff; }
+        .cla-line-card { display: grid; gap: 14px; padding: 18px; border-radius: 20px; border: 1px solid var(--cla-border); background: linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(255, 255, 255, 0.98)); box-shadow: 0 16px 32px rgba(2, 44, 24, 0.08); }
         .cla-line-card__header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
-        .cla-line-card__header h4 { margin: 0; font-size: 17px; }
-        .cla-line-card__header p { margin: 4px 0 0; color: var(--color-grey-700); font-size: 13px; }
+        .cla-line-card__header h4 { margin: 0; font-size: 17px; color: var(--cla-green-dk); }
+        .cla-line-card__header p { margin: 4px 0 0; color: var(--cla-muted); font-size: 13px; }
         .cla-line-grid { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; }
-        .cla-preview { display: flex; align-items: center; justify-content: center; min-height: 220px; border-radius: 14px; background: var(--color-grey-100); border: 1px dashed var(--color-component-border-300); color: var(--color-grey-700); text-align: center; padding: 16px; }
-        .cla-preview--empty { font-size: 14px; line-height: 1.45; }
-        .cla-preview__image { width: 100%; height: 220px; object-fit: cover; border-radius: 12px; }
+        .cla-preview { display: flex; align-items: center; justify-content: center; min-height: 220px; border-radius: 18px; background: linear-gradient(180deg, rgba(249, 245, 237, 0.92), rgba(255, 255, 255, 0.98)); border: 1px dashed rgba(0, 72, 37, 0.16); color: var(--cla-ink-soft); text-align: center; padding: 16px; }
+        .cla-preview--empty { font-size: 14px; line-height: 1.5; }
+        .cla-preview__image { width: 100%; height: 220px; object-fit: cover; border-radius: 14px; border: 1px solid var(--cla-border); box-shadow: 0 10px 22px rgba(2, 44, 24, 0.08); }
         .cla-line-meta { display: grid; gap: 10px; }
-        .cla-detail-row { display: flex; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid var(--color-component-border-200); color: var(--color-grey-700); }
-        .cla-detail-row strong { text-align: right; }
-        .cla-notes { padding: 12px 14px; border-radius: 12px; background: var(--color-primary-100); }
-        .cla-notes__label { display: block; margin-bottom: 4px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--color-grey-700); }
-        .cla-notes p { margin: 0; line-height: 1.45; }
-        .cla-link-row a { color: var(--color-primary-700); font-weight: 700; text-decoration: none; }
-        .cla-link-row a:hover { text-decoration: underline; }
+        .cla-detail-row { display: flex; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid var(--cla-border); color: var(--cla-ink-soft); }
+        .cla-detail-row strong { text-align: right; color: var(--cla-green-dk); }
+        .cla-notes { padding: 12px 14px; border-radius: 14px; background: rgba(199, 164, 107, 0.12); border: 1px solid rgba(199, 164, 107, 0.18); }
+        .cla-notes__label { display: block; margin-bottom: 4px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--cla-muted); }
+        .cla-notes p { margin: 0; line-height: 1.5; color: var(--cla-ink-soft); }
+        .cla-link-row a { color: var(--cla-green); font-weight: 700; text-decoration: none; }
+        .cla-link-row a:hover { color: var(--cla-green-lt); text-decoration: underline; }
         @media (max-width: 840px) {
             .cla-panel__header, .cla-line-card__header { flex-direction: column; }
             .cla-line-grid { grid-template-columns: 1fr; }

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import {
     Box,
     Typography,
@@ -9,10 +8,10 @@ import {
     ListItemIcon,
     ListItemText,
     Divider,
-    Button
 } from '@mui/material';
 import { IconCategory, IconX } from '@tabler/icons-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import TooltipButton from '@/components/ui/TooltipButton';
 
 interface Collection {
     id: string;
@@ -45,6 +44,15 @@ const ProductFilter = ({ collections }: ProductFilterProps) => {
 
     return (
         <Box p={3}>
+            <Box px={1.5} mb={2.5}>
+                <Typography variant="h6" fontWeight={700}>
+                    Filtrar colección
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
+                    Elegí una categoría para recorrer el catálogo con una vista más precisa.
+                </Typography>
+            </Box>
+
             <List>
                 <Typography
                     variant="overline"
@@ -85,16 +93,17 @@ const ProductFilter = ({ collections }: ProductFilterProps) => {
             <Divider sx={{ my: 3 }} />
 
             <Box px={2}>
-                <Button
+                <TooltipButton
                     variant="outlined"
                     color="inherit"
                     fullWidth
                     startIcon={<IconX size={18} />}
                     onClick={handleReset}
                     disabled={!activeCollection}
+                    tooltip="Quitar el filtro de categoría activo"
                 >
                     Limpiar Filtros
-                </Button>
+                </TooltipButton>
             </Box>
         </Box>
     );

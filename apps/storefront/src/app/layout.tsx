@@ -9,7 +9,7 @@ import Footer from "@/components/layout/Footer";
 import { StorefrontProvider } from "@/components/providers/StorefrontProvider";
 import { Box } from "@mui/material";
 import { getServerStorefrontState } from "@/lib/auth/session";
-import { plus } from "@/theme/typography";
+import { cormorant, plus } from "@/theme/typography";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ export default async function RootLayout({
 
   return (
     <html lang="es">
-      <body className={plus.className}>
+      <body className={`${plus.variable} ${cormorant.variable}`}>
 
         <ThemeRegistry>
           <StorefrontProvider initialState={initialState}>

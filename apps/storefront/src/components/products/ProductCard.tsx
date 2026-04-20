@@ -60,7 +60,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 border: '1px solid rgba(0,72,37,0.09)',
                 borderRadius: 4,
                 overflow: 'hidden',
-                background: 'linear-gradient(180deg, #fffdf8 0%, #fff7eb 100%)',
+                background: 'linear-gradient(180deg, rgba(255,251,244,1) 0%, rgba(252,245,234,1) 100%)',
                 transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
                 '&::before': {
                     content: '""',
@@ -85,10 +85,18 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 sx={{
                     display: 'block',
                     overflow: 'hidden',
-                    bgcolor: 'rgba(244,234,213,0.72)',
+                    bgcolor: 'rgba(244,234,213,0.74)',
                     flexShrink: 0,
                     aspectRatio: '1 / 1',
                     position: 'relative',
+                    '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        inset: '16px',
+                        borderRadius: '24px',
+                        border: '1px solid rgba(255,255,255,0.52)',
+                        pointerEvents: 'none',
+                    },
                 }}
             >
                 <Image
@@ -131,12 +139,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     variant="caption"
                     sx={{
                         color: 'secondary.dark',
-                        letterSpacing: 2.1,
+                        letterSpacing: 2.4,
                         fontWeight: 700,
                         textTransform: 'uppercase',
                     }}
                 >
-                    Selección CLA
+                    Curaduría CLA
                 </Typography>
 
                 <Stack spacing={1.25} sx={{ flexGrow: 1 }}>
@@ -173,6 +181,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                             textDecoration: 'none',
                             color: 'text.secondary',
                             fontWeight: 600,
+                            letterSpacing: '0.01em',
                             '&:hover': { color: 'primary.main' },
                         }}
                     >

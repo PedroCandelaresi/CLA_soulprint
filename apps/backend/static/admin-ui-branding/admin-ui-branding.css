@@ -550,6 +550,662 @@ tbody tr:hover {
 }
 
 /* ======================================================================
+   REFINAMIENTO GLOBAL — shell más elegante y moderno
+   ====================================================================== */
+:root {
+    --cla-surface: rgba(255, 253, 248, 0.92);
+    --cla-surface-strong: #ffffff;
+    --cla-surface-soft: #f7f0e2;
+    --cla-ring: 0 0 0 3px rgba(0, 72, 37, 0.12);
+}
+
+body {
+    min-height: 100vh;
+    position: relative;
+}
+
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    inset: auto;
+    border-radius: 999px;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(18px);
+    opacity: 0.55;
+}
+
+body::before {
+    top: -6rem;
+    right: -4rem;
+    width: 20rem;
+    height: 20rem;
+    background: radial-gradient(circle, rgba(199, 164, 107, 0.24) 0%, rgba(199, 164, 107, 0) 72%);
+}
+
+body::after {
+    bottom: -8rem;
+    left: -6rem;
+    width: 24rem;
+    height: 24rem;
+    background: radial-gradient(circle, rgba(0, 72, 37, 0.14) 0%, rgba(0, 72, 37, 0) 74%);
+}
+
+body > vdr-root {
+    position: relative;
+    z-index: 1;
+}
+
+.top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background:
+        linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(255, 253, 248, 0.92));
+    box-shadow:
+        0 1px 0 rgba(0, 72, 37, 0.08),
+        0 14px 32px rgba(2, 44, 24, 0.08);
+}
+
+.top-bar .icon-button,
+.top-bar button {
+    transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.top-bar .icon-button:hover,
+.top-bar button:hover {
+    transform: translateY(-1px);
+}
+
+.left-nav {
+    box-shadow:
+        inset -1px 0 0 rgba(199, 164, 107, 0.16),
+        22px 0 48px rgba(2, 44, 24, 0.16);
+}
+
+.left-nav .nav-link,
+.left-nav .nav-group-content {
+    margin: 0.12rem 0.55rem;
+    padding: 0.78rem 0.95rem !important;
+    border-radius: 14px;
+}
+
+.left-nav .nav-link:hover,
+.left-nav .nav-group-content:hover {
+    transform: translateX(2px);
+}
+
+.left-nav .nav-link.active,
+.left-nav .nav-group-content.active {
+    border-left: none;
+    padding-left: 0.95rem !important;
+    box-shadow:
+        inset 0 0 0 1px rgba(199, 164, 107, 0.26),
+        0 16px 28px rgba(2, 44, 24, 0.18) !important;
+}
+
+.left-nav .branding {
+    min-height: 144px;
+}
+
+.content-container,
+.content-area,
+.page-block {
+    position: relative;
+}
+
+.content-area {
+    padding: 1.25rem 1.25rem 2rem;
+}
+
+.card,
+clr-card,
+.surface,
+.details-card,
+.form-grid-list,
+vdr-data-table-2,
+vdr-data-table,
+.modal-content,
+.dropdown-menu,
+.popover-content {
+    backdrop-filter: blur(14px);
+    overflow: hidden;
+}
+
+.card,
+clr-card,
+.surface,
+.details-card,
+.form-grid-list,
+vdr-data-table-2,
+vdr-data-table {
+    background:
+        linear-gradient(180deg, rgba(255, 253, 248, 0.92) 0%, rgba(255, 255, 255, 0.98) 100%) !important;
+    box-shadow:
+        0 12px 24px rgba(2, 44, 24, 0.07),
+        0 1px 0 rgba(255, 255, 255, 0.8) inset !important;
+}
+
+.card-header,
+.details-card-header,
+.modal-header {
+    padding: 1rem 1.25rem !important;
+}
+
+.card .card-block,
+.card-block,
+.details-card .card-block,
+.modal-body,
+.form-block {
+    padding: 1.15rem 1.25rem !important;
+}
+
+.btn {
+    min-height: 2.5rem;
+    padding: 0.58rem 1rem !important;
+    box-shadow: none;
+}
+
+.btn.btn-primary,
+.btn-primary,
+.login-button {
+    box-shadow:
+        0 10px 22px rgba(0, 72, 37, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+.btn.btn-secondary,
+.btn-outline {
+    background: rgba(255, 253, 248, 0.72) !important;
+}
+
+.btn.btn-secondary:hover,
+.btn-outline:hover {
+    box-shadow: 0 8px 16px rgba(2, 44, 24, 0.08);
+    transform: translateY(-1px);
+}
+
+.btn:focus,
+.btn:focus-visible {
+    outline: none !important;
+    box-shadow: var(--cla-ring) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: rgba(44, 76, 60, 0.48);
+}
+
+.clr-form-control,
+.clr-input-wrapper,
+.clr-textarea-wrapper,
+.clr-select-wrapper {
+    border-radius: var(--cla-radius-sm);
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.clr-input:focus,
+.clr-textarea:focus,
+.clr-select:focus {
+    box-shadow: var(--cla-ring) !important;
+}
+
+.clr-subtext,
+.clr-control-helper,
+.clr-form-control .clr-subtext {
+    color: var(--cla-muted) !important;
+}
+
+table,
+.table,
+.datagrid-table {
+    border-collapse: separate !important;
+    border-spacing: 0;
+    width: 100%;
+}
+
+table thead th,
+.table thead th,
+.datagrid-table thead th,
+.datagrid-column-title {
+    padding: 0.85rem 1rem !important;
+    border-bottom: 1px solid var(--cla-border) !important;
+    font-size: 0.73rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+table tbody td,
+.table tbody td,
+.datagrid-table tbody td {
+    padding: 0.95rem 1rem !important;
+    border-bottom: 1px solid rgba(0, 72, 37, 0.08);
+    vertical-align: middle;
+}
+
+table tbody tr:last-child td,
+.table tbody tr:last-child td,
+.datagrid-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+table tbody tr:hover td,
+.table tbody tr:hover td,
+.datagrid-table tbody tr:hover td {
+    background: rgba(244, 234, 213, 0.48) !important;
+}
+
+.table-compact tbody td {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+}
+
+.modal,
+.modal-dialog,
+.modal-content,
+.dropdown-menu,
+.popover-content {
+    border-radius: 20px !important;
+    border: 1px solid var(--cla-border) !important;
+    box-shadow: 0 28px 60px rgba(2, 44, 24, 0.18) !important;
+}
+
+.modal-backdrop {
+    backdrop-filter: blur(6px);
+}
+
+.nav .nav-link,
+.tabs .tab-link {
+    padding-bottom: 0.8rem;
+}
+
+.cla-help-banner {
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    background:
+        linear-gradient(90deg, rgba(199, 164, 107, 0.18), rgba(255, 253, 248, 0.92));
+    box-shadow: 0 10px 18px rgba(2, 44, 24, 0.06);
+}
+
+.cla-help-banner::before {
+    content: '';
+    width: 0.72rem;
+    height: 0.72rem;
+    border-radius: 999px;
+    background: radial-gradient(circle, var(--cla-gold) 0%, #b88b4f 100%);
+    box-shadow: 0 0 0 6px rgba(199, 164, 107, 0.12);
+}
+
+/* ======================================================================
+   PÁGINAS CUSTOM — badges y extensiones internas
+   ====================================================================== */
+.cla-admin-page {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.cla-page-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1.35rem 1.5rem;
+    border: 1px solid var(--cla-border);
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at top right, rgba(199, 164, 107, 0.18), transparent 32%),
+        linear-gradient(135deg, rgba(255, 253, 248, 0.96), rgba(247, 240, 226, 0.9));
+    box-shadow: 0 18px 32px rgba(2, 44, 24, 0.08);
+}
+
+.cla-page-eyebrow {
+    margin: 0 0 0.4rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--cla-muted);
+    font-weight: 700;
+}
+
+.cla-page-head h2 {
+    margin: 0;
+    font-size: 1.65rem;
+    color: var(--cla-green-dk);
+}
+
+.cla-page-copy {
+    margin: 0.35rem 0 0;
+    max-width: 46rem;
+    color: var(--cla-ink-soft);
+    line-height: 1.6;
+}
+
+.cla-page-actions {
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.cla-button-with-icon clr-icon,
+.cla-button-with-icon cds-icon {
+    margin-right: 0.35rem;
+}
+
+.cla-loading-state {
+    padding: 2.5rem 1rem;
+    text-align: center;
+}
+
+.cla-table-shell {
+    border: 1px solid var(--cla-border);
+    border-radius: 24px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 16px 32px rgba(2, 44, 24, 0.08);
+}
+
+.cla-table-shell .table {
+    margin: 0;
+}
+
+.cla-asset-thumb {
+    display: inline-flex;
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(249, 245, 237, 0.92), #ffffff);
+    border: 1px solid var(--cla-border);
+    padding: 0.2rem;
+}
+
+.cla-color-pill {
+    display: inline-block;
+    min-width: 52px;
+    height: 28px;
+    border-radius: 999px;
+    vertical-align: middle;
+    border: 1px solid rgba(0, 72, 37, 0.08);
+}
+
+.cla-asset-placeholder {
+    color: rgba(23, 52, 40, 0.28) !important;
+}
+
+.cla-inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.cla-empty-state {
+    display: grid;
+    place-items: center;
+    gap: 0.6rem;
+    padding: 2.1rem 1.2rem;
+    text-align: center;
+    color: var(--cla-muted);
+    background:
+        radial-gradient(circle at top, rgba(199, 164, 107, 0.12), transparent 34%),
+        linear-gradient(180deg, rgba(249, 245, 237, 0.9), rgba(255, 255, 255, 0.98));
+}
+
+.cla-empty-state p {
+    margin: 0;
+}
+
+.cla-mono-code {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(23, 52, 40, 0.06);
+    color: var(--cla-green-dk);
+}
+
+.cla-total-note {
+    padding: 0 0.25rem;
+    color: var(--cla-muted);
+    font-size: 0.86rem;
+}
+
+.cla-form-grid {
+    row-gap: 1rem;
+}
+
+.cla-card-stack {
+    display: grid;
+    gap: 1rem;
+}
+
+.cla-admin-card .card-header {
+    font-size: 0.95rem;
+}
+
+.cla-asset-preview,
+.cla-asset-preview-empty {
+    display: grid;
+    place-items: center;
+    margin-bottom: 1rem;
+    min-height: 172px;
+    border-radius: 18px;
+    border: 1px dashed rgba(0, 72, 37, 0.16);
+    background:
+        radial-gradient(circle at top, rgba(199, 164, 107, 0.12), transparent 32%),
+        linear-gradient(180deg, rgba(249, 245, 237, 0.92), rgba(255, 255, 255, 0.98));
+    text-align: center;
+}
+
+.cla-asset-preview img {
+    max-width: 100%;
+    max-height: 128px;
+    object-fit: contain;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 0.5rem;
+    border: 1px solid var(--cla-border);
+}
+
+.cla-preview-meta {
+    margin-top: 0.45rem;
+    font-size: 0.82rem;
+    color: var(--cla-muted);
+}
+
+.cla-asset-preview-empty clr-icon {
+    color: rgba(23, 52, 40, 0.28) !important;
+}
+
+.cla-asset-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.cla-form-note {
+    margin: 0.75rem 0 0;
+    font-size: 0.82rem;
+    color: var(--cla-muted);
+    line-height: 1.5;
+}
+
+.cla-color-editor {
+    display: grid;
+    gap: 1rem;
+}
+
+.cla-color-field {
+    display: grid;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-radius: 18px;
+    border: 1px solid var(--cla-border);
+    background: linear-gradient(180deg, rgba(249, 245, 237, 0.88), rgba(255, 255, 255, 0.98));
+}
+
+.cla-field-label {
+    display: block;
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--cla-green-dk);
+}
+
+.cla-color-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+.cla-color-picker-row input[type="color"] {
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border-radius: 12px;
+    border: 1px solid var(--cla-border-strong);
+    background: #ffffff;
+    cursor: pointer;
+}
+
+.cla-color-input--compact {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+}
+
+.cla-color-value {
+    font-family: 'SFMono-Regular', 'Consolas', monospace;
+    font-size: 0.82rem;
+    color: var(--cla-green-dk);
+}
+
+.cla-color-empty,
+.cla-color-hint {
+    font-size: 0.82rem;
+    color: var(--cla-muted);
+}
+
+.cla-badge-chip-preview {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    box-shadow: 0 8px 18px rgba(2, 44, 24, 0.12);
+}
+
+/* ======================================================================
+   TOOLTIPS flotantes — evita cortes dentro de tablas/cards
+   ====================================================================== */
+body.cla-tooltips-ready [data-cla-tip]::before,
+body.cla-tooltips-ready [data-cla-tip]::after {
+    display: none !important;
+    content: none !important;
+}
+
+.cla-floating-tooltip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    max-width: min(24rem, calc(100vw - 24px));
+    padding: 0.65rem 0.82rem;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(2, 44, 24, 0.98), rgba(0, 72, 37, 0.96));
+    color: var(--cla-cream);
+    font-size: 0.8rem;
+    line-height: 1.38;
+    border: 1px solid rgba(199, 164, 107, 0.22);
+    box-shadow: 0 18px 38px rgba(2, 44, 24, 0.28);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 20000;
+    transform: translate3d(0, 4px, 0);
+    transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.cla-floating-tooltip.is-visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+.cla-floating-tooltip::after {
+    content: '';
+    position: absolute;
+    left: var(--cla-tip-arrow-left, 50%);
+    bottom: -6px;
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    transform: rotate(45deg);
+    border-right: 1px solid rgba(199, 164, 107, 0.22);
+    border-bottom: 1px solid rgba(199, 164, 107, 0.22);
+    background: #003a1f;
+}
+
+.cla-floating-tooltip--bottom::after {
+    top: -6px;
+    bottom: auto;
+    border-right: none;
+    border-bottom: none;
+    border-left: 1px solid rgba(199, 164, 107, 0.22);
+    border-top: 1px solid rgba(199, 164, 107, 0.22);
+}
+
+.cla-floating-tooltip--wrap {
+    white-space: normal;
+}
+
+@media (max-width: 1024px) {
+    .content-area {
+        padding: 1rem 1rem 1.5rem;
+    }
+
+    .login-wrapper .login-wrapper-inner {
+        width: min(1120px, calc(100vw - 36px)) !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .cla-page-head {
+        padding: 1.15rem 1rem;
+        border-radius: 20px;
+    }
+
+    .cla-page-head h2 {
+        font-size: 1.4rem;
+    }
+
+    .cla-table-shell {
+        border-radius: 20px;
+    }
+
+    .login-wrapper .login-wrapper-inner {
+        width: calc(100vw - 24px) !important;
+        border-radius: 20px !important;
+    }
+
+    .login-wrapper .login-wrapper-form {
+        width: 100% !important;
+        padding: 132px 1.5rem 1.75rem !important;
+    }
+
+    .login-wrapper .login-wrapper-form::before {
+        top: 30px;
+        left: 1.5rem;
+        right: 1.5rem;
+        height: 58px;
+    }
+}
+
+/* ======================================================================
    SCROLLBARS (toque final prolijo)
    ====================================================================== */
 ::-webkit-scrollbar {

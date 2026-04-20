@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import {
     Box,
-    Button,
     Divider,
     Stack,
     Typography,
@@ -29,6 +28,7 @@ import {
     getLatestFulfillment,
     getOrderStatusPresentation,
 } from './accountPresentation';
+import TooltipButton from '@/components/ui/TooltipButton';
 
 const quickLinks = [
     {
@@ -98,9 +98,9 @@ export default function AccountOverview() {
             <AccountErrorState
                 message={accountError}
                 action={
-                    <Button variant="outlined" onClick={() => void refreshAccount()}>
+                    <TooltipButton variant="outlined" onClick={() => void refreshAccount()} tooltip="Volver a intentar la carga de tu cuenta">
                         Reintentar carga
-                    </Button>
+                    </TooltipButton>
                 }
             />
         );
@@ -112,9 +112,9 @@ export default function AccountOverview() {
                 title="Todavía no encontramos tu cuenta"
                 description="Iniciá sesión de nuevo para cargar tus datos o volvé al catálogo para continuar tu compra."
                 action={
-                    <Button component={Link} href="/productos" variant="contained">
+                    <TooltipButton component={Link} href="/productos" variant="contained" tooltip="Volver al catálogo">
                         Ir al catálogo
-                    </Button>
+                    </TooltipButton>
                 }
             />
         );
@@ -193,13 +193,14 @@ export default function AccountOverview() {
                         }}
                     >
                         {quickLinks.map((item) => (
-                            <Button
+                            <TooltipButton
                                 key={item.href}
                                 component={Link}
                                 href={item.href}
                                 variant="outlined"
                                 color="inherit"
                                 endIcon={<ArrowForwardRoundedIcon fontSize="small" />}
+                                tooltip={`Abrir ${item.title}`}
                                 sx={{
                                     justifyContent: 'space-between',
                                     alignItems: 'flex-start',
@@ -217,7 +218,7 @@ export default function AccountOverview() {
                                         {item.description}
                                     </Typography>
                                 </Stack>
-                            </Button>
+                            </TooltipButton>
                         ))}
                     </Box>
                 </Stack>
@@ -247,9 +248,9 @@ export default function AccountOverview() {
                                     Los movimientos más recientes de tu historial.
                                 </Typography>
                             </Stack>
-                            <Button component={Link} href="/mi-cuenta/pedidos" variant="text">
+                            <TooltipButton component={Link} href="/mi-cuenta/pedidos" variant="text" tooltip="Ver el historial completo de pedidos">
                                 Ver todos
-                            </Button>
+                            </TooltipButton>
                         </Stack>
 
                         {recentOrders.length === 0 ? (
@@ -287,13 +288,14 @@ export default function AccountOverview() {
                                                 alignItems={{ xs: 'flex-start', sm: 'center' }}
                                             >
                                                 <AccountStatusChip label={status.label} color={status.tone} />
-                                                <Button
+                                                <TooltipButton
                                                     component={Link}
                                                     href={`/mi-cuenta/pedidos/${encodeURIComponent(order.code)}`}
                                                     variant="outlined"
+                                                    tooltip={`Ver detalle del pedido ${order.code}`}
                                                 >
                                                     Ver detalle
-                                                </Button>
+                                                </TooltipButton>
                                             </Stack>
                                         </Stack>
                                     );
