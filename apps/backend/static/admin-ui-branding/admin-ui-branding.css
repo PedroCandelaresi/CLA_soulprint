@@ -115,13 +115,29 @@ clr-vertical-nav {
 .left-nav .nav-link,
 .left-nav .nav-group-content,
 .left-nav a.nav-link,
-.left-nav .nav-text,
 .left-nav .nav-group-trigger {
-    color: #f4ead5 !important;
+    color: #d9f2c4 !important;
     background-color: transparent !important;
     box-shadow: none !important;
     font-weight: 500;
+    display: flex !important;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
     transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.left-nav .nav-link .nav-text,
+.left-nav .nav-group-content .nav-text,
+.left-nav .nav-text {
+    color: inherit !important;
+    flex: 1 1 auto;
+    pointer-events: none;
+}
+
+.left-nav .nav-link > *,
+.left-nav .nav-group-content > * {
+    pointer-events: none;
 }
 
 .left-nav .nav-link:hover,
@@ -131,11 +147,12 @@ clr-vertical-nav {
 }
 
 .left-nav .nav-link.active,
-.left-nav .nav-group-content.active {
+.left-nav .nav-group-content.active,
+.left-nav .nav-link.active .nav-text,
+.left-nav .nav-group-content.active .nav-text {
     background-color: rgba(199, 164, 107, 0.18) !important;
     color: #ffffff !important;
-    border-left: 3px solid var(--cla-gold);
-    padding-left: calc(1rem - 3px);
+    font-weight: 600;
 }
 
 .left-nav cds-icon,
@@ -170,9 +187,7 @@ clr-vertical-nav {
     justify-content: center;
     padding: 1.75rem 1.25rem 1.25rem;
     border-bottom: 1px solid rgba(199, 164, 107, 0.18);
-    background:
-        radial-gradient(circle at top right, rgba(199, 164, 107, 0.30), transparent 40%),
-        linear-gradient(180deg, rgba(244, 234, 213, 0.04), transparent 70%);
+    background: transparent;
 }
 
 .left-nav .branding a {
