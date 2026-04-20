@@ -16,7 +16,7 @@ async function baselineIfNeeded(): Promise<void> {
 
     try {
         await connection.query(
-            'CREATE TABLE IF NOT EXISTS migrations (' +
+            'CREATE TABLE IF NOT EXISTS vendure_migrations (' +
                 '`id` int NOT NULL AUTO_INCREMENT,' +
                 '`timestamp` bigint NOT NULL,' +
                 '`name` varchar(255) NOT NULL,' +
@@ -53,12 +53,12 @@ async function baselineIfNeeded(): Promise<void> {
             const name = `${pascal}${timestamp}`;
 
             const [existing] = (await connection.query(
-                'SELECT id FROM migrations WHERE name = ? LIMIT 1',
+                'SELECT id FROM vendure_migrations WHERE name = ? LIMIT 1',
                 [name],
             )) as any;
             if (existing.length === 0) {
                 await connection.query(
-                    'INSERT INTO migrations (`timestamp`, `name`) VALUES (?, ?)',
+                    'INSERT INTO vendure_migrations (`timestamp`, `name`) VALUES (?, ?)',
                     [Number(timestamp), name],
                 );
                 console.log(`[baseline] Marked migration as applied: ${name}`);
