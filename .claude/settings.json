@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter backend run prepare:admin-ui)",
+      "Bash(pnpm --filter backend run build)",
+      "Bash(echo \"EXIT=$?\")"
+    ]
+  }
+}
