@@ -219,12 +219,11 @@ const CarruselDestacado = () => {
             sx={{
                 position: "relative",
                 width: "100%",
-                height: { xs: "clamp(34rem, 145vw, 42rem)", md: "clamp(32rem, 56vw, 44rem)" },
+                height: "40vh",
+                minHeight: { xs: 420, md: 360 },
                 overflow: "hidden",
                 bgcolor: "var(--cla-brand-green)",
                 isolation: "isolate",
-                borderBottomLeftRadius: { xs: 24, md: 36 },
-                borderBottomRightRadius: { xs: 24, md: 36 },
             }}
         >
             <Box component="p" id={`${carouselId}-instructions`} sx={VISUALLY_HIDDEN_STYLES}>
@@ -239,8 +238,6 @@ const CarruselDestacado = () => {
                 const desktopColumns = textOnRight
                     ? "minmax(0, 1.14fr) minmax(0, 0.86fr)"
                     : "minmax(0, 0.86fr) minmax(0, 1.14fr)";
-                const textJustifyContent = textOnRight ? "flex-end" : "flex-start";
-                const textAlign = textOnRight ? "right" : "left";
                 const textBackground = textOnRight
                     ? "linear-gradient(135deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)"
                     : "linear-gradient(225deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)";
@@ -282,9 +279,9 @@ const CarruselDestacado = () => {
                                     width: "100%",
                                     display: "flex",
                                     alignItems: "center",
-                                    justifyContent: { xs: "flex-start", md: textJustifyContent },
-                                    px: { xs: 3, sm: 4, md: 5, lg: 7 },
-                                    py: { xs: 4, sm: 5, md: 6 },
+                                    justifyContent: "center",
+                                    px: { xs: 3, sm: 4, md: 4.5, lg: 6 },
+                                    py: { xs: 3.5, sm: 4, md: 4.5 },
                                     background: {
                                         xs: "linear-gradient(180deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)",
                                         md: textBackground,
@@ -295,9 +292,10 @@ const CarruselDestacado = () => {
                                     spacing={{ xs: 1.75, sm: 2.25, md: 2.5 }}
                                     sx={{
                                         width: "100%",
-                                        maxWidth: { xs: "100%", md: 430 },
-                                        textAlign: { xs: "left", md: textAlign },
-                                        alignItems: { xs: "flex-start", md: textOnRight ? "flex-end" : "flex-start" },
+                                        maxWidth: { xs: "100%", md: 440 },
+                                        mx: "auto",
+                                        textAlign: "center",
+                                        alignItems: "center",
                                         opacity: isActive ? 1 : 0,
                                         transform: isActive ? "translateY(0)" : "translateY(16px)",
                                         transition: transicionContenido,
@@ -344,9 +342,10 @@ const CarruselDestacado = () => {
                                     <Stack
                                         direction={{ xs: "column", sm: "row" }}
                                         spacing={1.5}
-                                        justifyContent={{ xs: "flex-start", md: textOnRight ? "flex-end" : "flex-start" }}
+                                        justifyContent="center"
                                         width="100%"
                                         pt={{ xs: 0.5, md: 1 }}
+                                        alignItems="center"
                                     >
                                         <TooltipButton
                                             variant="contained"
