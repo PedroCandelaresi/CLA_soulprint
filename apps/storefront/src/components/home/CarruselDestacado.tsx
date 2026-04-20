@@ -337,7 +337,6 @@ const CarruselDestacado = () => {
                                 sx={{
                                     width: "100%",
                                     maxWidth: { xs: 340, sm: 460, md: 430 },
-                                    px: { xs: 1, sm: 2, md: 0 },
                                     py: { xs: 5, sm: 6, md: 7 },
                                     textAlign: { xs: "center", md: textAlign },
                                     alignItems: { xs: "center", md: textOnRight ? "flex-end" : "flex-start" },
