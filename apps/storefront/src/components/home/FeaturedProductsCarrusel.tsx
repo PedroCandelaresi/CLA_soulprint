@@ -57,7 +57,7 @@ const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) =
                 <Box
                     sx={{
                         p: { xs: 3, md: 4 },
-                        borderRadius: 6,
+                        borderRadius: 4,
                         border: '1px solid rgba(0,72,37,0.08)',
                         background: 'linear-gradient(180deg, rgba(255,250,242,0.92) 0%, rgba(255,255,255,0.66) 100%)',
                         boxShadow: '0 24px 46px rgba(0,72,37,0.08)',

@@ -82,13 +82,14 @@ const navigationButtonStyles = {
     transform: "translateY(-50%)",
     zIndex: 10,
     color: "common.white",
-    bgcolor: "rgba(255,255,255,0.12)",
+    bgcolor: "rgba(255,250,242,0.14)",
     backdropFilter: "blur(6px)",
     border: "1px solid rgba(255,255,255,0.2)",
     width: { xs: 40, md: 52 },
     height: { xs: 40, md: 52 },
+    borderRadius: 10,
     "&:hover": {
-        bgcolor: "rgba(255,255,255,0.22)",
+        bgcolor: "rgba(255,250,242,0.22)",
         borderColor: "rgba(255,255,255,0.5)",
     },
     "&:focus-visible": {
@@ -369,10 +370,18 @@ const CarruselDestacado = () => {
                                                 py: 1.15,
                                                 fontSize: { xs: "0.92rem", md: "0.96rem" },
                                                 fontFamily: "Arial, Helvetica, sans-serif",
-                                                fontWeight: 600,
-                                                bgcolor: "var(--cla-brand-cream)",
-                                                color: "var(--cla-brand-green)",
-                                                "&:hover": { bgcolor: "#f8f0df" },
+                                                fontWeight: 700,
+                                                borderRadius: 10,
+                                                border: "1px solid rgba(226,207,170,0.82)",
+                                                background:
+                                                    "linear-gradient(135deg, rgba(226,207,170,1) 0%, rgba(199,164,107,1) 100%)",
+                                                boxShadow: "none",
+                                                color: "var(--cla-brand-green-deep)",
+                                                "&:hover": {
+                                                    background:
+                                                        "linear-gradient(135deg, rgba(235,217,184,1) 0%, rgba(210,176,118,1) 100%)",
+                                                    boxShadow: "none",
+                                                },
                                             }}
                                         >
                                             Explorar colección
@@ -390,12 +399,14 @@ const CarruselDestacado = () => {
                                                 py: 1.15,
                                                 fontSize: { xs: "0.92rem", md: "0.96rem" },
                                                 fontFamily: "Arial, Helvetica, sans-serif",
-                                                fontWeight: 500,
-                                                borderColor: "rgba(244,234,213,0.54)",
-                                                color: "var(--cla-brand-cream)",
+                                                fontWeight: 600,
+                                                borderRadius: 10,
+                                                borderColor: "rgba(244,234,213,0.5)",
+                                                backgroundColor: "rgba(255,250,242,0.06)",
+                                                color: "var(--cla-brand-paper)",
                                                 "&:hover": {
-                                                    borderColor: "var(--cla-brand-cream)",
-                                                    bgcolor: "rgba(244,234,213,0.08)",
+                                                    borderColor: "rgba(244,234,213,0.72)",
+                                                    backgroundColor: "rgba(244,234,213,0.14)",
                                                 },
                                             }}
                                         >
@@ -493,6 +504,7 @@ const CarruselDestacado = () => {
                     fontSize: { xs: "0.75rem", md: "0.8125rem" },
                     fontWeight: 600,
                     textTransform: "none",
+                    borderRadius: 10,
                     bgcolor: "rgba(244,234,213,0.12)",
                     border: "1px solid rgba(244,234,213,0.2)",
                     backdropFilter: "blur(6px)",

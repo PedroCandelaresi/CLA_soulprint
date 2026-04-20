@@ -163,7 +163,7 @@ export function AccountProgress({
             <LinearProgress
                 variant="determinate"
                 value={Math.max(0, Math.min(100, value))}
-                sx={{ height: 8, borderRadius: 999 }}
+                sx={{ height: 8, borderRadius: 6 }}
             />
             {caption && (
                 <Typography variant="body2" color="text.secondary">

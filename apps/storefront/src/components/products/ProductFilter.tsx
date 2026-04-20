@@ -69,7 +69,7 @@ const ProductFilter = ({ collections }: ProductFilterProps) => {
                         selected={activeCollection === collection.slug}
                         onClick={() => handleCollectionClick(collection.slug)}
                         sx={{
-                            borderRadius: 999,
+                            borderRadius: 10,
                             mb: 1,
                             border: '1px solid transparent',
                             px: 1.5,
@@ -101,6 +101,7 @@ const ProductFilter = ({ collections }: ProductFilterProps) => {
                     onClick={handleReset}
                     disabled={!activeCollection}
                     tooltip="Quitar el filtro de categoría activo"
+                    sx={{ borderRadius: 10 }}
                 >
                     Limpiar Filtros
                 </TooltipButton>

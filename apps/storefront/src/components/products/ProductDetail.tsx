@@ -461,7 +461,7 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
                                     alignItems: 'center',
                                     gap: 1,
                                     p: 0.75,
-                                    borderRadius: 999,
+                                    borderRadius: 10,
                                     border: '1px solid rgba(0,72,37,0.1)',
                                     bgcolor: 'rgba(255,255,255,0.68)',
                                     width: 'fit-content',

@@ -46,7 +46,7 @@ export default async function ProductosPage({
                 sx={{
                     mb: 4,
                     p: { xs: 3.5, md: 5 },
-                    borderRadius: 5,
+                    borderRadius: 4,
                     border: '1px solid rgba(0,72,37,0.08)',
                     background:
                         'linear-gradient(135deg, rgba(255,253,248,1) 0%, rgba(247,238,224,1) 46%, rgba(241,231,213,1) 100%)',
@@ -78,7 +78,7 @@ export default async function ProductosPage({
                             bgcolor: '#fffdf8',
                         position: { md: 'sticky' },
                         top: { md: 96 },
-                        borderRadius: 5,
+                        borderRadius: 4,
                     }}
                 >
                     <ProductFilter collections={collections} />
@@ -92,7 +92,7 @@ export default async function ProductosPage({
                             p: { xs: 2.5, md: 3.5 },
                             border: '1px solid rgba(0,72,37,0.08)',
                             bgcolor: '#fffdf8',
-                            borderRadius: 5,
+                            borderRadius: 4,
                         }}
                     >
                         <ProductList products={products} />

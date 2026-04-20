@@ -81,7 +81,7 @@ const ProductBadges = ({ badges, size = 'sm' }: ProductBadgesProps) => {
                         sx={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            borderRadius: 999,
+                            borderRadius: 10,
                             px: dimensions.textPaddingX,
                             py: dimensions.textPaddingY,
                             bgcolor: badge.backgroundColor || 'rgba(17, 24, 39, 0.88)',

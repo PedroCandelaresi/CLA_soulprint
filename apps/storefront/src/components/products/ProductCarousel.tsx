@@ -57,7 +57,7 @@ const ProductCarousel = ({ images, alt, overlay }: ProductCarouselProps) => {
                         content: '""',
                         position: 'absolute',
                         inset: 18,
-                        borderRadius: 28,
+                        borderRadius: 14,
                         border: '1px solid rgba(255,255,255,0.58)',
                         pointerEvents: 'none',
                     },

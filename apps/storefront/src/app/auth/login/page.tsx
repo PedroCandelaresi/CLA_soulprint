@@ -221,7 +221,7 @@ export default function LoginPage() {
                     elevation={0}
                     sx={{
                         p: { xs: 3, md: 6 },
-                        borderRadius: 6,
+                        borderRadius: 4,
                         border: '1px solid',
                         borderColor: 'rgba(0,72,37,0.08)',
                         bgcolor: 'rgba(255,253,248,0.94)',

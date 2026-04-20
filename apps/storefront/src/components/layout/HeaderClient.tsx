@@ -139,7 +139,7 @@ export default function HeaderClient({
                                             color: activa ? "var(--cla-brand-cream)" : "rgba(255,255,255,0.9)",
                                             px: 1.6,
                                             py: 0.7,
-                                            borderRadius: 999,
+                                            borderRadius: 10,
                                             backgroundColor: activa ? "rgba(255,255,255,0.08)" : "transparent",
                                             "&:hover": {
                                                 backgroundColor: "rgba(255,255,255,0.1)",

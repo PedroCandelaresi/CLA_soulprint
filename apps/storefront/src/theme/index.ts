@@ -11,7 +11,7 @@ export const theme = createTheme({
     ...baselightTheme,
     typography,
     shape: {
-        borderRadius: 24,
+        borderRadius: 3,
     },
     components: {
         MuiCssBaseline: {
@@ -27,25 +27,25 @@ export const theme = createTheme({
             },
             styleOverrides: {
                 root: {
-                    borderRadius: 999,
+                    borderRadius: 10,
                     textTransform: 'none',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     letterSpacing: '0.01em',
-                    paddingInline: '1.35rem',
-                    paddingBlock: '0.78rem',
+                    paddingInline: '1.2rem',
+                    paddingBlock: '0.72rem',
                 },
                 containedPrimary: {
-                    background: 'linear-gradient(135deg, #0A5A31 0%, #062616 100%)',
-                    boxShadow: '0 18px 32px rgba(6, 38, 22, 0.18)',
+                    background: '#0A5A31',
+                    boxShadow: '0 14px 26px rgba(6, 38, 22, 0.16)',
                     '&:hover': {
-                        boxShadow: '0 22px 34px rgba(6, 38, 22, 0.22)',
-                        background: 'linear-gradient(135deg, #116D3D 0%, #041C11 100%)',
+                        boxShadow: '0 16px 28px rgba(6, 38, 22, 0.18)',
+                        background: '#116D3D',
                     },
                 },
                 containedSecondary: {
                     background: 'linear-gradient(135deg, #E4C28E 0%, #C7A46B 100%)',
                     color: '#173428',
-                    boxShadow: '0 16px 30px rgba(139, 102, 57, 0.18)',
+                    boxShadow: '0 14px 26px rgba(139, 102, 57, 0.16)',
                     '&:hover': {
                         background: 'linear-gradient(135deg, #E7CC9F 0%, #BE975E 100%)',
                     },
@@ -69,7 +69,7 @@ export const theme = createTheme({
         MuiIconButton: {
             styleOverrides: {
                 root: {
-                    borderRadius: 999,
+                    borderRadius: 10,
                     border: `1px solid ${border}`,
                     backgroundColor: alpha('#FFFDF8', 0.74),
                     backdropFilter: 'blur(12px)',
@@ -92,7 +92,7 @@ export const theme = createTheme({
         MuiCard: {
             styleOverrides: {
                 root: {
-                    borderRadius: 32,
+                    borderRadius: 16,
                     border: `1px solid ${border}`,
                     boxShadow: surfaceGlow,
                 },
@@ -105,14 +105,14 @@ export const theme = createTheme({
                     borderColor: border,
                 },
                 rounded: {
-                    borderRadius: 28,
+                    borderRadius: 14,
                 },
             },
         },
         MuiChip: {
             styleOverrides: {
                 root: {
-                    borderRadius: 999,
+                    borderRadius: 10,
                     fontWeight: 700,
                     letterSpacing: '0.01em',
                     backdropFilter: 'blur(10px)',
@@ -138,7 +138,7 @@ export const theme = createTheme({
         MuiOutlinedInput: {
             styleOverrides: {
                 root: {
-                    borderRadius: 20,
+                    borderRadius: 10,
                     backgroundColor: alpha('#FFFDF8', 0.9),
                     '& fieldset': {
                         borderColor: strongBorder,
@@ -163,7 +163,7 @@ export const theme = createTheme({
         MuiAlert: {
             styleOverrides: {
                 root: {
-                    borderRadius: 20,
+                    borderRadius: 12,
                     border: `1px solid ${border}`,
                 },
                 standardInfo: {
@@ -186,7 +186,7 @@ export const theme = createTheme({
                     backgroundColor: alpha('#062616', 0.96),
                     color: '#FFF9F1',
                     border: `1px solid ${alpha('#E4C28E', 0.24)}`,
-                    borderRadius: 14,
+                    borderRadius: 10,
                     padding: '0.65rem 0.8rem',
                     fontSize: '0.78rem',
                     fontWeight: 600,
@@ -203,13 +203,13 @@ export const theme = createTheme({
                 root: {
                     minHeight: 52,
                     backgroundColor: alpha('#FFFDF8', 0.7),
-                    borderRadius: 999,
+                    borderRadius: 12,
                     border: `1px solid ${border}`,
                     padding: 4,
                 },
                 indicator: {
                     height: '100%',
-                    borderRadius: 999,
+                    borderRadius: 10,
                     background: 'linear-gradient(135deg, rgba(0,72,37,0.12), rgba(199,164,107,0.18))',
                 },
             },
@@ -220,7 +220,7 @@ export const theme = createTheme({
                     minHeight: 44,
                     textTransform: 'none',
                     fontWeight: 700,
-                    borderRadius: 999,
+                    borderRadius: 10,
                     zIndex: 1,
                 },
             },
@@ -228,7 +228,7 @@ export const theme = createTheme({
         MuiListItemButton: {
             styleOverrides: {
                 root: {
-                    borderRadius: 18,
+                    borderRadius: 10,
                     transition: 'background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease',
                     '&:hover': {
                         transform: 'translateY(-1px)',

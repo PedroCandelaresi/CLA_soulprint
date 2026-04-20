@@ -113,7 +113,7 @@ export default async function Home() {
                                             position: 'relative',
                                             minHeight: { xs: 300, md: 100 },
                                             height: '100%',
-                                            borderRadius: 6,
+                                            borderRadius: 4,
                                             overflow: 'hidden',
                                             border: '1px solid rgba(0,72,37,0.08)',
                                             boxShadow: '0 24px 44px rgba(0,72,37,0.1)',
@@ -187,7 +187,7 @@ export default async function Home() {
                     textAlign="center"
                     sx={{
                         p: { xs: 3.5, md: 4.5 },
-                        borderRadius: 5,
+                        borderRadius: 4,
                         border: '1px solid rgba(0,72,37,0.08)',
                         background: 'linear-gradient(180deg, rgba(255,250,242,0.92) 0%, rgba(255,255,255,0.56) 100%)',
                     }}

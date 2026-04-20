@@ -34,7 +34,7 @@ const Footer = () => {
                     sx={{
                         mb: { xs: 4, md: 5 },
                         p: { xs: 3, md: 3.5 },
-                        borderRadius: 6,
+                        borderRadius: 4,
                         border: '1px solid rgba(244,234,213,0.12)',
                         background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
                         backdropFilter: 'blur(14px)',

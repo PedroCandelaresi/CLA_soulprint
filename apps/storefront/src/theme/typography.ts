@@ -1,98 +1,80 @@
-import { Cormorant_Garamond, Plus_Jakarta_Sans } from 'next/font/google';
-
-export const plus = Plus_Jakarta_Sans({
-    weight: ['300', '400', '500', '600', '700'],
-    subsets: ['latin'],
-    display: 'swap',
-    fallback: ['Helvetica', 'Arial', 'sans-serif'],
-    variable: '--font-cla-sans',
-});
-
-export const cormorant = Cormorant_Garamond({
-    weight: ['500', '600', '700'],
-    subsets: ['latin'],
-    display: 'swap',
-    fallback: ['Georgia', 'Times New Roman', 'serif'],
-    variable: '--font-cla-serif',
-});
-
-const fontFamily = 'var(--font-cla-sans), Helvetica, Arial, sans-serif';
-const headingFamily = 'var(--font-cla-serif), Georgia, serif';
+const fontFamily = 'Arial, Helvetica, sans-serif';
+const headingFamily = 'Arial, Helvetica, sans-serif';
 
 const typography = {
     fontFamily,
     h1: {
         fontFamily: headingFamily,
-        fontWeight: 600,
-        fontSize: 'clamp(3rem, 7vw, 4.75rem)',
-        lineHeight: 0.98,
-        letterSpacing: '-0.035em',
+        fontWeight: 700,
+        fontSize: 'clamp(2.8rem, 6vw, 4.2rem)',
+        lineHeight: 1.02,
+        letterSpacing: '-0.04em',
     },
     h2: {
         fontFamily: headingFamily,
-        fontWeight: 600,
-        fontSize: 'clamp(2.45rem, 5vw, 3.75rem)',
-        lineHeight: 1.02,
-        letterSpacing: '-0.03em',
+        fontWeight: 700,
+        fontSize: 'clamp(2.2rem, 4.8vw, 3.3rem)',
+        lineHeight: 1.05,
+        letterSpacing: '-0.032em',
     },
     h3: {
         fontFamily: headingFamily,
-        fontWeight: 600,
-        fontSize: 'clamp(2rem, 4vw, 3rem)',
-        lineHeight: 1.06,
-        letterSpacing: '-0.028em',
+        fontWeight: 700,
+        fontSize: 'clamp(1.85rem, 3.8vw, 2.65rem)',
+        lineHeight: 1.08,
+        letterSpacing: '-0.026em',
     },
     h4: {
         fontFamily: headingFamily,
-        fontWeight: 600,
-        fontSize: 'clamp(1.65rem, 3.5vw, 2.35rem)',
-        lineHeight: 1.12,
-        letterSpacing: '-0.024em',
+        fontWeight: 700,
+        fontSize: 'clamp(1.5rem, 3vw, 2.05rem)',
+        lineHeight: 1.14,
+        letterSpacing: '-0.02em',
     },
     h5: {
         fontFamily: headingFamily,
-        fontWeight: 600,
-        fontSize: 'clamp(1.35rem, 2.4vw, 1.85rem)',
+        fontWeight: 700,
+        fontSize: 'clamp(1.22rem, 2.1vw, 1.6rem)',
         lineHeight: 1.18,
-        letterSpacing: '-0.02em',
+        letterSpacing: '-0.015em',
     },
     h6: {
         fontFamily: headingFamily,
-        fontWeight: 600,
-        fontSize: 'clamp(1.08rem, 2vw, 1.4rem)',
+        fontWeight: 700,
+        fontSize: 'clamp(1rem, 1.8vw, 1.22rem)',
         lineHeight: 1.24,
-        letterSpacing: '-0.015em',
+        letterSpacing: '-0.01em',
     },
     button: {
         textTransform: 'none' as const,
-        fontWeight: 600,
+        fontWeight: 700,
         letterSpacing: '0.01em',
     },
     body1: {
         fontSize: '0.975rem',
         fontWeight: 400,
-        lineHeight: 1.75,
+        lineHeight: 1.72,
     },
     body2: {
         fontSize: '0.875rem',
         letterSpacing: '0.005em',
         fontWeight: 400,
-        lineHeight: 1.6,
+        lineHeight: 1.58,
     },
     subtitle1: {
         fontSize: '1rem',
         fontWeight: 500,
-        lineHeight: 1.7,
+        lineHeight: 1.64,
     },
     subtitle2: {
         fontSize: '0.875rem',
         fontWeight: 600,
-        lineHeight: 1.55,
+        lineHeight: 1.5,
     },
     overline: {
         fontSize: '0.72rem',
         fontWeight: 700,
-        letterSpacing: '0.24em',
+        letterSpacing: '0.22em',
     },
 };
 
