@@ -88,15 +88,22 @@ const navigationButtonStyles = {
     width: { xs: 40, md: 52 },
     height: { xs: 40, md: 52 },
     borderRadius: 10,
+    boxShadow: "none",
     "&:hover": {
-        bgcolor: "rgba(255,250,242,0.22)",
-        borderColor: "rgba(255,255,255,0.5)",
+        bgcolor: "rgba(255,250,242,0.28)",
+        borderColor: "rgba(255,255,255,0.55)",
+        transform: "translateY(-50%)",
+        boxShadow: "none",
     },
     "&:focus-visible": {
         outline: "2px solid rgba(255,255,255,0.9)",
         outlineOffset: 2,
+        transform: "translateY(-50%)",
     },
-    transition: "all 0.2s ease",
+    "&:active": {
+        transform: "translateY(-50%)",
+    },
+    transition: "background-color 0.2s ease, border-color 0.2s ease",
 } as const;
 
 const CarruselDestacado = () => {
