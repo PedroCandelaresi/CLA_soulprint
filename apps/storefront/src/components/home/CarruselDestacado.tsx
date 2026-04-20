@@ -219,8 +219,8 @@ const CarruselDestacado = () => {
             sx={{
                 position: "relative",
                 width: "100%",
-                height: "40vh",
-                minHeight: { xs: 420, md: 360 },
+                height: "45vh",
+                minHeight: { xs: 440, md: 420 },
                 overflow: "hidden",
                 bgcolor: "var(--cla-brand-green)",
                 isolation: "isolate",
@@ -289,13 +289,14 @@ const CarruselDestacado = () => {
                                 }}
                             >
                                 <Stack
-                                    spacing={{ xs: 1.75, sm: 2.25, md: 2.5 }}
+                                    spacing={{ xs: 1.2, sm: 1.5, md: 1.8 }}
                                     sx={{
                                         width: "100%",
-                                        maxWidth: { xs: "100%", md: 440 },
+                                        maxWidth: { xs: "100%", md: 430 },
                                         mx: "auto",
                                         textAlign: "center",
                                         alignItems: "center",
+                                        fontFamily: "Arial, Helvetica, sans-serif",
                                         opacity: isActive ? 1 : 0,
                                         transform: isActive ? "translateY(0)" : "translateY(16px)",
                                         transition: transicionContenido,
@@ -307,8 +308,9 @@ const CarruselDestacado = () => {
                                         variant="overline"
                                         sx={{
                                             color: "var(--cla-brand-cream)",
-                                            letterSpacing: { xs: 3, sm: 4, md: 5 },
-                                            fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                                            fontFamily: "Arial, Helvetica, sans-serif",
+                                            letterSpacing: { xs: 2.5, sm: 3.5, md: 4.5 },
+                                            fontSize: { xs: "0.68rem", sm: "0.72rem", md: "0.74rem" },
                                             fontWeight: 600,
                                         }}
                                     >
@@ -320,8 +322,14 @@ const CarruselDestacado = () => {
                                         color="common.white"
                                         fontWeight={700}
                                         sx={{
-                                            typography: { xs: "h4", sm: "h3", md: "h2" },
-                                            lineHeight: { xs: 1.12, md: 1.15 },
+                                            fontFamily: "Arial, Helvetica, sans-serif",
+                                            fontSize: {
+                                                xs: "clamp(1.95rem, 7vw, 2.5rem)",
+                                                sm: "clamp(2.2rem, 4.8vw, 3rem)",
+                                                md: "clamp(2.35rem, 3.3vw, 3.3rem)",
+                                            },
+                                            lineHeight: 1.06,
+                                            letterSpacing: "-0.04em",
                                         }}
                                     >
                                         {slide.titulo}
@@ -331,9 +339,11 @@ const CarruselDestacado = () => {
                                         variant="h6"
                                         sx={{
                                             color: "rgba(255,248,238,0.82)",
+                                            fontFamily: "Arial, Helvetica, sans-serif",
                                             fontWeight: 400,
-                                            lineHeight: 1.6,
-                                            fontSize: { xs: "0.95rem", sm: "1rem", md: "1.12rem" },
+                                            lineHeight: 1.45,
+                                            fontSize: { xs: "0.92rem", sm: "0.98rem", md: "1rem" },
+                                            maxWidth: { xs: "100%", md: 400 },
                                         }}
                                     >
                                         {slide.descripcion}
@@ -356,8 +366,9 @@ const CarruselDestacado = () => {
                                             sx={{
                                                 width: { xs: "100%", sm: "auto" },
                                                 px: { xs: 3, md: 4 },
-                                                py: 1.45,
-                                                fontSize: { xs: "0.95rem", md: "1rem" },
+                                                py: 1.15,
+                                                fontSize: { xs: "0.92rem", md: "0.96rem" },
+                                                fontFamily: "Arial, Helvetica, sans-serif",
                                                 fontWeight: 600,
                                                 bgcolor: "var(--cla-brand-cream)",
                                                 color: "var(--cla-brand-green)",
@@ -376,8 +387,9 @@ const CarruselDestacado = () => {
                                             sx={{
                                                 width: { xs: "100%", sm: "auto" },
                                                 px: { xs: 3, md: 4 },
-                                                py: 1.45,
-                                                fontSize: { xs: "0.95rem", md: "1rem" },
+                                                py: 1.15,
+                                                fontSize: { xs: "0.92rem", md: "0.96rem" },
+                                                fontFamily: "Arial, Helvetica, sans-serif",
                                                 fontWeight: 500,
                                                 borderColor: "rgba(244,234,213,0.54)",
                                                 color: "var(--cla-brand-cream)",
