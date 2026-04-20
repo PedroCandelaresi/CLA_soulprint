@@ -21,6 +21,7 @@ import { MercadoPagoPlugin } from '../plugins/payments/mercadopago/mercadopago.p
 import { transferenciaPaymentHandler } from '../plugins/payments/transferencia-payment.plugin';
 import { Badge } from '../plugins/badges/badge.entity';
 import { BadgesPlugin } from '../plugins/badges/badges.plugin';
+import { HomeCarouselPlugin } from '../plugins/home-carousel/home-carousel.plugin';
 import { PersonalizationPlugin } from '../plugins/logistics/personalization';
 
 function requireEnv(name: string): string {
@@ -332,6 +333,7 @@ export const config: VendureConfig = {
         CustomerAccessPlugin,
         MercadoPagoPlugin,
         BadgesPlugin,
+        HomeCarouselPlugin,
         PersonalizationPlugin,
         AdminUiPlugin.init({
             route: 'admin',

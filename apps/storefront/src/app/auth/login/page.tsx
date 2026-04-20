@@ -17,11 +17,9 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
 import { resolveRedirectTarget } from '@/lib/auth/redirects';
-import BrandLogoImage from '@/components/branding/BrandLogoImage';
 import TooltipButton from '@/components/ui/TooltipButton';
 
 const REQUIRE_CUSTOMER_VERIFICATION =
@@ -242,16 +240,6 @@ export default function LoginPage() {
                     }}
                 >
                     <Stack spacing={3}>
-                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                            <Box
-                                sx={{
-                                    width: { xs: 210, md: 260 },
-                                }}
-                            >
-                                <BrandLogoImage label="CLA Soulprint" />
-                            </Box>
-                        </Box>
-
                         <Stack spacing={1} textAlign="center">
                             <Typography variant="overline" color="secondary.dark">
                                 Acceso de cliente

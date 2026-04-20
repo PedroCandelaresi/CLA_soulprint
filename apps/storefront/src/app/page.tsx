@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import { listProducts, getFeaturedProducts } from '@/lib/vendure';
+import { listProducts, getFeaturedProducts, getHomeCarouselConfig } from '@/lib/vendure';
+import type { HomeCarouselConfig } from '@/lib/vendure';
 import type { Product } from '@/types/product';
 import ProductCard from '@/components/products/ProductCard';
 import { Grid, Container, Typography, Box, Paper, Stack, Chip } from '@mui/material';
@@ -12,6 +13,13 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
     let products: Product[] = [];
     let featuredProducts: Product[] = [];
+    let carouselConfig: HomeCarouselConfig | null = null;
+
+    try {
+        carouselConfig = await getHomeCarouselConfig();
+    } catch (error) {
+        console.error('Error fetching home carousel config', error);
+    }
 
     try {
         products = await listProducts({ take: 24, skip: 0 });
@@ -27,7 +35,10 @@ export default async function Home() {
 
     return (
         <>
-            <CarruselDestacado />
+            <CarruselDestacado
+                slides={carouselConfig?.slides}
+                settings={carouselConfig?.settings}
+            />
 
             {featuredProducts.length > 0 && (
                 <FeaturedProductsCarrusel products={featuredProducts} />

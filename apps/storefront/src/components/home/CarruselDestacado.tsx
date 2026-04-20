@@ -14,15 +14,42 @@ import { Box, Stack, Typography, useMediaQuery } from "@mui/material";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import TooltipButton from "@/components/ui/TooltipButton";
 import TooltipIconButton from "@/components/ui/TooltipIconButton";
+import type {
+    HomeCarouselBadgeVariant,
+    HomeCarouselSettings,
+    HomeCarouselSlide,
+    HomeCarouselSlideLayout,
+    HomeCarouselTextTheme,
+    HomeCarouselTransitionEffect,
+} from "@/lib/vendure";
 
 type Diapositiva = {
     id: string;
     titulo: string;
     descripcion: string;
     imagen: string;
+    imagenMobile?: string;
     enlace: string;
+    enlaceSecundario?: string;
+    textoBoton?: string;
+    textoBotonSecundario?: string;
+    abrirEnNuevaPestana?: boolean;
+    esExterno?: boolean;
     posicion: string;
     alt?: string;
+    layout: HomeCarouselSlideLayout;
+    textTheme: HomeCarouselTextTheme;
+    badgeText?: string;
+    badgeColor?: string;
+    badgeVariant: HomeCarouselBadgeVariant;
+};
+
+const DEFAULT_SETTINGS: HomeCarouselSettings = {
+    transitionEffect: "fade",
+    autoplayEnabled: true,
+    autoplayInterval: 5500,
+    showArrows: true,
+    showDots: true,
 };
 
 type EstadoPausa = {
@@ -31,7 +58,7 @@ type EstadoPausa = {
     manual: boolean;
 };
 
-const diapositivas: Diapositiva[] = [
+const diapositivasFallback: Diapositiva[] = [
     {
         id: "retratos-con-memoria",
         titulo: "Retratos que se vuelven amuleto",
@@ -40,6 +67,9 @@ const diapositivas: Diapositiva[] = [
         enlace: "/productos",
         posicion: "center center",
         alt: "Mujer con un perro usando joyas con retratos grabados",
+        layout: "split_left",
+        textTheme: "dark",
+        badgeVariant: "solid",
     },
     {
         id: "vinculos-cotidianos",
@@ -49,6 +79,9 @@ const diapositivas: Diapositiva[] = [
         enlace: "/productos",
         posicion: "center center",
         alt: "Hombre con un perro en un parque mostrando dijes personalizados",
+        layout: "split_right",
+        textTheme: "dark",
+        badgeVariant: "solid",
     },
     {
         id: "alma-criolla",
@@ -58,10 +91,12 @@ const diapositivas: Diapositiva[] = [
         enlace: "/destacados",
         posicion: "center center",
         alt: "Hombre con atuendo tradicional junto a animales con dijes personalizados",
+        layout: "split_left",
+        textTheme: "dark",
+        badgeVariant: "solid",
     },
 ];
 
-const AUTOPLAY_INTERVAL = 5500;
 const SWIPE_THRESHOLD = 48;
 const SLIDE_IMAGE_SIZES = "(min-width: 900px) 58vw, 100vw";
 const VISUALLY_HIDDEN_STYLES = {
@@ -106,9 +141,46 @@ const navigationButtonStyles = {
     transition: "background-color 0.2s ease, border-color 0.2s ease",
 } as const;
 
-const CarruselDestacado = () => {
+function mapSlide(slide: HomeCarouselSlide): Diapositiva | null {
+    const desktop = slide.desktopAsset?.source ?? slide.desktopAsset?.preview;
+    if (!desktop) return null;
+    return {
+        id: String(slide.id),
+        titulo: slide.title,
+        descripcion: slide.description ?? slide.subtitle ?? "",
+        imagen: desktop,
+        imagenMobile: slide.mobileAsset?.source ?? slide.mobileAsset?.preview ?? undefined,
+        enlace: slide.primaryButtonUrl ?? "/productos",
+        enlaceSecundario: slide.secondaryButtonUrl ?? undefined,
+        textoBoton: slide.primaryButtonText ?? undefined,
+        textoBotonSecundario: slide.secondaryButtonText ?? undefined,
+        abrirEnNuevaPestana: slide.openInNewTab,
+        esExterno: slide.linkType === "external",
+        posicion: "center center",
+        alt: slide.altText ?? slide.title,
+        layout: slide.layout ?? "split_left",
+        textTheme: slide.textTheme ?? "dark",
+        badgeText: slide.badgeText ?? undefined,
+        badgeColor: slide.badgeColor ?? undefined,
+        badgeVariant: slide.badgeVariant ?? "solid",
+    };
+}
+
+interface CarruselDestacadoProps {
+    slides?: HomeCarouselSlide[];
+    settings?: HomeCarouselSettings;
+}
+
+const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) => {
     const carouselId = useId();
     const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)", { noSsr: true });
+    const isMobile = useMediaQuery("(max-width: 899px)", { noSsr: true });
+    const mapped = (slides ?? [])
+        .map(mapSlide)
+        .filter((s): s is Diapositiva => s !== null);
+    const diapositivas: Diapositiva[] = mapped.length > 0 ? mapped : diapositivasFallback;
+    const cfg = settings ?? DEFAULT_SETTINGS;
+    const effect: HomeCarouselTransitionEffect = cfg.transitionEffect;
     const touchStartRef = useRef<{ x: number; y: number } | null>(null);
     const [activeStep, setActiveStep] = useState(0);
     const [estadoPausa, setEstadoPausa] = useState<EstadoPausa>({
@@ -118,8 +190,8 @@ const CarruselDestacado = () => {
     });
 
     const totalDiapositivas = diapositivas.length;
-    const autoplayActivo = !reduceMotion && !estadoPausa.hover && !estadoPausa.focus && !estadoPausa.manual;
-    const transicionFade = reduceMotion ? "none" : "opacity 0.9s ease-in-out";
+    const autoplayActivo =
+        cfg.autoplayEnabled && !reduceMotion && !estadoPausa.hover && !estadoPausa.focus && !estadoPausa.manual;
     const transicionContenido = reduceMotion ? "none" : "opacity 0.8s ease, transform 0.8s ease";
 
     const actualizarPausa = useCallback((clave: keyof EstadoPausa, valor: boolean) => {
@@ -205,7 +277,7 @@ const CarruselDestacado = () => {
             return undefined;
         }
 
-        const timer = window.setTimeout(goNext, AUTOPLAY_INTERVAL);
+        const timer = window.setTimeout(goNext, cfg.autoplayInterval);
 
         return () => window.clearTimeout(timer);
     }, [activeStep, autoplayActivo, goNext]);
@@ -235,17 +307,31 @@ const CarruselDestacado = () => {
             }}
         >
             <Box component="p" id={`${carouselId}-instructions`} sx={VISUALLY_HIDDEN_STYLES}>
-                El carrusel rota automáticamente cada {AUTOPLAY_INTERVAL / 1000} segundos. Se pausa al pasar el cursor,
+                El carrusel rota automáticamente cada {cfg.autoplayInterval / 1000} segundos. Se pausa al pasar el cursor,
                 al enfocar un control o al activar el botón de pausa.
             </Box>
 
             {diapositivas.map((slide, index) => {
                 const slideId = `${carouselId}-slide-${slide.id}`;
                 const isActive = index === activeStep;
-                const textOnRight = index % 2 === 1;
-                const desktopColumns = textOnRight
+                const isFullImage = slide.layout === "full_image";
+                const textOnRight = slide.layout === "split_right";
+                const desktopColumns = isFullImage
+                    ? "1fr"
+                    : textOnRight
                     ? "minmax(0, 1.14fr) minmax(0, 0.86fr)"
                     : "minmax(0, 0.86fr) minmax(0, 1.14fr)";
+                const offset = (index - activeStep) * 100;
+                const slideTranslate =
+                    effect === "slide" ? `translateX(${offset}%)` : "translateX(0)";
+                const slideScale = effect === "zoom" && !isActive ? "scale(1.08)" : "scale(1)";
+                const slideTransform = `${slideTranslate} ${slideScale}`;
+                const slideTransition = reduceMotion
+                    ? "none"
+                    : effect === "fade"
+                    ? "opacity 0.9s ease-in-out"
+                    : "opacity 0.5s ease, transform 0.7s ease";
+                const slideOpacity = effect === "slide" ? 1 : isActive ? 1 : 0;
                 const textBackground = textOnRight
                     ? "linear-gradient(135deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)"
                     : "linear-gradient(225deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)";
@@ -264,8 +350,9 @@ const CarruselDestacado = () => {
                         sx={{
                             position: "absolute",
                             inset: 0,
-                            opacity: isActive ? 1 : 0,
-                            transition: transicionFade,
+                            opacity: slideOpacity,
+                            transform: slideTransform,
+                            transition: slideTransition,
                             zIndex: isActive ? 1 : 0,
                             pointerEvents: isActive ? "auto" : "none",
                         }}
@@ -277,23 +364,29 @@ const CarruselDestacado = () => {
                                 display: "grid",
                                 height: "100%",
                                 gridTemplateColumns: { xs: "1fr", md: desktopColumns },
-                                gridTemplateRows: { xs: "minmax(0, 0.9fr) minmax(0, 1.1fr)", md: "1fr" },
+                                gridTemplateRows: isFullImage
+                                    ? "1fr"
+                                    : { xs: "minmax(0, 0.9fr) minmax(0, 1.1fr)", md: "1fr" },
                             }}
                         >
                             <Box
                                 sx={{
-                                    position: "relative",
-                                    order: { xs: 1, md: textOnRight ? 2 : 1 },
+                                    position: isFullImage ? "absolute" : "relative",
+                                    inset: isFullImage ? 0 : undefined,
+                                    zIndex: isFullImage ? 2 : undefined,
+                                    order: isFullImage ? undefined : { xs: 1, md: textOnRight ? 2 : 1 },
                                     width: "100%",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
                                     px: { xs: 3, sm: 4, md: 4.5, lg: 6 },
                                     py: { xs: 3.5, sm: 4, md: 4.5 },
-                                    background: {
-                                        xs: "linear-gradient(180deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)",
-                                        md: textBackground,
-                                    },
+                                    background: isFullImage
+                                        ? "linear-gradient(180deg, rgba(6,38,22,0.1) 0%, rgba(6,38,22,0.72) 100%)"
+                                        : {
+                                              xs: "linear-gradient(180deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)",
+                                              md: textBackground,
+                                          },
                                 }}
                             >
                                 <Stack
@@ -311,11 +404,45 @@ const CarruselDestacado = () => {
                                         transitionDelay: reduceMotion || !isActive ? "0s" : "0.15s",
                                     }}
                                 >
+                                    {slide.badgeText ? (
+                                        <Box
+                                            component="span"
+                                            sx={{
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                px: slide.badgeVariant === "pill" ? 1.6 : 1.2,
+                                                py: 0.4,
+                                                fontSize: "0.7rem",
+                                                fontWeight: 700,
+                                                letterSpacing: 1.2,
+                                                textTransform: "uppercase",
+                                                borderRadius: slide.badgeVariant === "pill" ? 999 : 1.2,
+                                                color:
+                                                    slide.badgeVariant === "outline"
+                                                        ? slide.badgeColor || "var(--cla-brand-cream)"
+                                                        : "#06261A",
+                                                bgcolor:
+                                                    slide.badgeVariant === "outline"
+                                                        ? "transparent"
+                                                        : slide.badgeColor || "var(--cla-brand-cream)",
+                                                border:
+                                                    slide.badgeVariant === "outline"
+                                                        ? `1px solid ${slide.badgeColor || "var(--cla-brand-cream)"}`
+                                                        : "none",
+                                            }}
+                                        >
+                                            {slide.badgeText}
+                                        </Box>
+                                    ) : null}
+
                                     <Typography
                                         component="p"
                                         variant="overline"
                                         sx={{
-                                            color: "var(--cla-brand-cream)",
+                                            color:
+                                                slide.textTheme === "light"
+                                                    ? "rgba(6,38,22,0.72)"
+                                                    : "var(--cla-brand-cream)",
                                             fontFamily: "Arial, Helvetica, sans-serif",
                                             letterSpacing: { xs: 2.5, sm: 3.5, md: 4.5 },
                                             fontSize: { xs: "0.68rem", sm: "0.72rem", md: "0.74rem" },
@@ -370,6 +497,8 @@ const CarruselDestacado = () => {
                                             href={slide.enlace}
                                             size="large"
                                             tabIndex={isActive ? 0 : -1}
+                                            target={slide.abrirEnNuevaPestana || slide.esExterno ? "_blank" : undefined}
+                                            rel={slide.esExterno ? "noopener noreferrer" : undefined}
                                             tooltip={`Explorar ${slide.titulo}`}
                                             sx={{
                                                 width: { xs: "100%", sm: "auto" },
@@ -391,15 +520,18 @@ const CarruselDestacado = () => {
                                                 },
                                             }}
                                         >
-                                            Explorar colección
+                                            {slide.textoBoton ?? "Explorar colección"}
                                         </TooltipButton>
 
+                                        {slide.enlaceSecundario ? (
                                         <TooltipButton
                                             variant="outlined"
-                                            href="/productos"
+                                            href={slide.enlaceSecundario}
                                             size="large"
                                             tabIndex={isActive ? 0 : -1}
-                                            tooltip="Ir al catálogo general"
+                                            target={slide.abrirEnNuevaPestana || slide.esExterno ? "_blank" : undefined}
+                                            rel={slide.esExterno ? "noopener noreferrer" : undefined}
+                                            tooltip={slide.textoBotonSecundario ?? "Ir al catálogo general"}
                                             sx={{
                                                 width: { xs: "100%", sm: "auto" },
                                                 px: { xs: 3, md: 4 },
@@ -417,8 +549,9 @@ const CarruselDestacado = () => {
                                                 },
                                             }}
                                         >
-                                            Ver catálogo
+                                            {slide.textoBotonSecundario ?? "Ver catálogo"}
                                         </TooltipButton>
+                                        ) : null}
                                     </Stack>
                                 </Stack>
                             </Box>
@@ -426,7 +559,9 @@ const CarruselDestacado = () => {
                             <Box
                                 sx={{
                                     position: "relative",
-                                    order: { xs: 2, md: textOnRight ? 1 : 2 },
+                                    order: isFullImage ? 1 : { xs: 2, md: textOnRight ? 1 : 2 },
+                                    gridColumn: isFullImage ? "1 / -1" : undefined,
+                                    gridRow: isFullImage ? "1 / -1" : undefined,
                                     width: "100%",
                                     minHeight: { xs: 260, sm: 320, md: "100%" },
                                     overflow: "hidden",
@@ -443,7 +578,7 @@ const CarruselDestacado = () => {
                                 }}
                             >
                                 <Image
-                                    src={slide.imagen}
+                                    src={isMobile && slide.imagenMobile ? slide.imagenMobile : slide.imagen}
                                     alt={slide.alt ?? slide.titulo}
                                     fill
                                     priority={index === 0}
@@ -469,6 +604,7 @@ const CarruselDestacado = () => {
                 );
             })}
 
+            {cfg.showArrows && (<>
             <TooltipIconButton
                 onClick={goPrev}
                 aria-label="Ver diapositiva anterior"
@@ -492,6 +628,7 @@ const CarruselDestacado = () => {
             >
                 <IconChevronRight size={22} stroke={2} />
             </TooltipIconButton>
+            </>)}
 
             <TooltipButton
                 type="button"
@@ -528,6 +665,7 @@ const CarruselDestacado = () => {
                 {estadoPausa.manual ? "Reanudar" : "Pausar"}
             </TooltipButton>
 
+            {cfg.showDots && (
             <Stack
                 direction="row"
                 spacing={1}
@@ -573,6 +711,7 @@ const CarruselDestacado = () => {
                     );
                 })}
             </Stack>
+            )}
         </Box>
     );
 };
