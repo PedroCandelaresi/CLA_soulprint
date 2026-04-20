@@ -74,25 +74,14 @@ export default function HeaderClient({
             position="sticky"
             elevation={0}
             sx={{
-                backdropFilter: "blur(18px)",
-                borderBottom: "1px solid rgba(244,234,213,0.14)",
-                background:
-                    "linear-gradient(180deg, rgba(3,25,15,0.96) 0%, rgba(5,37,23,0.9) 100%)",
+                backdropFilter: "blur(10px)",
+                borderBottom: "1px solid var(--cla-header-border)",
+                backgroundColor: "var(--cla-brand-green)",
                 color: "common.white",
-                overflow: "hidden",
-                "&::after": {
-                    content: '""',
-                    position: "absolute",
-                    insetInline: 0,
-                    bottom: 0,
-                    height: 1,
-                    background:
-                        "linear-gradient(90deg, transparent 0%, rgba(244,234,213,0.12) 14%, rgba(244,234,213,0.42) 50%, rgba(244,234,213,0.12) 86%, transparent 100%)",
-                },
             }}
         >
             <Container maxWidth="xl">
-                <Toolbar sx={{ gap: 2, py: 1.25, px: "0 !important" }}>
+                <Toolbar sx={{ gap: 2, py: 1.5, px: "0 !important" }}>
                     <Box sx={{ display: { xs: "flex", md: "none" } }}>
                         <TooltipIconButton
                             edge="start"
@@ -100,6 +89,16 @@ export default function HeaderClient({
                             aria-label="abrir menú"
                             color="inherit"
                             tooltip="Abrir navegación"
+                            sx={{
+                                bgcolor: "transparent",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                "&:hover": {
+                                    bgcolor: "rgba(255,255,255,0.08)",
+                                    borderColor: "rgba(255,255,255,0.32)",
+                                    boxShadow: "none",
+                                    transform: "none",
+                                },
+                            }}
                         >
                             <MenuIcon />
                         </TooltipIconButton>
@@ -109,31 +108,15 @@ export default function HeaderClient({
                         component={Link}
                         href="/"
                         sx={{
-                            position: "relative",
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: 1.25,
                             textDecoration: "none",
                             color: "common.white",
-                            width: { xs: "clamp(10rem, 44vw, 13rem)", md: "16.25rem" },
-                            px: { xs: 0, md: 1.5 },
-                            py: { xs: 0.35, md: 0.65 },
-                            borderRadius: 999,
-                            backgroundColor: { xs: "transparent", md: "rgba(255,255,255,0.04)" },
-                            border: { xs: "none", md: "1px solid rgba(244,234,213,0.1)" },
+                            width: { xs: "clamp(10rem, 44vw, 13rem)", md: "15.5rem" },
+                            flexShrink: 0,
+                            lineHeight: 0,
                             "--brand-logo-fg": "var(--header-logo-fg)",
                             "--brand-logo-bg": "var(--header-logo-bg)",
-                            "&::after": {
-                                content: '""',
-                                position: "absolute",
-                                left: { xs: 0, md: 18 },
-                                right: { xs: "18%", md: 22 },
-                                bottom: { xs: -8, md: -6 },
-                                height: "1px",
-                                background:
-                                    "linear-gradient(90deg, rgba(244, 234, 213, 0.75), rgba(244, 234, 213, 0.18), transparent)",
-                                pointerEvents: "none",
-                            },
                         }}
                     >
                         {headerLogo}
@@ -151,18 +134,16 @@ export default function HeaderClient({
                                         color="inherit"
                                         tooltip={`Ir a ${opcion.etiqueta}`}
                                         sx={{
+                                            minWidth: "auto",
                                             fontWeight: activa ? 700 : 500,
-                                            color: activa ? "var(--cla-brand-cream)" : "rgba(255,255,255,0.82)",
-                                            px: 2.2,
-                                            py: 1,
+                                            color: activa ? "var(--cla-brand-cream)" : "rgba(255,255,255,0.9)",
+                                            px: 1.6,
+                                            py: 0.7,
                                             borderRadius: 999,
                                             backgroundColor: activa ? "rgba(255,255,255,0.08)" : "transparent",
-                                            border: "1px solid",
-                                            borderColor: activa ? "rgba(244,234,213,0.18)" : "transparent",
                                             "&:hover": {
-                                                backgroundColor: activa
-                                                    ? "rgba(255,255,255,0.12)"
-                                                    : "rgba(255,255,255,0.06)",
+                                                backgroundColor: "rgba(255,255,255,0.1)",
+                                                color: "common.white",
                                             },
                                         }}
                                     >
@@ -194,10 +175,10 @@ export default function HeaderClient({
                                 sx={{
                                     display: { xs: "none", md: "inline-flex" },
                                     color: "inherit",
-                                    bgcolor: "rgba(255,255,255,0.05)",
-                                    border: "1px solid rgba(244,234,213,0.12)",
+                                    bgcolor: "transparent",
+                                    border: "1px solid rgba(255,255,255,0.18)",
                                     "&:hover": {
-                                        bgcolor: "rgba(255,255,255,0.1)",
+                                        bgcolor: "rgba(255,255,255,0.08)",
                                     },
                                 }}
                             >
@@ -215,8 +196,8 @@ export default function HeaderClient({
                                 sx={{
                                     display: { xs: "none", md: "inline-flex" },
                                     color: "inherit",
-                                    bgcolor: "rgba(255,255,255,0.03)",
-                                    border: "1px solid rgba(244,234,213,0.1)",
+                                    bgcolor: "transparent",
+                                    border: "1px solid rgba(255,255,255,0.16)",
                                     "&:hover": {
                                         bgcolor: "rgba(255,255,255,0.08)",
                                     },
@@ -227,17 +208,18 @@ export default function HeaderClient({
                         )}
 
                         <TooltipIconButton
-                            component={Link}
                             href="/carrito"
                             aria-label="ir al carrito"
                             color="inherit"
                             tooltip={cartQuantity > 0 ? `Ver carrito con ${cartQuantity} producto${cartQuantity === 1 ? "" : "s"}` : "Ver carrito"}
                             sx={{
-                                bgcolor: "rgba(244,234,213,0.12)",
-                                borderColor: "rgba(244,234,213,0.2)",
+                                bgcolor: "transparent",
+                                border: "1px solid rgba(255,255,255,0.2)",
                                 "&:hover": {
-                                    bgcolor: "rgba(244,234,213,0.18)",
-                                    borderColor: "rgba(244,234,213,0.34)",
+                                    bgcolor: "rgba(255,255,255,0.08)",
+                                    borderColor: "rgba(255,255,255,0.32)",
+                                    boxShadow: "none",
+                                    transform: "none",
                                 },
                             }}
                         >
@@ -256,8 +238,8 @@ export default function HeaderClient({
                 PaperProps={{
                     sx: {
                         width: "clamp(240px, 80vw, 300px)",
-                        bgcolor: "rgba(255,250,242,0.94)",
-                        backdropFilter: "blur(18px)",
+                        bgcolor: "rgba(255,250,242,0.98)",
+                        backdropFilter: "blur(12px)",
                     },
                 }}
             >
@@ -271,8 +253,7 @@ export default function HeaderClient({
                             pb: 2.5,
                             borderBottom: "1px solid",
                             borderColor: "divider",
-                            background:
-                                "linear-gradient(180deg, rgba(244,234,213,0.42) 0%, rgba(255,250,242,0.9) 100%)",
+                            backgroundColor: "rgba(255,250,242,0.98)",
                             "--brand-logo-fg": "var(--muted-logo-fg)",
                             "--brand-logo-bg": "transparent",
                         }}
@@ -297,18 +278,6 @@ export default function HeaderClient({
                         <Typography sx={{ position: "relative", zIndex: 1, mt: 1.5, color: "text.secondary" }}>
                             Navegación curada para explorar la tienda CLA con una experiencia más serena.
                         </Typography>
-
-                        <Box
-                            aria-hidden
-                            sx={{
-                                position: "relative",
-                                zIndex: 1,
-                                mt: 2,
-                                width: "78%",
-                                height: "1px",
-                                background: "linear-gradient(90deg, var(--brand-accent), transparent)",
-                            }}
-                        />
                     </Box>
 
                     <List sx={{ py: 1 }}>

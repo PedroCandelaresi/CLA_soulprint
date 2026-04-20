@@ -10,7 +10,7 @@ import {
     type TouchEvent,
 } from "react";
 import Image from "next/image";
-import { Box, Stack, Typography, Container, useMediaQuery } from "@mui/material";
+import { Box, Stack, Typography, useMediaQuery } from "@mui/material";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import TooltipButton from "@/components/ui/TooltipButton";
 import TooltipIconButton from "@/components/ui/TooltipIconButton";
@@ -63,8 +63,7 @@ const diapositivas: Diapositiva[] = [
 
 const AUTOPLAY_INTERVAL = 5500;
 const SWIPE_THRESHOLD = 48;
-const SLIDE_IMAGE_SIZES = "100vw";
-const SIDE_PANEL_WIDTH = { xs: 56, md: 84 };
+const SLIDE_IMAGE_SIZES = "(min-width: 900px) 58vw, 100vw";
 const VISUALLY_HIDDEN_STYLES = {
     position: "absolute",
     width: 1,
@@ -220,11 +219,9 @@ const CarruselDestacado = () => {
             sx={{
                 position: "relative",
                 width: "100%",
-                aspectRatio: { xs: "4 / 3", md: "16 / 9" },
-                minHeight: { xs: 320, sm: 360, md: 420 },
-                maxHeight: { xs: 560, md: 760 },
+                height: { xs: "clamp(34rem, 145vw, 42rem)", md: "clamp(32rem, 56vw, 44rem)" },
                 overflow: "hidden",
-                bgcolor: "var(--cla-brand-green-dark)",
+                bgcolor: "var(--cla-brand-green)",
                 isolation: "isolate",
                 borderBottomLeftRadius: { xs: 24, md: 36 },
                 borderBottomRightRadius: { xs: 24, md: 36 },
@@ -239,13 +236,17 @@ const CarruselDestacado = () => {
                 const slideId = `${carouselId}-slide-${slide.id}`;
                 const isActive = index === activeStep;
                 const textOnRight = index % 2 === 1;
-                const imageJustifyContent = textOnRight ? "flex-start" : "flex-end";
+                const desktopColumns = textOnRight
+                    ? "minmax(0, 1.14fr) minmax(0, 0.86fr)"
+                    : "minmax(0, 0.86fr) minmax(0, 1.14fr)";
                 const textJustifyContent = textOnRight ? "flex-end" : "flex-start";
                 const textAlign = textOnRight ? "right" : "left";
-                const foregroundImagePosition = textOnRight ? "left center" : "right center";
-                const contentGradient = textOnRight
-                    ? "linear-gradient(90deg, rgba(244,234,213,0.06) 0%, rgba(6,42,27,0.16) 28%, rgba(6,42,27,0.62) 68%, rgba(2,27,17,0.9) 100%)"
-                    : "linear-gradient(90deg, rgba(2,27,17,0.9) 0%, rgba(6,42,27,0.62) 32%, rgba(6,42,27,0.16) 72%, rgba(244,234,213,0.06) 100%)";
+                const textBackground = textOnRight
+                    ? "linear-gradient(135deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)"
+                    : "linear-gradient(225deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)";
+                const imageOverlay = textOnRight
+                    ? "linear-gradient(90deg, rgba(0,72,37,0.28) 0%, rgba(0,72,37,0.08) 18%, rgba(3,25,15,0.08) 100%)"
+                    : "linear-gradient(270deg, rgba(0,72,37,0.28) 0%, rgba(0,72,37,0.08) 18%, rgba(3,25,15,0.08) 100%)";
 
                 return (
                     <Box
@@ -264,46 +265,152 @@ const CarruselDestacado = () => {
                             pointerEvents: isActive ? "auto" : "none",
                         }}
                     >
-                        <Image
-                            src={slide.imagen}
-                            alt=""
-                            fill
-                            priority={index === 0}
-                            sizes={SLIDE_IMAGE_SIZES}
-                            style={{
-                                objectFit: "cover",
-                                objectPosition: slide.posicion,
-                                filter: "blur(28px) saturate(1.03) brightness(0.82)",
-                                transform: "scale(1.12)",
-                                opacity: 0.78,
-                            }}
-                        />
-
                         <Box
                             sx={{
-                                position: "absolute",
-                                inset: 0,
-                                background: contentGradient,
-                            }}
-                        />
-
-                        <Box
-                            sx={{
-                                position: "absolute",
-                                inset: 0,
-                                display: "flex",
-                                justifyContent: { xs: "center", md: imageJustifyContent },
-                                alignItems: "stretch",
-                                pointerEvents: "none",
+                                position: "relative",
                                 zIndex: 1,
-                                overflow: "hidden",
+                                display: "grid",
+                                height: "100%",
+                                gridTemplateColumns: { xs: "1fr", md: desktopColumns },
+                                gridTemplateRows: { xs: "minmax(0, 0.9fr) minmax(0, 1.1fr)", md: "1fr" },
                             }}
                         >
                             <Box
                                 sx={{
                                     position: "relative",
+                                    order: { xs: 1, md: textOnRight ? 2 : 1 },
                                     width: "100%",
-                                    height: "100%",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: { xs: "flex-start", md: textJustifyContent },
+                                    px: { xs: 3, sm: 4, md: 5, lg: 7 },
+                                    py: { xs: 4, sm: 5, md: 6 },
+                                    background: {
+                                        xs: "linear-gradient(180deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)",
+                                        md: textBackground,
+                                    },
+                                }}
+                            >
+                                <Stack
+                                    spacing={{ xs: 1.75, sm: 2.25, md: 2.5 }}
+                                    sx={{
+                                        width: "100%",
+                                        maxWidth: { xs: "100%", md: 430 },
+                                        textAlign: { xs: "left", md: textAlign },
+                                        alignItems: { xs: "flex-start", md: textOnRight ? "flex-end" : "flex-start" },
+                                        opacity: isActive ? 1 : 0,
+                                        transform: isActive ? "translateY(0)" : "translateY(16px)",
+                                        transition: transicionContenido,
+                                        transitionDelay: reduceMotion || !isActive ? "0s" : "0.15s",
+                                    }}
+                                >
+                                    <Typography
+                                        component="p"
+                                        variant="overline"
+                                        sx={{
+                                            color: "var(--cla-brand-cream)",
+                                            letterSpacing: { xs: 3, sm: 4, md: 5 },
+                                            fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        CLA Soulprint
+                                    </Typography>
+
+                                    <Typography
+                                        component="h2"
+                                        color="common.white"
+                                        fontWeight={700}
+                                        sx={{
+                                            typography: { xs: "h4", sm: "h3", md: "h2" },
+                                            lineHeight: { xs: 1.12, md: 1.15 },
+                                        }}
+                                    >
+                                        {slide.titulo}
+                                    </Typography>
+
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
+                                            color: "rgba(255,248,238,0.82)",
+                                            fontWeight: 400,
+                                            lineHeight: 1.6,
+                                            fontSize: { xs: "0.95rem", sm: "1rem", md: "1.12rem" },
+                                        }}
+                                    >
+                                        {slide.descripcion}
+                                    </Typography>
+
+                                    <Stack
+                                        direction={{ xs: "column", sm: "row" }}
+                                        spacing={1.5}
+                                        justifyContent={{ xs: "flex-start", md: textOnRight ? "flex-end" : "flex-start" }}
+                                        width="100%"
+                                        pt={{ xs: 0.5, md: 1 }}
+                                    >
+                                        <TooltipButton
+                                            variant="contained"
+                                            href={slide.enlace}
+                                            size="large"
+                                            tabIndex={isActive ? 0 : -1}
+                                            tooltip={`Explorar ${slide.titulo}`}
+                                            sx={{
+                                                width: { xs: "100%", sm: "auto" },
+                                                px: { xs: 3, md: 4 },
+                                                py: 1.45,
+                                                fontSize: { xs: "0.95rem", md: "1rem" },
+                                                fontWeight: 600,
+                                                bgcolor: "var(--cla-brand-cream)",
+                                                color: "var(--cla-brand-green)",
+                                                "&:hover": { bgcolor: "#f8f0df" },
+                                            }}
+                                        >
+                                            Explorar colección
+                                        </TooltipButton>
+
+                                        <TooltipButton
+                                            variant="outlined"
+                                            href="/productos"
+                                            size="large"
+                                            tabIndex={isActive ? 0 : -1}
+                                            tooltip="Ir al catálogo general"
+                                            sx={{
+                                                width: { xs: "100%", sm: "auto" },
+                                                px: { xs: 3, md: 4 },
+                                                py: 1.45,
+                                                fontSize: { xs: "0.95rem", md: "1rem" },
+                                                fontWeight: 500,
+                                                borderColor: "rgba(244,234,213,0.54)",
+                                                color: "var(--cla-brand-cream)",
+                                                "&:hover": {
+                                                    borderColor: "var(--cla-brand-cream)",
+                                                    bgcolor: "rgba(244,234,213,0.08)",
+                                                },
+                                            }}
+                                        >
+                                            Ver catálogo
+                                        </TooltipButton>
+                                    </Stack>
+                                </Stack>
+                            </Box>
+
+                            <Box
+                                sx={{
+                                    position: "relative",
+                                    order: { xs: 2, md: textOnRight ? 1 : 2 },
+                                    width: "100%",
+                                    minHeight: { xs: 260, sm: 320, md: "100%" },
+                                    overflow: "hidden",
+                                    "&::before": {
+                                        content: '""',
+                                        position: "absolute",
+                                        top: 0,
+                                        bottom: 0,
+                                        [textOnRight ? "right" : "left"]: 0,
+                                        width: "1px",
+                                        bgcolor: "rgba(244,234,213,0.16)",
+                                        zIndex: 1,
+                                    },
                                 }}
                             >
                                 <Image
@@ -313,168 +420,25 @@ const CarruselDestacado = () => {
                                     priority={index === 0}
                                     sizes={SLIDE_IMAGE_SIZES}
                                     style={{
-                                        objectFit: "contain",
-                                        objectPosition: foregroundImagePosition,
-                                        transform: "scale(1.015)",
+                                        objectFit: "cover",
+                                        objectPosition: slide.posicion,
+                                    }}
+                                />
+                                <Box
+                                    sx={{
+                                        position: "absolute",
+                                        inset: 0,
+                                        background: {
+                                            xs: "linear-gradient(180deg, rgba(6,38,22,0.06) 0%, rgba(6,38,22,0.24) 100%)",
+                                            md: imageOverlay,
+                                        },
                                     }}
                                 />
                             </Box>
                         </Box>
-
-                        <Container
-                            maxWidth="lg"
-                            sx={{
-                                height: "100%",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: { xs: "center", md: textJustifyContent },
-                                position: "relative",
-                                zIndex: 2,
-                            }}
-                        >
-                            <Stack
-                                spacing={{ xs: 1.75, sm: 2.25, md: 2.5 }}
-                                sx={{
-                                    width: "100%",
-                                    maxWidth: { xs: 340, sm: 460, md: 430 },
-                                    py: { xs: 5, sm: 6, md: 7 },
-                                    textAlign: { xs: "center", md: textAlign },
-                                    alignItems: { xs: "center", md: textOnRight ? "flex-end" : "flex-start" },
-                                    position: "relative",
-                                    borderRadius: { xs: 5, md: 6 },
-                                    border: "1px solid rgba(244,234,213,0.12)",
-                                    background:
-                                        "linear-gradient(180deg, rgba(7,31,21,0.56) 0%, rgba(7,31,21,0.22) 100%)",
-                                    backdropFilter: "blur(8px)",
-                                    boxShadow: "0 24px 44px rgba(0,0,0,0.16)",
-                                    px: { xs: 2.5, sm: 3, md: 3.5 },
-                                    opacity: isActive ? 1 : 0,
-                                    transform: isActive ? "translateY(0)" : "translateY(16px)",
-                                    transition: transicionContenido,
-                                    transitionDelay: reduceMotion || !isActive ? "0s" : "0.15s",
-                                }}
-                            >
-                                <Typography
-                                    component="p"
-                                    variant="overline"
-                                    sx={{
-                                        color: "var(--cla-brand-cream)",
-                                        letterSpacing: { xs: 3, sm: 4, md: 5 },
-                                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                                        fontWeight: 600,
-                                    }}
-                                >
-                                    CLA Soulprint
-                                </Typography>
-
-                                <Typography
-                                    component="h2"
-                                    color="common.white"
-                                    fontWeight={700}
-                                    sx={{
-                                        typography: { xs: "h4", sm: "h3", md: "h2" },
-                                        lineHeight: { xs: 1.12, md: 1.15 },
-                                        textShadow: "0 2px 20px rgba(0,0,0,0.3)",
-                                    }}
-                                >
-                                    {slide.titulo}
-                                </Typography>
-
-                                <Typography
-                                    variant="h6"
-                                    sx={{
-                                        color: "rgba(255,248,238,0.82)",
-                                        fontWeight: 400,
-                                        lineHeight: 1.6,
-                                        fontSize: { xs: "0.95rem", sm: "1rem", md: "1.15rem" },
-                                    }}
-                                >
-                                    {slide.descripcion}
-                                </Typography>
-
-                                <Stack
-                                    direction={{ xs: "column", sm: "row" }}
-                                    spacing={1.5}
-                                    justifyContent={{ xs: "center", md: textOnRight ? "flex-end" : "flex-start" }}
-                                    width="100%"
-                                    pt={{ xs: 0.5, md: 1 }}
-                                >
-                                    <TooltipButton
-                                        variant="contained"
-                                        href={slide.enlace}
-                                        size="large"
-                                        tabIndex={isActive ? 0 : -1}
-                                        tooltip={`Explorar ${slide.titulo}`}
-                                        sx={{
-                                            width: { xs: "100%", sm: "auto" },
-                                            px: { xs: 3, md: 4 },
-                                            py: 1.5,
-                                            fontSize: { xs: "0.95rem", md: "1rem" },
-                                            fontWeight: 600,
-                                            bgcolor: "var(--cla-brand-cream)",
-                                            color: "var(--cla-brand-green-dark)",
-                                            "&:hover": { bgcolor: "#f8f0df" },
-                                        }}
-                                    >
-                                        Explorar colección
-                                    </TooltipButton>
-
-                                    <TooltipButton
-                                        variant="outlined"
-                                        href="/productos"
-                                        size="large"
-                                        tabIndex={isActive ? 0 : -1}
-                                        tooltip="Ir al catálogo general"
-                                        sx={{
-                                            width: { xs: "100%", sm: "auto" },
-                                            px: { xs: 3, md: 4 },
-                                            py: 1.5,
-                                            fontSize: { xs: "0.95rem", md: "1rem" },
-                                            fontWeight: 500,
-                                            borderColor: "rgba(244,234,213,0.54)",
-                                            color: "var(--cla-brand-cream)",
-                                            "&:hover": {
-                                                borderColor: "var(--cla-brand-cream)",
-                                                bgcolor: "rgba(244,234,213,0.08)",
-                                            },
-                                        }}
-                                    >
-                                        Ver catálogo
-                                    </TooltipButton>
-                                </Stack>
-                            </Stack>
-                        </Container>
                     </Box>
                 );
             })}
-
-            <Box
-                sx={{
-                    position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                    left: 0,
-                    width: SIDE_PANEL_WIDTH,
-                    zIndex: 3,
-                    pointerEvents: "none",
-                    bgcolor: "rgba(0,72,37,0.84)",
-                    borderRight: "1px solid rgba(244,234,213,0.1)",
-                }}
-            />
-
-            <Box
-                sx={{
-                    position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                    right: 0,
-                    width: SIDE_PANEL_WIDTH,
-                    zIndex: 3,
-                    pointerEvents: "none",
-                    bgcolor: "rgba(0,72,37,0.84)",
-                    borderLeft: "1px solid rgba(244,234,213,0.1)",
-                }}
-            />
 
             <TooltipIconButton
                 onClick={goPrev}
