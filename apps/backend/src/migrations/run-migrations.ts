@@ -6,6 +6,10 @@ async function main(): Promise<void> {
         console.log('Skipping migrations because DB_SYNCHRONIZE=true.');
         return;
     }
+    if (process.env.RECREATE_DB_ON_START === 'true') {
+        console.log('Skipping migrations because RECREATE_DB_ON_START=true (schema will be synchronized from entities).');
+        return;
+    }
 
     process.env.VENDURE_RUN_MIGRATIONS = 'true';
     const { config } = await import('../config/vendure-config');
