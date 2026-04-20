@@ -250,7 +250,6 @@ export function CustomerAccountShell({ children }: { children: React.ReactNode }
                         return (
                             <TooltipButton
                                 key={item.href}
-                                component={Link}
                                 href={item.href}
                                 variant={selected ? 'contained' : 'outlined'}
                                 startIcon={item.icon}

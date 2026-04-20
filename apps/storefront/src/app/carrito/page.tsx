@@ -109,11 +109,11 @@ export default function CarritoPage() {
                                     Agregá productos desde el catálogo para empezar tu pedido.
                                 </Typography>
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                                    <TooltipButton component={Link} href="/productos" variant="contained" tooltip="Ir al catálogo de productos">
+                                    <TooltipButton href="/productos" variant="contained" tooltip="Ir al catálogo de productos">
                                         Ir al catálogo
                                     </TooltipButton>
                                     {!customer && (
-                                        <TooltipButton component={Link} href="/auth/login" variant="outlined" tooltip="Ingresar o crear una cuenta">
+                                        <TooltipButton href="/auth/login" variant="outlined" tooltip="Ingresar o crear una cuenta">
                                             Ingresar o crear cuenta
                                         </TooltipButton>
                                     )}
@@ -262,10 +262,10 @@ export default function CarritoPage() {
                                     <Alert severity="info">
                                         El checkout demo ya permite completar el pedido con envío y pago simulados.
                                     </Alert>
-                                    <TooltipButton component={Link} href="/checkout" variant="contained" fullWidth tooltip="Pasar al checkout">
+                                    <TooltipButton href="/checkout" variant="contained" fullWidth tooltip="Pasar al checkout">
                                         Finalizar compra
                                     </TooltipButton>
-                                    <TooltipButton component={Link} href="/productos" variant="outlined" fullWidth tooltip="Seguir explorando productos">
+                                    <TooltipButton href="/productos" variant="outlined" fullWidth tooltip="Seguir explorando productos">
                                         Seguir comprando
                                     </TooltipButton>
                                 </Stack>

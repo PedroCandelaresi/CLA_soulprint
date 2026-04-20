@@ -295,7 +295,6 @@ export default function LoginPage() {
 
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                                     <TooltipButton
-                                        component={Link}
                                         href={redirectTarget}
                                         variant="contained"
                                         size="large"
@@ -304,7 +303,7 @@ export default function LoginPage() {
                                     >
                                         {primaryAuthenticatedLabel}
                                     </TooltipButton>
-                                    <TooltipButton component={Link} href="/carrito" variant="outlined" size="large" fullWidth tooltip="Ir al carrito">
+                                    <TooltipButton href="/carrito" variant="outlined" size="large" fullWidth tooltip="Ir al carrito">
                                         Ver carrito
                                     </TooltipButton>
                                 </Stack>

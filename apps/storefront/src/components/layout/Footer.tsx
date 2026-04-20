@@ -58,7 +58,6 @@ const Footer = () => {
                                 justifyContent={{ xs: 'stretch', md: 'flex-end' }}
                             >
                                 <TooltipButton
-                                    component={Link}
                                     href="/productos"
                                     variant="contained"
                                     color="secondary"
@@ -67,7 +66,6 @@ const Footer = () => {
                                     Explorar piezas
                                 </TooltipButton>
                                 <TooltipButton
-                                    component={Link}
                                     href="/sobre-nosotros"
                                     variant="outlined"
                                     color="inherit"

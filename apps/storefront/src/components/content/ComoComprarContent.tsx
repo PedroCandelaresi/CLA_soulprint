@@ -76,7 +76,6 @@ export default function ComoComprarContent() {
                 <TooltipButton
                     variant="contained"
                     size="large"
-                    component={Link}
                     href="/productos"
                     tooltip="Ir a la tienda"
                     sx={{ px: 6, py: 2, fontSize: '1.05rem' }}

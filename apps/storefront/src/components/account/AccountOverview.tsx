@@ -112,7 +112,7 @@ export default function AccountOverview() {
                 title="Todavía no encontramos tu cuenta"
                 description="Iniciá sesión de nuevo para cargar tus datos o volvé al catálogo para continuar tu compra."
                 action={
-                    <TooltipButton component={Link} href="/productos" variant="contained" tooltip="Volver al catálogo">
+                    <TooltipButton href="/productos" variant="contained" tooltip="Volver al catálogo">
                         Ir al catálogo
                     </TooltipButton>
                 }
@@ -195,7 +195,6 @@ export default function AccountOverview() {
                         {quickLinks.map((item) => (
                             <TooltipButton
                                 key={item.href}
-                                component={Link}
                                 href={item.href}
                                 variant="outlined"
                                 color="inherit"
@@ -248,7 +247,7 @@ export default function AccountOverview() {
                                     Los movimientos más recientes de tu historial.
                                 </Typography>
                             </Stack>
-                            <TooltipButton component={Link} href="/mi-cuenta/pedidos" variant="text" tooltip="Ver el historial completo de pedidos">
+                            <TooltipButton href="/mi-cuenta/pedidos" variant="text" tooltip="Ver el historial completo de pedidos">
                                 Ver todos
                             </TooltipButton>
                         </Stack>
@@ -289,7 +288,6 @@ export default function AccountOverview() {
                                             >
                                                 <AccountStatusChip label={status.label} color={status.tone} />
                                                 <TooltipButton
-                                                    component={Link}
                                                     href={`/mi-cuenta/pedidos/${encodeURIComponent(order.code)}`}
                                                     variant="outlined"
                                                     tooltip={`Ver detalle del pedido ${order.code}`}

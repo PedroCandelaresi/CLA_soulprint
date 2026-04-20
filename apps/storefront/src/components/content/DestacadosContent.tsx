@@ -73,7 +73,6 @@ export default function DestacadosContent({ featuredProducts = [] }: DestacadosC
                                 <TooltipButton
                                     variant="contained"
                                     size="large"
-                                    component={Link}
                                     href="/productos"
                                     tooltip="Ir al catálogo completo"
                                     sx={{

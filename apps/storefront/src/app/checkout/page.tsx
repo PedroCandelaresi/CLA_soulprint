@@ -716,10 +716,10 @@ function CheckoutContent() {
                                 </Typography>
                             </Stack>
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                                <TooltipButton component={Link} href="/productos" variant="contained" tooltip="Ir al catálogo" sx={{ borderRadius: 2 }}>
+                                <TooltipButton href="/productos" variant="contained" tooltip="Ir al catálogo" sx={{ borderRadius: 2 }}>
                                     Ver productos
                                 </TooltipButton>
-                                <TooltipButton component={Link} href="/carrito" variant="outlined" tooltip="Volver al carrito" sx={{ borderRadius: 2 }}>
+                                <TooltipButton href="/carrito" variant="outlined" tooltip="Volver al carrito" sx={{ borderRadius: 2 }}>
                                     Ir al carrito
                                 </TooltipButton>
                             </Stack>
@@ -1107,7 +1107,6 @@ function CheckoutContent() {
                                     </Paper>
 
                                     <TooltipButton
-                                        component={Link}
                                         href="/carrito"
                                         variant="text"
                                         fullWidth

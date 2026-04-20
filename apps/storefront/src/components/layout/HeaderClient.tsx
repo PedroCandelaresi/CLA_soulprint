@@ -147,7 +147,6 @@ export default function HeaderClient({
                                 return (
                                     <TooltipButton
                                         key={opcion.ruta}
-                                        component={Link}
                                         href={opcion.ruta}
                                         color="inherit"
                                         tooltip={`Ir a ${opcion.etiqueta}`}
@@ -187,7 +186,6 @@ export default function HeaderClient({
                             </TooltipButton>
                         ) : (
                             <TooltipButton
-                                component={Link}
                                 href={customer ? "/mi-cuenta" : loginHref}
                                 color="inherit"
                                 startIcon={<PersonOutlineOutlinedIcon />}
