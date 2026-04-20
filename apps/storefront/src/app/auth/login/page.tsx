@@ -21,7 +21,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
 import { resolveRedirectTarget } from '@/lib/auth/redirects';
-import BrandLogo from '@/components/branding/BrandLogo';
+import BrandLogoImage from '@/components/branding/BrandLogoImage';
 import TooltipButton from '@/components/ui/TooltipButton';
 
 const REQUIRE_CUSTOMER_VERIFICATION =
@@ -246,11 +246,9 @@ export default function LoginPage() {
                             <Box
                                 sx={{
                                     width: { xs: 210, md: 260 },
-                                    '--brand-logo-fg': 'var(--surface-logo-fg)',
-                                    '--brand-logo-bg': 'transparent',
                                 }}
                             >
-                                <BrandLogo label="CLA Soulprint" />
+                                <BrandLogoImage label="CLA Soulprint" />
                             </Box>
                         </Box>
 

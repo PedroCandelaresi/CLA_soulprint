@@ -25,7 +25,7 @@ import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlin
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
-import BrandLogo from '@/components/branding/BrandLogo';
+import BrandLogoImage from '@/components/branding/BrandLogoImage';
 import TooltipButton from '@/components/ui/TooltipButton';
 import TooltipIconButton from '@/components/ui/TooltipIconButton';
 import {
@@ -703,11 +703,9 @@ function CheckoutContent() {
                             <Box
                                 sx={{
                                     width: 220,
-                                    '--brand-logo-fg': 'var(--surface-logo-fg)',
-                                    '--brand-logo-bg': 'transparent',
                                 }}
                             >
-                                <BrandLogo label="CLA Soulprint" />
+                                <BrandLogoImage label="CLA Soulprint" />
                             </Box>
                             <Stack spacing={1}>
                                 <Typography variant="h5" fontWeight={800}>
@@ -752,11 +750,9 @@ function CheckoutContent() {
                             <Box
                                 sx={{
                                     width: { xs: 180, md: 220 },
-                                    '--brand-logo-fg': 'var(--surface-logo-fg)',
-                                    '--brand-logo-bg': 'transparent',
                                 }}
                             >
-                                <BrandLogo label="CLA Soulprint" />
+                                <BrandLogoImage label="CLA Soulprint" />
                             </Box>
                             <Typography variant="h4" fontWeight={800}>
                                 Finalizar compra
