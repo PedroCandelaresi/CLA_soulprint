@@ -78,7 +78,12 @@ const CORS_ORIGINS = IS_DEV
     ? ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002']
     : requireEnv('CORS_ORIGINS').split(',').map(origin => origin.trim()).filter(Boolean);
 const ASSET_URL_PREFIX = process.env.ASSET_URL_PREFIX || '/assets/';
-const DB_SYNCHRONIZE = process.env.DB_SYNCHRONIZE ? process.env.DB_SYNCHRONIZE === 'true' : IS_DEV;
+const RECREATE_DB_ON_START = process.env.RECREATE_DB_ON_START === 'true';
+const DB_SYNCHRONIZE = RECREATE_DB_ON_START
+    ? true
+    : process.env.DB_SYNCHRONIZE
+      ? process.env.DB_SYNCHRONIZE === 'true'
+      : IS_DEV;
 const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN?.trim() || undefined;
 const COOKIE_SAME_SITE = parseSameSite(process.env.COOKIE_SAME_SITE);
 const COOKIE_SECURE = parseBooleanEnv('COOKIE_SECURE', !IS_DEV);
