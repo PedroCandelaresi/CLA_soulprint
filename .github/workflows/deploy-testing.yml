@@ -4,6 +4,18 @@ on:
   push:
     branches:
       - develop
+  workflow_dispatch:
+    inputs:
+      force_scope:
+        description: 'Forzar scope de deploy (auto detecta si se deja vacío)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - backend
+          - storefront
+          - stack
 
 concurrency:
   group: deploy-testing
@@ -49,7 +61,13 @@ jobs:
           diff_source="push-range"
           changed_files=()
 
-          if [ -z "$before" ] || [[ "$before" =~ ^0+$ ]] || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+          forced="${{ github.event.inputs.force_scope }}"
+          if [ -n "$forced" ]; then
+            scope="$forced"
+            reason="Scope forzado manualmente via workflow_dispatch."
+            diff_source="manual"
+            mapfile -t changed_files < <(git show --pretty='' --name-only "$after" | sed '/^$/d')
+          elif [ -z "$before" ] || [[ "$before" =~ ^0+$ ]] || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
             scope="stack"
             reason="Previous pushed SHA is unavailable in the VPS checkout; running a conservative stack/global deploy."
             diff_source="fallback"
