@@ -17,6 +17,22 @@ interface SelectedAsset {
     name: string;
 }
 
+function getFirstSelectedAsset(result: any): SelectedAsset | null {
+    if (Array.isArray(result)) {
+        return result[0] ?? null;
+    }
+    if (Array.isArray(result?.assets)) {
+        return result.assets[0] ?? null;
+    }
+    if (result?.asset) {
+        return result.asset;
+    }
+    if (result?.id && result?.preview) {
+        return result;
+    }
+    return null;
+}
+
 const GET_SLIDE = gql`
     query GetHomeCarouselSlide($id: ID!) {
         homeCarouselSlide(id: $id) {
@@ -130,13 +146,18 @@ export class HomeCarouselDetailComponent implements OnInit, OnDestroy {
             badgeVariant: ['solid'],
         });
 
-        this.slideId = this.route.snapshot.paramMap.get('id');
-        this.isNew = !this.slideId;
-        if (!this.isNew && this.slideId) {
-            this.load(this.slideId);
-        } else {
+        this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+            this.slideId = params.get('id');
+            this.isNew = !this.slideId;
+
+            if (this.slideId) {
+                this.load(this.slideId);
+                return;
+            }
+
+            this.resetForCreate();
             this.loadCreateDefaults();
-        }
+        });
     }
 
     ngOnDestroy(): void {
@@ -195,9 +216,10 @@ export class HomeCarouselDetailComponent implements OnInit, OnDestroy {
                 locals: { multiSelect: false, initialTags: [] },
             })
             .subscribe((result: any) => {
-                if (result?.length) {
-                    if (target === 'desktop') this.desktopAsset = result[0];
-                    else this.mobileAsset = result[0];
+                const asset = getFirstSelectedAsset(result);
+                if (asset) {
+                    if (target === 'desktop') this.desktopAsset = asset;
+                    else this.mobileAsset = asset;
                 }
             });
     }
@@ -240,9 +262,15 @@ export class HomeCarouselDetailComponent implements OnInit, OnDestroy {
         if (this.isNew) {
             this.dataService.mutate(CREATE_SLIDE, { input: base }).subscribe({
                 next: (data: any) => {
+                    const createdSlideId = data.createHomeCarouselSlide.id;
+                    this.slideId = createdSlideId;
+                    this.isNew = false;
                     this.saving = false;
                     this.notificationService.success('Slide creado');
-                    this.router.navigate(['../', data.createHomeCarouselSlide.id], { relativeTo: this.route });
+                    this.router.navigate(['../', createdSlideId], {
+                        relativeTo: this.route,
+                        replaceUrl: true,
+                    });
                 },
                 error: (err: any) => {
                     this.saving = false;
@@ -295,6 +323,31 @@ export class HomeCarouselDetailComponent implements OnInit, OnDestroy {
     get previewThemeLabel(): string {
         const value = this.form?.get('textTheme')?.value;
         return this.textThemeOptions.find((opt) => opt.value === value)?.label ?? 'Oscuro';
+    }
+
+    private resetForCreate(): void {
+        this.loading = false;
+        this.desktopAsset = null;
+        this.mobileAsset = null;
+        this.form.reset({
+            title: '',
+            subtitle: '',
+            description: '',
+            primaryButtonText: '',
+            primaryButtonUrl: '',
+            secondaryButtonText: '',
+            secondaryButtonUrl: '',
+            linkType: 'internal',
+            openInNewTab: false,
+            isActive: true,
+            sortOrder: 0,
+            altText: '',
+            layout: 'split_left',
+            textTheme: 'dark',
+            badgeText: '',
+            badgeColor: '#c7a46b',
+            badgeVariant: 'solid',
+        });
     }
 
     private loadCreateDefaults(): void {

@@ -132,9 +132,198 @@
         { match: /^\/admin\/dashboard|^\/admin\/?$/, text: '<strong>Bienvenido/a al panel CLA Soulprint.</strong> Desde acá manejás productos, pedidos, clientes y configuraciones de la tienda.' },
     ];
 
+    const SIDEBAR_FIX_CSS = `
+.left-nav,
+.left-nav vdr-main-nav,
+.left-nav vdr-main-nav nav.main-nav {
+    --clr-nav-background-color: #003c22 !important;
+    --clr-sidenav-border-color: rgba(230, 216, 190, 0.22) !important;
+    --color-left-nav-bg: #003c22 !important;
+    --color-left-nav-text: #f7efe0 !important;
+    --color-left-nav-text-hover: #ffffff !important;
+    --color-text-active: #ffffff !important;
+    --color-primary-500: #006a3b !important;
+    background: linear-gradient(180deg, #003c22 0%, #002b1b 100%) !important;
+    color: #f7efe0 !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group:not(.collapsed) .nav-list {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group,
+.left-nav vdr-main-nav nav.main-nav .nav-list {
+    background: transparent !important;
+    color: #f7efe0 !important;
+}
+.left-nav vdr-main-nav nav.main-nav .section-header,
+.left-nav vdr-main-nav nav.main-nav .nav-group-header,
+.left-nav vdr-main-nav nav.main-nav .nav-link,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a {
+    min-height: 1.75rem !important;
+    background: transparent !important;
+    color: rgba(247, 239, 224, 0.82) !important;
+    border-radius: 0.35rem !important;
+}
+.left-nav vdr-main-nav nav.main-nav .section-header,
+.left-nav vdr-main-nav nav.main-nav .nav-group-header {
+    color: rgba(216, 171, 103, 0.92) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-link > a span,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a div,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a clr-icon,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a cds-icon {
+    color: inherit !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-link:hover,
+.left-nav vdr-main-nav nav.main-nav .nav-link:hover > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link.active,
+.left-nav vdr-main-nav nav.main-nav .nav-link.active > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a.active,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a[aria-current='page'] {
+    background: rgba(0, 106, 59, 0.62) !important;
+    color: #ffffff !important;
+}
+.left-nav vdr-main-nav nav.main-nav hr,
+.left-nav .settings-nav-container hr {
+    border-color: rgba(230, 216, 190, 0.24) !important;
+}
+.left-nav .settings-nav-container,
+.left-nav .channel-selector,
+.left-nav vdr-channel-switcher {
+    background: #002b1b !important;
+    color: #f7efe0 !important;
+}
+`;
+
+    const FALLBACK_NAV_LINKS = [
+        { id: 'home-carousel-slides', sectionId: 'marketing', label: 'Carrusel · Slides', route: '/extensions/home-carousel', icon: 'image' },
+        { id: 'home-carousel-settings', sectionId: 'marketing', label: 'Carrusel · Ajustes', route: '/extensions/home-carousel/settings', icon: 'cog' },
+    ];
+
     let lastPath = '';
     let tooltipEl = null;
     let activeTooltipHost = null;
+
+    function injectSidebarFixStyles() {
+        if (document.getElementById('cla-sidebar-runtime-fix')) {
+            return;
+        }
+        const style = document.createElement('style');
+        style.id = 'cla-sidebar-runtime-fix';
+        style.textContent = SIDEBAR_FIX_CSS;
+        document.head.appendChild(style);
+    }
+
+    function getAdminBasePath() {
+        const baseEl = document.querySelector('base[href]');
+        const baseHref = baseEl ? baseEl.getAttribute('href') : '/admin/';
+        try {
+            return new URL(baseHref, window.location.origin).pathname.replace(/\/$/, '') || '/admin';
+        } catch (error) {
+            return '/admin';
+        }
+    }
+
+    function findNavGroup(sectionId, label) {
+        const nav = document.querySelector('.left-nav vdr-main-nav nav.main-nav');
+        if (!nav) {
+            return null;
+        }
+        const direct = nav.querySelector('.nav-group[data-section-id="' + sectionId + '"]');
+        if (direct) {
+            return direct;
+        }
+        const normalizedLabel = normalizeText(label || sectionId);
+        return Array.from(nav.querySelectorAll('.nav-group')).find(function (group) {
+            const header = group.querySelector('.section-header, .nav-group-header');
+            return normalizeText(header ? header.textContent : '').indexOf(normalizedLabel) !== -1;
+        }) || null;
+    }
+
+    function createFallbackNavGroup(sectionId, label) {
+        const nav = document.querySelector('.left-nav vdr-main-nav nav.main-nav');
+        if (!nav) {
+            return null;
+        }
+        const group = document.createElement('div');
+        group.className = 'nav-group cla-fallback-nav-group';
+        group.setAttribute('data-section-id', sectionId);
+
+        const header = document.createElement('div');
+        header.className = 'section-header nav-group-header';
+        header.textContent = label;
+
+        const list = document.createElement('div');
+        list.className = 'nav-list';
+
+        group.appendChild(header);
+        group.appendChild(list);
+        nav.appendChild(group);
+        return group;
+    }
+
+    function cleanupFallbackNavLink(item) {
+        const escapedRoute = item.route.replace(/"/g, '\\"');
+        const fallback = document.querySelector('[data-cla-fallback-item="' + item.id + '"]');
+        const realLink = Array.from(document.querySelectorAll('a[href$="' + escapedRoute + '"]')).find(function (link) {
+            return !link.closest('[data-cla-fallback-item]');
+        });
+        if (fallback && realLink) {
+            const group = fallback.closest('.cla-fallback-nav-group');
+            fallback.remove();
+            if (group && !group.querySelector('.nav-link')) {
+                group.remove();
+            }
+        }
+    }
+
+    function ensureFallbackNavLink(item) {
+        cleanupFallbackNavLink(item);
+        const adminBase = getAdminBasePath();
+        const href = adminBase + item.route;
+        const escapedRoute = item.route.replace(/"/g, '\\"');
+        const existing = document.querySelector(
+            '[data-cla-fallback-item="' + item.id + '"], a[href="' + href + '"], a[href$="' + escapedRoute + '"]',
+        );
+        if (existing) {
+            return;
+        }
+
+        const group = findNavGroup(item.sectionId, 'Marketing') || createFallbackNavGroup(item.sectionId, 'Marketing');
+        const navList = group ? group.querySelector('.nav-list') : null;
+        if (!navList) {
+            return;
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'nav-link px-4 cla-fallback-nav-link';
+        wrapper.setAttribute('data-cla-fallback-item', item.id);
+
+        const link = document.createElement('a');
+        link.href = href;
+        link.setAttribute('data-item-id', item.id);
+
+        const icon = document.createElement('clr-icon');
+        icon.setAttribute('shape', item.icon);
+        icon.setAttribute('size', '16');
+
+        const span = document.createElement('span');
+        span.textContent = item.label;
+
+        link.appendChild(icon);
+        link.appendChild(span);
+        wrapper.appendChild(link);
+        navList.appendChild(wrapper);
+    }
+
+    function ensureCarouselNavLinks() {
+        FALLBACK_NAV_LINKS.forEach(ensureFallbackNavLink);
+    }
 
     function normalizeText(value) {
         return (value || '')
@@ -406,6 +595,8 @@
 
     function runAll() {
         try {
+            injectSidebarFixStyles();
+            ensureCarouselNavLinks();
             applyIconTooltips(document);
             applyActionTooltips(document);
             injectHelpBanner();

@@ -17,6 +17,22 @@ export interface SelectedAsset {
     name: string;
 }
 
+function getFirstSelectedAsset(result: any): SelectedAsset | null {
+    if (Array.isArray(result)) {
+        return result[0] ?? null;
+    }
+    if (Array.isArray(result?.assets)) {
+        return result.assets[0] ?? null;
+    }
+    if (result?.asset) {
+        return result.asset;
+    }
+    if (result?.id && result?.preview) {
+        return result;
+    }
+    return null;
+}
+
 const GET_BADGE = gql`
     query GetBadgeDetail($id: ID!) {
         badge(id: $id) {
@@ -184,8 +200,9 @@ export class BadgeDetailComponent implements OnInit, OnDestroy {
                 },
             })
             .subscribe((result: any) => {
-                if (result?.length) {
-                    this.selectedAsset = result[0];
+                const asset = getFirstSelectedAsset(result);
+                if (asset) {
+                    this.selectedAsset = asset;
                 }
             });
     }
