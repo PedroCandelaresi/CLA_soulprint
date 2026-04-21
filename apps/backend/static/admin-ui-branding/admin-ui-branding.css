@@ -140,13 +140,9 @@ clr-vertical-nav {
     flex: 1 1 auto;
     font-weight: 700 !important;
     font-size: 1rem !important;
-    pointer-events: none;
 }
 
-.left-nav .nav-link > *:not(.nav-text),
-.left-nav .nav-group-content > *:not(.nav-text) {
-    pointer-events: none;
-}
+/* pointer-events kept default so every child of .nav-link receives clicks */
 
 .left-nav .nav-link:hover,
 .left-nav .nav-group-content:hover {
@@ -182,10 +178,15 @@ clr-vertical-nav {
     color: var(--cla-gold) !important;
 }
 
-.left-nav .nav-group-text {
-    color: #f5d78f !important;
-    font-size: 0.85rem !important;
-    letter-spacing: 0.1em;
+.left-nav .nav-group-text,
+.left-nav .nav-divider-title,
+.left-nav .clr-vertical-nav-group-title,
+.left-nav [class*="nav-group-title"],
+.left-nav [class*="group-title"] {
+    color: #ffd98a !important;
+    opacity: 1 !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     font-weight: 800 !important;
 }

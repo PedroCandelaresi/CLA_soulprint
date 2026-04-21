@@ -1,15 +1,6 @@
-import { addNavMenuItem, addNavMenuSection } from '@vendure/admin-ui/core';
+import { addNavMenuItem } from '@vendure/admin-ui/core';
 
 export default [
-    addNavMenuSection(
-        {
-            id: 'home-carousel-section',
-            label: 'Home',
-            items: [],
-            requiresPermission: 'ReadCatalog',
-        },
-        'marketing',
-    ),
     addNavMenuItem(
         {
             id: 'home-carousel-slides',
@@ -18,7 +9,7 @@ export default [
             icon: 'image',
             requiresPermission: 'ReadCatalog',
         },
-        'home-carousel-section',
+        'marketing',
     ),
     addNavMenuItem(
         {
@@ -28,6 +19,6 @@ export default [
             icon: 'cog',
             requiresPermission: 'ReadCatalog',
         },
-        'home-carousel-section',
+        'marketing',
     ),
 ];
