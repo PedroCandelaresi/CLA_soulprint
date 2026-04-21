@@ -9,6 +9,7 @@ import {
     PERSONALIZATION_PSP_RESOLVER,
     NoopPersonalizationPspResolver,
 } from './adapters/psp-resolver';
+import { MercadoPagoPersonalizationPspResolver } from './adapters/mercadopago-psp-resolver';
 
 const configurationHook: PluginConfigurationFn = config => {
     config.customFields = config.customFields ?? {};
@@ -120,9 +121,10 @@ const configurationHook: PluginConfigurationFn = config => {
             provide: PERSONALIZATION_CONFIG_OPTIONS,
             useValue: getPersonalizationConfigFromEnv(),
         },
+        MercadoPagoPersonalizationPspResolver,
         {
             provide: PERSONALIZATION_PSP_RESOLVER,
-            useValue: NoopPersonalizationPspResolver,
+            useExisting: MercadoPagoPersonalizationPspResolver,
         },
         PersonalizationService,
     ],

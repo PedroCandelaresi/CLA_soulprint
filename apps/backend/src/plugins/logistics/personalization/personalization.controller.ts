@@ -39,8 +39,17 @@ export class PersonalizationController {
         private readonly sessionService: SessionService,
     ) {}
 
+    private getSessionToken(req?: Request): string | undefined {
+        const requestSessionToken = (req as Request & { session?: { token?: string } })?.session?.token;
+        if (requestSessionToken) return requestSessionToken;
+
+        const authorizationHeader = req?.headers?.authorization;
+        const bearerToken = authorizationHeader?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+        return bearerToken || undefined;
+    }
+
     private async getCustomerUserId(req?: Request): Promise<string | undefined> {
-        const sessionToken = (req as Request & { session?: { token?: string } })?.session?.token;
+        const sessionToken = this.getSessionToken(req);
         if (!sessionToken) return undefined;
         const session = await this.sessionService.getSessionFromToken(sessionToken);
         const userId = session?.user?.id;

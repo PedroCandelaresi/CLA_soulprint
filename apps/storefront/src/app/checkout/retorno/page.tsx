@@ -17,6 +17,15 @@ import {
     Typography,
 } from '@mui/material';
 import { formatCurrency } from '@/lib/checkout/demo';
+import { PersonalizationUploadPanel } from '@/components/checkout/PersonalizationUploadPanel';
+import {
+    fetchPersonalizationOrder,
+    uploadPersonalizationFile,
+} from '@/lib/personalization/client';
+import type {
+    PersonalizationLineData,
+    PersonalizationOrderData,
+} from '@/lib/personalization/types';
 import {
     fetchShopApi,
     GET_ORDER_BY_CODE_QUERY,
@@ -261,6 +270,11 @@ function CheckoutReturnPageContent() {
     const [refreshing, setRefreshing] = useState(false);
     const [retrying, setRetrying] = useState(false);
     const [pollingTimedOut, setPollingTimedOut] = useState(false);
+    const [personalization, setPersonalization] = useState<PersonalizationOrderData | null>(null);
+    const [personalizationLoading, setPersonalizationLoading] = useState(false);
+    const [personalizationError, setPersonalizationError] = useState<string | null>(null);
+    const [personalizationLoadedForOrderCode, setPersonalizationLoadedForOrderCode] = useState<string | null>(null);
+    const [personalizationUploadingLineId, setPersonalizationUploadingLineId] = useState<string | null>(null);
 
     const hints = useMemo<ReturnHints>(
         () => ({
@@ -283,6 +297,10 @@ function CheckoutReturnPageContent() {
     );
     const retryAvailable = canRetryPayment(latestPayment);
     const forceRetryAvailable = canForceRetryPayment(latestPayment, pollingTimedOut);
+    const personalizationRequiresAttention = Boolean(
+        personalization?.requiresPersonalization &&
+            personalization.overallPersonalizationStatus !== 'complete',
+    );
 
     const applyStatus = useCallback(
         (nextStatus: ReturnStatus) => {
@@ -391,6 +409,80 @@ function CheckoutReturnPageContent() {
             }
         },
         [applyStatus, resolveStatus, stopPolling],
+    );
+
+    const loadPersonalizationStatus = useCallback(
+        async (code: string) => {
+            setPersonalizationLoading(true);
+
+            try {
+                const data = await fetchPersonalizationOrder(code, {
+                    transactionId: hints.paymentId,
+                    accessToken: personalization?.accessToken,
+                });
+
+                setPersonalization(data);
+                setPersonalizationLoadedForOrderCode(code);
+                setPersonalizationError(null);
+                return data;
+            } catch (error) {
+                const message =
+                    error instanceof Error && error.message
+                        ? error.message
+                        : 'No pudimos consultar si este pedido requiere personalización.';
+
+                setPersonalization(null);
+                setPersonalizationLoadedForOrderCode(code);
+                setPersonalizationError(message);
+                return null;
+            } finally {
+                setPersonalizationLoading(false);
+            }
+        },
+        [hints.paymentId, personalization?.accessToken],
+    );
+
+    const handlePersonalizationUpload = useCallback(
+        async (line: PersonalizationLineData, file: File, notes: string) => {
+            if (!orderCode) {
+                return;
+            }
+
+            setPersonalizationUploadingLineId(line.orderLineId);
+            setPersonalizationError(null);
+
+            try {
+                const data = await uploadPersonalizationFile({
+                    orderCode,
+                    orderLineId: line.orderLineId,
+                    file,
+                    notes,
+                    transactionId: hints.paymentId,
+                    accessToken: personalization?.accessToken,
+                });
+
+                setPersonalization(data);
+                setPersonalizationLoadedForOrderCode(orderCode);
+                setFeedback({
+                    severity: 'success',
+                    message: 'Archivo recibido. Ya quedó asociado al pedido en Vendure.',
+                });
+            } catch (error) {
+                const message =
+                    error instanceof Error && error.message
+                        ? error.message
+                        : 'No pudimos subir el archivo de personalización.';
+
+                setPersonalizationError(message);
+                setFeedback({
+                    severity: 'error',
+                    message,
+                });
+            } finally {
+                setPersonalizationUploadingLineId(null);
+            }
+        },
+        [hints.paymentId, orderCode, personalization?.accessToken],
     );
 
     const handleRetryPayment = useCallback(
@@ -528,6 +620,40 @@ function CheckoutReturnPageContent() {
 
     useEffect(() => {
         if (status !== 'confirmed' || !orderCode) {
+            setPersonalization(null);
+            setPersonalizationError(null);
+            setPersonalizationLoadedForOrderCode(null);
+            return;
+        }
+
+        if (
+            personalizationLoadedForOrderCode === orderCode &&
+            (personalization?.orderCode === orderCode || personalizationError)
+        ) {
+            return;
+        }
+
+        void loadPersonalizationStatus(orderCode);
+    }, [
+        loadPersonalizationStatus,
+        orderCode,
+        personalization?.orderCode,
+        personalizationError,
+        personalizationLoadedForOrderCode,
+        status,
+    ]);
+
+    useEffect(() => {
+        if (status !== 'confirmed' || !orderCode) {
+            return;
+        }
+
+        if (
+            personalizationLoading ||
+            personalizationError ||
+            personalizationLoadedForOrderCode !== orderCode ||
+            personalizationRequiresAttention
+        ) {
             return;
         }
 
@@ -536,7 +662,15 @@ function CheckoutReturnPageContent() {
         }, CONFIRMED_REDIRECT_DELAY_MS);
 
         return () => clearTimeout(timer);
-    }, [status, orderCode, router]);
+    }, [
+        orderCode,
+        personalizationError,
+        personalizationLoadedForOrderCode,
+        personalizationLoading,
+        personalizationRequiresAttention,
+        router,
+        status,
+    ]);
 
     return (
         <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
@@ -622,6 +756,19 @@ function CheckoutReturnPageContent() {
                                         </Stack>
                                     </Stack>
                                 </Paper>
+                            )}
+
+                            {status === 'confirmed' && orderCode && (
+                                <PersonalizationUploadPanel
+                                    data={personalization}
+                                    loading={personalizationLoading}
+                                    error={personalizationError}
+                                    uploadingLineId={personalizationUploadingLineId}
+                                    onReload={() => {
+                                        void loadPersonalizationStatus(orderCode);
+                                    }}
+                                    onUpload={handlePersonalizationUpload}
+                                />
                             )}
 
                             {latestPayment && (

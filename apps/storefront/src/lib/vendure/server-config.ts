@@ -28,6 +28,20 @@ export function getServerVendureApiUrl(): string {
     );
 }
 
+export function getServerVendureRestBaseUrl(): string {
+    const apiUrl = getServerVendureApiUrl();
+
+    try {
+        const url = new URL(apiUrl);
+        url.pathname = url.pathname.replace(/\/shop-api\/?$/, '') || '/';
+        url.search = '';
+        url.hash = '';
+        return url.toString().replace(/\/$/, '');
+    } catch {
+        return apiUrl.replace(/\/shop-api\/?$/, '').replace(/\/$/, '');
+    }
+}
+
 export function getAllowedStorefrontOrigins(currentRequestOrigin?: string | null): string[] {
     const origins = new Set<string>();
 

@@ -88,9 +88,12 @@ export class PersonalizationService {
         if (!order) throw new Error('La orden no existe.');
 
         await this.authorize(access, order, false);
+        const syncedOrder = (await this.syncLineStatuses(ctx, order)) ?? order;
+        await this.syncOverallStatus(ctx, syncedOrder);
 
         const token = buildPersonalizationToken(order.code, this.config.tokenSecret);
-        return this.mapToResponse(order, token);
+        const finalOrder = (await this.loadOrder(ctx, access.orderCode)) ?? syncedOrder;
+        return this.mapToResponse(finalOrder, token);
     }
 
     async uploadForLine(input: PersonalizationLineUploadInput): Promise<PersonalizationOrderData> {
