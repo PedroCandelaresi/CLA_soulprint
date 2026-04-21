@@ -1810,6 +1810,202 @@ body.cla-tooltips-ready [data-cla-tip]::after {
     background: rgba(199, 164, 107, 0.16) !important;
 }
 
+.left-nav hr,
+.left-nav .settings-nav-container hr,
+.left-nav vdr-main-nav nav.main-nav hr {
+    display: none !important;
+}
+
+.left-nav .main-nav-container,
+.left-nav .settings-nav-container {
+    border: 0 !important;
+    background: transparent !important;
+}
+
+.left-nav {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
+
+.left-nav .main-nav-container {
+    flex: 0 0 auto !important;
+    overflow: visible !important;
+}
+
+.left-nav .settings-nav-container {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    overflow: visible !important;
+}
+
+.left-nav vdr-main-nav,
+.left-nav vdr-main-nav nav.main-nav {
+    display: block !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+}
+
+.left-nav .settings-nav-container,
+.left-nav .settings-nav-container vdr-main-nav,
+.left-nav .settings-nav-container nav.main-nav,
+.left-nav .settings-nav-container .nav-group,
+.left-nav .settings-nav-container .nav-list,
+.left-nav .settings-nav-container .section-header {
+    background: transparent !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group {
+    margin: 0.08rem 0 0.42rem !important;
+    padding: 0.12rem 0.72rem 0.35rem !important;
+    overflow: hidden !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.active:not(.collapsed),
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.active:not(.collapsed) {
+    background: transparent !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header {
+    display: grid !important;
+    grid-template-columns: 1.08rem minmax(0, 1fr) 1.55rem !important;
+    align-items: center !important;
+    column-gap: 0.72rem !important;
+    min-height: 2.35rem !important;
+    padding: 0.12rem 0.2rem !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header:hover {
+    background: rgba(245, 235, 217, 0.055) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-group-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-group-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-self: start !important;
+    align-self: center !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: var(--cla-gold-soft) !important;
+    font-size: 0.68rem !important;
+    line-height: 1 !important;
+    letter-spacing: 0.13em !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+    text-transform: uppercase !important;
+    transform: translateY(1px) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-title-icon,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-title-icon {
+    justify-self: center !important;
+    align-self: center !important;
+    width: 0.95rem !important;
+    height: 0.95rem !important;
+    margin: 0 !important;
+    color: var(--cla-gold-soft) !important;
+    opacity: 0.9 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header button,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header button,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 1.55rem !important;
+    height: 1.55rem !important;
+    min-width: 1.55rem !important;
+    justify-self: end !important;
+    align-self: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid rgba(226, 207, 170, 0.18) !important;
+    border-radius: 6px !important;
+    background: rgba(245, 235, 217, 0.06) !important;
+    color: rgba(245, 235, 217, 0.76) !important;
+    box-shadow: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header button:hover,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header button:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button:hover {
+    background: rgba(199, 164, 107, 0.18) !important;
+    color: #ffffff !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button clr-icon,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button clr-icon {
+    display: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button::before,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button::before {
+    content: "";
+    width: 0.42rem;
+    height: 0.42rem;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: translateY(-1px) rotate(45deg);
+    transition: transform 0.18s ease;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.collapsed .cla-nav-accordion-button::before,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.cla-nav-group-collapsed .cla-nav-accordion-button::before,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.collapsed .cla-nav-accordion-button::before,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.cla-nav-group-collapsed .cla-nav-accordion-button::before {
+    transform: translateX(-1px) rotate(-45deg);
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-list,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-list {
+    margin-top: 0.12rem !important;
+    transition: max-height 0.18s ease, opacity 0.14s ease !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) .nav-list {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) .nav-list {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.collapsed .nav-list,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.cla-nav-group-collapsed .nav-list,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.collapsed .nav-list,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.cla-nav-group-collapsed .nav-list {
+    max-height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    margin-top: 0 !important;
+    pointer-events: none !important;
+}
+
 @media (max-width: 1024px) {
     .content-area {
         padding: 1rem 1rem 1.5rem;

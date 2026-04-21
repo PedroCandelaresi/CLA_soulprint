@@ -133,9 +133,7 @@
     ];
 
     const SIDEBAR_FIX_CSS = `
-.left-nav,
-.left-nav vdr-main-nav,
-.left-nav vdr-main-nav nav.main-nav {
+.left-nav {
     --clr-nav-background-color: #003c22 !important;
     --clr-sidenav-border-color: rgba(230, 216, 190, 0.22) !important;
     --color-left-nav-bg: #003c22 !important;
@@ -144,6 +142,11 @@
     --color-text-active: #ffffff !important;
     --color-primary-500: #006a3b !important;
     background: linear-gradient(180deg, #003c22 0%, #002b1b 100%) !important;
+    color: #f7efe0 !important;
+}
+.left-nav vdr-main-nav,
+.left-nav vdr-main-nav nav.main-nav {
+    background: transparent !important;
     color: #f7efe0 !important;
 }
 .left-nav vdr-main-nav nav.main-nav .nav-group:not(.collapsed) .nav-list {
@@ -192,22 +195,276 @@
 .left-nav .settings-nav-container hr {
     border-color: rgba(230, 216, 190, 0.24) !important;
 }
-.left-nav .settings-nav-container,
 .left-nav .channel-selector,
 .left-nav vdr-channel-switcher {
     background: #002b1b !important;
     color: #f7efe0 !important;
 }
+.left-nav hr,
+.left-nav .settings-nav-container hr,
+.left-nav vdr-main-nav nav.main-nav hr {
+    display: none !important;
+}
+.left-nav .main-nav-container,
+.left-nav .settings-nav-container {
+    border: 0 !important;
+    background: transparent !important;
+}
+.left-nav {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
+.left-nav .main-nav-container {
+    flex: 0 0 auto !important;
+    overflow: visible !important;
+}
+.left-nav .settings-nav-container {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    overflow: visible !important;
+}
+.left-nav vdr-main-nav,
+.left-nav vdr-main-nav nav.main-nav {
+    display: block !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+}
+.left-nav .settings-nav-container,
+.left-nav .settings-nav-container vdr-main-nav,
+.left-nav .settings-nav-container nav.main-nav,
+.left-nav .settings-nav-container .nav-group,
+.left-nav .settings-nav-container .nav-list,
+.left-nav .settings-nav-container .section-header {
+    background: transparent !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group {
+    margin: 0.08rem 0 0.42rem !important;
+    padding: 0.12rem 0.72rem 0.35rem !important;
+    overflow: hidden !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header {
+    display: grid !important;
+    grid-template-columns: 1.08rem minmax(0, 1fr) 1.55rem !important;
+    align-items: center !important;
+    column-gap: 0.72rem !important;
+    min-height: 2.35rem !important;
+    padding: 0.12rem 0.2rem !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header:hover {
+    background: rgba(245, 235, 217, 0.055) !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-group-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-self: start !important;
+    align-self: center !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: rgba(216, 171, 103, 0.92) !important;
+    font-size: 0.68rem !important;
+    line-height: 1 !important;
+    letter-spacing: 0.13em !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+    text-transform: uppercase !important;
+    transform: translateY(1px) !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-title-icon {
+    justify-self: center !important;
+    align-self: center !important;
+    width: 0.95rem !important;
+    height: 0.95rem !important;
+    margin: 0 !important;
+    color: rgba(216, 171, 103, 0.92) !important;
+    opacity: 0.9 !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header button,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 1.55rem !important;
+    height: 1.55rem !important;
+    min-width: 1.55rem !important;
+    justify-self: end !important;
+    align-self: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid rgba(230, 216, 190, 0.18) !important;
+    border-radius: 6px !important;
+    background: rgba(247, 239, 224, 0.06) !important;
+    color: rgba(247, 239, 224, 0.76) !important;
+    box-shadow: none !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button clr-icon {
+    display: none !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button::before {
+    content: "";
+    width: 0.42rem;
+    height: 0.42rem;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: translateY(-1px) rotate(45deg);
+    transition: transform 0.18s ease;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.collapsed .cla-nav-accordion-button::before,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.cla-nav-group-collapsed .cla-nav-accordion-button::before {
+    transform: translateX(-1px) rotate(-45deg);
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-list {
+    margin-top: 0.12rem !important;
+    transition: max-height 0.18s ease, opacity 0.14s ease !important;
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group {
+    margin: 0.08rem 0 0.42rem !important;
+    padding: 0.12rem 0.72rem 0.35rem !important;
+    overflow: hidden !important;
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header {
+    display: grid !important;
+    grid-template-columns: 1.08rem minmax(0, 1fr) 1.55rem !important;
+    align-items: center !important;
+    column-gap: 0.72rem !important;
+    min-height: 2.35rem !important;
+    padding: 0.12rem 0.2rem !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header:hover {
+    background: rgba(245, 235, 217, 0.055) !important;
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-group-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-self: start !important;
+    align-self: center !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: rgba(216, 171, 103, 0.92) !important;
+    font-size: 0.68rem !important;
+    line-height: 1 !important;
+    letter-spacing: 0.13em !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+    text-transform: uppercase !important;
+    transform: translateY(1px) !important;
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-title-icon {
+    justify-self: center !important;
+    align-self: center !important;
+    width: 0.95rem !important;
+    height: 0.95rem !important;
+    margin: 0 !important;
+    color: rgba(216, 171, 103, 0.92) !important;
+    opacity: 0.9 !important;
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header button,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 1.55rem !important;
+    height: 1.55rem !important;
+    min-width: 1.55rem !important;
+    justify-self: end !important;
+    align-self: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid rgba(230, 216, 190, 0.18) !important;
+    border-radius: 6px !important;
+    background: rgba(247, 239, 224, 0.06) !important;
+    color: rgba(247, 239, 224, 0.76) !important;
+    box-shadow: none !important;
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header button:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button:hover {
+    background: rgba(199, 164, 107, 0.18) !important;
+    color: #ffffff !important;
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button clr-icon {
+    display: none !important;
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button::before {
+    content: "";
+    width: 0.42rem;
+    height: 0.42rem;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: translateY(-1px) rotate(45deg);
+    transition: transform 0.18s ease;
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.collapsed .cla-nav-accordion-button::before,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.cla-nav-group-collapsed .cla-nav-accordion-button::before {
+    transform: translateX(-1px) rotate(-45deg);
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-list {
+    margin-top: 0.12rem !important;
+    transition: max-height 0.18s ease, opacity 0.14s ease !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) .nav-list {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) .nav-list {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.collapsed .nav-list,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.cla-nav-group-collapsed .nav-list,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.collapsed .nav-list,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.cla-nav-group-collapsed .nav-list {
+    max-height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    margin-top: 0 !important;
+    pointer-events: none !important;
+}
 `;
 
     const FALLBACK_NAV_LINKS = [
-        { id: 'home-carousel-slides', sectionId: 'marketing', label: 'Carrusel · Slides', route: '/extensions/home-carousel', icon: 'image' },
-        { id: 'home-carousel-settings', sectionId: 'marketing', label: 'Carrusel · Ajustes', route: '/extensions/home-carousel/settings', icon: 'cog' },
+        { id: 'home-carousel', sectionId: 'marketing', label: 'Carrusel', route: '/extensions/home-carousel', icon: 'image' },
     ];
 
+    const SIDEBAR_SECTION_ICONS = {
+        catalog: 'folder',
+        catalogo: 'folder',
+        sales: 'shopping-cart',
+        ventas: 'shopping-cart',
+        customer: 'users',
+        customers: 'users',
+        clientes: 'users',
+        marketing: 'image',
+        settings: 'cog',
+        ajustes: 'cog',
+        system: 'blocks-group',
+        sistema: 'blocks-group',
+    };
+
     let lastPath = '';
+    let lastSidebarPath = '';
     let tooltipEl = null;
     let activeTooltipHost = null;
+    let runAllScheduled = false;
 
     function injectSidebarFixStyles() {
         if (document.getElementById('cla-sidebar-runtime-fix')) {
@@ -323,6 +580,172 @@
 
     function ensureCarouselNavLinks() {
         FALLBACK_NAV_LINKS.forEach(ensureFallbackNavLink);
+    }
+
+    function getSidebarGroups() {
+        return Array.from(new Set(Array.from(document.querySelectorAll(
+            '.left-nav vdr-main-nav nav.main-nav .nav-group, .left-nav .settings-nav-container .nav-group'
+        ))));
+    }
+
+    function getSidebarGroupLabel(group) {
+        const label = group.querySelector('.nav-group-header, .section-header');
+        return (label ? label.textContent : group.getAttribute('data-section-id') || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function getSidebarGroupKey(group, index) {
+        const existing = group.getAttribute('data-cla-accordion-key');
+        if (existing) {
+            return existing;
+        }
+        const key = normalizeText(group.getAttribute('data-section-id') || getSidebarGroupLabel(group) || 'group-' + index);
+        group.setAttribute('data-cla-accordion-key', key);
+        return key;
+    }
+
+    function getSidebarGroupIconShape(group, key) {
+        const labelKey = normalizeText(getSidebarGroupLabel(group));
+        return SIDEBAR_SECTION_ICONS[key] || SIDEBAR_SECTION_ICONS[labelKey] || 'folder';
+    }
+
+    function ensureSidebarGroupIcon(group, key) {
+        const header = group.querySelector('.section-header');
+        const label = header ? header.querySelector('.nav-group-header') : null;
+        if (!header || !label) {
+            return;
+        }
+        let icon = header.querySelector('.cla-nav-accordion-title-icon');
+        if (!icon) {
+            icon = document.createElement('clr-icon');
+            icon.className = 'cla-nav-accordion-title-icon';
+            icon.setAttribute('size', '14');
+            header.insertBefore(icon, label);
+        }
+        icon.setAttribute('shape', getSidebarGroupIconShape(group, key));
+    }
+
+    function sidebarGroupIsActive(group) {
+        if (group.classList.contains('active')) {
+            return true;
+        }
+        return Boolean(group.querySelector('.nav-link.active, a.active, a[aria-current="page"]'));
+    }
+
+    function getAccordionStorageValue(key) {
+        try {
+            return window.localStorage.getItem('cla-sidebar-accordion-v2:' + key);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function setAccordionStorageValue(key, value) {
+        try {
+            window.localStorage.setItem('cla-sidebar-accordion-v2:' + key, value);
+        } catch (error) {
+            // Local storage can be disabled; the accordion still works for this session.
+        }
+    }
+
+    function getSidebarGroupNavList(group) {
+        return group.querySelector(':scope > vdr-ui-extension-point > .nav-list, :scope > .nav-list, .nav-list');
+    }
+
+    function setNavListVisibility(group, collapsed) {
+        const navList = getSidebarGroupNavList(group);
+        if (!navList) {
+            return;
+        }
+
+        if (collapsed) {
+            navList.style.setProperty('display', 'block', 'important');
+            navList.style.setProperty('max-height', '0', 'important');
+            navList.style.setProperty('overflow', 'hidden', 'important');
+            navList.style.setProperty('opacity', '0', 'important');
+            navList.style.setProperty('visibility', 'hidden', 'important');
+            navList.style.setProperty('margin-top', '0', 'important');
+            navList.style.setProperty('pointer-events', 'none', 'important');
+            return;
+        }
+
+        navList.style.setProperty('display', 'block', 'important');
+        navList.style.setProperty('max-height', 'none', 'important');
+        navList.style.setProperty('overflow', 'visible', 'important');
+        navList.style.setProperty('opacity', '1', 'important');
+        navList.style.setProperty('visibility', 'visible', 'important');
+        navList.style.setProperty('margin-top', '0.12rem', 'important');
+        navList.style.setProperty('pointer-events', 'auto', 'important');
+    }
+
+    function setSidebarGroupCollapsed(group, collapsed) {
+        const shouldCollapse = collapsed && !sidebarGroupIsActive(group);
+        group.classList.toggle('collapsed', shouldCollapse);
+        group.classList.toggle('cla-nav-group-collapsed', shouldCollapse);
+        group.classList.add('collapsible');
+        setNavListVisibility(group, shouldCollapse);
+        const button = group.querySelector('.cla-nav-accordion-button');
+        if (button) {
+            button.setAttribute('aria-expanded', String(!shouldCollapse));
+            button.setAttribute(
+                'aria-label',
+                (shouldCollapse ? 'Expandir ' : 'Contraer ') + (getSidebarGroupLabel(group) || 'seccion'),
+            );
+        }
+    }
+
+    function toggleSidebarGroup(group) {
+        const key = group.getAttribute('data-cla-accordion-key') || normalizeText(getSidebarGroupLabel(group));
+        const nextCollapsed = !group.classList.contains('cla-nav-group-collapsed') && !group.classList.contains('collapsed');
+        setSidebarGroupCollapsed(group, nextCollapsed);
+        setAccordionStorageValue(key, nextCollapsed ? 'collapsed' : 'expanded');
+    }
+
+    function ensureSidebarAccordions() {
+        const currentPath = window.location.pathname + window.location.search;
+        const routeChanged = currentPath !== lastSidebarPath;
+
+        getSidebarGroups().forEach(function (group, index) {
+            const navList = group.querySelector(':scope > vdr-ui-extension-point > .nav-list, :scope > .nav-list, .nav-list');
+            const header = group.querySelector(':scope > vdr-ui-extension-point > .section-header, :scope > .section-header, .section-header');
+            if (!navList || !header) {
+                return;
+            }
+
+            const key = getSidebarGroupKey(group, index);
+            group.classList.add('cla-nav-accordion-group', 'collapsible');
+            header.classList.add('cla-nav-accordion-header');
+            ensureSidebarGroupIcon(group, key);
+
+            let button = header.querySelector('.cla-nav-accordion-button') || header.querySelector('button');
+            if (!button) {
+                button = document.createElement('button');
+                button.type = 'button';
+                header.appendChild(button);
+            }
+            button.classList.add('cla-nav-accordion-button');
+
+            if (!button.getAttribute('data-cla-accordion-bound')) {
+                button.setAttribute('data-cla-accordion-bound', 'true');
+                button.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    toggleSidebarGroup(group);
+                }, true);
+            }
+
+            if (!group.getAttribute('data-cla-accordion-ready')) {
+                setSidebarGroupCollapsed(group, !sidebarGroupIsActive(group));
+                group.setAttribute('data-cla-accordion-ready', 'true');
+            } else if (sidebarGroupIsActive(group)) {
+                setSidebarGroupCollapsed(group, false);
+            } else if (routeChanged) {
+                setSidebarGroupCollapsed(group, true);
+            } else {
+                setSidebarGroupCollapsed(group, group.classList.contains('cla-nav-group-collapsed') || group.classList.contains('collapsed'));
+            }
+        });
+
+        lastSidebarPath = currentPath;
     }
 
     function normalizeText(value) {
@@ -597,6 +1020,7 @@
         try {
             injectSidebarFixStyles();
             ensureCarouselNavLinks();
+            ensureSidebarAccordions();
             applyIconTooltips(document);
             applyActionTooltips(document);
             injectHelpBanner();
@@ -608,24 +1032,47 @@
         }
     }
 
+    function scheduleRunAll(delay) {
+        if (runAllScheduled) {
+            return;
+        }
+        runAllScheduled = true;
+
+        const run = function () {
+            runAllScheduled = false;
+            runAll();
+        };
+
+        if (delay) {
+            setTimeout(run, delay);
+            return;
+        }
+
+        if (typeof window.requestAnimationFrame === 'function') {
+            window.requestAnimationFrame(run);
+        } else {
+            setTimeout(run, 16);
+        }
+    }
+
     function start() {
         runAll();
         bindTooltipEvents();
 
         const observer = new MutationObserver(function () {
-            runAll();
+            scheduleRunAll();
         });
         observer.observe(document.body, { childList: true, subtree: true });
 
         const pushState = history.pushState;
         history.pushState = function () {
             const result = pushState.apply(this, arguments);
-            setTimeout(runAll, 50);
+            scheduleRunAll(50);
             return result;
         };
 
         window.addEventListener('popstate', function () {
-            setTimeout(runAll, 50);
+            scheduleRunAll(50);
         });
     }
 
