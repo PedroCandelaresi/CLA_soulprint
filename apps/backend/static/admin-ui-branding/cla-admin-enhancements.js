@@ -2,8 +2,8 @@
  * CLA Soulprint — Admin UI enhancements
  *
  * Se carga una sola vez desde index.html. Su objetivo es hacer el panel
- * Vendure "a prueba de boludos": agrega tooltips explicativos en castellano
- * sobre los botones e íconos más importantes, y un banner de ayuda con
+ * Vendure más claro y amable: agrega tooltips explicativos en castellano
+ * sobre los botones e íconos más importantes, y un aviso de ayuda con
  * contexto al entrar a cada sección.
  *
  * No modifica ningún comportamiento de Vendure — sólo añade atributos
@@ -82,10 +82,15 @@
     const ACTION_TIPS = {
         'nuevo badge': 'Crear un badge reusable para destacar productos o variantes.',
         'crear badge': 'Guardar este badge y dejarlo disponible en la tienda.',
+        'nuevo slide': 'Crear un slide completo para el carrusel de la home.',
+        'crear slide': 'Guardar este slide con textos, layout, estado e imágenes.',
+        'ajustes del carrusel': 'Configurar autoplay, transición, flechas y dots del carrusel.',
         'guardar cambios': 'Guardar la configuración actual de esta pantalla.',
+        guardar: 'Guardar la configuración actual de esta pantalla.',
         cancelar: 'Volver sin guardar cambios.',
-        'crear el primero': 'Crear el primer badge disponible para la tienda.',
+        'crear el primero': 'Crear el primer registro de esta sección.',
         'seleccionar imagen': 'Abrir la biblioteca de assets para elegir una imagen.',
+        seleccionar: 'Abrir la biblioteca de assets para elegir una imagen.',
         quitar: 'Quitar el valor seleccionado.',
         'abrir archivo completo': 'Abrir el archivo en una pestaña nueva.',
     };
@@ -122,6 +127,8 @@
         { match: /^\/admin\/settings\/administrators/, text: '<strong>Administradores.</strong> Usuarios que pueden entrar a este panel. Dales roles según lo que puedan tocar.' },
         { match: /^\/admin\/settings\/roles/, text: '<strong>Roles.</strong> Definen qué puede hacer cada administrador.' },
         { match: /^\/admin\/extensions\/badges/, text: '<strong>Badges.</strong> Etiquetas visuales que se superponen a las fotos de los productos, con imagen o color de fallback.' },
+        { match: /^\/admin\/extensions\/home-carousel\/settings/, text: '<strong>Ajustes del carrusel.</strong> Controlás autoplay, transición y controles visibles para todos los slides activos.' },
+        { match: /^\/admin\/extensions\/home-carousel/, text: '<strong>Carrusel.</strong> Armá los slides de la home con imagen desktop/mobile, textos, botones, orden y estado desde una sola pantalla.' },
         { match: /^\/admin\/dashboard|^\/admin\/?$/, text: '<strong>Bienvenido/a al panel CLA Soulprint.</strong> Desde acá manejás productos, pedidos, clientes y configuraciones de la tienda.' },
     ];
 

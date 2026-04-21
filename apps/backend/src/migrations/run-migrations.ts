@@ -24,10 +24,23 @@ async function baselineIfNeeded(): Promise<void> {
                 ') ENGINE=InnoDB',
         );
 
-        const [schemaRows] = (await connection.query(
-            "SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'badge'",
-        )) as any;
-        const schemaExists = Number(schemaRows[0].c) > 0;
+        async function tableExists(tableName: string): Promise<boolean> {
+            const [rows] = (await connection.query(
+                'SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
+                [tableName],
+            )) as any;
+            return Number(rows[0].c) > 0;
+        }
+
+        async function columnExists(tableName: string, columnName: string): Promise<boolean> {
+            const [rows] = (await connection.query(
+                'SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?',
+                [tableName, columnName],
+            )) as any;
+            return Number(rows[0].c) > 0;
+        }
+
+        const schemaExists = await tableExists('badge');
         if (!schemaExists) {
             return;
         }
@@ -36,10 +49,18 @@ async function baselineIfNeeded(): Promise<void> {
         if (!fs.existsSync(historyDir)) {
             return;
         }
-        // Only baseline migrations up to this cutoff — anything newer must run normally
-        // against the live DB. Bump this after verifying a new migration ran on all
-        // environments at least once.
-        const BASELINE_CUTOFF_TIMESTAMP = 1777100000000;
+        // Only baseline stable legacy migrations automatically. Newer feature migrations
+        // are marked applied only if their schema already exists, so a missing carousel
+        // table can still be created normally on deploy.
+        const BASELINE_CUTOFF_TIMESTAMP = 1777000001000;
+        const conditionalBaselineChecks: Record<number, () => Promise<boolean>> = {
+            1777100000000: () => tableExists('home_carousel_slide'),
+            1777200000000: async () =>
+                (await tableExists('home_carousel_settings')) &&
+                (await columnExists('home_carousel_slide', 'layout')) &&
+                (await columnExists('home_carousel_slide', 'textTheme')) &&
+                (await columnExists('home_carousel_slide', 'badgeVariant')),
+        };
         const migrationFiles = fs
             .readdirSync(historyDir)
             .filter((f) => /^\d+-.+\.(ts|js)$/.test(f))
@@ -49,7 +70,11 @@ async function baselineIfNeeded(): Promise<void> {
             const match = file.match(/^(\d+)-(.+)\.(ts|js)$/);
             if (!match) continue;
             const timestamp = match[1];
-            if (Number(timestamp) > BASELINE_CUTOFF_TIMESTAMP) {
+            const numericTimestamp = Number(timestamp);
+            const shouldBaseline =
+                numericTimestamp <= BASELINE_CUTOFF_TIMESTAMP ||
+                Boolean(await conditionalBaselineChecks[numericTimestamp]?.());
+            if (!shouldBaseline) {
                 continue;
             }
             const kebab = match[2];
@@ -66,7 +91,7 @@ async function baselineIfNeeded(): Promise<void> {
             if (existing.length === 0) {
                 await connection.query(
                     'INSERT INTO vendure_migrations (`timestamp`, `name`) VALUES (?, ?)',
-                    [Number(timestamp), name],
+                    [numericTimestamp, name],
                 );
                 console.log(`[baseline] Marked migration as applied: ${name}`);
             }

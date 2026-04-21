@@ -15,7 +15,7 @@ export const BadgesUiExtension: AdminUiExtension = {
         },
     ],
     providers: ['providers.ts'],
-    globalStyles: [path.join(__dirname, '../../../static/admin-ui/admin-ui-branding.css')],
+    globalStyles: [path.join(brandingDir, 'admin-ui-branding.css')],
     staticAssets: [
         {
             path: path.join(brandingDir, 'admin-login-hero.svg'),

@@ -1,18 +1,30 @@
 <vdr-page-body>
-    <section class="cla-admin-page cla-admin-page--detail">
+    <section class="cla-admin-page cla-admin-page--detail cla-admin-page--visual">
         <div class="cla-page-head">
             <div>
-                <p class="cla-page-eyebrow">Home · Carrusel</p>
+                <p class="cla-page-eyebrow">CLA Visual · Carrusel</p>
                 <h2>Ajustes globales</h2>
                 <p class="cla-page-copy">
                     Efecto de transición, autoplay y controles visibles en la storefront.
                 </p>
             </div>
             <div class="cla-page-actions">
-                <button class="btn btn-secondary" type="button" (click)="back()">Volver</button>
-                <button class="btn btn-primary" type="button" (click)="save()"
+                <button
+                    class="btn btn-secondary"
+                    type="button"
+                    data-cla-tip="Volver al listado de slides."
+                    (click)="back()"
+                >
+                    Volver
+                </button>
+                <button
+                    class="btn btn-primary cla-button-with-icon"
+                    type="button"
+                    data-cla-tip="Guardar comportamiento global del carrusel."
+                    (click)="save()"
                     [disabled]="form.invalid || saving">
                     <span *ngIf="saving" class="spinner spinner-inline"></span>
+                    <clr-icon *ngIf="!saving" shape="floppy"></clr-icon>
                     Guardar
                 </button>
             </div>
@@ -28,6 +40,9 @@
                     <div class="card cla-admin-card">
                         <div class="card-header">Comportamiento</div>
                         <div class="card-block">
+                            <p class="cla-form-note cla-form-note--top">
+                                Estos ajustes afectan a todos los slides activos de la home.
+                            </p>
                             <form [formGroup]="form" clrForm clrLayout="vertical">
                                 <clr-select-container>
                                     <label>Efecto de transición</label>

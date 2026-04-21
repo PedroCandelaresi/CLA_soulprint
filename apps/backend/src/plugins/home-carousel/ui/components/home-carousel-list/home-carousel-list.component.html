@@ -1,19 +1,29 @@
 <vdr-page-body>
-    <section class="cla-admin-page">
+    <section class="cla-admin-page cla-admin-page--visual">
         <div class="cla-page-head">
             <div>
-                <p class="cla-page-eyebrow">Home</p>
-                <h2>Carrusel · Slides</h2>
+                <p class="cla-page-eyebrow">CLA Visual</p>
+                <h2>Carrusel</h2>
                 <p class="cla-page-copy">
                     Gestiona los slides que se muestran en el carrusel de la home.
                 </p>
             </div>
             <div class="cla-page-actions">
-                <button class="btn btn-secondary" type="button" (click)="navigateToSettings()">
+                <button
+                    class="btn btn-secondary cla-button-with-icon"
+                    type="button"
+                    data-cla-tip="Configurar autoplay, transición, flechas y dots del carrusel."
+                    (click)="navigateToSettings()"
+                >
                     <clr-icon shape="cog"></clr-icon>
                     Ajustes del carrusel
                 </button>
-                <button class="btn btn-primary" type="button" (click)="navigateToCreate()">
+                <button
+                    class="btn btn-primary cla-button-with-icon"
+                    type="button"
+                    data-cla-tip="Crear un slide completo con textos, layout e imágenes."
+                    (click)="navigateToCreate()"
+                >
                     <clr-icon shape="plus"></clr-icon>
                     Nuevo slide
                 </button>
@@ -43,11 +53,13 @@
                             <td>
                                 <div class="cla-inline-actions">
                                     <button class="btn btn-icon btn-sm" type="button"
-                                        [disabled]="i === 0" (click)="move(slide, -1)" aria-label="Subir">
+                                        [disabled]="i === 0" (click)="move(slide, -1)" aria-label="Subir"
+                                        data-cla-tip="Subir este slide una posición.">
                                         <clr-icon shape="arrow" dir="up"></clr-icon>
                                     </button>
                                     <button class="btn btn-icon btn-sm" type="button"
-                                        [disabled]="i === slides.length - 1" (click)="move(slide, 1)" aria-label="Bajar">
+                                        [disabled]="i === slides.length - 1" (click)="move(slide, 1)" aria-label="Bajar"
+                                        data-cla-tip="Bajar este slide una posición.">
                                         <clr-icon shape="arrow" dir="down"></clr-icon>
                                     </button>
                                 </div>
@@ -64,23 +76,26 @@
                             </td>
                             <td><code class="cla-mono-code">{{ slide.layout }}</code></td>
                             <td>
-                                <span *ngIf="slide.badgeText; else noBadge">{{ slide.badgeText }}</span>
+                                <span *ngIf="slide.badgeText; else noBadge" class="cla-status-pill cla-status-pill--gold">{{ slide.badgeText }}</span>
                                 <ng-template #noBadge><span class="cla-total-note">—</span></ng-template>
                             </td>
                             <td>
                                 <clr-toggle-wrapper>
                                     <input type="checkbox" clrToggle [checked]="slide.isActive"
+                                        [attr.aria-label]="slide.isActive ? 'Desactivar slide' : 'Activar slide'"
                                         (change)="toggleActive(slide)" />
                                 </clr-toggle-wrapper>
                             </td>
                             <td>
                                 <div class="cla-inline-actions">
                                     <button class="btn btn-icon btn-sm" type="button"
-                                        (click)="navigateToEdit(slide.id)" aria-label="Editar">
+                                        (click)="navigateToEdit(slide.id)" aria-label="Editar"
+                                        data-cla-tip="Editar textos, layout, estado e imágenes.">
                                         <clr-icon shape="pencil"></clr-icon>
                                     </button>
                                     <button class="btn btn-icon btn-sm btn-danger-outline" type="button"
-                                        (click)="deleteSlide(slide)" aria-label="Eliminar">
+                                        (click)="deleteSlide(slide)" aria-label="Eliminar"
+                                        data-cla-tip="Eliminar este slide definitivamente.">
                                         <clr-icon shape="trash"></clr-icon>
                                     </button>
                                 </div>

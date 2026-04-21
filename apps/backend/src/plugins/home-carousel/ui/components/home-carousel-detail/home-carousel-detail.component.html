@@ -1,18 +1,30 @@
 <vdr-page-body>
-    <section class="cla-admin-page cla-admin-page--detail">
+    <section class="cla-admin-page cla-admin-page--detail cla-admin-page--visual">
         <div class="cla-page-head">
             <div>
                 <p class="cla-page-eyebrow">Home · Carrusel</p>
                 <h2>{{ isNew ? 'Nuevo slide' : 'Editar slide' }}</h2>
                 <p class="cla-page-copy">
-                    Configura textos, layout, badge y assets (desktop/mobile) de este slide.
+                    Configura contenido, layout, publicación e imágenes sin tener que guardar primero.
                 </p>
             </div>
             <div class="cla-page-actions">
-                <button class="btn btn-secondary" type="button" (click)="cancel()">Cancelar</button>
-                <button class="btn btn-primary" type="button" (click)="save()"
+                <button
+                    class="btn btn-secondary"
+                    type="button"
+                    data-cla-tip="Volver al listado sin guardar cambios."
+                    (click)="cancel()"
+                >
+                    Cancelar
+                </button>
+                <button
+                    class="btn btn-primary cla-button-with-icon"
+                    type="button"
+                    data-cla-tip="Guardar todo el slide: textos, layout, estado, orden e imágenes."
+                    (click)="save()"
                     [disabled]="form.invalid || saving">
                     <span *ngIf="saving" class="spinner spinner-inline"></span>
+                    <clr-icon *ngIf="!saving" shape="floppy"></clr-icon>
                     {{ isNew ? 'Crear slide' : 'Guardar cambios' }}
                 </button>
             </div>
@@ -23,12 +35,15 @@
         </div>
 
         <ng-container *ngIf="!loading">
-            <form [formGroup]="form" clrForm clrLayout="vertical">
+            <form [formGroup]="form" clrForm clrLayout="vertical" class="cla-carousel-editor">
                 <div class="clr-row cla-form-grid">
-                    <div class="clr-col-8">
+                    <div class="clr-col-7">
                         <div class="card cla-admin-card">
-                            <div class="card-header">Contenido</div>
+                            <div class="card-header">Contenido editorial</div>
                             <div class="card-block">
+                                <p class="cla-form-note cla-form-note--top">
+                                    Estos textos se guardan desde el primer alta y alimentan la home.
+                                </p>
                                 <clr-input-container>
                                     <label>Título <span class="text-danger">*</span></label>
                                     <input clrInput formControlName="title" style="width:100%" />
@@ -50,7 +65,7 @@
                         </div>
 
                         <div class="card cla-admin-card">
-                            <div class="card-header">Botones</div>
+                            <div class="card-header">Botones del slide</div>
                             <div class="card-block">
                                 <div class="clr-row">
                                     <div class="clr-col-6">
@@ -92,6 +107,9 @@
                         <div class="card cla-admin-card">
                             <div class="card-header">Layout y estilo</div>
                             <div class="card-block">
+                                <p class="cla-form-note cla-form-note--top">
+                                    Elegí cómo convive el texto con la foto en la storefront.
+                                </p>
                                 <clr-select-container>
                                     <label>Layout</label>
                                     <select clrSelect formControlName="layout">
@@ -110,6 +128,9 @@
                         <div class="card cla-admin-card">
                             <div class="card-header">Badge</div>
                             <div class="card-block">
+                                <p class="cla-form-note cla-form-note--top">
+                                    Opcional. Sirve para destacar campañas, lanzamientos o colecciones.
+                                </p>
                                 <clr-input-container>
                                     <label>Texto del badge</label>
                                     <input clrInput formControlName="badgeText" style="width:100%" />
@@ -129,8 +150,49 @@
                         </div>
                     </div>
 
-                    <div class="clr-col-4">
+                    <div class="clr-col-5">
                         <div class="cla-card-stack">
+                            <div class="card cla-admin-card cla-preview-card">
+                                <div class="card-header">Vista previa rápida</div>
+                                <div class="card-block">
+                                    <div
+                                        class="cla-slide-preview"
+                                        [class.cla-slide-preview--reverse]="form.get('layout')?.value === 'split_right'"
+                                        [class.cla-slide-preview--image-only]="form.get('layout')?.value === 'full_image'"
+                                        [class.cla-slide-preview--light]="form.get('textTheme')?.value === 'light'"
+                                    >
+                                        <div
+                                            class="cla-slide-preview__media"
+                                            [style.background-image]="desktopAsset ? 'url(' + desktopAsset.preview + '?preset=medium)' : null"
+                                        >
+                                            <div *ngIf="!desktopAsset" class="cla-slide-preview__empty">
+                                                <clr-icon shape="image" size="32"></clr-icon>
+                                                Seleccioná una imagen desktop
+                                            </div>
+                                        </div>
+                                        <div class="cla-slide-preview__content">
+                                            <span
+                                                *ngIf="previewBadgeText"
+                                                class="cla-slide-preview__badge"
+                                                [style.background-color]="previewBadgeColor"
+                                            >
+                                                {{ previewBadgeText }}
+                                            </span>
+                                            <p class="cla-slide-preview__eyebrow">{{ previewSubtitle }}</p>
+                                            <h3>{{ previewTitle }}</h3>
+                                            <p>{{ previewDescription }}</p>
+                                            <div class="cla-slide-preview__meta">
+                                                <span>{{ previewLayoutLabel }}</span>
+                                                <span>{{ previewThemeLabel }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="cla-form-note">
+                                        La vista previa es orientativa; la storefront ajusta tamaño y recorte final.
+                                    </p>
+                                </div>
+                            </div>
+
                             <div class="card cla-admin-card">
                                 <div class="card-header">Publicación</div>
                                 <div class="card-block">
@@ -159,11 +221,23 @@
                                         <div class="cla-preview-meta">Sin imagen</div>
                                     </div>
                                     <div class="cla-asset-actions">
-                                        <button type="button" class="btn btn-outline btn-sm" (click)="pickAsset('desktop')">
+                                        <button
+                                            type="button"
+                                            class="btn btn-outline btn-sm cla-button-with-icon"
+                                            data-cla-tip="Elegir la imagen principal para escritorio."
+                                            (click)="pickAsset('desktop')"
+                                        >
                                             <clr-icon shape="folder-open"></clr-icon> Seleccionar
                                         </button>
-                                        <button *ngIf="desktopAsset" type="button" class="btn btn-sm btn-link"
-                                            (click)="clearAsset('desktop')">Quitar</button>
+                                        <button
+                                            *ngIf="desktopAsset"
+                                            type="button"
+                                            class="btn btn-sm btn-link"
+                                            data-cla-tip="Quitar la imagen desktop seleccionada."
+                                            (click)="clearAsset('desktop')"
+                                        >
+                                            Quitar
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -180,11 +254,23 @@
                                         <div class="cla-preview-meta">Sin imagen</div>
                                     </div>
                                     <div class="cla-asset-actions">
-                                        <button type="button" class="btn btn-outline btn-sm" (click)="pickAsset('mobile')">
+                                        <button
+                                            type="button"
+                                            class="btn btn-outline btn-sm cla-button-with-icon"
+                                            data-cla-tip="Elegir una imagen alternativa para celulares."
+                                            (click)="pickAsset('mobile')"
+                                        >
                                             <clr-icon shape="folder-open"></clr-icon> Seleccionar
                                         </button>
-                                        <button *ngIf="mobileAsset" type="button" class="btn btn-sm btn-link"
-                                            (click)="clearAsset('mobile')">Quitar</button>
+                                        <button
+                                            *ngIf="mobileAsset"
+                                            type="button"
+                                            class="btn btn-sm btn-link"
+                                            data-cla-tip="Quitar la imagen mobile seleccionada."
+                                            (click)="clearAsset('mobile')"
+                                        >
+                                            Quitar
+                                        </button>
                                     </div>
                                 </div>
                             </div>

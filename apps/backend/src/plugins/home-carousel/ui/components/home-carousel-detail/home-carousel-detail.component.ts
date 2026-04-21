@@ -56,6 +56,16 @@ const UPDATE_SLIDE = gql`
     }
 `;
 
+const GET_NEXT_SORT_ORDER = gql`
+    query GetHomeCarouselNextSortOrder {
+        homeCarouselSlides(options: { sort: { sortOrder: DESC }, take: 1 }) {
+            items {
+                sortOrder
+            }
+        }
+    }
+`;
+
 @Component({
     selector: 'home-carousel-detail',
     templateUrl: './home-carousel-detail.component.html',
@@ -71,7 +81,7 @@ export class HomeCarouselDetailComponent implements OnInit, OnDestroy {
     readonly layoutOptions = [
         { value: 'split_left', label: 'Split · texto izquierda' },
         { value: 'split_right', label: 'Split · texto derecha' },
-        { value: 'full_image', label: 'Imagen completa' },
+        { value: 'full_image', label: 'Foto completa' },
     ];
     readonly textThemeOptions = [
         { value: 'dark', label: 'Oscuro' },
@@ -116,7 +126,7 @@ export class HomeCarouselDetailComponent implements OnInit, OnDestroy {
             layout: ['split_left'],
             textTheme: ['dark'],
             badgeText: [''],
-            badgeColor: [''],
+            badgeColor: ['#c7a46b'],
             badgeVariant: ['solid'],
         });
 
@@ -124,6 +134,8 @@ export class HomeCarouselDetailComponent implements OnInit, OnDestroy {
         this.isNew = !this.slideId;
         if (!this.isNew && this.slideId) {
             this.load(this.slideId);
+        } else {
+            this.loadCreateDefaults();
         }
     }
 
@@ -161,7 +173,7 @@ export class HomeCarouselDetailComponent implements OnInit, OnDestroy {
                         layout: slide.layout,
                         textTheme: slide.textTheme,
                         badgeText: slide.badgeText ?? '',
-                        badgeColor: slide.badgeColor ?? '',
+                        badgeColor: slide.badgeColor ?? '#c7a46b',
                         badgeVariant: slide.badgeVariant,
                     });
                     this.desktopAsset = slide.desktopAsset ?? null;
@@ -196,10 +208,15 @@ export class HomeCarouselDetailComponent implements OnInit, OnDestroy {
     }
 
     save(): void {
-        if (this.form.invalid) return;
+        if (this.saving) return;
+        if (this.form.invalid) {
+            this.form.markAllAsTouched();
+            this.notificationService.error('Revisá los campos obligatorios antes de guardar.');
+            return;
+        }
         const v = this.form.getRawValue();
         const base = {
-            title: v.title,
+            title: String(v.title).trim(),
             subtitle: v.subtitle || null,
             description: v.description || null,
             primaryButtonText: v.primaryButtonText || null,
@@ -248,5 +265,55 @@ export class HomeCarouselDetailComponent implements OnInit, OnDestroy {
 
     cancel(): void {
         this.router.navigate(['../'], { relativeTo: this.route });
+    }
+
+    get previewTitle(): string {
+        return this.form?.get('title')?.value || 'Título del slide';
+    }
+
+    get previewSubtitle(): string {
+        return this.form?.get('subtitle')?.value || 'CLA Soulprint';
+    }
+
+    get previewDescription(): string {
+        return this.form?.get('description')?.value || 'Configurá el contenido y la imagen antes de publicar.';
+    }
+
+    get previewBadgeText(): string {
+        return this.form?.get('badgeText')?.value || '';
+    }
+
+    get previewBadgeColor(): string {
+        return this.form?.get('badgeColor')?.value || '#c7a46b';
+    }
+
+    get previewLayoutLabel(): string {
+        const value = this.form?.get('layout')?.value;
+        return this.layoutOptions.find((opt) => opt.value === value)?.label ?? 'Split · texto izquierda';
+    }
+
+    get previewThemeLabel(): string {
+        const value = this.form?.get('textTheme')?.value;
+        return this.textThemeOptions.find((opt) => opt.value === value)?.label ?? 'Oscuro';
+    }
+
+    private loadCreateDefaults(): void {
+        this.dataService
+            .query(GET_NEXT_SORT_ORDER)
+            .mapSingle((data: any) => data.homeCarouselSlides?.items?.[0]?.sortOrder)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (lastSortOrder: number | null | undefined) => {
+                    const sortOrderControl = this.form.get('sortOrder');
+                    if (!sortOrderControl || sortOrderControl.dirty) {
+                        return;
+                    }
+                    const nextSortOrder =
+                        typeof lastSortOrder === 'number' && Number.isFinite(lastSortOrder)
+                            ? lastSortOrder + 1
+                            : 0;
+                    sortOrderControl.setValue(nextSortOrder);
+                },
+            });
     }
 }

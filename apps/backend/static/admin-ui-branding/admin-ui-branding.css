@@ -2,34 +2,37 @@
    CLA Soulprint — Admin UI branding overlay
    Paleta (idéntica al storefront):
      --cla-green     #004825   verde profundo, superficie principal oscura
-     --cla-green-dk  #022c18   sombras / fondos dramáticos
-     --cla-green-lt  #0b5a31   hover verde más luminoso
-     --cla-cream     #f4ead5   superficies claras, texto sobre verde
-     --cla-sand      #e8d8b3   bordes suaves, divisores
+     --cla-green-dk  #062616   sombras / fondos dramáticos
+     --cla-green-lt  #0a5a31   hover verde más luminoso
+     --cla-cream     #f5ebd9   superficies claras, texto sobre verde
+     --cla-sand      #e2cfaa   bordes suaves, divisores
      --cla-gold      #c7a46b   acentos, links, botones secundarios
-     --cla-mist      #f9f5ed   fondo general del admin
+     --cla-mist      #f7f1e8   fondo general del admin
      --cla-ink       #173428   texto principal sobre claro
    ========================================================================= */
 
 :root {
     --cla-green: #004825;
-    --cla-green-dk: #022c18;
-    --cla-green-lt: #0b5a31;
-    --cla-cream: #f4ead5;
-    --cla-sand: #e8d8b3;
+    --cla-green-dk: #062616;
+    --cla-green-deep: #03190f;
+    --cla-green-lt: #0a5a31;
+    --cla-cream: #f5ebd9;
+    --cla-cream-strong: #f0e1c3;
+    --cla-sand: #e2cfaa;
     --cla-gold: #c7a46b;
-    --cla-gold-soft: rgba(199, 164, 107, 0.32);
-    --cla-mist: #f9f5ed;
+    --cla-gold-soft: #dcc297;
+    --cla-mist: #f7f1e8;
+    --cla-paper: #fffaf2;
     --cla-ink: #173428;
     --cla-ink-soft: #2c4c3c;
-    --cla-muted: #6b7f72;
+    --cla-muted: #617268;
     --cla-border: rgba(0, 72, 37, 0.14);
     --cla-border-strong: rgba(0, 72, 37, 0.24);
-    --cla-shadow-sm: 0 2px 6px rgba(2, 44, 24, 0.08);
-    --cla-shadow-md: 0 12px 30px rgba(2, 44, 24, 0.12);
-    --cla-shadow-lg: 0 28px 64px rgba(2, 44, 24, 0.18);
-    --cla-radius: 12px;
-    --cla-radius-sm: 8px;
+    --cla-shadow-sm: 0 2px 6px rgba(6, 38, 22, 0.08);
+    --cla-shadow-md: 0 12px 30px rgba(6, 38, 22, 0.12);
+    --cla-shadow-lg: 0 28px 64px rgba(6, 38, 22, 0.18);
+    --cla-radius: 10px;
+    --cla-radius-sm: 6px;
 
     /* Override de variables Clarity en todo el documento */
     --clr-color-action-600: var(--cla-green);
@@ -46,7 +49,7 @@
 html, body {
     background: var(--cla-mist);
     color: var(--cla-ink);
-    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -54,9 +57,9 @@ html, body {
 
 body {
     background:
-        radial-gradient(circle at top left, rgba(244, 234, 213, 0.55), transparent 34%),
+        radial-gradient(circle at top left, rgba(245, 235, 217, 0.55), transparent 34%),
         radial-gradient(circle at bottom right, rgba(199, 164, 107, 0.12), transparent 28%),
-        linear-gradient(180deg, #fffdf8 0%, var(--cla-mist) 100%) !important;
+        linear-gradient(180deg, var(--cla-paper) 0%, var(--cla-mist) 100%) !important;
 }
 
 h1, h2, h3, h4, .page-title {
@@ -68,39 +71,44 @@ h1, h2, h3, h4, .page-title {
 /* ======================================================================
    NAV IZQUIERDO — verde profundo CLA
    ====================================================================== */
-.left-nav,
-vdr-main-nav,
-.sidenav,
-clr-vertical-nav {
+.left-nav {
     --clr-vertical-nav-width: 16rem;
     min-width: 16rem !important;
     width: 16rem !important;
+    flex: 0 0 16rem;
+}
+
+.left-nav clr-vertical-nav,
+.left-nav .clr-vertical-nav,
+.left-nav .sidenav {
+    min-width: 0 !important;
+    width: 100% !important;
 }
 
 .left-nav {
-    background: linear-gradient(180deg, var(--cla-green-dk) 0%, var(--cla-green) 55%, var(--cla-green-lt) 100%);
+    background: linear-gradient(180deg, var(--cla-green-deep) 0%, var(--cla-green-dk) 52%, var(--cla-green) 100%);
     color: var(--cla-cream);
-    border-right: 1px solid rgba(199, 164, 107, 0.12);
+    border-right: 1px solid rgba(226, 207, 170, 0.16);
     overflow: visible !important;
 
     --clr-vertical-nav-bg-color:                     transparent;
-    --clr-vertical-nav-item-color:                   rgba(244, 234, 213, 0.72);
+    --clr-vertical-nav-item-color:                   rgba(245, 235, 217, 0.78);
     --clr-vertical-nav-item-active-color:            #ffffff;
-    --clr-vertical-nav-selected-bg-color:            rgba(199, 164, 107, 0.18);
-    --clr-vertical-nav-hover-bg-color:               rgba(244, 234, 213, 0.08);
-    --clr-vertical-nav-active-bg-color:              rgba(199, 164, 107, 0.18);
+    --clr-vertical-nav-selected-bg-color:            rgba(199, 164, 107, 0.20);
+    --clr-vertical-nav-hover-bg-color:               rgba(245, 235, 217, 0.10);
+    --clr-vertical-nav-active-bg-color:              rgba(199, 164, 107, 0.20);
     --clr-vertical-nav-active-color:                 #ffffff;
-    --clr-vertical-nav-icon-color:                   rgba(244, 234, 213, 0.62);
+    --clr-vertical-nav-icon-color:                   rgba(245, 235, 217, 0.64);
     --clr-vertical-nav-icon-active-color:            var(--cla-gold);
-    --clr-vertical-nav-group-title-color:            rgba(244, 234, 213, 0.38);
-    --clr-vertical-nav-trigger-divider-border-color: rgba(244, 234, 213, 0.10);
-    --clr-vertical-nav-toggle-icon-color:            rgba(244, 234, 213, 0.48);
+    --clr-vertical-nav-group-title-color:            rgba(220, 194, 151, 0.78);
+    --clr-vertical-nav-trigger-divider-border-color: rgba(245, 235, 217, 0.10);
+    --clr-vertical-nav-toggle-icon-color:            rgba(245, 235, 217, 0.48);
     --clr-vertical-nav-toggle-icon-hover-color:      var(--cla-gold);
-    --clr-nav-link-color:                            #f5d78f;
+    --clr-nav-link-color:                            rgba(245, 235, 217, 0.86);
     --clr-nav-link-active-color:                     #ffffff;
     --clr-nav-box-shadow-color:                      transparent;
-    --clr-nav-active-bg-color:                       rgba(199, 164, 107, 0.18);
-    --clr-nav-selected-hover-background-color:       rgba(199, 164, 107, 0.24);
+    --clr-nav-active-bg-color:                       rgba(199, 164, 107, 0.20);
+    --clr-nav-selected-hover-background-color:       rgba(199, 164, 107, 0.26);
 }
 
 .left-nav .clr-vertical-nav,
@@ -113,7 +121,6 @@ clr-vertical-nav {
 }
 
 .left-nav .nav-link,
-.left-nav .nav-group-content,
 .left-nav a.nav-link,
 .left-nav .nav-group-trigger {
     display: flex !important;
@@ -123,7 +130,7 @@ clr-vertical-nav {
     margin: 0.15rem 0.55rem !important;
     padding: 0.6rem 0.85rem !important;
     border-radius: 10px;
-    color: #c8ecd6 !important;
+    color: rgba(245, 235, 217, 0.86) !important;
     background-color: transparent !important;
     box-shadow: none !important;
     font-weight: 600 !important;
@@ -138,7 +145,7 @@ clr-vertical-nav {
 }
 
 .left-nav .nav-link .nav-text,
-.left-nav .nav-group-content .nav-text,
+.left-nav .nav-group-trigger .nav-text,
 .left-nav .nav-text {
     color: inherit !important;
     flex: 1 1 auto;
@@ -149,9 +156,15 @@ clr-vertical-nav {
 /* full-row hitbox: the <a> is flex, nav-text fills remaining space so click
    on blank area after the label still lands on the anchor */
 .left-nav .nav-link .nav-text,
-.left-nav .nav-group-content .nav-text {
+.left-nav .nav-group-trigger .nav-text {
     flex: 1 1 auto;
     min-width: 0;
+}
+
+.left-nav .nav-group-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: transparent !important;
 }
 
 .left-nav vdr-nav-menu-item,
@@ -160,39 +173,42 @@ clr-vertical-nav {
 }
 
 .left-nav .nav-link:hover,
-.left-nav .nav-group-content:hover {
-    background-color: rgba(244, 234, 213, 0.10) !important;
+.left-nav .nav-group-trigger:hover {
+    background-color: rgba(245, 235, 217, 0.10) !important;
     color: #ffffff !important;
 }
 
 .left-nav .nav-link.active,
 .left-nav .nav-link.is-active,
 .left-nav .nav-link[aria-current="page"],
-.left-nav .nav-group-content.active,
+.left-nav .nav-group-trigger.active,
+.left-nav .nav-group-trigger.is-active,
 .left-nav .active > .nav-link,
 .left-nav a.active,
 .left-nav a.is-active {
-    background-color: rgba(199, 164, 107, 0.26) !important;
+    background-color: rgba(199, 164, 107, 0.24) !important;
     color: #ffffff !important;
     font-weight: 700 !important;
-    box-shadow: inset 0 0 0 1px rgba(199, 164, 107, 0.35) !important;
+    box-shadow: inset 0 0 0 1px rgba(226, 207, 170, 0.32) !important;
 }
 
 .left-nav .nav-link.active .nav-text,
 .left-nav a.active .nav-text,
-.left-nav .nav-link.is-active .nav-text {
+.left-nav .nav-link.is-active .nav-text,
+.left-nav .nav-group-trigger.active .nav-text,
+.left-nav .nav-group-trigger.is-active .nav-text {
     color: #ffffff !important;
 }
 
 .left-nav cds-icon,
 .left-nav clr-icon {
-    color: rgba(244, 234, 213, 0.60) !important;
+    color: rgba(245, 235, 217, 0.62) !important;
 }
 
 .left-nav .nav-link.active cds-icon,
 .left-nav .nav-link.active clr-icon,
-.left-nav .nav-group-content.active cds-icon,
-.left-nav .nav-group-content.active clr-icon {
+.left-nav .nav-group-trigger.active cds-icon,
+.left-nav .nav-group-trigger.active clr-icon {
     color: var(--cla-gold) !important;
 }
 
@@ -201,7 +217,7 @@ clr-vertical-nav {
 .left-nav .clr-vertical-nav-group-title,
 .left-nav [class*="nav-group-title"],
 .left-nav [class*="group-title"] {
-    color: #ffd98a !important;
+    color: var(--cla-gold-soft) !important;
     opacity: 1 !important;
     font-size: 0.8rem !important;
     letter-spacing: 0.14em;
@@ -210,7 +226,7 @@ clr-vertical-nav {
 }
 
 .left-nav hr {
-    border-color: rgba(244, 234, 213, 0.08);
+    border-color: rgba(245, 235, 217, 0.08);
 }
 
 /* Branding / logo arriba del nav */
@@ -418,16 +434,21 @@ tbody tr:hover {
 /* ======================================================================
    TABS
    ====================================================================== */
-.nav .nav-link,
-.tabs .tab-link {
+.content-area .nav .nav-link,
+.content-area .tabs .tab-link,
+.content-container .nav .nav-link,
+.content-container .tabs .tab-link {
     color: var(--cla-muted);
     border-bottom: 2px solid transparent;
     transition: color 140ms ease, border-color 140ms ease;
 }
 
-.nav .nav-link.active,
-.tabs .tab-link.active,
-.nav .nav-link:hover {
+.content-area .nav .nav-link.active,
+.content-area .tabs .tab-link.active,
+.content-area .nav .nav-link:hover,
+.content-container .nav .nav-link.active,
+.content-container .tabs .tab-link.active,
+.content-container .nav .nav-link:hover {
     color: var(--cla-green-dk) !important;
     border-bottom-color: var(--cla-gold);
 }
@@ -437,7 +458,7 @@ tbody tr:hover {
    ====================================================================== */
 .label,
 .badge {
-    border-radius: 999px;
+    border-radius: 6px;
     padding: 2px 10px;
     font-weight: 500;
     letter-spacing: 0.01em;
@@ -1048,7 +1069,7 @@ table tbody tr:hover td,
 .modal-content,
 .dropdown-menu,
 .popover-content {
-    border-radius: 20px !important;
+    border-radius: var(--cla-radius) !important;
     border: 1px solid var(--cla-border) !important;
     box-shadow: 0 28px 60px rgba(2, 44, 24, 0.18) !important;
 }
@@ -1057,8 +1078,10 @@ table tbody tr:hover td,
     backdrop-filter: blur(6px);
 }
 
-.nav .nav-link,
-.tabs .tab-link {
+.content-area .nav .nav-link,
+.content-area .tabs .tab-link,
+.content-container .nav .nav-link,
+.content-container .tabs .tab-link {
     padding-bottom: 0.8rem;
 }
 
@@ -1072,6 +1095,10 @@ table tbody tr:hover td,
     gap: 1.25rem;
 }
 
+.cla-admin-page--visual {
+    max-width: 1440px;
+}
+
 .cla-page-head {
     display: flex;
     align-items: flex-start;
@@ -1080,7 +1107,7 @@ table tbody tr:hover td,
     flex-wrap: wrap;
     padding: 1.35rem 1.5rem;
     border: 1px solid var(--cla-border);
-    border-radius: 24px;
+    border-radius: var(--cla-radius);
     background:
         radial-gradient(circle at top right, rgba(199, 164, 107, 0.18), transparent 32%),
         linear-gradient(135deg, rgba(255, 253, 248, 0.96), rgba(247, 240, 226, 0.9));
@@ -1113,6 +1140,7 @@ table tbody tr:hover td,
     display: flex;
     gap: 0.65rem;
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .cla-button-with-icon clr-icon,
@@ -1127,7 +1155,7 @@ table tbody tr:hover td,
 
 .cla-table-shell {
     border: 1px solid var(--cla-border);
-    border-radius: 24px;
+    border-radius: var(--cla-radius);
     overflow: hidden;
     background: rgba(255, 255, 255, 0.96);
     box-shadow: 0 16px 32px rgba(2, 44, 24, 0.08);
@@ -1142,7 +1170,7 @@ table tbody tr:hover td,
     width: 52px;
     height: 52px;
     object-fit: contain;
-    border-radius: 14px;
+    border-radius: 8px;
     background: linear-gradient(180deg, rgba(249, 245, 237, 0.92), #ffffff);
     border: 1px solid var(--cla-border);
     padding: 0.2rem;
@@ -1152,7 +1180,7 @@ table tbody tr:hover td,
     display: inline-block;
     min-width: 52px;
     height: 28px;
-    border-radius: 999px;
+    border-radius: 8px;
     vertical-align: middle;
     border: 1px solid rgba(0, 72, 37, 0.08);
 }
@@ -1186,7 +1214,7 @@ table tbody tr:hover td,
 .cla-mono-code {
     font-size: 0.8rem;
     padding: 0.2rem 0.45rem;
-    border-radius: 999px;
+    border-radius: 6px;
     background: rgba(23, 52, 40, 0.06);
     color: var(--cla-green-dk);
 }
@@ -1216,7 +1244,7 @@ table tbody tr:hover td,
     place-items: center;
     margin-bottom: 1rem;
     min-height: 172px;
-    border-radius: 18px;
+    border-radius: var(--cla-radius);
     border: 1px dashed rgba(0, 72, 37, 0.16);
     background:
         radial-gradient(circle at top, rgba(199, 164, 107, 0.12), transparent 32%),
@@ -1228,7 +1256,7 @@ table tbody tr:hover td,
     max-width: 100%;
     max-height: 128px;
     object-fit: contain;
-    border-radius: 12px;
+    border-radius: 8px;
     background: rgba(255, 255, 255, 0.92);
     padding: 0.5rem;
     border: 1px solid var(--cla-border);
@@ -1257,6 +1285,11 @@ table tbody tr:hover td,
     line-height: 1.5;
 }
 
+.cla-form-note--top {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
 .cla-color-editor {
     display: grid;
     gap: 1rem;
@@ -1266,7 +1299,7 @@ table tbody tr:hover td,
     display: grid;
     gap: 0.5rem;
     padding: 1rem;
-    border-radius: 18px;
+    border-radius: var(--cla-radius);
     border: 1px solid var(--cla-border);
     background: linear-gradient(180deg, rgba(249, 245, 237, 0.88), rgba(255, 255, 255, 0.98));
 }
@@ -1290,7 +1323,7 @@ table tbody tr:hover td,
     width: 42px;
     height: 42px;
     padding: 0;
-    border-radius: 12px;
+    border-radius: 8px;
     border: 1px solid var(--cla-border-strong);
     background: #ffffff;
     cursor: pointer;
@@ -1299,7 +1332,7 @@ table tbody tr:hover td,
 .cla-color-input--compact {
     width: 32px !important;
     height: 32px !important;
-    border-radius: 10px !important;
+    border-radius: 6px !important;
 }
 
 .cla-color-value {
@@ -1320,11 +1353,160 @@ table tbody tr:hover td,
     justify-content: center;
     min-height: 34px;
     padding: 0.35rem 0.9rem;
-    border-radius: 999px;
+    border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 700;
     letter-spacing: 0.02em;
     box-shadow: 0 8px 18px rgba(2, 44, 24, 0.12);
+}
+
+.cla-status-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.55rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--cla-border);
+}
+
+.cla-status-pill--gold {
+    color: #6f4c16;
+    background: rgba(199, 164, 107, 0.18);
+    border-color: rgba(199, 164, 107, 0.32);
+}
+
+.cla-preview-card .card-block {
+    padding: 1rem;
+}
+
+.cla-slide-preview {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    min-height: 260px;
+    overflow: hidden;
+    border-radius: var(--cla-radius);
+    border: 1px solid rgba(0, 72, 37, 0.16);
+    background: var(--cla-green-dk);
+    box-shadow: inset 0 1px 0 rgba(245, 235, 217, 0.08);
+}
+
+.cla-slide-preview--reverse {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+}
+
+.cla-slide-preview--reverse .cla-slide-preview__media {
+    order: 2;
+}
+
+.cla-slide-preview--image-only {
+    grid-template-columns: 1fr;
+}
+
+.cla-slide-preview--image-only .cla-slide-preview__content {
+    min-height: 190px;
+    background:
+        linear-gradient(90deg, rgba(3, 25, 15, 0.86), rgba(3, 25, 15, 0.34)),
+        transparent;
+}
+
+.cla-slide-preview__media {
+    min-height: 220px;
+    background:
+        radial-gradient(circle at 40% 40%, rgba(199, 164, 107, 0.16), transparent 38%),
+        rgba(245, 235, 217, 0.08);
+    background-size: cover;
+    background-position: center;
+    display: grid;
+    place-items: center;
+}
+
+.cla-slide-preview__empty {
+    display: grid;
+    place-items: center;
+    gap: 0.45rem;
+    color: rgba(245, 235, 217, 0.74);
+    font-size: 0.84rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+.cla-slide-preview__empty clr-icon {
+    color: rgba(245, 235, 217, 0.48) !important;
+}
+
+.cla-slide-preview__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.15rem;
+    color: var(--cla-cream);
+    background:
+        radial-gradient(circle at top right, rgba(199, 164, 107, 0.16), transparent 36%),
+        linear-gradient(180deg, rgba(3, 25, 15, 0.96), rgba(0, 72, 37, 0.92));
+}
+
+.cla-slide-preview--light .cla-slide-preview__content {
+    color: var(--cla-green-dk);
+    background:
+        radial-gradient(circle at top right, rgba(199, 164, 107, 0.18), transparent 36%),
+        linear-gradient(180deg, rgba(255, 250, 242, 0.96), rgba(245, 235, 217, 0.94));
+}
+
+.cla-slide-preview__badge {
+    align-self: flex-start;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.cla-slide-preview__eyebrow,
+.cla-slide-preview__content p,
+.cla-slide-preview__content h3 {
+    margin: 0;
+}
+
+.cla-slide-preview__eyebrow {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.72;
+}
+
+.cla-slide-preview__content h3 {
+    font-size: clamp(1.15rem, 2vw, 1.65rem);
+    line-height: 1.15;
+    color: inherit !important;
+}
+
+.cla-slide-preview__content p:not(.cla-slide-preview__eyebrow) {
+    color: currentColor;
+    opacity: 0.78;
+    line-height: 1.45;
+}
+
+.cla-slide-preview__meta {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.35rem;
+}
+
+.cla-slide-preview__meta span {
+    padding: 0.18rem 0.42rem;
+    border-radius: 5px;
+    border: 1px solid currentColor;
+    color: currentColor;
+    opacity: 0.58;
+    font-size: 0.68rem;
 }
 
 /* ======================================================================
@@ -1388,6 +1570,78 @@ body.cla-tooltips-ready [data-cla-tip]::after {
     white-space: normal;
 }
 
+/* ======================================================================
+   SIDEBAR CASCADE GUARD
+   Mantiene el lateral CLA aunque Clarity reutilice clases .nav/.nav-link
+   para tabs, grupos o estados activos renderizados después por Angular.
+   ====================================================================== */
+.left-nav,
+.left-nav .clr-vertical-nav,
+.left-nav clr-vertical-nav,
+.left-nav .nav-content,
+.left-nav .nav-group,
+.left-nav .nav-group-content {
+    background: transparent !important;
+    border-bottom: 0 !important;
+}
+
+.left-nav {
+    background:
+        radial-gradient(circle at 20% 8%, rgba(199, 164, 107, 0.14), transparent 32%),
+        linear-gradient(180deg, var(--cla-green-deep) 0%, var(--cla-green-dk) 52%, var(--cla-green) 100%) !important;
+}
+
+.left-nav .nav-link,
+.left-nav a.nav-link,
+.left-nav .nav-group-trigger {
+    color: rgba(245, 235, 217, 0.86) !important;
+    border-bottom: 0 !important;
+    padding: 0.6rem 0.85rem !important;
+}
+
+.left-nav .nav-link:hover,
+.left-nav a.nav-link:hover,
+.left-nav .nav-group-trigger:hover {
+    background: rgba(245, 235, 217, 0.10) !important;
+    color: #ffffff !important;
+}
+
+.left-nav .nav-link.active,
+.left-nav .nav-link.is-active,
+.left-nav .nav-link[aria-current="page"],
+.left-nav a.active,
+.left-nav a.is-active,
+.left-nav .active > .nav-link,
+.left-nav .nav-group-trigger.active,
+.left-nav .nav-group-trigger.is-active {
+    background: rgba(199, 164, 107, 0.24) !important;
+    color: #ffffff !important;
+    border-bottom: 0 !important;
+    box-shadow: inset 0 0 0 1px rgba(226, 207, 170, 0.32) !important;
+}
+
+.left-nav .nav-text,
+.left-nav .nav-link .nav-text,
+.left-nav .nav-group-trigger .nav-text {
+    color: inherit !important;
+}
+
+.left-nav cds-icon,
+.left-nav clr-icon {
+    color: rgba(245, 235, 217, 0.62) !important;
+}
+
+.left-nav .nav-link.active cds-icon,
+.left-nav .nav-link.active clr-icon,
+.left-nav .nav-link.is-active cds-icon,
+.left-nav .nav-link.is-active clr-icon,
+.left-nav .nav-group-trigger.active cds-icon,
+.left-nav .nav-group-trigger.active clr-icon,
+.left-nav .nav-group-trigger.is-active cds-icon,
+.left-nav .nav-group-trigger.is-active clr-icon {
+    color: var(--cla-gold-soft) !important;
+}
+
 @media (max-width: 1024px) {
     .content-area {
         padding: 1rem 1rem 1.5rem;
@@ -1401,7 +1655,7 @@ body.cla-tooltips-ready [data-cla-tip]::after {
 @media (max-width: 767px) {
     .cla-page-head {
         padding: 1.15rem 1rem;
-        border-radius: 20px;
+        border-radius: var(--cla-radius);
     }
 
     .cla-page-head h2 {
@@ -1409,7 +1663,16 @@ body.cla-tooltips-ready [data-cla-tip]::after {
     }
 
     .cla-table-shell {
-        border-radius: 20px;
+        border-radius: var(--cla-radius);
+    }
+
+    .cla-slide-preview,
+    .cla-slide-preview--reverse {
+        grid-template-columns: 1fr;
+    }
+
+    .cla-slide-preview--reverse .cla-slide-preview__media {
+        order: 0;
     }
 
     .login-wrapper .login-wrapper-inner {
