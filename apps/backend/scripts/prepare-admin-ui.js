@@ -9,6 +9,7 @@ const outputPath = path.join(backendRoot, 'static/admin-ui');
 const buildWorkspacePath = path.join(backendRoot, '.admin-ui-build');
 const brandingDir = path.join(backendRoot, 'static/admin-ui-branding');
 const badgesExtensionPath = path.join(backendRoot, 'src/plugins/badges/ui');
+const homeCarouselExtensionPath = path.join(backendRoot, 'src/plugins/home-carousel/ui');
 const personalizationExtensionPath = path.join(
     backendRoot,
     'src/plugins/logistics/personalization/admin-ui',
@@ -56,6 +57,19 @@ const extensions = [
                 rename: 'assets/marca-ejemplo.svg',
             },
         ],
+    },
+    {
+        id: 'home-carousel-ui-extension',
+        extensionPath: homeCarouselExtensionPath,
+        ngModules: [
+            {
+                type: 'lazy',
+                route: 'home-carousel',
+                ngModuleFileName: 'home-carousel.module.ts',
+                ngModuleName: 'HomeCarouselModule',
+            },
+        ],
+        providers: ['providers.ts'],
     },
     {
         id: 'personalization-ui-extension',

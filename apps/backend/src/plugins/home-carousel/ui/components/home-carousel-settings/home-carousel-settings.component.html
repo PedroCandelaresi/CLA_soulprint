@@ -1,0 +1,75 @@
+<vdr-page-body>
+    <section class="cla-admin-page cla-admin-page--detail">
+        <div class="cla-page-head">
+            <div>
+                <p class="cla-page-eyebrow">Home · Carrusel</p>
+                <h2>Ajustes globales</h2>
+                <p class="cla-page-copy">
+                    Efecto de transición, autoplay y controles visibles en la storefront.
+                </p>
+            </div>
+            <div class="cla-page-actions">
+                <button class="btn btn-secondary" type="button" (click)="back()">Volver</button>
+                <button class="btn btn-primary" type="button" (click)="save()"
+                    [disabled]="form.invalid || saving">
+                    <span *ngIf="saving" class="spinner spinner-inline"></span>
+                    Guardar
+                </button>
+            </div>
+        </div>
+
+        <div *ngIf="loading" class="cla-loading-state">
+            <span class="spinner spinner-md"></span>
+        </div>
+
+        <ng-container *ngIf="!loading">
+            <div class="clr-row cla-form-grid">
+                <div class="clr-col-8">
+                    <div class="card cla-admin-card">
+                        <div class="card-header">Comportamiento</div>
+                        <div class="card-block">
+                            <form [formGroup]="form" clrForm clrLayout="vertical">
+                                <clr-select-container>
+                                    <label>Efecto de transición</label>
+                                    <select clrSelect formControlName="transitionEffect">
+                                        <option *ngFor="let opt of transitionOptions" [value]="opt.value">
+                                            {{ opt.label }}
+                                        </option>
+                                    </select>
+                                </clr-select-container>
+
+                                <div class="clr-form-control">
+                                    <clr-toggle-wrapper>
+                                        <input type="checkbox" clrToggle formControlName="autoplayEnabled" id="autoplayEnabled" />
+                                        <label for="autoplayEnabled">Autoplay</label>
+                                    </clr-toggle-wrapper>
+                                </div>
+
+                                <clr-input-container>
+                                    <label>Intervalo autoplay (ms)</label>
+                                    <input clrInput type="number" formControlName="autoplayInterval"
+                                        min="1000" step="250" style="width:160px" />
+                                    <clr-control-helper>Por defecto: 5500 ms.</clr-control-helper>
+                                </clr-input-container>
+
+                                <div class="clr-form-control">
+                                    <clr-toggle-wrapper>
+                                        <input type="checkbox" clrToggle formControlName="showArrows" id="showArrows" />
+                                        <label for="showArrows">Mostrar flechas</label>
+                                    </clr-toggle-wrapper>
+                                </div>
+
+                                <div class="clr-form-control">
+                                    <clr-toggle-wrapper>
+                                        <input type="checkbox" clrToggle formControlName="showDots" id="showDots" />
+                                        <label for="showDots">Mostrar dots</label>
+                                    </clr-toggle-wrapper>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+    </section>
+</vdr-page-body>

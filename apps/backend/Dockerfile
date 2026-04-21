@@ -37,6 +37,7 @@ COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/apps/backend/package.json ./apps/backend/
 COPY --from=builder /usr/src/app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder /usr/src/app/apps/backend/src/plugins/badges/ui ./apps/backend/dist/plugins/badges/ui
+COPY --from=builder /usr/src/app/apps/backend/src/plugins/home-carousel/ui ./apps/backend/dist/plugins/home-carousel/ui
 COPY --from=builder /usr/src/app/apps/backend/node_modules ./apps/backend/node_modules
 COPY --from=builder /usr/src/app/apps/backend/static ./apps/backend/static
 COPY --from=builder /usr/src/app/apps/backend/email-templates ./apps/backend/email-templates

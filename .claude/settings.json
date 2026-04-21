@@ -4,7 +4,9 @@
       "Bash(pnpm --filter backend run prepare:admin-ui)",
       "Bash(pnpm --filter backend run build)",
       "Bash(echo \"EXIT=$?\")",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(ln -s ../admin-ui-branding/admin-ui-branding.css /home/candelaresi/Proyectos/CLA_soulprint/apps/backend/static/admin-ui/admin-ui-branding.css)",
+      "Bash(pnpm run *)"
     ]
   }
 }

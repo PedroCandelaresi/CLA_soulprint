@@ -1,0 +1,197 @@
+<vdr-page-body>
+    <section class="cla-admin-page cla-admin-page--detail">
+        <div class="cla-page-head">
+            <div>
+                <p class="cla-page-eyebrow">Home · Carrusel</p>
+                <h2>{{ isNew ? 'Nuevo slide' : 'Editar slide' }}</h2>
+                <p class="cla-page-copy">
+                    Configura textos, layout, badge y assets (desktop/mobile) de este slide.
+                </p>
+            </div>
+            <div class="cla-page-actions">
+                <button class="btn btn-secondary" type="button" (click)="cancel()">Cancelar</button>
+                <button class="btn btn-primary" type="button" (click)="save()"
+                    [disabled]="form.invalid || saving">
+                    <span *ngIf="saving" class="spinner spinner-inline"></span>
+                    {{ isNew ? 'Crear slide' : 'Guardar cambios' }}
+                </button>
+            </div>
+        </div>
+
+        <div *ngIf="loading" class="cla-loading-state">
+            <span class="spinner spinner-md"></span>
+        </div>
+
+        <ng-container *ngIf="!loading">
+            <form [formGroup]="form" clrForm clrLayout="vertical">
+                <div class="clr-row cla-form-grid">
+                    <div class="clr-col-8">
+                        <div class="card cla-admin-card">
+                            <div class="card-header">Contenido</div>
+                            <div class="card-block">
+                                <clr-input-container>
+                                    <label>Título <span class="text-danger">*</span></label>
+                                    <input clrInput formControlName="title" style="width:100%" />
+                                    <clr-control-error *clrIfError="'required'">Obligatorio</clr-control-error>
+                                </clr-input-container>
+                                <clr-input-container>
+                                    <label>Subtítulo</label>
+                                    <input clrInput formControlName="subtitle" style="width:100%" />
+                                </clr-input-container>
+                                <clr-textarea-container>
+                                    <label>Descripción</label>
+                                    <textarea clrTextarea formControlName="description" rows="3" style="width:100%"></textarea>
+                                </clr-textarea-container>
+                                <clr-input-container>
+                                    <label>Alt text (accesibilidad)</label>
+                                    <input clrInput formControlName="altText" style="width:100%" />
+                                </clr-input-container>
+                            </div>
+                        </div>
+
+                        <div class="card cla-admin-card">
+                            <div class="card-header">Botones</div>
+                            <div class="card-block">
+                                <div class="clr-row">
+                                    <div class="clr-col-6">
+                                        <clr-input-container>
+                                            <label>Texto botón primario</label>
+                                            <input clrInput formControlName="primaryButtonText" style="width:100%" />
+                                        </clr-input-container>
+                                        <clr-input-container>
+                                            <label>URL botón primario</label>
+                                            <input clrInput formControlName="primaryButtonUrl" style="width:100%" />
+                                        </clr-input-container>
+                                    </div>
+                                    <div class="clr-col-6">
+                                        <clr-input-container>
+                                            <label>Texto botón secundario</label>
+                                            <input clrInput formControlName="secondaryButtonText" style="width:100%" />
+                                        </clr-input-container>
+                                        <clr-input-container>
+                                            <label>URL botón secundario</label>
+                                            <input clrInput formControlName="secondaryButtonUrl" style="width:100%" />
+                                        </clr-input-container>
+                                    </div>
+                                </div>
+                                <clr-select-container>
+                                    <label>Tipo de enlace</label>
+                                    <select clrSelect formControlName="linkType">
+                                        <option *ngFor="let opt of linkTypeOptions" [value]="opt.value">{{ opt.label }}</option>
+                                    </select>
+                                </clr-select-container>
+                                <div class="clr-form-control">
+                                    <clr-toggle-wrapper>
+                                        <input type="checkbox" clrToggle formControlName="openInNewTab" id="openInNewTab" />
+                                        <label for="openInNewTab">Abrir en nueva pestaña</label>
+                                    </clr-toggle-wrapper>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card cla-admin-card">
+                            <div class="card-header">Layout y estilo</div>
+                            <div class="card-block">
+                                <clr-select-container>
+                                    <label>Layout</label>
+                                    <select clrSelect formControlName="layout">
+                                        <option *ngFor="let opt of layoutOptions" [value]="opt.value">{{ opt.label }}</option>
+                                    </select>
+                                </clr-select-container>
+                                <clr-select-container>
+                                    <label>Tema de texto</label>
+                                    <select clrSelect formControlName="textTheme">
+                                        <option *ngFor="let opt of textThemeOptions" [value]="opt.value">{{ opt.label }}</option>
+                                    </select>
+                                </clr-select-container>
+                            </div>
+                        </div>
+
+                        <div class="card cla-admin-card">
+                            <div class="card-header">Badge</div>
+                            <div class="card-block">
+                                <clr-input-container>
+                                    <label>Texto del badge</label>
+                                    <input clrInput formControlName="badgeText" style="width:100%" />
+                                    <clr-control-helper>Dejar vacío para no mostrar badge.</clr-control-helper>
+                                </clr-input-container>
+                                <clr-input-container>
+                                    <label>Color del badge</label>
+                                    <input clrInput type="color" formControlName="badgeColor" style="width:80px" />
+                                </clr-input-container>
+                                <clr-select-container>
+                                    <label>Variante</label>
+                                    <select clrSelect formControlName="badgeVariant">
+                                        <option *ngFor="let opt of badgeVariantOptions" [value]="opt.value">{{ opt.label }}</option>
+                                    </select>
+                                </clr-select-container>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="clr-col-4">
+                        <div class="cla-card-stack">
+                            <div class="card cla-admin-card">
+                                <div class="card-header">Publicación</div>
+                                <div class="card-block">
+                                    <div class="clr-form-control">
+                                        <clr-toggle-wrapper>
+                                            <input type="checkbox" clrToggle formControlName="isActive" id="isActive" />
+                                            <label for="isActive">Activo</label>
+                                        </clr-toggle-wrapper>
+                                    </div>
+                                    <clr-input-container>
+                                        <label>Orden</label>
+                                        <input clrInput type="number" formControlName="sortOrder" min="0" style="width:120px" />
+                                    </clr-input-container>
+                                </div>
+                            </div>
+
+                            <div class="card cla-admin-card">
+                                <div class="card-header">Imagen desktop</div>
+                                <div class="card-block">
+                                    <div *ngIf="desktopAsset" class="cla-asset-preview">
+                                        <img [src]="desktopAsset.preview + '?preset=medium'" [alt]="desktopAsset.name" />
+                                        <div class="cla-preview-meta">{{ desktopAsset.name }}</div>
+                                    </div>
+                                    <div *ngIf="!desktopAsset" class="cla-asset-preview-empty">
+                                        <clr-icon shape="image" size="36"></clr-icon>
+                                        <div class="cla-preview-meta">Sin imagen</div>
+                                    </div>
+                                    <div class="cla-asset-actions">
+                                        <button type="button" class="btn btn-outline btn-sm" (click)="pickAsset('desktop')">
+                                            <clr-icon shape="folder-open"></clr-icon> Seleccionar
+                                        </button>
+                                        <button *ngIf="desktopAsset" type="button" class="btn btn-sm btn-link"
+                                            (click)="clearAsset('desktop')">Quitar</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card cla-admin-card">
+                                <div class="card-header">Imagen mobile</div>
+                                <div class="card-block">
+                                    <div *ngIf="mobileAsset" class="cla-asset-preview">
+                                        <img [src]="mobileAsset.preview + '?preset=medium'" [alt]="mobileAsset.name" />
+                                        <div class="cla-preview-meta">{{ mobileAsset.name }}</div>
+                                    </div>
+                                    <div *ngIf="!mobileAsset" class="cla-asset-preview-empty">
+                                        <clr-icon shape="image" size="36"></clr-icon>
+                                        <div class="cla-preview-meta">Sin imagen</div>
+                                    </div>
+                                    <div class="cla-asset-actions">
+                                        <button type="button" class="btn btn-outline btn-sm" (click)="pickAsset('mobile')">
+                                            <clr-icon shape="folder-open"></clr-icon> Seleccionar
+                                        </button>
+                                        <button *ngIf="mobileAsset" type="button" class="btn btn-sm btn-link"
+                                            (click)="clearAsset('mobile')">Quitar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </ng-container>
+    </section>
+</vdr-page-body>

@@ -96,7 +96,7 @@ clr-vertical-nav {
     --clr-vertical-nav-trigger-divider-border-color: rgba(244, 234, 213, 0.10);
     --clr-vertical-nav-toggle-icon-color:            rgba(244, 234, 213, 0.48);
     --clr-vertical-nav-toggle-icon-hover-color:      var(--cla-gold);
-    --clr-nav-link-color:                            rgba(244, 234, 213, 0.72);
+    --clr-nav-link-color:                            #f5d78f;
     --clr-nav-link-active-color:                     #ffffff;
     --clr-nav-box-shadow-color:                      transparent;
     --clr-nav-active-bg-color:                       rgba(199, 164, 107, 0.18);
@@ -116,14 +116,20 @@ clr-vertical-nav {
 .left-nav .nav-group-content,
 .left-nav a.nav-link,
 .left-nav .nav-group-trigger {
-    color: #d9f2c4 !important;
+    color: #f5d78f !important;
     background-color: transparent !important;
     box-shadow: none !important;
-    font-weight: 500;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    letter-spacing: 0.01em;
     display: flex !important;
     align-items: center;
     width: 100%;
-    cursor: pointer;
+    min-height: 2.25rem;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
     transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
@@ -132,11 +138,13 @@ clr-vertical-nav {
 .left-nav .nav-text {
     color: inherit !important;
     flex: 1 1 auto;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
     pointer-events: none;
 }
 
-.left-nav .nav-link > *,
-.left-nav .nav-group-content > * {
+.left-nav .nav-link > *:not(.nav-text),
+.left-nav .nav-group-content > *:not(.nav-text) {
     pointer-events: none;
 }
 
@@ -175,11 +183,11 @@ clr-vertical-nav {
 }
 
 .left-nav .nav-group-text {
-    color: rgba(244, 234, 213, 0.40) !important;
-    font-size: 0.65rem;
-    letter-spacing: 0.12em;
+    color: #f5d78f !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    font-weight: 600;
+    font-weight: 800 !important;
 }
 
 .left-nav hr {
@@ -850,12 +858,13 @@ body > vdr-root {
 
 .left-nav .nav-link,
 .left-nav .nav-group-content {
-    margin: 0.06rem 0.45rem !important;
-    padding: 0.42rem 0.75rem !important;
+    margin: 0.1rem 0.45rem !important;
+    padding: 0.55rem 0.8rem !important;
     border-radius: 10px;
-    min-height: 0 !important;
-    line-height: 1.2 !important;
-    font-size: 0.9rem;
+    min-height: 2.25rem !important;
+    line-height: 1.25 !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
 }
 
 .left-nav .nav-group-text {

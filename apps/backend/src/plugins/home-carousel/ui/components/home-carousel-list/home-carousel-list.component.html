@@ -1,0 +1,107 @@
+<vdr-page-body>
+    <section class="cla-admin-page">
+        <div class="cla-page-head">
+            <div>
+                <p class="cla-page-eyebrow">Home</p>
+                <h2>Carrusel · Slides</h2>
+                <p class="cla-page-copy">
+                    Gestiona los slides que se muestran en el carrusel de la home.
+                </p>
+            </div>
+            <div class="cla-page-actions">
+                <button class="btn btn-secondary" type="button" (click)="navigateToSettings()">
+                    <clr-icon shape="cog"></clr-icon>
+                    Ajustes del carrusel
+                </button>
+                <button class="btn btn-primary" type="button" (click)="navigateToCreate()">
+                    <clr-icon shape="plus"></clr-icon>
+                    Nuevo slide
+                </button>
+            </div>
+        </div>
+
+        <div *ngIf="loading" class="cla-loading-state">
+            <span class="spinner spinner-md"></span>
+        </div>
+
+        <ng-container *ngIf="!loading">
+            <div class="cla-table-shell">
+                <table class="table table-noborder table-compact cla-admin-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 72px;">Orden</th>
+                            <th style="width: 96px;">Imagen</th>
+                            <th>Título</th>
+                            <th style="width: 140px;">Layout</th>
+                            <th style="width: 120px;">Badge</th>
+                            <th style="width: 96px;">Activo</th>
+                            <th style="width: 140px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let slide of slides; let i = index">
+                            <td>
+                                <div class="cla-inline-actions">
+                                    <button class="btn btn-icon btn-sm" type="button"
+                                        [disabled]="i === 0" (click)="move(slide, -1)" aria-label="Subir">
+                                        <clr-icon shape="arrow" dir="up"></clr-icon>
+                                    </button>
+                                    <button class="btn btn-icon btn-sm" type="button"
+                                        [disabled]="i === slides.length - 1" (click)="move(slide, 1)" aria-label="Bajar">
+                                        <clr-icon shape="arrow" dir="down"></clr-icon>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <img *ngIf="slide.desktopAsset"
+                                    [src]="slide.desktopAsset.preview + '?preset=tiny'"
+                                    class="cla-asset-thumb" [alt]="slide.title" />
+                                <clr-icon *ngIf="!slide.desktopAsset" shape="image" class="cla-asset-placeholder"></clr-icon>
+                            </td>
+                            <td>
+                                <strong>{{ slide.title }}</strong>
+                                <div *ngIf="slide.subtitle" class="cla-total-note">{{ slide.subtitle }}</div>
+                            </td>
+                            <td><code class="cla-mono-code">{{ slide.layout }}</code></td>
+                            <td>
+                                <span *ngIf="slide.badgeText; else noBadge">{{ slide.badgeText }}</span>
+                                <ng-template #noBadge><span class="cla-total-note">—</span></ng-template>
+                            </td>
+                            <td>
+                                <clr-toggle-wrapper>
+                                    <input type="checkbox" clrToggle [checked]="slide.isActive"
+                                        (change)="toggleActive(slide)" />
+                                </clr-toggle-wrapper>
+                            </td>
+                            <td>
+                                <div class="cla-inline-actions">
+                                    <button class="btn btn-icon btn-sm" type="button"
+                                        (click)="navigateToEdit(slide.id)" aria-label="Editar">
+                                        <clr-icon shape="pencil"></clr-icon>
+                                    </button>
+                                    <button class="btn btn-icon btn-sm btn-danger-outline" type="button"
+                                        (click)="deleteSlide(slide)" aria-label="Eliminar">
+                                        <clr-icon shape="trash"></clr-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr *ngIf="slides.length === 0">
+                            <td colspan="7">
+                                <div class="cla-empty-state">
+                                    <p>No hay slides creados todavía.</p>
+                                    <button class="btn btn-link" type="button" (click)="navigateToCreate()">
+                                        Crear el primero
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cla-total-note" *ngIf="slides.length > 0">
+                {{ totalItems }} {{ totalItems === 1 ? 'slide' : 'slides' }} en total
+            </div>
+        </ng-container>
+    </section>
+</vdr-page-body>
