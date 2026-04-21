@@ -39,7 +39,7 @@ async function baselineIfNeeded(): Promise<void> {
         // Only baseline migrations up to this cutoff — anything newer must run normally
         // against the live DB. Bump this after verifying a new migration ran on all
         // environments at least once.
-        const BASELINE_CUTOFF_TIMESTAMP = 1777000001000;
+        const BASELINE_CUTOFF_TIMESTAMP = 1777100000000;
         const migrationFiles = fs
             .readdirSync(historyDir)
             .filter((f) => /^\d+-.+\.(ts|js)$/.test(f))
