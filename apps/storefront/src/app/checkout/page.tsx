@@ -50,6 +50,7 @@ import type {
     StorefrontOrderAddress,
     StorefrontOrderPayment,
     StorefrontPaymentMetadata,
+    StorefrontPaymentSettings,
 } from '@/types/storefront';
 
 const MERCADOPAGO_ORDER_CODE_STORAGE_KEY = 'mercadopago:last-order-code';
@@ -254,8 +255,6 @@ function displayText(value: string | null | undefined): string {
 
 function getPaymentDisplay(method: EligiblePaymentMethod): PaymentDisplay {
     return {
-        sectionTitle: displayText(method.storefrontDisplay?.sectionTitle) || null,
-        footerText: displayText(method.storefrontDisplay?.footerText) || null,
         title: displayText(method.storefrontDisplay?.title) || displayText(method.name),
         cardDescription:
             displayText(method.storefrontDisplay?.cardDescription) || displayText(method.description),
@@ -397,6 +396,7 @@ function CheckoutContent() {
 
     const [checkoutOrder, setCheckoutOrder] = useState<ActiveOrder | null>(activeOrder);
     const [paymentMethods, setPaymentMethods] = useState<EligiblePaymentMethod[]>([]);
+    const [paymentSettings, setPaymentSettings] = useState<StorefrontPaymentSettings | null>(null);
     const [selectedPaymentCode, setSelectedPaymentCode] = useState('');
     const [form, setForm] = useState<CheckoutFormState>(() =>
         getInitialForm(customer, activeOrder?.shippingAddress),
@@ -465,6 +465,7 @@ function CheckoutContent() {
         const res = await fetchShopApi<EligiblePaymentMethodsResponse>(GET_ELIGIBLE_PAYMENT_METHODS_QUERY);
         const methods = res.eligiblePaymentMethods.filter((m) => m.isEligible);
         setPaymentMethods(methods);
+        setPaymentSettings(res.storefrontPaymentSettings ?? null);
         setSelectedPaymentCode((cur) => {
             const ok = methods.some((m) => m.code === cur);
             return ok ? cur : (methods[0]?.code ?? '');
@@ -613,14 +614,8 @@ function CheckoutContent() {
     const currencyCode = checkoutOrder?.currencyCode || 'ARS';
     const selectedPaymentMethod = paymentMethods.find((method) => method.code === selectedPaymentCode) ?? null;
     const selectedPaymentDisplay = selectedPaymentMethod ? getPaymentDisplay(selectedPaymentMethod) : null;
-    const paymentSectionTitle =
-        paymentMethods
-            .map((method) => getPaymentDisplay(method).sectionTitle)
-            .find(Boolean) ?? null;
-    const paymentFooterText =
-        paymentMethods
-            .map((method) => getPaymentDisplay(method).footerText)
-            .find(Boolean) ?? null;
+    const paymentSectionTitle = displayText(paymentSettings?.sectionTitle) || null;
+    const paymentFooterText = displayText(paymentSettings?.footerText) || null;
     const busy = savingData || paying;
 
     // ── Loading ──

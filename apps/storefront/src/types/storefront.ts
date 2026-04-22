@@ -61,8 +61,6 @@ export interface EligiblePaymentMethod {
     isEligible: boolean;
     eligibilityMessage?: string | null;
     storefrontDisplay: {
-        sectionTitle?: string | null;
-        footerText?: string | null;
         title: string;
         cardDescription: string;
         instructionsTitle?: string | null;
@@ -70,6 +68,11 @@ export interface EligiblePaymentMethod {
         buttonLabel: string;
         icon?: string | null;
     };
+}
+
+export interface StorefrontPaymentSettings {
+    sectionTitle?: string | null;
+    footerText?: string | null;
 }
 
 export interface StorefrontPaymentMetadataPublic {

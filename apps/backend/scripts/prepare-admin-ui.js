@@ -10,6 +10,7 @@ const buildWorkspacePath = path.join(backendRoot, '.admin-ui-build');
 const brandingDir = path.join(backendRoot, 'static/admin-ui-branding');
 const badgesExtensionPath = path.join(backendRoot, 'src/plugins/badges/ui');
 const homeCarouselExtensionPath = path.join(backendRoot, 'src/plugins/home-carousel/ui');
+const paymentDisplayExtensionPath = path.join(backendRoot, 'src/plugins/payments/ui');
 const personalizationExtensionPath = path.join(
     backendRoot,
     'src/plugins/logistics/personalization/admin-ui',
@@ -67,6 +68,19 @@ const extensions = [
                 route: 'home-carousel',
                 ngModuleFileName: 'home-carousel.module.ts',
                 ngModuleName: 'HomeCarouselModule',
+            },
+        ],
+        providers: ['providers.ts'],
+    },
+    {
+        id: 'payment-display-ui-extension',
+        extensionPath: paymentDisplayExtensionPath,
+        ngModules: [
+            {
+                type: 'lazy',
+                route: 'payment-display',
+                ngModuleFileName: 'payment-display.module.ts',
+                ngModuleName: 'PaymentDisplayModule',
             },
         ],
         providers: ['providers.ts'],

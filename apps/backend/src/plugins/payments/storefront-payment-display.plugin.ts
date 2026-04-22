@@ -1,14 +1,21 @@
-import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import {
+    Allow,
     Ctx,
     LanguageCode,
     PaymentMethodService,
+    Permission,
     PluginCommonModule,
     RequestContext,
     VendurePlugin,
     type PluginConfigurationFn,
 } from '@vendure/core';
 import { gql } from 'graphql-tag';
+import {
+    StorefrontPaymentDisplayService,
+    type UpdateStorefrontPaymentSettingsInput,
+} from './storefront-payment-display.service';
+import { StorefrontPaymentSettings } from './storefront-payment-settings.entity';
 
 type PaymentMethodQuoteLike = {
     id: string | number;
@@ -18,8 +25,6 @@ type PaymentMethodQuoteLike = {
 };
 
 type StorefrontPaymentDisplay = {
-    sectionTitle: string | null;
-    footerText: string | null;
     title: string;
     cardDescription: string;
     instructionsTitle: string | null;
@@ -57,20 +62,6 @@ const configurationHook: PluginConfigurationFn = config => {
     config.customFields = config.customFields ?? {};
     const paymentMethodFields = ((config.customFields as any).PaymentMethod ?? []) as any[];
 
-    addPaymentDisplayField(
-        paymentMethodFields,
-        'storefrontSectionTitle',
-        'string',
-        'Título de sección en tienda',
-        'Texto superior del selector de pagos. Si queda vacío, el storefront no muestra título.',
-    );
-    addPaymentDisplayField(
-        paymentMethodFields,
-        'storefrontFooterText',
-        'text',
-        'Texto inferior en tienda',
-        'Nota opcional debajo del botón de pago.',
-    );
     addPaymentDisplayField(
         paymentMethodFields,
         'storefrontTitle',
@@ -133,8 +124,6 @@ export class StorefrontPaymentMethodQuoteResolver {
         const cardDescription = text(customFields.storefrontCardDescription) ?? text(quote.description) ?? '';
 
         return {
-            sectionTitle: text(customFields.storefrontSectionTitle),
-            footerText: text(customFields.storefrontFooterText),
             title,
             cardDescription,
             instructionsTitle: text(customFields.storefrontInstructionsTitle),
@@ -145,13 +134,75 @@ export class StorefrontPaymentMethodQuoteResolver {
     }
 }
 
+@Resolver()
+export class StorefrontPaymentSettingsResolver {
+    constructor(private readonly service: StorefrontPaymentDisplayService) {}
+
+    @Query()
+    storefrontPaymentSettings(@Ctx() ctx: RequestContext): Promise<StorefrontPaymentSettings> {
+        return this.service.getSettings(ctx);
+    }
+}
+
+@Resolver()
+export class StorefrontPaymentSettingsAdminResolver {
+    constructor(private readonly service: StorefrontPaymentDisplayService) {}
+
+    @Query()
+    @Allow(Permission.ReadSettings)
+    storefrontPaymentSettings(@Ctx() ctx: RequestContext): Promise<StorefrontPaymentSettings> {
+        return this.service.getSettings(ctx);
+    }
+
+    @Mutation()
+    @Allow(Permission.UpdateSettings)
+    updateStorefrontPaymentSettings(
+        @Ctx() ctx: RequestContext,
+        @Args('input') input: UpdateStorefrontPaymentSettingsInput,
+    ): Promise<StorefrontPaymentSettings> {
+        return this.service.updateSettings(ctx, input);
+    }
+}
+
 @VendurePlugin({
     imports: [PluginCommonModule],
-    shopApiExtensions: {
+    entities: [StorefrontPaymentSettings],
+    adminApiExtensions: {
         schema: gql`
-            type StorefrontPaymentMethodDisplay {
+            type StorefrontPaymentSettings {
+                id: ID!
+                createdAt: DateTime!
+                updatedAt: DateTime!
                 sectionTitle: String
                 footerText: String
+            }
+
+            input UpdateStorefrontPaymentSettingsInput {
+                sectionTitle: String
+                footerText: String
+            }
+
+            extend type Query {
+                storefrontPaymentSettings: StorefrontPaymentSettings!
+            }
+
+            extend type Mutation {
+                updateStorefrontPaymentSettings(input: UpdateStorefrontPaymentSettingsInput!): StorefrontPaymentSettings!
+            }
+        `,
+        resolvers: [StorefrontPaymentSettingsAdminResolver],
+    },
+    shopApiExtensions: {
+        schema: gql`
+            type StorefrontPaymentSettings {
+                id: ID!
+                createdAt: DateTime!
+                updatedAt: DateTime!
+                sectionTitle: String
+                footerText: String
+            }
+
+            type StorefrontPaymentMethodDisplay {
                 title: String!
                 cardDescription: String!
                 instructionsTitle: String
@@ -163,10 +214,14 @@ export class StorefrontPaymentMethodQuoteResolver {
             extend type PaymentMethodQuote {
                 storefrontDisplay: StorefrontPaymentMethodDisplay!
             }
+
+            extend type Query {
+                storefrontPaymentSettings: StorefrontPaymentSettings!
+            }
         `,
-        resolvers: [StorefrontPaymentMethodQuoteResolver],
+        resolvers: [StorefrontPaymentMethodQuoteResolver, StorefrontPaymentSettingsResolver],
     },
-    providers: [StorefrontPaymentMethodQuoteResolver],
+    providers: [StorefrontPaymentDisplayService],
     configuration: configurationHook,
 })
 export class StorefrontPaymentDisplayPlugin {}
