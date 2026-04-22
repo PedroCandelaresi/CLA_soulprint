@@ -64,13 +64,18 @@ export default function LoginPage() {
     const authError = searchParams.get('authError');
     const checkoutEmail = searchParams.get('email') || '';
     const checkoutReason = searchParams.get('reason');
-    const primaryAuthenticatedLabel = redirectTarget === '/mi-cuenta' ? 'Ir a mi cuenta' : 'Continuar';
+    const primaryAuthenticatedLabel =
+        redirectTarget === '/mi-cuenta'
+            ? 'Ir a mi cuenta'
+            : redirectTarget === '/carrito'
+              ? 'Volver al carrito'
+              : 'Continuar';
     const authContextFeedback = useMemo<FeedbackState | null>(() => {
         if (checkoutReason === 'checkout') {
             return {
                 severity: 'info',
                 message:
-                    'Este email ya tiene una cuenta. Ingresá para continuar con tu compra — tu carrito te estará esperando.',
+                    'Ingresá con tu cuenta o creá una nueva para finalizar la compra. Tu carrito te estará esperando.',
             };
         }
 
@@ -84,13 +89,16 @@ export default function LoginPage() {
 
         return null;
     }, [authError, checkoutReason]);
-    const [tab, setTab] = useState(0);
+    const [tab, setTab] = useState(() => (searchParams.get('tab') === 'register' ? 1 : 0));
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [loginForm, setLoginForm] = useState(() => ({
         ...initialLoginForm,
         emailAddress: checkoutEmail || initialLoginForm.emailAddress,
     }));
-    const [registerForm, setRegisterForm] = useState(initialRegisterForm);
+    const [registerForm, setRegisterForm] = useState(() => ({
+        ...initialRegisterForm,
+        emailAddress: checkoutEmail || initialRegisterForm.emailAddress,
+    }));
     const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
     const [passwordRecoveryEmail, setPasswordRecoveryEmail] = useState('');
 
@@ -168,7 +176,7 @@ export default function LoginPage() {
                 emailAddress: registerForm.emailAddress,
             }));
             setRegisterForm(initialRegisterForm);
-            setTab(1);
+            setTab(0);
         }
     };
 
@@ -317,11 +325,11 @@ export default function LoginPage() {
                                     variant="fullWidth"
                                     aria-label="Acceso o registro"
                                 >
-                                    <Tab label="Crear cuenta" />
                                     <Tab label="Ingresar" />
+                                    <Tab label="Crear cuenta" />
                                 </Tabs>
 
-                                {tab === 0 ? (
+                                {tab === 1 ? (
                                     <Box component="form" onSubmit={handleRegisterSubmit}>
                                         <Stack spacing={2.25}>
                                             <TextField

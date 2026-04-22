@@ -25,6 +25,8 @@ type FeedbackState = {
     message: string;
 };
 
+const CHECKOUT_LOGIN_HREF = `/auth/login?redirect=${encodeURIComponent('/carrito')}&reason=checkout`;
+
 function formatCurrency(amount: number, currencyCode: string) {
     return new Intl.NumberFormat('es-AR', {
         style: 'currency',
@@ -41,7 +43,7 @@ export default function CarritoPage() {
     const currencyCode = activeOrder?.currencyCode || 'ARS';
     const summaryText = useMemo(() => {
         if (!customer) {
-            return 'Podés seguir comprando como invitado o ingresar para conservar tu carrito entre dispositivos.';
+            return 'Para finalizar la compra necesitás ingresar o crear una cuenta. Tu carrito queda listo para retomar.';
         }
 
         return `Carrito asociado a ${customer.emailAddress}.`;
@@ -113,7 +115,7 @@ export default function CarritoPage() {
                                         Ir al catálogo
                                     </TooltipButton>
                                     {!customer && (
-                                        <TooltipButton href="/auth/login" variant="outlined" tooltip="Ingresar o crear una cuenta">
+                                        <TooltipButton href={CHECKOUT_LOGIN_HREF} variant="outlined" tooltip="Ingresar o crear una cuenta">
                                             Ingresar o crear cuenta
                                         </TooltipButton>
                                     )}
@@ -262,8 +264,13 @@ export default function CarritoPage() {
                                     <Alert severity="info">
                                         El checkout demo ya permite completar el pedido con envío y pago simulados.
                                     </Alert>
-                                    <TooltipButton href="/checkout" variant="contained" fullWidth tooltip="Pasar al checkout">
-                                        Finalizar compra
+                                    <TooltipButton
+                                        href={customer ? '/checkout' : CHECKOUT_LOGIN_HREF}
+                                        variant="contained"
+                                        fullWidth
+                                        tooltip={customer ? 'Pasar al checkout' : 'Ingresar o crear una cuenta para pagar'}
+                                    >
+                                        {customer ? 'Finalizar compra' : 'Ingresar para comprar'}
                                     </TooltipButton>
                                     <TooltipButton href="/productos" variant="outlined" fullWidth tooltip="Seguir explorando productos">
                                         Seguir comprando

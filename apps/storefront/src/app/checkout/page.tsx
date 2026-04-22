@@ -3,7 +3,6 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense, useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
     Alert,
@@ -32,7 +31,6 @@ import {
     ADD_PAYMENT_TO_ORDER_MUTATION,
     GET_ELIGIBLE_PAYMENT_METHODS_QUERY,
     GET_ELIGIBLE_SHIPPING_METHODS_QUERY,
-    SET_CUSTOMER_FOR_ORDER_MUTATION,
     SET_ORDER_BILLING_ADDRESS_MUTATION,
     SET_ORDER_SHIPPING_ADDRESS_MUTATION,
     SET_ORDER_SHIPPING_METHOD_MUTATION,
@@ -58,10 +56,8 @@ const BANK_ACCOUNT_NAME = process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || '';
 const BANK_CUIT = process.env.NEXT_PUBLIC_BANK_CUIT || '';
 const BANK_CBU = process.env.NEXT_PUBLIC_BANK_CBU || '';
 const BANK_ALIAS = process.env.NEXT_PUBLIC_BANK_ALIAS || '';
-
-const REQUIRE_CUSTOMER_VERIFICATION =
-    process.env.NEXT_PUBLIC_REQUIRE_CUSTOMER_VERIFICATION === 'true';
 const MERCADOPAGO_ORDER_CODE_STORAGE_KEY = 'mercadopago:last-order-code';
+const CHECKOUT_LOGIN_HREF = `/auth/login?redirect=${encodeURIComponent('/carrito')}&reason=checkout`;
 
 type FeedbackState = {
     severity: 'success' | 'error' | 'info' | 'warning';
@@ -80,23 +76,8 @@ type CheckoutFormState = {
     postalCode: string;
 };
 
-type GuestCustomerResolution = {
-    canContinue: boolean;
-    pendingVerification?: boolean;
-    redirectToLogin?: boolean;
-};
-
 function normalizeEmail(email: string): string {
     return email.trim().toLowerCase();
-}
-
-function generatePassword(): string {
-    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-        const bytes = new Uint8Array(18);
-        crypto.getRandomValues(bytes);
-        return `Mx!${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}9a`;
-    }
-    return `Mx!${Math.random().toString(36).slice(2)}9a`;
 }
 
 function getInitialForm(
@@ -410,7 +391,7 @@ export default function CheckoutPage() {
 
 function CheckoutContent() {
     const router = useRouter();
-    const { activeOrder, customer, initialized, register, requestPasswordReset } = useStorefront();
+    const { activeOrder, customer, initialized } = useStorefront();
 
     const [checkoutOrder, setCheckoutOrder] = useState<ActiveOrder | null>(activeOrder);
     const [paymentMethods, setPaymentMethods] = useState<EligiblePaymentMethod[]>([]);
@@ -427,6 +408,14 @@ function CheckoutContent() {
     useEffect(() => {
         setCheckoutOrder(activeOrder);
     }, [activeOrder]);
+
+    useEffect(() => {
+        if (!initialized || customer || !checkoutOrder?.lines.length) {
+            return;
+        }
+
+        router.replace(CHECKOUT_LOGIN_HREF);
+    }, [checkoutOrder?.lines.length, customer, initialized, router]);
 
     useEffect(() => {
         const initial = getInitialForm(customer, activeOrder?.shippingAddress);
@@ -446,35 +435,9 @@ function CheckoutContent() {
     const field = (key: keyof CheckoutFormState, value: string) =>
         setForm((cur) => ({ ...cur, [key]: value }));
 
-    const resolveGuest = useCallback(async (): Promise<GuestCustomerResolution> => {
-        const email = normalizeEmail(form.emailAddress);
-        try {
-            const result = await register({
-                firstName: form.firstName.trim(),
-                lastName: form.lastName.trim(),
-                emailAddress: email,
-                ...(REQUIRE_CUSTOMER_VERIFICATION ? {} : { password: generatePassword() }),
-            });
-
-            if (result.success) {
-                if (REQUIRE_CUSTOMER_VERIFICATION) {
-                    return { canContinue: false, pendingVerification: true };
-                }
-                void requestPasswordReset(email);
-                return { canContinue: true };
-            }
-
-            // Email ya registrado → ir al login
-            return { canContinue: false, redirectToLogin: true };
-        } catch {
-            return { canContinue: false, redirectToLogin: true };
-        }
-    }, [form.emailAddress, form.firstName, form.lastName, register, requestPasswordReset]);
-
     const runMutation = useCallback(
         async (
             fieldName:
-                | 'setCustomerForOrder'
                 | 'setOrderShippingAddress'
                 | 'setOrderBillingAddress'
                 | 'setOrderShippingMethod'
@@ -521,40 +484,8 @@ function CheckoutContent() {
             const email = normalizeEmail(form.emailAddress);
 
             if (!customer) {
-                const resolution = await resolveGuest();
-
-                if (resolution.pendingVerification) {
-                    router.push(
-                        `/checkout/verificacion-pendiente?email=${encodeURIComponent(email)}`,
-                    );
-                    return;
-                }
-
-                if (resolution.redirectToLogin) {
-                    router.push(
-                        `/auth/login?redirect=${encodeURIComponent('/checkout')}&email=${encodeURIComponent(email)}&reason=checkout`,
-                    );
-                    return;
-                }
-
-                const customerResult = await runMutation(
-                    'setCustomerForOrder',
-                    SET_CUSTOMER_FOR_ORDER_MUTATION,
-                    {
-                        input: {
-                            firstName: form.firstName.trim(),
-                            lastName: form.lastName.trim(),
-                            emailAddress: email,
-                            phoneNumber: form.phoneNumber.trim() || undefined,
-                        },
-                    },
-                    'No se pudieron guardar tus datos.',
-                );
-
-                if (!customerResult.success) {
-                    setFeedback({ severity: 'error', message: '¡Ups! No pudimos guardar tus datos. Intentá de nuevo.' });
-                    return;
-                }
+                router.push(`${CHECKOUT_LOGIN_HREF}&email=${encodeURIComponent(email)}`);
+                return;
             }
 
             const addr = buildAddressInput(form);
@@ -612,9 +543,14 @@ function CheckoutContent() {
         } finally {
             setSavingData(false);
         }
-    }, [customer, form, loadPaymentMethods, resolveGuest, router, runMutation]);
+    }, [customer, form, loadPaymentMethods, router, runMutation]);
 
     const pay = useCallback(async () => {
+        if (!customer) {
+            router.push(CHECKOUT_LOGIN_HREF);
+            return;
+        }
+
         if (!selectedPaymentCode) {
             setFeedback({ severity: 'error', message: 'Elegí una forma de pago para continuar.' });
             return;
@@ -667,7 +603,7 @@ function CheckoutContent() {
         } finally {
             setPaying(false);
         }
-    }, [checkoutOrder?.state, runMutation, selectedPaymentCode, router]);
+    }, [checkoutOrder?.state, customer, runMutation, selectedPaymentCode, router]);
 
     const currencyCode = checkoutOrder?.currencyCode || 'ARS';
     const busy = savingData || paying;
@@ -723,6 +659,54 @@ function CheckoutContent() {
                                     Ir al carrito
                                 </TooltipButton>
                             </Stack>
+                        </Stack>
+                    </Paper>
+                </Container>
+            </Box>
+        );
+    }
+
+    if (!customer) {
+        return (
+            <Box
+                sx={{
+                    minHeight: '60vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    bgcolor: 'grey.50',
+                }}
+            >
+                <Container maxWidth="sm">
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            p: { xs: 4, md: 6 },
+                            borderRadius: 4,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            textAlign: 'center',
+                        }}
+                    >
+                        <Stack spacing={3} alignItems="center">
+                            <Box sx={{ width: 220 }}>
+                                <BrandLogoImage label="CLA Soulprint" />
+                            </Box>
+                            <Stack spacing={1}>
+                                <Typography variant="h5" fontWeight={800}>
+                                    Ingresá para finalizar la compra
+                                </Typography>
+                                <Typography color="text.secondary">
+                                    Te llevamos al acceso de cliente y después volvés al carrito para terminar el pedido.
+                                </Typography>
+                            </Stack>
+                            <TooltipButton
+                                href={CHECKOUT_LOGIN_HREF}
+                                variant="contained"
+                                tooltip="Ingresar o crear una cuenta para continuar"
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Ir al login
+                            </TooltipButton>
                         </Stack>
                     </Paper>
                 </Container>
