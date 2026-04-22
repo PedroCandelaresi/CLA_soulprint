@@ -12,9 +12,11 @@ import {
     TaxCategoryService,
     TaxRateService,
     ZoneService,
-    defaultShippingCalculator,
-    defaultShippingEligibilityChecker,
 } from '@vendure/core';
+import {
+    manualShippingCalculator,
+    manualShippingEligibilityChecker,
+} from '../plugins/shipping/manual-shipping.handlers';
 
 const DEMO_PRODUCT_SLUG = 'producto-demo';
 const DEMO_PRODUCT_SKU = 'DEMO-001';
@@ -30,25 +32,44 @@ function getDemoShippingMethodInput() {
     return {
         fulfillmentHandler: 'manual-fulfillment',
         checker: {
-            code: defaultShippingEligibilityChecker.code,
-            arguments: [{ name: 'orderMinimum', value: '0' }],
+            code: manualShippingEligibilityChecker.code,
+            arguments: [
+                { name: 'orderMinimum', value: '0' },
+                { name: 'orderMaximum', value: '0' },
+                { name: 'allowedProvinces', value: '[]' },
+                { name: 'excludedProvinces', value: '[]' },
+                { name: 'postalCodePrefixes', value: '[]' },
+                { name: 'requireShippingAddress', value: 'true' },
+            ],
         },
         calculator: {
-            code: defaultShippingCalculator.code,
+            code: manualShippingCalculator.code,
             arguments: [
-                { name: 'rate', value: '1500' },
+                { name: 'baseRate', value: '0' },
+                { name: 'extraPerAdditionalItem', value: '0' },
+                { name: 'freeAbove', value: '0' },
                 { name: 'includesTax', value: 'auto' },
                 { name: 'taxRate', value: '21' },
+                { name: 'estimatedMinDays', value: '0' },
+                { name: 'estimatedMaxDays', value: '0' },
+                { name: 'serviceLabel', value: '' },
             ],
         },
         translations: [
             {
                 languageCode: LanguageCode.es,
-                name: 'Envio demo',
-                description: 'Entrega coordinada para la demo.',
+                name: 'Envío a coordinar',
+                description: 'Entrega manual coordinada con el cliente.',
             },
         ],
     };
+}
+
+function shouldUpgradeDemoShippingMethod(method: { name?: string; description?: string }): boolean {
+    const name = (method.name ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const description = (method.description ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+    return name.includes('envio demo') || description.includes('demo');
 }
 
 function getDemoProductTranslation() {
@@ -214,12 +235,14 @@ export async function ensureDemoData(app: {
             ...getDemoShippingMethodInput(),
         });
         summary.created.push('shipping-method:envio-demo');
-    } else {
+    } else if (shouldUpgradeDemoShippingMethod(shippingMethod)) {
         await shippingMethodService.update(ctx, {
             id: shippingMethod.id,
             ...getDemoShippingMethodInput(),
         });
-        summary.existing.push('shipping-method:envio-demo(updated)');
+        summary.existing.push('shipping-method:envio-demo(upgraded-to-manual)');
+    } else {
+        summary.existing.push('shipping-method:envio-demo(preserved)');
     }
 
     let demoProduct = await productService.findOneBySlug(ctx, DEMO_PRODUCT_SLUG);

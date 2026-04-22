@@ -96,11 +96,13 @@ export default function DestacadosContent({ featuredProducts = [] }: DestacadosC
             <Container maxWidth="lg" sx={{ pb: 10 }}>
                 <Box
                     sx={{
-                        bgcolor: 'primary.light',
+                        background:
+                            'linear-gradient(135deg, rgba(255,250,242,0.96) 0%, rgba(245,235,217,0.86) 100%)',
                         p: 6,
-                        borderRadius: 5,
+                        borderRadius: 3,
                         textAlign: 'center',
-                        border: '1px solid rgba(0,72,37,0.08)',
+                        border: '1px solid rgba(199,164,107,0.28)',
+                        boxShadow: '0 18px 44px rgba(6,38,22,0.08)',
                     }}
                 >
                     <Typography variant="h4" fontStyle="italic" color="primary.dark" sx={{ lineHeight: 1.6 }}>

@@ -66,21 +66,24 @@ export default function ComoComprarContent() {
                         variant="outlined"
                         sx={{
                             height: '100%',
-                            borderColor: 'rgba(0,72,37,0.18)',
-                            bgcolor: 'rgba(255,251,244,0.84)',
+                            borderColor: 'rgba(0,72,37,0.14)',
+                            bgcolor: 'rgba(255,251,244,0.9)',
                             backdropFilter: 'blur(12px)',
+                            borderRadius: 3,
+                            boxShadow: '0 18px 44px rgba(6,38,22,0.08)',
                         }}
                     >
                         <CardContent sx={{ textAlign: 'center', py: 4 }}>
                             <Avatar
                                 sx={{
-                                    bgcolor: 'rgba(0,72,37,0.08)',
+                                    bgcolor: 'rgba(255,250,242,0.96)',
                                     color: 'primary.main',
-                                    border: '1px solid rgba(0,72,37,0.16)',
+                                    border: '1px solid rgba(199,164,107,0.28)',
                                     width: 80,
                                     height: 80,
                                     mx: 'auto',
                                     mb: 3,
+                                    boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.68)',
                                 }}
                             >
                                 {step.icon}

@@ -56,6 +56,24 @@ import type {
 const MERCADOPAGO_ORDER_CODE_STORAGE_KEY = 'mercadopago:last-order-code';
 const PERSONALIZATION_ORDER_CODE_STORAGE_KEY = 'personalization:last-order-code';
 const CHECKOUT_LOGIN_HREF = `/auth/login?redirect=${encodeURIComponent('/carrito')}&reason=checkout`;
+const CLA_SURFACE = 'rgba(255,251,244,0.88)';
+const CLA_SURFACE_STRONG = 'rgba(255,250,242,0.96)';
+const CLA_GREEN_TINT_SOFT = 'rgba(0,72,37,0.045)';
+const CLA_GREEN_BORDER = 'rgba(0,72,37,0.16)';
+const CLA_GOLD_TINT = 'rgba(199,164,107,0.13)';
+const CLA_GOLD_BORDER = 'rgba(199,164,107,0.28)';
+const claIconSurfaceSx = {
+    width: 44,
+    height: 44,
+    borderRadius: 2,
+    bgcolor: CLA_SURFACE_STRONG,
+    border: `1px solid ${CLA_GREEN_BORDER}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'primary.main',
+    boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.62)',
+};
 
 type FeedbackState = {
     severity: 'success' | 'error' | 'info' | 'warning';
@@ -180,11 +198,12 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
                         width: 36,
                         height: 36,
                         borderRadius: '50%',
-                        bgcolor: 'rgba(0,72,37,0.08)',
-                        border: '1px solid rgba(0,72,37,0.16)',
+                        bgcolor: CLA_SURFACE_STRONG,
+                        border: `1px solid ${CLA_GREEN_BORDER}`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        boxShadow: `0 8px 18px ${CLA_GREEN_TINT_SOFT}`,
                     }}
                 >
                     {step > 1 ? (
@@ -209,7 +228,7 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
                     flex: 1,
                     height: 2,
                     mx: 1.5,
-                    bgcolor: step >= 2 ? 'primary.main' : 'divider',
+                    bgcolor: step >= 2 ? 'primary.main' : CLA_GOLD_BORDER,
                     minWidth: 40,
                     transition: 'background-color 0.3s',
                 }}
@@ -221,12 +240,12 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
                         width: 36,
                         height: 36,
                         borderRadius: '50%',
-                        bgcolor: step >= 2 ? 'rgba(0,72,37,0.08)' : 'rgba(0,0,0,0.04)',
-                        border: step >= 2 ? '1px solid rgba(0,72,37,0.16)' : '1px solid rgba(0,0,0,0.08)',
+                        bgcolor: step >= 2 ? CLA_SURFACE_STRONG : CLA_GOLD_TINT,
+                        border: step >= 2 ? `1px solid ${CLA_GREEN_BORDER}` : `1px solid ${CLA_GOLD_BORDER}`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        transition: 'background-color 0.3s',
+                        transition: 'background-color 0.3s, border-color 0.3s',
                     }}
                 >
                     <Typography variant="caption" fontWeight={700} color={step >= 2 ? 'primary.main' : 'text.secondary'}>
@@ -307,15 +326,15 @@ function PaymentMethodCard({
             onClick={onSelect}
             sx={{
                 p: 2,
-                borderRadius: 4,
+                borderRadius: 2.5,
                 cursor: 'pointer',
                 border: selected ? '2px solid' : '1px solid',
                 borderColor: selected ? 'primary.main' : 'divider',
-                bgcolor: selected ? 'rgba(0,72,37,0.08)' : 'rgba(255,251,244,0.8)',
+                bgcolor: selected ? 'rgba(238,246,240,0.78)' : CLA_SURFACE,
                 transition: 'all 0.15s ease',
                 '&:hover': {
-                    borderColor: 'primary.light',
-                    bgcolor: selected ? 'rgba(0,72,37,0.1)' : 'rgba(255,255,255,0.92)',
+                    borderColor: CLA_GREEN_BORDER,
+                    bgcolor: selected ? 'rgba(232,242,236,0.9)' : CLA_SURFACE_STRONG,
                 },
             }}
         >
@@ -325,7 +344,21 @@ function PaymentMethodCard({
                 ) : (
                     <RadioButtonUncheckedIcon sx={{ color: 'text.disabled', flexShrink: 0 }} />
                 )}
-                {icon}
+                <Box
+                    sx={{
+                        width: 42,
+                        height: 42,
+                        borderRadius: 1.75,
+                        bgcolor: selected ? CLA_SURFACE_STRONG : CLA_GOLD_TINT,
+                        border: `1px solid ${selected ? CLA_GREEN_BORDER : CLA_GOLD_BORDER}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                    }}
+                >
+                    {icon}
+                </Box>
                 <Stack spacing={0.25} flex={1}>
                     <Typography fontWeight={selected ? 700 : 500}>{display.title}</Typography>
                     {display.cardDescription && (
@@ -351,14 +384,14 @@ function PaymentInstructions({ display }: { display: PaymentDisplay }) {
             variant="outlined"
             sx={{
                 p: 2.5,
-                borderRadius: 3,
-                bgcolor: 'info.50',
-                borderColor: 'info.200',
+                borderRadius: 2.5,
+                bgcolor: 'rgba(232,242,236,0.62)',
+                borderColor: 'rgba(0,72,37,0.18)',
             }}
         >
             <Stack spacing={1.5}>
                 {display.instructionsTitle && (
-                    <Typography variant="subtitle2" fontWeight={700} color="info.dark">
+                    <Typography variant="subtitle2" fontWeight={700} color="primary.dark">
                         {display.instructionsTitle}
                     </Typography>
                 )}
@@ -759,7 +792,7 @@ function CheckoutContent() {
 
                     <Paper
                         elevation={0}
-                        sx={{ p: 2.5, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}
+                        sx={{ p: 2.5, borderRadius: 2.5, border: '1px solid', borderColor: 'divider', bgcolor: CLA_SURFACE }}
                     >
                         <StepIndicator step={step} />
                     </Paper>
@@ -778,19 +811,21 @@ function CheckoutContent() {
                         <Stack spacing={3} flex={1} width="100%">
                             <Paper
                                 elevation={0}
-                                sx={{ p: { xs: 3, md: 4 }, borderRadius: 5, border: '1px solid', borderColor: step === 2 ? 'success.200' : 'divider' }}
+                                sx={{
+                                    p: { xs: 3, md: 4 },
+                                    borderRadius: 3,
+                                    border: '1px solid',
+                                    borderColor: step === 2 ? 'rgba(47,125,78,0.24)' : 'divider',
+                                    bgcolor: CLA_SURFACE,
+                                }}
                             >
                                 <Stack spacing={3}>
                                     <Stack direction="row" spacing={1.5} alignItems="center">
                                         <Box
                                             sx={{
-                                                width: 44,
-                                                height: 44,
-                                                borderRadius: 2.5,
-                                                bgcolor: step === 2 ? 'success.light' : 'primary.light',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
+                                                ...claIconSurfaceSx,
+                                                bgcolor: step === 2 ? 'rgba(232,242,236,0.9)' : CLA_SURFACE_STRONG,
+                                                borderColor: step === 2 ? 'rgba(47,125,78,0.24)' : CLA_GREEN_BORDER,
                                             }}
                                         >
                                             <LocalShippingOutlinedIcon
@@ -930,21 +965,12 @@ function CheckoutContent() {
                             {step === 2 && (
                                 <Paper
                                     elevation={0}
-                                    sx={{ p: { xs: 3, md: 4 }, borderRadius: 5, border: '1px solid', borderColor: 'divider' }}
+                                    sx={{ p: { xs: 3, md: 4 }, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: CLA_SURFACE }}
                                 >
                                     <Stack spacing={3}>
                                         <Stack direction="row" spacing={1.5} alignItems="center">
                                             <Box
-                                                sx={{
-                                                    width: 44,
-                                                    height: 44,
-                                                    borderRadius: 2.5,
-                                                    bgcolor: 'rgba(0,72,37,0.08)',
-                                                    border: '1px solid rgba(0,72,37,0.16)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                }}
+                                                sx={claIconSurfaceSx}
                                             >
                                                 <PaymentOutlinedIcon sx={{ color: 'primary.main' }} />
                                             </Box>
@@ -1083,9 +1109,10 @@ function CheckoutContent() {
                                         sx={{
                                             p: 2,
                                             borderRadius: 2.5,
-                                            bgcolor: 'rgba(0,72,37,0.08)',
+                                            bgcolor: CLA_SURFACE_STRONG,
                                             border: '1px solid',
-                                            borderColor: 'rgba(0,72,37,0.16)',
+                                            borderColor: CLA_GOLD_BORDER,
+                                            boxShadow: `0 12px 28px ${CLA_GREEN_TINT_SOFT}`,
                                         }}
                                     >
                                         <Stack direction="row" justifyContent="space-between" alignItems="center">

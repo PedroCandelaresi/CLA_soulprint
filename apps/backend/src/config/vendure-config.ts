@@ -20,6 +20,10 @@ import { mercadopagoPaymentHandler } from '../plugins/payments/mercadopago/merca
 import { MercadoPagoPlugin } from '../plugins/payments/mercadopago/mercadopago.plugin';
 import { transferenciaPaymentHandler } from '../plugins/payments/transferencia-payment.plugin';
 import { StorefrontPaymentDisplayPlugin } from '../plugins/payments/storefront-payment-display.plugin';
+import {
+    manualShippingCalculator,
+    manualShippingEligibilityChecker,
+} from '../plugins/shipping/manual-shipping.handlers';
 import { Badge } from '../plugins/badges/badge.entity';
 import { BadgesPlugin } from '../plugins/badges/badges.plugin';
 import { HomeCarouselPlugin } from '../plugins/home-carousel/home-carousel.plugin';
@@ -262,8 +266,8 @@ export const config: VendureConfig = {
         ],
     },
     shippingOptions: {
-        shippingCalculators: [defaultShippingCalculator],
-        shippingEligibilityCheckers: [defaultShippingEligibilityChecker],
+        shippingCalculators: [defaultShippingCalculator, manualShippingCalculator],
+        shippingEligibilityCheckers: [defaultShippingEligibilityChecker, manualShippingEligibilityChecker],
     },
     customFields: {
         Product: [badgeRelationCustomField],
