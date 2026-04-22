@@ -139,6 +139,7 @@ export class StorefrontPaymentSettingsResolver {
     constructor(private readonly service: StorefrontPaymentDisplayService) {}
 
     @Query()
+    @Allow(Permission.Public)
     storefrontPaymentSettings(@Ctx() ctx: RequestContext): Promise<StorefrontPaymentSettings> {
         return this.service.getSettings(ctx);
     }
@@ -149,13 +150,13 @@ export class StorefrontPaymentSettingsAdminResolver {
     constructor(private readonly service: StorefrontPaymentDisplayService) {}
 
     @Query()
-    @Allow(Permission.ReadSettings)
+    @Allow(Permission.Public)
     storefrontPaymentSettings(@Ctx() ctx: RequestContext): Promise<StorefrontPaymentSettings> {
         return this.service.getSettings(ctx);
     }
 
     @Mutation()
-    @Allow(Permission.UpdateSettings)
+    @Allow(Permission.UpdateSettings, Permission.UpdatePaymentMethod)
     updateStorefrontPaymentSettings(
         @Ctx() ctx: RequestContext,
         @Args('input') input: UpdateStorefrontPaymentSettingsInput,
