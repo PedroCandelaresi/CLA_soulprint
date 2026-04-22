@@ -42,8 +42,11 @@ export async function ensureMercadoPagoPaymentMethod(app: {
 
             await paymentMethodService.update(ctx, {
                 id: mercadopagoMethod.id,
-                code: MERCADOPAGO_PAYMENT_METHOD_CODE,
-                ...getMercadoPagoPaymentMethodInput(),
+                enabled: true,
+                handler: {
+                    code: MERCADOPAGO_PAYMENT_HANDLER_CODE,
+                    arguments: [],
+                },
             });
         } else {
             await paymentMethodService.create(ctx, {

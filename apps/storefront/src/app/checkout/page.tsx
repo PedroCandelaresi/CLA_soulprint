@@ -21,12 +21,12 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlined';
+import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
+import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
 import BrandLogoImage from '@/components/branding/BrandLogoImage';
 import TooltipButton from '@/components/ui/TooltipButton';
-import TooltipIconButton from '@/components/ui/TooltipIconButton';
 import {
     ADD_PAYMENT_TO_ORDER_MUTATION,
     GET_ELIGIBLE_PAYMENT_METHODS_QUERY,
@@ -52,10 +52,6 @@ import type {
     StorefrontPaymentMetadata,
 } from '@/types/storefront';
 
-const BANK_ACCOUNT_NAME = process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || '';
-const BANK_CUIT = process.env.NEXT_PUBLIC_BANK_CUIT || '';
-const BANK_CBU = process.env.NEXT_PUBLIC_BANK_CBU || '';
-const BANK_ALIAS = process.env.NEXT_PUBLIC_BANK_ALIAS || '';
 const MERCADOPAGO_ORDER_CODE_STORAGE_KEY = 'mercadopago:last-order-code';
 const PERSONALIZATION_ORDER_CODE_STORAGE_KEY = 'personalization:last-order-code';
 const CHECKOUT_LOGIN_HREF = `/auth/login?redirect=${encodeURIComponent('/carrito')}&reason=checkout`;
@@ -250,28 +246,61 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
 
 // ─── Payment method card ───────────────────────────────────────────────────────
 
+type PaymentDisplay = EligiblePaymentMethod['storefrontDisplay'];
+
+function displayText(value: string | null | undefined): string {
+    return cleanPaymentDescription(value);
+}
+
+function getPaymentDisplay(method: EligiblePaymentMethod): PaymentDisplay {
+    return {
+        sectionTitle: displayText(method.storefrontDisplay?.sectionTitle) || null,
+        footerText: displayText(method.storefrontDisplay?.footerText) || null,
+        title: displayText(method.storefrontDisplay?.title) || displayText(method.name),
+        cardDescription:
+            displayText(method.storefrontDisplay?.cardDescription) || displayText(method.description),
+        instructionsTitle: displayText(method.storefrontDisplay?.instructionsTitle) || null,
+        instructions: displayText(method.storefrontDisplay?.instructions) || null,
+        buttonLabel:
+            displayText(method.storefrontDisplay?.buttonLabel) ||
+            displayText(method.storefrontDisplay?.title) ||
+            displayText(method.name),
+        icon: displayText(method.storefrontDisplay?.icon) || null,
+    };
+}
+
+function getPaymentIcon(icon: string | null | undefined, selected: boolean) {
+    const iconProps = {
+        sx: { fontSize: 28, color: selected ? 'primary.main' : 'text.secondary' },
+    };
+    const normalizedIcon = icon?.trim().toLowerCase();
+
+    if (normalizedIcon === 'bank') {
+        return <AccountBalanceOutlinedIcon {...iconProps} />;
+    }
+    if (normalizedIcon === 'cash') {
+        return <AttachMoneyOutlinedIcon {...iconProps} />;
+    }
+    if (normalizedIcon === 'wallet') {
+        return <AccountBalanceWalletOutlinedIcon {...iconProps} />;
+    }
+    if (normalizedIcon === 'card') {
+        return <CreditCardOutlinedIcon {...iconProps} />;
+    }
+    return <PaymentOutlinedIcon {...iconProps} />;
+}
+
 function PaymentMethodCard({
-    code,
-    name,
-    description: configuredDescription,
+    method,
     selected,
     onSelect,
 }: {
-    code: string;
-    name: string;
-    description?: string | null;
+    method: EligiblePaymentMethod;
     selected: boolean;
     onSelect: () => void;
 }) {
-    const icon =
-        code === 'mercadopago' ? (
-            <CreditCardOutlinedIcon sx={{ fontSize: 28, color: selected ? 'primary.main' : 'text.secondary' }} />
-        ) : (
-            <AccountBalanceOutlinedIcon sx={{ fontSize: 28, color: selected ? 'primary.main' : 'text.secondary' }} />
-        );
-
-    const label = name?.trim() || (code === 'mercadopago' ? 'Mercado Pago' : 'Forma de pago');
-    const description = cleanPaymentDescription(configuredDescription);
+    const display = getPaymentDisplay(method);
+    const icon = getPaymentIcon(display.icon, selected);
 
     return (
         <Paper
@@ -299,10 +328,10 @@ function PaymentMethodCard({
                 )}
                 {icon}
                 <Stack spacing={0.25} flex={1}>
-                    <Typography fontWeight={selected ? 700 : 500}>{label}</Typography>
-                    {description && (
+                    <Typography fontWeight={selected ? 700 : 500}>{display.title}</Typography>
+                    {display.cardDescription && (
                         <Typography variant="caption" color="text.secondary">
-                            {description}
+                            {display.cardDescription}
                         </Typography>
                     )}
                 </Stack>
@@ -311,45 +340,12 @@ function PaymentMethodCard({
     );
 }
 
-// ─── Bank transfer details ─────────────────────────────────────────────────────
+// ─── Payment instructions ──────────────────────────────────────────────────────
 
-function BankTransferDetails({ description }: { description?: string | null }) {
-    const [copied, setCopied] = useState<string | null>(null);
-    const instructions = cleanPaymentDescription(description);
-    const hasStructuredBankData = Boolean(BANK_ACCOUNT_NAME || BANK_CUIT || BANK_CBU || BANK_ALIAS);
-
-    const copy = (value: string, key: string) => {
-        void navigator.clipboard.writeText(value);
-        setCopied(key);
-        setTimeout(() => setCopied(null), 2000);
-    };
-
-    const row = (label: string, value: string, copyKey: string) => (
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography color="text.secondary" variant="body2">
-                {label}
-            </Typography>
-            <Stack direction="row" spacing={0.5} alignItems="center">
-                <Typography fontWeight={600} fontFamily={copyKey === 'cbu' ? 'monospace' : 'inherit'}>
-                    {value}
-                </Typography>
-                {(copyKey === 'cbu' || copyKey === 'alias') && (
-                    <TooltipIconButton
-                        onClick={() => copy(value, copyKey)}
-                        size="small"
-                        tooltip={copied === copyKey ? 'Dato copiado' : `Copiar ${label.toLowerCase()}`}
-                        sx={{
-                            p: 0.5,
-                            color: copied === copyKey ? 'success.main' : 'text.disabled',
-                            '&:hover': { color: 'primary.main' },
-                        }}
-                    >
-                        <ContentCopyIcon sx={{ fontSize: 14 }} />
-                    </TooltipIconButton>
-                )}
-            </Stack>
-        </Stack>
-    );
+function PaymentInstructions({ display }: { display: PaymentDisplay }) {
+    if (!display.instructionsTitle && !display.instructions) {
+        return null;
+    }
 
     return (
         <Paper
@@ -362,29 +358,16 @@ function BankTransferDetails({ description }: { description?: string | null }) {
             }}
         >
             <Stack spacing={1.5}>
-                <Typography variant="subtitle2" fontWeight={700} color="info.dark">
-                    Datos / instrucciones del pago
-                </Typography>
-                {instructions && (
+                {display.instructionsTitle && (
+                    <Typography variant="subtitle2" fontWeight={700} color="info.dark">
+                        {display.instructionsTitle}
+                    </Typography>
+                )}
+                {display.instructions && (
                     <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                        {instructions}
+                        {display.instructions}
                     </Typography>
                 )}
-                {instructions && hasStructuredBankData && <Divider />}
-                {BANK_ACCOUNT_NAME && row('Titular', BANK_ACCOUNT_NAME, 'name')}
-                {BANK_CUIT && row('CUIT', BANK_CUIT, 'cuit')}
-                {BANK_CBU && row('CBU / CVU', BANK_CBU, 'cbu')}
-                {BANK_ALIAS && row('Alias', BANK_ALIAS, 'alias')}
-                {!hasStructuredBankData && !instructions && (
-                    <Typography variant="body2" color="text.secondary">
-                        Configurá las instrucciones de este medio de pago en la descripción del método dentro de Vendure.
-                    </Typography>
-                )}
-                <Divider />
-                <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                    Confirmá el pedido y realizá la transferencia. Te vamos a contactar para
-                    coordinar la entrega una vez que acreditemos el pago.
-                </Typography>
             </Stack>
         </Paper>
     );
@@ -629,7 +612,15 @@ function CheckoutContent() {
 
     const currencyCode = checkoutOrder?.currencyCode || 'ARS';
     const selectedPaymentMethod = paymentMethods.find((method) => method.code === selectedPaymentCode) ?? null;
-    const isMercadoPagoSelected = selectedPaymentCode === 'mercadopago';
+    const selectedPaymentDisplay = selectedPaymentMethod ? getPaymentDisplay(selectedPaymentMethod) : null;
+    const paymentSectionTitle =
+        paymentMethods
+            .map((method) => getPaymentDisplay(method).sectionTitle)
+            .find(Boolean) ?? null;
+    const paymentFooterText =
+        paymentMethods
+            .map((method) => getPaymentDisplay(method).footerText)
+            .find(Boolean) ?? null;
     const busy = savingData || paying;
 
     // ── Loading ──
@@ -962,65 +953,59 @@ function CheckoutContent() {
                                             >
                                                 <PaymentOutlinedIcon sx={{ color: 'primary.main' }} />
                                             </Box>
-                                            <Typography variant="h6" fontWeight={700}>
-                                                ¿Cómo querés pagar?
-                                            </Typography>
+                                            {paymentSectionTitle && (
+                                                <Typography variant="h6" fontWeight={700}>
+                                                    {paymentSectionTitle}
+                                                </Typography>
+                                            )}
                                         </Stack>
 
                                         <Stack spacing={1.5}>
                                             {paymentMethods.map((method) => (
                                                 <PaymentMethodCard
                                                     key={method.code}
-                                                    code={method.code}
-                                                    name={method.name}
-                                                    description={method.description}
+                                                    method={method}
                                                     selected={selectedPaymentCode === method.code}
                                                     onSelect={() => setSelectedPaymentCode(method.code)}
                                                 />
                                             ))}
                                         </Stack>
 
-                                        {selectedPaymentMethod && !isMercadoPagoSelected && (
-                                            <BankTransferDetails description={selectedPaymentMethod.description} />
+                                        {selectedPaymentDisplay && (
+                                            <PaymentInstructions display={selectedPaymentDisplay} />
                                         )}
 
-                                        <TooltipButton
-                                            variant="contained"
-                                            color="success"
-                                            size="large"
-                                            onClick={() => void pay()}
-                                            disabled={!selectedPaymentCode || paying}
-                                            tooltip={
-                                                selectedPaymentCode === 'mercadopago'
-                                                    ? 'Ir a Mercado Pago para completar el pago'
-                                                    : 'Confirmar esta forma de pago y continuar con la carga del archivo'
-                                            }
-                                            sx={{
-                                                borderRadius: 2,
-                                                py: 1.5,
-                                                fontSize: '1rem',
-                                                fontWeight: 700,
-                                            }}
-                                        >
-                                            {paying ? (
-                                                <Stack direction="row" spacing={1} alignItems="center">
-                                                    <CircularProgress size={20} color="inherit" />
-                                                    <span>Procesando...</span>
+                                        {selectedPaymentDisplay && (
+                                            <TooltipButton
+                                                variant="contained"
+                                                color="success"
+                                                size="large"
+                                                onClick={() => void pay()}
+                                                disabled={paying}
+                                                tooltip={selectedPaymentDisplay.buttonLabel}
+                                                sx={{
+                                                    borderRadius: 2,
+                                                    py: 1.5,
+                                                    fontSize: '1rem',
+                                                    fontWeight: 700,
+                                                }}
+                                            >
+                                                <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
+                                                    {paying && <CircularProgress size={20} color="inherit" />}
+                                                    <span>{selectedPaymentDisplay.buttonLabel}</span>
                                                 </Stack>
-                                            ) : selectedPaymentCode === 'mercadopago' ? (
-                                                'Pagar con Mercado Pago'
-                                            ) : (
-                                                'Confirmar pago y cargar foto'
-                                            )}
-                                        </TooltipButton>
+                                            </TooltipButton>
+                                        )}
 
-                                        <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                            textAlign="center"
-                                        >
-                                            Tus datos están protegidos y nunca los compartimos con terceros.
-                                        </Typography>
+                                        {paymentFooterText && (
+                                            <Typography
+                                                variant="caption"
+                                                color="text.secondary"
+                                                textAlign="center"
+                                            >
+                                                {paymentFooterText}
+                                            </Typography>
+                                        )}
                                     </Stack>
                                 </Paper>
                             )}
