@@ -67,6 +67,7 @@ services:
       MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-}
       MERCADOPAGO_ENV: ${MERCADOPAGO_ENV:-testing}
       MERCADOPAGO_PUBLIC_BASE_URL: ${MERCADOPAGO_PUBLIC_BASE_URL:-}
+      PERSONALIZATION_REQUIRE_UPLOAD_BY_DEFAULT: ${PERSONALIZATION_REQUIRE_UPLOAD_BY_DEFAULT:-true}
     ports:
       # Primary backend loopback upstream for the recommended host-level Nginx.
       - "127.0.0.1:3402:3001"

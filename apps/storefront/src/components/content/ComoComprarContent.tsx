@@ -1,8 +1,7 @@
 'use client';
 
-import { Container, Typography, Box, Grid, Card, CardContent, Avatar, Chip, Stack } from '@mui/material';
-import { IconClick, IconCreditCard, IconShoppingCart, IconTruckDelivery } from '@tabler/icons-react';
-import Link from 'next/link';
+import { Container, Typography, Box, Card, CardContent, Avatar, Chip, Stack } from '@mui/material';
+import { IconClick, IconCreditCard, IconPhotoUp, IconShoppingCart, IconTruckDelivery } from '@tabler/icons-react';
 import TooltipButton from '@/components/ui/TooltipButton';
 
 const steps = [
@@ -22,8 +21,13 @@ const steps = [
         description: 'Ingresá tus datos de envío y pago'
     },
     {
+        icon: <IconPhotoUp size={40} />,
+        title: '4. Cargá tu Foto',
+        description: 'Subí el archivo para personalizar tu pieza'
+    },
+    {
         icon: <IconTruckDelivery size={40} />,
-        title: '4. Recibí en Casa',
+        title: '5. Recibí en Casa',
         description: 'Enviamos tu pedido a donde estés'
     }
 ];
@@ -37,40 +41,60 @@ export default function ComoComprarContent() {
                     <Chip label="Simple y clara" color="primary" variant="outlined" />
                 </Stack>
                 <Typography variant="h2" fontWeight="700" sx={{ mt: 1 }}>
-                    Tu compra en 4 pasos
+                    Tu compra en 5 pasos
                 </Typography>
                 <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 2 }}>
                     Un recorrido claro, elegante y sin fricción para comprar en CLA Soulprint.
                 </Typography>
             </Box>
 
-            <Grid container spacing={4} sx={{ mb: 8 }}>
+            <Box
+                sx={{
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'repeat(2, minmax(0, 1fr))',
+                        md: 'repeat(5, minmax(0, 1fr))',
+                    },
+                    gap: 3,
+                    mb: 8,
+                }}
+            >
                 {steps.map((step, index) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-                        <Card
-                            variant="outlined"
-                            sx={{
-                                height: '100%',
-                                borderColor: 'primary.light',
-                                bgcolor: 'rgba(255,251,244,0.84)',
-                                backdropFilter: 'blur(12px)',
-                            }}
-                        >
-                            <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                                <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', width: 80, height: 80, mx: 'auto', mb: 3 }}>
-                                    {step.icon}
-                                </Avatar>
-                                <Typography variant="h5" fontWeight="600" gutterBottom>
-                                    {step.title}
-                                </Typography>
-                                <Typography variant="body1" color="text.secondary">
-                                    {step.description}
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
+                    <Card
+                        key={index}
+                        variant="outlined"
+                        sx={{
+                            height: '100%',
+                            borderColor: 'rgba(0,72,37,0.18)',
+                            bgcolor: 'rgba(255,251,244,0.84)',
+                            backdropFilter: 'blur(12px)',
+                        }}
+                    >
+                        <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                            <Avatar
+                                sx={{
+                                    bgcolor: 'rgba(0,72,37,0.08)',
+                                    color: 'primary.main',
+                                    border: '1px solid rgba(0,72,37,0.16)',
+                                    width: 80,
+                                    height: 80,
+                                    mx: 'auto',
+                                    mb: 3,
+                                }}
+                            >
+                                {step.icon}
+                            </Avatar>
+                            <Typography variant="h5" fontWeight="600" gutterBottom>
+                                {step.title}
+                            </Typography>
+                            <Typography variant="body1" color="text.secondary">
+                                {step.description}
+                            </Typography>
+                        </CardContent>
+                    </Card>
                 ))}
-            </Grid>
+            </Box>
 
             <Box textAlign="center">
                 <TooltipButton

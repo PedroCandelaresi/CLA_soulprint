@@ -169,7 +169,10 @@ export class PersonalizationService {
 
     private lineRequiresPersonalization(line: OrderLine): boolean {
         const variantCf = (line.productVariant?.customFields ?? {}) as Record<string, unknown>;
-        return variantCf['requiresPersonalization'] === true;
+        if (variantCf['requiresPersonalization'] === true) {
+            return true;
+        }
+        return this.config.requireUploadByDefault;
     }
 
     private orderRequiresPersonalization(order: Order): boolean {

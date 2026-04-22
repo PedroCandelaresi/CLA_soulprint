@@ -159,6 +159,19 @@ function persistPersonalizationOrderCode(code: string): void {
     }
 }
 
+function cleanPaymentDescription(description: string | null | undefined): string {
+    return (description ?? '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 // ─── Step indicator ────────────────────────────────────────────────────────────
 
 function StepIndicator({ step }: { step: 1 | 2 }) {
@@ -170,17 +183,17 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
                         width: 36,
                         height: 36,
                         borderRadius: '50%',
-                        bgcolor: 'primary.main',
-                        boxShadow: '0 10px 20px rgba(0,72,37,0.18)',
+                        bgcolor: 'rgba(0,72,37,0.08)',
+                        border: '1px solid rgba(0,72,37,0.16)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                     }}
                 >
                     {step > 1 ? (
-                        <CheckCircleIcon sx={{ fontSize: 20, color: 'white' }} />
+                        <CheckCircleIcon sx={{ fontSize: 20, color: 'primary.main' }} />
                     ) : (
-                        <Typography variant="caption" fontWeight={700} color="white">
+                        <Typography variant="caption" fontWeight={700} color="primary.main">
                             1
                         </Typography>
                     )}
@@ -211,15 +224,15 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
                         width: 36,
                         height: 36,
                         borderRadius: '50%',
-                        bgcolor: step >= 2 ? 'primary.main' : 'grey.300',
-                        boxShadow: step >= 2 ? '0 10px 20px rgba(0,72,37,0.18)' : 'none',
+                        bgcolor: step >= 2 ? 'rgba(0,72,37,0.08)' : 'rgba(0,0,0,0.04)',
+                        border: step >= 2 ? '1px solid rgba(0,72,37,0.16)' : '1px solid rgba(0,0,0,0.08)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         transition: 'background-color 0.3s',
                     }}
                 >
-                    <Typography variant="caption" fontWeight={700} color="white">
+                    <Typography variant="caption" fontWeight={700} color={step >= 2 ? 'primary.main' : 'text.secondary'}>
                         2
                     </Typography>
                 </Box>
@@ -240,11 +253,13 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
 function PaymentMethodCard({
     code,
     name,
+    description: configuredDescription,
     selected,
     onSelect,
 }: {
     code: string;
     name: string;
+    description?: string | null;
     selected: boolean;
     onSelect: () => void;
 }) {
@@ -255,19 +270,8 @@ function PaymentMethodCard({
             <AccountBalanceOutlinedIcon sx={{ fontSize: 28, color: selected ? 'primary.main' : 'text.secondary' }} />
         );
 
-    const label =
-        code === 'mercadopago'
-            ? 'Mercado Pago'
-            : code === 'transferencia-bancaria'
-              ? 'Transferencia bancaria'
-              : name;
-
-    const description =
-        code === 'mercadopago'
-            ? 'Tarjeta de crédito, débito o saldo de Mercado Pago'
-            : code === 'transferencia-bancaria'
-              ? 'Transferí por CBU/CVU desde tu home banking'
-              : '';
+    const label = name?.trim() || (code === 'mercadopago' ? 'Mercado Pago' : 'Forma de pago');
+    const description = cleanPaymentDescription(configuredDescription);
 
     return (
         <Paper
@@ -309,8 +313,10 @@ function PaymentMethodCard({
 
 // ─── Bank transfer details ─────────────────────────────────────────────────────
 
-function BankTransferDetails() {
+function BankTransferDetails({ description }: { description?: string | null }) {
     const [copied, setCopied] = useState<string | null>(null);
+    const instructions = cleanPaymentDescription(description);
+    const hasStructuredBankData = Boolean(BANK_ACCOUNT_NAME || BANK_CUIT || BANK_CBU || BANK_ALIAS);
 
     const copy = (value: string, key: string) => {
         void navigator.clipboard.writeText(value);
@@ -357,15 +363,21 @@ function BankTransferDetails() {
         >
             <Stack spacing={1.5}>
                 <Typography variant="subtitle2" fontWeight={700} color="info.dark">
-                    Datos para transferir
+                    Datos / instrucciones del pago
                 </Typography>
+                {instructions && (
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+                        {instructions}
+                    </Typography>
+                )}
+                {instructions && hasStructuredBankData && <Divider />}
                 {BANK_ACCOUNT_NAME && row('Titular', BANK_ACCOUNT_NAME, 'name')}
                 {BANK_CUIT && row('CUIT', BANK_CUIT, 'cuit')}
                 {BANK_CBU && row('CBU / CVU', BANK_CBU, 'cbu')}
                 {BANK_ALIAS && row('Alias', BANK_ALIAS, 'alias')}
-                {!BANK_CBU && !BANK_ALIAS && (
+                {!hasStructuredBankData && !instructions && (
                     <Typography variant="body2" color="text.secondary">
-                        Configurar datos bancarios en variables de entorno.
+                        Configurá las instrucciones de este medio de pago en la descripción del método dentro de Vendure.
                     </Typography>
                 )}
                 <Divider />
@@ -616,6 +628,8 @@ function CheckoutContent() {
     }, [checkoutOrder?.state, customer, runMutation, selectedPaymentCode, router]);
 
     const currencyCode = checkoutOrder?.currencyCode || 'ARS';
+    const selectedPaymentMethod = paymentMethods.find((method) => method.code === selectedPaymentCode) ?? null;
+    const isMercadoPagoSelected = selectedPaymentCode === 'mercadopago';
     const busy = savingData || paying;
 
     // ── Loading ──
@@ -939,7 +953,8 @@ function CheckoutContent() {
                                                     width: 44,
                                                     height: 44,
                                                     borderRadius: 2.5,
-                                                    bgcolor: 'primary.light',
+                                                    bgcolor: 'rgba(0,72,37,0.08)',
+                                                    border: '1px solid rgba(0,72,37,0.16)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
@@ -958,14 +973,15 @@ function CheckoutContent() {
                                                     key={method.code}
                                                     code={method.code}
                                                     name={method.name}
+                                                    description={method.description}
                                                     selected={selectedPaymentCode === method.code}
                                                     onSelect={() => setSelectedPaymentCode(method.code)}
                                                 />
                                             ))}
                                         </Stack>
 
-                                        {selectedPaymentCode === 'transferencia-bancaria' && (
-                                            <BankTransferDetails />
+                                        {selectedPaymentMethod && !isMercadoPagoSelected && (
+                                            <BankTransferDetails description={selectedPaymentMethod.description} />
                                         )}
 
                                         <TooltipButton
@@ -977,7 +993,7 @@ function CheckoutContent() {
                                             tooltip={
                                                 selectedPaymentCode === 'mercadopago'
                                                     ? 'Ir a Mercado Pago para completar el pago'
-                                                    : 'Confirmar la transferencia y continuar con la carga del archivo'
+                                                    : 'Confirmar esta forma de pago y continuar con la carga del archivo'
                                             }
                                             sx={{
                                                 borderRadius: 2,
@@ -994,7 +1010,7 @@ function CheckoutContent() {
                                             ) : selectedPaymentCode === 'mercadopago' ? (
                                                 'Pagar con Mercado Pago'
                                             ) : (
-                                                'Confirmar transferencia y cargar foto'
+                                                'Confirmar pago y cargar foto'
                                             )}
                                         </TooltipButton>
 
@@ -1087,9 +1103,9 @@ function CheckoutContent() {
                                         sx={{
                                             p: 2,
                                             borderRadius: 2.5,
-                                            bgcolor: 'primary.light',
+                                            bgcolor: 'rgba(0,72,37,0.08)',
                                             border: '1px solid',
-                                            borderColor: 'primary.100',
+                                            borderColor: 'rgba(0,72,37,0.16)',
                                         }}
                                     >
                                         <Stack direction="row" justifyContent="space-between" alignItems="center">
