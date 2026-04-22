@@ -976,6 +976,11 @@
             }
         }
     `;
+    const PAYMENT_SETTINGS_LOAD_RETRY_MS = 60000;
+    let paymentSettingsCache = null;
+    let paymentSettingsLoadPromise = null;
+    let paymentSettingsLastAttemptAt = 0;
+    let paymentSettingsLastError = '';
 
     function clearToast() {
         currentToastTimers.forEach(function (t) { clearTimeout(t); });
@@ -1105,8 +1110,14 @@
         if (!status) {
             return;
         }
-        status.textContent = message || '';
-        status.setAttribute('data-tone', tone || 'neutral');
+        const nextMessage = message || '';
+        const nextTone = tone || 'neutral';
+        if (status.textContent !== nextMessage) {
+            status.textContent = nextMessage;
+        }
+        if (status.getAttribute('data-tone') !== nextTone) {
+            status.setAttribute('data-tone', nextTone);
+        }
     }
 
     function setPaymentPanelBusy(panel, busy) {
@@ -1116,8 +1127,35 @@
         panel.classList.toggle('is-loading', Boolean(busy));
     }
 
+    function hydratePaymentPanel(panel, settings) {
+        const sectionTitleInput = panel.querySelector('[name="sectionTitle"]');
+        const footerTextInput = panel.querySelector('[name="footerText"]');
+
+        if (sectionTitleInput) {
+            sectionTitleInput.value = settings?.sectionTitle || '';
+        }
+        if (footerTextInput) {
+            footerTextInput.value = settings?.footerText || '';
+        }
+    }
+
     async function loadPaymentPanel(panel) {
         if (panel.getAttribute('data-loaded') === 'true' || panel.getAttribute('data-loading') === 'true') {
+            return;
+        }
+
+        if (paymentSettingsCache) {
+            hydratePaymentPanel(panel, paymentSettingsCache);
+            panel.setAttribute('data-loaded', 'true');
+            setPaymentPanelStatus(panel, 'Listo para editar.', 'success');
+            return;
+        }
+
+        const now = Date.now();
+        if (!paymentSettingsLoadPromise && now - paymentSettingsLastAttemptAt < PAYMENT_SETTINGS_LOAD_RETRY_MS) {
+            if (paymentSettingsLastError) {
+                setPaymentPanelStatus(panel, paymentSettingsLastError, 'error');
+            }
             return;
         }
 
@@ -1125,22 +1163,26 @@
         setPaymentPanelStatus(panel, 'Cargando textos...', 'neutral');
 
         try {
-            const data = await adminGraphql(PAYMENT_SETTINGS_QUERY);
-            const settings = data?.storefrontPaymentSettings || {};
-            const sectionTitleInput = panel.querySelector('[name="sectionTitle"]');
-            const footerTextInput = panel.querySelector('[name="footerText"]');
-
-            if (sectionTitleInput) {
-                sectionTitleInput.value = settings.sectionTitle || '';
+            if (!paymentSettingsLoadPromise) {
+                paymentSettingsLastAttemptAt = now;
+                paymentSettingsLoadPromise = adminGraphql(PAYMENT_SETTINGS_QUERY)
+                    .then(function (data) {
+                        paymentSettingsCache = data?.storefrontPaymentSettings || {};
+                        paymentSettingsLastError = '';
+                        return paymentSettingsCache;
+                    })
+                    .finally(function () {
+                        paymentSettingsLoadPromise = null;
+                    });
             }
-            if (footerTextInput) {
-                footerTextInput.value = settings.footerText || '';
-            }
 
+            const settings = await paymentSettingsLoadPromise;
+            hydratePaymentPanel(panel, settings);
             panel.setAttribute('data-loaded', 'true');
             setPaymentPanelStatus(panel, 'Listo para editar.', 'success');
         } catch (error) {
-            setPaymentPanelStatus(panel, error?.message || 'No se pudieron cargar los textos.', 'error');
+            paymentSettingsLastError = error?.message || 'No se pudieron cargar los textos.';
+            setPaymentPanelStatus(panel, paymentSettingsLastError, 'error');
         } finally {
             panel.removeAttribute('data-loading');
         }
@@ -1158,7 +1200,11 @@
         setPaymentPanelStatus(panel, 'Guardando...', 'neutral');
 
         try {
-            await adminGraphql(PAYMENT_SETTINGS_MUTATION, { input });
+            const data = await adminGraphql(PAYMENT_SETTINGS_MUTATION, { input });
+            paymentSettingsCache = data?.updateStorefrontPaymentSettings || input;
+            paymentSettingsLastError = '';
+            hydratePaymentPanel(panel, paymentSettingsCache);
+            panel.setAttribute('data-loaded', 'true');
             setPaymentPanelStatus(panel, 'Textos guardados. El storefront ya puede leer esta configuracion.', 'success');
         } catch (error) {
             setPaymentPanelStatus(panel, error?.message || 'No se pudo guardar.', 'error');
