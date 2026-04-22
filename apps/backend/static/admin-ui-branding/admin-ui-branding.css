@@ -69,6 +69,152 @@ h1, h2, h3, h4, .page-title {
 }
 
 /* ======================================================================
+   PAYMENT METHODS — bloque global del checkout dentro de la vista nativa
+   ====================================================================== */
+.cla-payment-settings-panel {
+    margin: 0.9rem 0 1.15rem;
+    padding: 1.1rem 1.2rem;
+    border: 1px solid rgba(0, 72, 37, 0.16);
+    border-left: 4px solid var(--cla-gold);
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(255, 250, 242, 0.96), rgba(245, 235, 217, 0.72)),
+        var(--cla-paper);
+    box-shadow: var(--cla-shadow-sm);
+    color: var(--cla-ink);
+}
+
+.cla-payment-settings-panel__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.cla-payment-settings-panel__head h2 {
+    margin: 0.08rem 0 0.25rem;
+    color: var(--cla-green-dk);
+    font-size: clamp(1.1rem, 1.5vw, 1.45rem);
+    line-height: 1.2;
+}
+
+.cla-payment-settings-panel__head p {
+    max-width: 58rem;
+    margin: 0;
+    color: var(--cla-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.cla-payment-settings-panel__eyebrow {
+    margin: 0 !important;
+    color: var(--cla-gold);
+    font-size: 0.66rem !important;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.cla-payment-settings-panel__save {
+    flex: 0 0 auto;
+    border-radius: 6px !important;
+    background: var(--cla-green) !important;
+    border-color: var(--cla-green) !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 18px rgba(0, 72, 37, 0.16);
+}
+
+.cla-payment-settings-panel__save:hover {
+    background: var(--cla-green-lt) !important;
+    border-color: var(--cla-green-lt) !important;
+}
+
+.cla-payment-settings-panel__save clr-icon {
+    margin-right: 0.3rem;
+}
+
+.cla-payment-settings-panel__form {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.8fr) minmax(18rem, 1.2fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.cla-payment-settings-panel__form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+}
+
+.cla-payment-settings-panel__form span {
+    color: var(--cla-ink);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.cla-payment-settings-panel__form input,
+.cla-payment-settings-panel__form textarea {
+    width: 100%;
+    min-height: 2.2rem;
+    padding: 0.48rem 0.62rem;
+    border: 1px solid rgba(0, 72, 37, 0.22);
+    border-radius: 6px;
+    background: rgba(255, 250, 242, 0.94);
+    color: var(--cla-ink);
+    font: inherit;
+    outline: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.cla-payment-settings-panel__form textarea {
+    resize: vertical;
+}
+
+.cla-payment-settings-panel__form input:focus,
+.cla-payment-settings-panel__form textarea:focus {
+    border-color: var(--cla-green);
+    box-shadow: 0 0 0 3px rgba(0, 72, 37, 0.10);
+}
+
+.cla-payment-settings-panel__form small {
+    color: var(--cla-muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
+}
+
+.cla-payment-settings-panel__status {
+    min-height: 1.05rem;
+    margin-top: 0.85rem;
+    color: var(--cla-muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.cla-payment-settings-panel__status[data-tone="success"] {
+    color: var(--cla-green);
+}
+
+.cla-payment-settings-panel__status[data-tone="error"] {
+    color: #8a2b1f;
+}
+
+.cla-payment-settings-panel.is-loading {
+    opacity: 0.78;
+}
+
+@media (max-width: 900px) {
+    .cla-payment-settings-panel__head {
+        flex-direction: column;
+    }
+
+    .cla-payment-settings-panel__form {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ======================================================================
    NAV IZQUIERDO — verde profundo CLA
    ====================================================================== */
 .left-nav {

@@ -957,6 +957,26 @@
     let currentToast = null;
     let currentToastTimers = [];
 
+    const PAYMENT_SETTINGS_QUERY = `
+        query ClaStorefrontPaymentSettings {
+            storefrontPaymentSettings {
+                id
+                sectionTitle
+                footerText
+            }
+        }
+    `;
+
+    const PAYMENT_SETTINGS_MUTATION = `
+        mutation ClaUpdateStorefrontPaymentSettings($input: UpdateStorefrontPaymentSettingsInput!) {
+            updateStorefrontPaymentSettings(input: $input) {
+                id
+                sectionTitle
+                footerText
+            }
+        }
+    `;
+
     function clearToast() {
         currentToastTimers.forEach(function (t) { clearTimeout(t); });
         currentToastTimers = [];
@@ -1016,6 +1036,202 @@
         }, 260);
     }
 
+    function isPaymentMethodsListPage() {
+        const path = window.location.pathname.replace(/\/+$/, '');
+        return /(?:^|\/)(admin\/)?settings\/payment-methods$/.test(path);
+    }
+
+    function readVendureStorageValue(key) {
+        const storageKey = 'vnd_' + key;
+        const storages = [window.sessionStorage, window.localStorage];
+
+        for (const storage of storages) {
+            try {
+                const raw = storage.getItem(storageKey);
+                if (!raw) {
+                    continue;
+                }
+                return JSON.parse(raw);
+            } catch (error) {
+                // Ignore malformed browser storage; Vendure can repopulate it.
+            }
+        }
+
+        return null;
+    }
+
+    function getAdminApiHeaders() {
+        const headers = {
+            'content-type': 'application/json',
+            'Apollo-Require-Preflight': 'true',
+        };
+        const authToken = readVendureStorageValue('authToken');
+        const channelToken = readVendureStorageValue('activeChannelToken');
+
+        if (authToken) {
+            headers.authorization = String(authToken).startsWith('Bearer ')
+                ? String(authToken)
+                : 'Bearer ' + authToken;
+        }
+        if (channelToken) {
+            headers['vendure-token'] = String(channelToken);
+        }
+
+        return headers;
+    }
+
+    async function adminGraphql(query, variables) {
+        const response = await fetch(window.location.origin + '/admin-api', {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAdminApiHeaders(),
+            body: JSON.stringify({ query, variables }),
+        });
+
+        const payload = await response.json().catch(function () {
+            return null;
+        });
+
+        if (!response.ok || payload?.errors?.length) {
+            const message = payload?.errors?.[0]?.message || 'No se pudo conectar con el Admin API.';
+            throw new Error(message);
+        }
+
+        return payload.data;
+    }
+
+    function setPaymentPanelStatus(panel, message, tone) {
+        const status = panel.querySelector('[data-cla-payment-status]');
+        if (!status) {
+            return;
+        }
+        status.textContent = message || '';
+        status.setAttribute('data-tone', tone || 'neutral');
+    }
+
+    function setPaymentPanelBusy(panel, busy) {
+        panel.querySelectorAll('input, textarea, button').forEach(function (control) {
+            control.disabled = Boolean(busy);
+        });
+        panel.classList.toggle('is-loading', Boolean(busy));
+    }
+
+    async function loadPaymentPanel(panel) {
+        if (panel.getAttribute('data-loaded') === 'true' || panel.getAttribute('data-loading') === 'true') {
+            return;
+        }
+
+        panel.setAttribute('data-loading', 'true');
+        setPaymentPanelStatus(panel, 'Cargando textos...', 'neutral');
+
+        try {
+            const data = await adminGraphql(PAYMENT_SETTINGS_QUERY);
+            const settings = data?.storefrontPaymentSettings || {};
+            const sectionTitleInput = panel.querySelector('[name="sectionTitle"]');
+            const footerTextInput = panel.querySelector('[name="footerText"]');
+
+            if (sectionTitleInput) {
+                sectionTitleInput.value = settings.sectionTitle || '';
+            }
+            if (footerTextInput) {
+                footerTextInput.value = settings.footerText || '';
+            }
+
+            panel.setAttribute('data-loaded', 'true');
+            setPaymentPanelStatus(panel, 'Listo para editar.', 'success');
+        } catch (error) {
+            setPaymentPanelStatus(panel, error?.message || 'No se pudieron cargar los textos.', 'error');
+        } finally {
+            panel.removeAttribute('data-loading');
+        }
+    }
+
+    async function savePaymentPanel(panel) {
+        const sectionTitleInput = panel.querySelector('[name="sectionTitle"]');
+        const footerTextInput = panel.querySelector('[name="footerText"]');
+        const input = {
+            sectionTitle: sectionTitleInput ? sectionTitleInput.value.trim() : '',
+            footerText: footerTextInput ? footerTextInput.value.trim() : '',
+        };
+
+        setPaymentPanelBusy(panel, true);
+        setPaymentPanelStatus(panel, 'Guardando...', 'neutral');
+
+        try {
+            await adminGraphql(PAYMENT_SETTINGS_MUTATION, { input });
+            setPaymentPanelStatus(panel, 'Textos guardados. El storefront ya puede leer esta configuracion.', 'success');
+        } catch (error) {
+            setPaymentPanelStatus(panel, error?.message || 'No se pudo guardar.', 'error');
+        } finally {
+            setPaymentPanelBusy(panel, false);
+        }
+    }
+
+    function createPaymentSettingsPanel() {
+        const panel = document.createElement('section');
+        panel.className = 'cla-payment-settings-panel';
+        panel.setAttribute('data-cla-payment-settings-panel', 'true');
+        panel.innerHTML = [
+            '<div class="cla-payment-settings-panel__head">',
+            '  <div>',
+            '    <p class="cla-payment-settings-panel__eyebrow">CLA Checkout</p>',
+            '    <h2>Textos globales del selector de pagos</h2>',
+            '    <p>Estos campos aparecen una sola vez en el checkout. La descripcion, instrucciones y boton de cada opcion se editan dentro de cada metodo de pago.</p>',
+            '  </div>',
+            '  <button type="button" class="btn btn-primary cla-payment-settings-panel__save" data-cla-tip="Guardar los textos globales que ve el cliente en el checkout.">',
+            '    <clr-icon shape="floppy"></clr-icon>',
+            '    Guardar textos',
+            '  </button>',
+            '</div>',
+            '<form class="cla-payment-settings-panel__form">',
+            '  <label>',
+            '    <span>Titulo de seccion en tienda</span>',
+            '    <input name="sectionTitle" type="text" placeholder="Ej: Como queres pagar?" autocomplete="off" />',
+            '    <small>Si queda vacio, el storefront usa su titulo por defecto.</small>',
+            '  </label>',
+            '  <label>',
+            '    <span>Texto inferior en tienda</span>',
+            '    <textarea name="footerText" rows="3" placeholder="Ej: Tus datos estan protegidos y nunca los compartimos con terceros."></textarea>',
+            '    <small>Nota opcional debajo del boton principal del selector de pagos.</small>',
+            '  </label>',
+            '</form>',
+            '<div class="cla-payment-settings-panel__status" data-cla-payment-status data-tone="neutral"></div>',
+        ].join('');
+
+        panel.querySelector('form')?.addEventListener('submit', function (event) {
+            event.preventDefault();
+            savePaymentPanel(panel);
+        });
+        panel.querySelector('.cla-payment-settings-panel__save')?.addEventListener('click', function () {
+            savePaymentPanel(panel);
+        });
+
+        return panel;
+    }
+
+    function ensurePaymentMethodSettingsPanel() {
+        if (!isPaymentMethodsListPage()) {
+            document.querySelectorAll('[data-cla-payment-settings-panel]').forEach(function (panel) {
+                panel.remove();
+            });
+            return;
+        }
+
+        const host = document.querySelector('vdr-payment-method-list');
+        const table = host?.querySelector('vdr-data-table-2#payment-method-list, vdr-data-table-2[id="payment-method-list"]');
+        if (!host || !table) {
+            return;
+        }
+
+        let panel = host.querySelector('[data-cla-payment-settings-panel]');
+        if (!panel) {
+            panel = createPaymentSettingsPanel();
+            table.parentNode.insertBefore(panel, table);
+        }
+
+        loadPaymentPanel(panel);
+    }
+
     function runAll() {
         try {
             injectSidebarFixStyles();
@@ -1023,6 +1239,7 @@
             ensureSidebarAccordions();
             applyIconTooltips(document);
             applyActionTooltips(document);
+            ensurePaymentMethodSettingsPanel();
             injectHelpBanner();
             if (activeTooltipHost) {
                 positionTooltip(activeTooltipHost);
