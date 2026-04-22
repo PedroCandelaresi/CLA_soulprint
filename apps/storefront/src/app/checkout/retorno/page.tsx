@@ -108,8 +108,27 @@ function normalizeStatus(value: string | null | undefined): string | null {
     return normalizedValue || null;
 }
 
+function isRejectedReturnStatus(value: string | null | undefined): boolean {
+    const status = normalizeStatus(value);
+    return status === 'failure' || status === 'failed' || status === 'rejected' || status === 'declined';
+}
+
+function isCancelledReturnStatus(value: string | null | undefined): boolean {
+    const status = normalizeStatus(value);
+    return status === 'cancelled' || status === 'cancel' || status === 'null';
+}
+
+function isRejectedProviderStatus(payment: StorefrontOrderPayment | null): boolean {
+    const providerStatus = normalizeStatus(getPublicPaymentMetadata(payment)?.status);
+    return isRejectedReturnStatus(providerStatus);
+}
+
+function isReadyPaymentState(payment: StorefrontOrderPayment | null): boolean {
+    return payment?.state === 'Authorized' || payment?.state === 'Settled';
+}
+
 function isPaymentConfirmed(payment: StorefrontOrderPayment | null): boolean {
-    return payment?.state === 'Settled';
+    return isReadyPaymentState(payment);
 }
 
 function isPaymentCancelled(payment: StorefrontOrderPayment | null): boolean {
@@ -176,17 +195,17 @@ function getStatusCopy(status: ReturnStatus): {
 } {
     if (status === 'confirmed') {
         return {
-            title: 'Pago confirmado',
+            title: 'Continuá con la foto',
             severity: 'success',
-            description: 'Vendure ya registró el cobro. En unos segundos te llevamos al detalle de tu pedido.',
+            description: 'El medio de pago no informó rechazo. Antes de cerrar el pedido, subí el archivo de personalización.',
         };
     }
 
     if (status === 'pending') {
         return {
-            title: 'Pago pendiente',
+            title: 'Pago pendiente de acreditación',
             severity: 'info',
-            description: 'Mercado Pago ya informó un estado intermedio. Seguimos esperando la confirmación final del webhook.',
+            description: 'Podés cargar el archivo mientras esperamos la acreditación final del pago.',
         };
     }
 
@@ -194,7 +213,7 @@ function getStatusCopy(status: ReturnStatus): {
         return {
             title: 'Pago rechazado',
             severity: 'error',
-            description: 'Vendure registró que este intento no quedó aprobado. Podés generar un nuevo intento de pago.',
+            description: 'El medio de pago rechazó la operación. Volvé al checkout para elegir otro medio o reintentar.',
         };
     }
 
@@ -323,35 +342,34 @@ function CheckoutReturnPageContent() {
         [refreshState],
     );
 
-    const resolveStatus = useCallback((nextOrder: ActiveOrder | null): ReturnStatus => {
-        const payment = getLatestPayment(nextOrder);
+    const resolveStatus = useCallback(
+        (nextOrder: ActiveOrder | null): ReturnStatus => {
+            const payment = getLatestPayment(nextOrder);
 
-        if (isPaymentConfirmed(payment)) {
-            return 'confirmed';
-        }
+            if (isRejectedReturnStatus(hints.result) || isPaymentRejected(payment) || isRejectedProviderStatus(payment)) {
+                return 'rejected';
+            }
 
-        if (isPaymentCancelled(payment)) {
-            return 'cancelled';
-        }
+            if (isCancelledReturnStatus(hints.result) || isPaymentCancelled(payment)) {
+                return 'cancelled';
+            }
 
-        if (isPaymentRejected(payment)) {
-            return 'rejected';
-        }
+            if (isPaymentConfirmed(payment)) {
+                return 'confirmed';
+            }
 
-        if (isPaymentPending(payment)) {
-            return 'pending';
-        }
+            if (payment || (nextOrder && hints.result && !isRejectedReturnStatus(hints.result))) {
+                return 'confirmed';
+            }
 
-        if (isPaymentStillVerifying(payment)) {
-            return 'verifying';
-        }
+            if (nextOrder) {
+                return 'verifying';
+            }
 
-        if (nextOrder) {
-            return 'verifying';
-        }
-
-        return 'error';
-    }, []);
+            return 'error';
+        },
+        [hints.result],
+    );
 
     const stopPolling = useCallback(() => {
         if (pollingTimeoutRef.current) {
@@ -840,31 +858,37 @@ function CheckoutReturnPageContent() {
 
                             <Divider />
 
-                            <Button
-                                variant="contained"
-                                onClick={() => {
-                                    if (retryAvailable) {
-                                        void handleRetryPayment(false);
-                                        return;
-                                    }
+                            {(status === 'rejected' || status === 'cancelled') ? (
+                                <Button component={Link} href="/checkout" variant="contained" color="error">
+                                    Volver a elegir pago
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="contained"
+                                    onClick={() => {
+                                        if (retryAvailable) {
+                                            void handleRetryPayment(false);
+                                            return;
+                                        }
 
-                                    if (forceRetryAvailable) {
-                                        void handleRetryPayment(true);
-                                    }
-                                }}
-                                disabled={(!retryAvailable && !forceRetryAvailable) || retrying || refreshing}
-                            >
-                                {retryAvailable || forceRetryAvailable
-                                    ? 'Generar nuevo intento'
-                                    : 'Sin reintento disponible'}
-                            </Button>
+                                        if (forceRetryAvailable) {
+                                            void handleRetryPayment(true);
+                                        }
+                                    }}
+                                    disabled={(!retryAvailable && !forceRetryAvailable) || retrying || refreshing}
+                                >
+                                    {retryAvailable || forceRetryAvailable
+                                        ? 'Generar nuevo intento'
+                                        : 'Sin reintento disponible'}
+                                </Button>
+                            )}
 
-                            {orderCode && (status === 'confirmed' || status === 'rejected' || status === 'cancelled' || status === 'pending') && (
+                            {orderCode && status === 'confirmed' && (
                                 <Button
                                     component={Link}
                                     href={`/mi-cuenta/pedidos/${orderCode}`}
-                                    variant={status === 'confirmed' ? 'contained' : 'outlined'}
-                                    color={status === 'confirmed' ? 'success' : 'primary'}
+                                    variant="contained"
+                                    color="success"
                                 >
                                     Ver mi pedido
                                 </Button>

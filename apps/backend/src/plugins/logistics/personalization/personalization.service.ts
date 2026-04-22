@@ -103,7 +103,7 @@ export class PersonalizationService {
         const order = await this.loadOrder(ctx, input.orderCode);
         if (!order) throw new Error('La orden no existe.');
 
-        await this.authorize(input, order, true);
+        await this.authorize(input, order, false);
 
         const line = this.getLines(order).find(l => String(l.id) === String(input.orderLineId));
         if (!line) throw new Error('Línea de orden no encontrada.');

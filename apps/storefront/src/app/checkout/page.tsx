@@ -57,6 +57,7 @@ const BANK_CUIT = process.env.NEXT_PUBLIC_BANK_CUIT || '';
 const BANK_CBU = process.env.NEXT_PUBLIC_BANK_CBU || '';
 const BANK_ALIAS = process.env.NEXT_PUBLIC_BANK_ALIAS || '';
 const MERCADOPAGO_ORDER_CODE_STORAGE_KEY = 'mercadopago:last-order-code';
+const PERSONALIZATION_ORDER_CODE_STORAGE_KEY = 'personalization:last-order-code';
 const CHECKOUT_LOGIN_HREF = `/auth/login?redirect=${encodeURIComponent('/carrito')}&reason=checkout`;
 
 type FeedbackState = {
@@ -149,6 +150,12 @@ function getMercadoPagoRedirectUrl(order: ActiveOrder | null | undefined): strin
 function persistMercadoPagoOrderCode(code: string): void {
     if (typeof window !== 'undefined') {
         window.sessionStorage.setItem(MERCADOPAGO_ORDER_CODE_STORAGE_KEY, code);
+    }
+}
+
+function persistPersonalizationOrderCode(code: string): void {
+    if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(PERSONALIZATION_ORDER_CODE_STORAGE_KEY, code);
     }
 }
 
@@ -252,14 +259,14 @@ function PaymentMethodCard({
         code === 'mercadopago'
             ? 'Mercado Pago'
             : code === 'transferencia-bancaria'
-              ? 'Transferencia / Efectivo'
+              ? 'Transferencia bancaria'
               : name;
 
     const description =
         code === 'mercadopago'
             ? 'Tarjeta de crédito, débito o saldo de Mercado Pago'
             : code === 'transferencia-bancaria'
-              ? 'Transferí desde tu home banking y coordinamos la entrega'
+              ? 'Transferí por CBU/CVU desde tu home banking'
               : '';
 
     return (
@@ -596,7 +603,10 @@ function CheckoutContent() {
                 return;
             }
 
-            router.push(`/mi-cuenta/pedidos/${p.order.code}`);
+            persistPersonalizationOrderCode(p.order.code);
+            router.push(
+                `/checkout/personalizacion?order=${encodeURIComponent(p.order.code)}&method=${encodeURIComponent(selectedPaymentCode)}`,
+            );
         } catch (error) {
             const r = getOperationResultMessage(error, '');
             setFeedback({ severity: 'error', message: r.message || '¡Ups! Algo salió mal. Revisá tu conexión e intentá de nuevo.' });
@@ -967,7 +977,7 @@ function CheckoutContent() {
                                             tooltip={
                                                 selectedPaymentCode === 'mercadopago'
                                                     ? 'Ir a Mercado Pago para completar el pago'
-                                                    : 'Confirmar el pedido'
+                                                    : 'Confirmar la transferencia y continuar con la carga del archivo'
                                             }
                                             sx={{
                                                 borderRadius: 2,
@@ -984,7 +994,7 @@ function CheckoutContent() {
                                             ) : selectedPaymentCode === 'mercadopago' ? (
                                                 'Pagar con Mercado Pago'
                                             ) : (
-                                                'Confirmar pedido'
+                                                'Confirmar transferencia y cargar foto'
                                             )}
                                         </TooltipButton>
 
