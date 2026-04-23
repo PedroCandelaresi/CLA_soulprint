@@ -1177,27 +1177,30 @@
     }
 
     function readVendureStorageValue(key) {
-        const storageKey = 'vnd_' + key;
+        const keys = ['vnd_' + key, key, 'vendure_' + key];
         const storages = [window.sessionStorage, window.localStorage];
 
         for (const storage of storages) {
-            try {
-                const raw = storage.getItem(storageKey);
-                if (!raw) {
-                    continue;
-                }
+            for (const k of keys) {
                 try {
-                    return JSON.parse(raw);
-                } catch (e) {
-                    return raw;
+                    const raw = storage.getItem(k);
+                    if (!raw) {
+                        continue;
+                    }
+                    try {
+                        return JSON.parse(raw);
+                    } catch (e) {
+                        return raw;
+                    }
+                } catch (error) {
+                    // Ignore inaccessible storage.
                 }
-            } catch (error) {
-                // Ignore inaccessible storage.
             }
         }
 
         return null;
     }
+
 
 
     function getAdminApiHeaders() {
