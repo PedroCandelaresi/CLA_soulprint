@@ -1244,6 +1244,17 @@
             headers['vendure-token'] = String(channelToken);
         }
 
+        // Fallback for CLA Soulprint default channel if not found
+        if (!headers['vendure-token']) {
+            headers['vendure-token'] = 'cla-soulprint-token';
+        }
+
+        console.log('[CLA] Outgoing Headers:', {
+            hasAuth: !!headers.authorization,
+            hasVendureAuth: !!headers['vendure-auth-token'],
+            channel: headers['vendure-token']
+        });
+
         return headers;
     }
 
