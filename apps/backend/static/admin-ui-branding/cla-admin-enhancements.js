@@ -982,6 +982,136 @@
     let paymentSettingsLastAttemptAt = 0;
     let paymentSettingsLastError = '';
 
+    const PAYMENT_METHODS_QUERY = `
+        query ClaPaymentMethodsDisplay {
+            paymentMethods(options: { take: 50 }) {
+                items {
+                    id
+                    name
+                    customFields {
+                        storefrontTitle
+                        storefrontCardDescription
+                        storefrontInstructionsTitle
+                        storefrontInstructions
+                        storefrontButtonLabel
+                        storefrontIcon
+                    }
+                }
+            }
+        }
+    `;
+
+    const PAYMENT_METHOD_DISPLAY_MUTATION = `
+        mutation ClaUpdatePaymentMethodDisplay($input: UpdatePaymentMethodDisplayInput!) {
+            updatePaymentMethodDisplay(input: $input)
+        }
+    `;
+
+    let paymentMethodsCache = null;
+
+    function createPaymentMethodCard(method) {
+        const cf = method.customFields || {};
+        const card = document.createElement('section');
+        card.className = 'cla-payment-settings-panel';
+        card.setAttribute('data-cla-payment-method-card', method.id);
+        card.innerHTML = [
+            '<div class="cla-payment-settings-panel__head">',
+            '  <div>',
+            '    <p class="cla-payment-settings-panel__eyebrow">M\u00e9todo de pago</p>',
+            '    <h2>' + method.name + '</h2>',
+            '    <p>Textos que ve el cliente para este m\u00e9todo en el checkout.</p>',
+            '  </div>',
+            '  <button type="button" class="btn btn-primary cla-payment-settings-panel__save" data-payment-id="' + method.id + '">',
+            '    <clr-icon shape="floppy"></clr-icon>',
+            '    Guardar',
+            '  </button>',
+            '</div>',
+            '<form class="cla-payment-settings-panel__form">',
+            '  <label>',
+            '    <span>T\u00edtulo en checkout</span>',
+            '    <input name="storefrontTitle" type="text" value="' + (cf.storefrontTitle || '') + '" placeholder="Ej: Transferencia bancaria" autocomplete="off" />',
+            '    <small>Si queda vac\u00edo usa el nombre del m\u00e9todo.</small>',
+            '  </label>',
+            '  <label>',
+            '    <span>Descripci\u00f3n de card</span>',
+            '    <textarea name="storefrontCardDescription" rows="2" placeholder="Ej: Pag\u00e1 con tu cuenta bancaria.">' + (cf.storefrontCardDescription || '') + '</textarea>',
+            '    <small>Si queda vac\u00eda usa la descripci\u00f3n del m\u00e9todo.</small>',
+            '  </label>',
+            '  <label>',
+            '    <span>T\u00edtulo de instrucciones</span>',
+            '    <input name="storefrontInstructionsTitle" type="text" value="' + (cf.storefrontInstructionsTitle || '') + '" placeholder="Ej: Datos para la transferencia" autocomplete="off" />',
+            '  </label>',
+            '  <label>',
+            '    <span>Instrucciones (CBU / CVU / alias / CUIT)</span>',
+            '    <textarea name="storefrontInstructions" rows="4" placeholder="Ej: CBU: 0000003100012345678901">' + (cf.storefrontInstructions || '') + '</textarea>',
+            '  </label>',
+            '  <label>',
+            '    <span>Label del bot\u00f3n</span>',
+            '    <input name="storefrontButtonLabel" type="text" value="' + (cf.storefrontButtonLabel || '') + '" placeholder="Ej: Confirmar transferencia" autocomplete="off" />',
+            '    <small>Si queda vac\u00edo usa el t\u00edtulo del m\u00e9todo.</small>',
+            '  </label>',
+            '  <label>',
+            '    <span>\u00cdcono (card / bank / cash / wallet / payment)</span>',
+            '    <input name="storefrontIcon" type="text" value="' + (cf.storefrontIcon || '') + '" placeholder="Ej: bank" autocomplete="off" />',
+            '  </label>',
+            '</form>',
+            '<div class="cla-payment-settings-panel__status" data-cla-payment-method-status="' + method.id + '" data-tone="neutral"></div>',
+        ].join('');
+
+        function setStatus(msg, tone) {
+            const el = card.querySelector('[data-cla-payment-method-status]');
+            if (el) { el.textContent = msg; el.setAttribute('data-tone', tone || 'neutral'); }
+        }
+
+        card.querySelector('.cla-payment-settings-panel__save').addEventListener('click', async function () {
+            const paymentId = this.getAttribute('data-payment-id');
+            const input = { id: paymentId };
+            card.querySelectorAll('form [name]').forEach(function (el) {
+                input[el.name] = el.value.trim();
+            });
+
+            setPaymentPanelBusy(card, true);
+            setStatus('Guardando...', 'neutral');
+            try {
+                await adminGraphql(PAYMENT_METHOD_DISPLAY_MUTATION, { input });
+                paymentMethodsCache = null;
+                setStatus('Guardado correctamente.', 'success');
+            } catch (err) {
+                setStatus(err?.message || 'No se pudo guardar.', 'error');
+            } finally {
+                setPaymentPanelBusy(card, false);
+            }
+        });
+
+        return card;
+    }
+
+    async function ensurePaymentMethodCards() {
+        if (!isPaymentMethodsListPage()) {
+            document.querySelectorAll('[data-cla-payment-method-card]').forEach(function (el) { el.remove(); });
+            return;
+        }
+
+        const host = document.querySelector('vdr-payment-method-list');
+        const table = host?.querySelector('vdr-data-table-2#payment-method-list, vdr-data-table-2[id="payment-method-list"]');
+        if (!host || !table) return;
+
+        if (host.querySelector('[data-cla-payment-method-card]')) return;
+
+        try {
+            if (!paymentMethodsCache) {
+                const data = await adminGraphql(PAYMENT_METHODS_QUERY);
+                paymentMethodsCache = data?.paymentMethods?.items || [];
+            }
+            paymentMethodsCache.forEach(function (method) {
+                const card = createPaymentMethodCard(method);
+                table.parentNode.insertBefore(card, table);
+            });
+        } catch (err) {
+            console.warn('[CLA] No se pudieron cargar los métodos de pago:', err);
+        }
+    }
+
     function clearToast() {
         currentToastTimers.forEach(function (t) { clearTimeout(t); });
         currentToastTimers = [];
@@ -1286,6 +1416,7 @@
             applyIconTooltips(document);
             applyActionTooltips(document);
             ensurePaymentMethodSettingsPanel();
+            ensurePaymentMethodCards();
             injectHelpBanner();
             if (activeTooltipHost) {
                 positionTooltip(activeTooltipHost);

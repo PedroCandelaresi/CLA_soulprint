@@ -1,6 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { RequestContext, TransactionalConnection } from '@vendure/core';
+import { PaymentMethodService, RequestContext, TransactionalConnection } from '@vendure/core';
 import { StorefrontPaymentSettings } from './storefront-payment-settings.entity';
+
+export interface UpdatePaymentMethodDisplayInput {
+    id: string;
+    storefrontTitle?: string | null;
+    storefrontCardDescription?: string | null;
+    storefrontInstructionsTitle?: string | null;
+    storefrontInstructions?: string | null;
+    storefrontButtonLabel?: string | null;
+    storefrontIcon?: string | null;
+}
 
 export interface UpdateStorefrontPaymentSettingsInput {
     sectionTitle?: string | null;
@@ -9,7 +19,10 @@ export interface UpdateStorefrontPaymentSettingsInput {
 
 @Injectable()
 export class StorefrontPaymentDisplayService {
-    constructor(private readonly connection: TransactionalConnection) {}
+    constructor(
+        private readonly connection: TransactionalConnection,
+        private readonly paymentMethodService: PaymentMethodService,
+    ) {}
 
     async getSettings(ctx: RequestContext): Promise<StorefrontPaymentSettings> {
         const repo = this.connection.getRepository(ctx, StorefrontPaymentSettings);
@@ -34,6 +47,18 @@ export class StorefrontPaymentDisplayService {
         }
 
         return repo.save(settings);
+    }
+
+    async updatePaymentMethodDisplay(
+        ctx: RequestContext,
+        input: UpdatePaymentMethodDisplayInput,
+    ): Promise<boolean> {
+        const { id, ...fields } = input;
+        await this.paymentMethodService.update(ctx, {
+            id,
+            customFields: fields as any,
+        });
+        return true;
     }
 }
 

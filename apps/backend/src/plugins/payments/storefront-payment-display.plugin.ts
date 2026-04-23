@@ -14,6 +14,7 @@ import { gql } from 'graphql-tag';
 import {
     StorefrontPaymentDisplayService,
     type UpdateStorefrontPaymentSettingsInput,
+    type UpdatePaymentMethodDisplayInput,
 } from './storefront-payment-display.service';
 import { StorefrontPaymentSettings } from './storefront-payment-settings.entity';
 
@@ -163,6 +164,15 @@ export class StorefrontPaymentSettingsAdminResolver {
     ): Promise<StorefrontPaymentSettings> {
         return this.service.updateSettings(ctx, input);
     }
+
+    @Mutation()
+    @Allow(Permission.UpdatePaymentMethod)
+    updatePaymentMethodDisplay(
+        @Ctx() ctx: RequestContext,
+        @Args('input') input: UpdatePaymentMethodDisplayInput,
+    ): Promise<boolean> {
+        return this.service.updatePaymentMethodDisplay(ctx, input);
+    }
 }
 
 @VendurePlugin({
@@ -183,12 +193,23 @@ export class StorefrontPaymentSettingsAdminResolver {
                 footerText: String
             }
 
+            input UpdatePaymentMethodDisplayInput {
+                id: ID!
+                storefrontTitle: String
+                storefrontCardDescription: String
+                storefrontInstructionsTitle: String
+                storefrontInstructions: String
+                storefrontButtonLabel: String
+                storefrontIcon: String
+            }
+
             extend type Query {
                 storefrontPaymentSettings: StorefrontPaymentSettings!
             }
 
             extend type Mutation {
                 updateStorefrontPaymentSettings(input: UpdateStorefrontPaymentSettingsInput!): StorefrontPaymentSettings!
+                updatePaymentMethodDisplay(input: UpdatePaymentMethodDisplayInput!): Boolean!
             }
         `,
         resolvers: [StorefrontPaymentSettingsAdminResolver],
