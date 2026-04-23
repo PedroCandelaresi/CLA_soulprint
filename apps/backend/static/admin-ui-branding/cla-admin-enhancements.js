@@ -1186,14 +1186,19 @@
                 if (!raw) {
                     continue;
                 }
-                return JSON.parse(raw);
+                try {
+                    return JSON.parse(raw);
+                } catch (e) {
+                    return raw;
+                }
             } catch (error) {
-                // Ignore malformed browser storage; Vendure can repopulate it.
+                // Ignore inaccessible storage.
             }
         }
 
         return null;
     }
+
 
     function getAdminApiHeaders() {
         const headers = {
