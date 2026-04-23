@@ -978,9 +978,12 @@
     `;
     const PAYMENT_SETTINGS_LOAD_RETRY_MS = 60000;
     let paymentSettingsCache = null;
-    let paymentSettingsLoadPromise = null;
+    let paymentMethodsLoadPromise = null;
     let paymentSettingsLastAttemptAt = 0;
+    let paymentMethodsLastAttemptAt = 0;
     let paymentSettingsLastError = '';
+    let paymentSettingsRetryAfter = 0;
+    let paymentMethodsRetryAfter = 0;
 
     const PAYMENT_METHODS_QUERY = `
         query ClaPaymentMethodsDisplay {
@@ -1098,10 +1101,16 @@
 
         if (host.querySelector('[data-cla-payment-method-card]')) return;
 
+        const now = Date.now();
+        if (now < paymentMethodsRetryAfter) return;
+
         try {
             if (!paymentMethodsCache) {
+                console.log('[CLA] Loading payment methods display info...');
+                paymentMethodsLastAttemptAt = now;
                 const data = await adminGraphql(PAYMENT_METHODS_QUERY);
                 paymentMethodsCache = data?.paymentMethods?.items || [];
+                paymentMethodsRetryAfter = 0;
             }
             paymentMethodsCache.forEach(function (method) {
                 const card = createPaymentMethodCard(method);
@@ -1109,6 +1118,7 @@
             });
         } catch (err) {
             console.warn('[CLA] No se pudieron cargar los métodos de pago:', err);
+            paymentMethodsRetryAfter = now + 10000; // Cooldown 10s
         }
     }
 
@@ -1177,26 +1187,38 @@
     }
 
     function readVendureStorageValue(key) {
-        const keys = ['vnd_' + key, key, 'vendure_' + key];
+        const keys = ['vnd_' + key, key, 'vendure_' + key, 'auth-token', 'token'];
         const storages = [window.sessionStorage, window.localStorage];
 
         for (const storage of storages) {
             for (const k of keys) {
                 try {
                     const raw = storage.getItem(k);
-                    if (!raw) {
-                        continue;
-                    }
+                    if (!raw) continue;
                     try {
-                        return JSON.parse(raw);
+                        const parsed = JSON.parse(raw);
+                        if (parsed && typeof parsed === 'string') return parsed;
+                        if (parsed && (parsed.token || parsed.authToken)) return parsed.token || parsed.authToken;
+                        return parsed;
                     } catch (e) {
                         return raw;
                     }
-                } catch (error) {
-                    // Ignore inaccessible storage.
-                }
+                } catch (error) {}
             }
         }
+
+        // Final attempt: Scan all keys for something that looks like a token
+        try {
+            for (const k in window.localStorage) {
+                if (k.toLowerCase().indexOf('token') !== -1 || k.toLowerCase().indexOf('auth') !== -1) {
+                    const val = window.localStorage.getItem(k);
+                    if (val && val.length > 20 && val.length < 500) {
+                        console.log('[CLA] Detected potential token in key:', k);
+                        return val;
+                    }
+                }
+            }
+        } catch (e) {}
 
         return null;
     }
@@ -1212,9 +1234,11 @@
         const channelToken = readVendureStorageValue('activeChannelToken');
 
         if (authToken) {
-            headers.authorization = String(authToken).startsWith('Bearer ')
+            const tokenValue = String(authToken).startsWith('Bearer ')
                 ? String(authToken)
                 : 'Bearer ' + authToken;
+            headers.authorization = tokenValue;
+            headers['vendure-auth-token'] = String(authToken).replace('Bearer ', '');
         }
         if (channelToken) {
             headers['vendure-token'] = String(channelToken);
@@ -1290,10 +1314,11 @@
         }
 
         const now = Date.now();
-        if (!paymentSettingsLoadPromise && now - paymentSettingsLastAttemptAt < PAYMENT_SETTINGS_LOAD_RETRY_MS) {
-            if (paymentSettingsLastError) {
-                setPaymentPanelStatus(panel, paymentSettingsLastError, 'error');
-            }
+        if (now < paymentSettingsRetryAfter) {
+            setPaymentPanelStatus(panel, paymentSettingsLastError || 'Reintentando en unos segundos...', 'error');
+            return;
+        }
+        if (!paymentSettingsLoadPromise && now - paymentSettingsLastAttemptAt < 2000) {
             return;
         }
 
@@ -1320,7 +1345,9 @@
             setPaymentPanelStatus(panel, 'Listo para editar.', 'success');
         } catch (error) {
             paymentSettingsLastError = error?.message || 'No se pudieron cargar los textos.';
+            console.error('[CLA] Error loading settings:', error);
             setPaymentPanelStatus(panel, paymentSettingsLastError, 'error');
+            paymentSettingsRetryAfter = Date.now() + 10000;
         } finally {
             panel.removeAttribute('data-loading');
         }
@@ -1416,7 +1443,14 @@
         loadPaymentPanel(panel);
     }
 
+    let lastRunTime = 0;
     function runAll() {
+        const now = Date.now();
+        if (now - lastRunTime < 300) {
+            return;
+        }
+        lastRunTime = now;
+
         try {
             injectSidebarFixStyles();
             ensureCarouselNavLinks();
