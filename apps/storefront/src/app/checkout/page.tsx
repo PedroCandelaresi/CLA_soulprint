@@ -30,6 +30,7 @@ import TooltipButton from '@/components/ui/TooltipButton';
 import {
     ADD_PAYMENT_TO_ORDER_MUTATION,
     GET_ELIGIBLE_PAYMENT_METHODS_QUERY,
+    GET_STOREFRONT_PAYMENT_SETTINGS_QUERY,
     GET_ELIGIBLE_SHIPPING_METHODS_QUERY,
     SET_ORDER_BILLING_ADDRESS_MUTATION,
     SET_ORDER_SHIPPING_ADDRESS_MUTATION,
@@ -40,6 +41,7 @@ import {
     getOperationResultMessage,
     isActiveOrder,
     type EligiblePaymentMethodsResponse,
+    type StorefrontPaymentSettingsResponse,
     type EligibleShippingMethodsResponse,
 } from '@/lib/vendure/shop';
 import { formatCurrency } from '@/lib/checkout/demo';
@@ -498,11 +500,17 @@ function CheckoutContent() {
         const res = await fetchShopApi<EligiblePaymentMethodsResponse>(GET_ELIGIBLE_PAYMENT_METHODS_QUERY);
         const methods = res.eligiblePaymentMethods.filter((m) => m.isEligible);
         setPaymentMethods(methods);
-        setPaymentSettings(res.storefrontPaymentSettings ?? null);
         setSelectedPaymentCode((cur) => {
             const ok = methods.some((m) => m.code === cur);
             return ok ? cur : (methods[0]?.code ?? '');
         });
+
+        // Cargamos los textos globales por separado para que un fallo aquí
+        // no impida mostrar los métodos de pago.
+        fetchShopApi<StorefrontPaymentSettingsResponse>(GET_STOREFRONT_PAYMENT_SETTINGS_QUERY)
+            .then((s) => setPaymentSettings(s.storefrontPaymentSettings ?? null))
+            .catch(() => { /* textos no críticos */ });
+
         return methods;
     }, []);
 

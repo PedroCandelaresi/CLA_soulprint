@@ -1243,11 +1243,8 @@
         if (channelToken) {
             headers['vendure-token'] = String(channelToken);
         }
-
-        // Fallback for CLA Soulprint default channel if not found
-        if (!headers['vendure-token']) {
-            headers['vendure-token'] = 'cla-soulprint-token';
-        }
+        // Sin fallback de canal: si no encontramos el token real dejamos que
+        // Vendure use el canal por defecto. Un canal inventado causa Forbidden.
 
         console.log('[CLA] Outgoing Headers:', {
             hasAuth: !!headers.authorization,
