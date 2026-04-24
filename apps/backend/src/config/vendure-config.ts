@@ -19,6 +19,7 @@ import { mockPaymentHandler } from '../plugins/payments/mock-payment.plugin';
 import { mercadopagoPaymentHandler } from '../plugins/payments/mercadopago/mercadopago.handler';
 import { MercadoPagoPlugin } from '../plugins/payments/mercadopago/mercadopago.plugin';
 import { transferenciaPaymentHandler } from '../plugins/payments/transferencia-payment.plugin';
+import { PaymentMethodIconPlugin } from '../plugins/payments/payment-method-icon.plugin';
 import {
     manualShippingCalculator,
     manualShippingEligibilityChecker,
@@ -336,6 +337,7 @@ export const config: VendureConfig = {
             : []),
         CustomerAccessPlugin,
         MercadoPagoPlugin,
+        PaymentMethodIconPlugin,
         BadgesPlugin,
         HomeCarouselPlugin,
         PersonalizationPlugin,

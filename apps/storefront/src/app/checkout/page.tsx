@@ -278,6 +278,16 @@ function displayText(value: string | null | undefined): string {
     return cleanPaymentDescription(value);
 }
 
+function resolveIcon(method: EligiblePaymentMethod): string | null {
+    if (method.icon?.trim()) return method.icon.trim().toLowerCase();
+    const code = method.code.toLowerCase();
+    if (code.includes('transfer') || code.includes('bank') || code.includes('cuenta')) return 'bank';
+    if (code.includes('mercadopago') || code.includes('mp')) return 'card';
+    if (code.includes('cash') || code.includes('efectivo')) return 'cash';
+    if (code.includes('wallet') || code.includes('billetera')) return 'wallet';
+    return null;
+}
+
 function getPaymentDisplay(method: EligiblePaymentMethod): PaymentDisplay {
     return {
         title: displayText(method.name),
@@ -285,7 +295,7 @@ function getPaymentDisplay(method: EligiblePaymentMethod): PaymentDisplay {
         instructionsTitle: null,
         instructions: null,
         buttonLabel: displayText(method.name),
-        icon: null,
+        icon: resolveIcon(method),
     };
 }
 
@@ -330,12 +340,12 @@ function PaymentMethodCard({
                 p: 2,
                 borderRadius: 2.5,
                 cursor: 'pointer',
-                border: selected ? '2px solid' : '1px solid',
+                border: '2px solid',
                 borderColor: selected ? 'primary.main' : 'divider',
                 bgcolor: selected ? 'rgba(238,246,240,0.78)' : CLA_SURFACE,
-                transition: 'all 0.15s ease',
+                transition: 'border-color 0.2s ease, background-color 0.2s ease',
                 '&:hover': {
-                    borderColor: CLA_GREEN_BORDER,
+                    borderColor: selected ? 'primary.main' : CLA_GREEN_BORDER,
                     bgcolor: selected ? 'rgba(232,242,236,0.9)' : CLA_SURFACE_STRONG,
                 },
             }}
@@ -967,11 +977,12 @@ function CheckoutContent() {
                                 >
                                     <Stack spacing={3}>
                                         <Stack direction="row" spacing={1.5} alignItems="center">
-                                            <Box
-                                                sx={claIconSurfaceSx}
-                                            >
+                                            <Box sx={claIconSurfaceSx}>
                                                 <PaymentOutlinedIcon sx={{ color: 'primary.main' }} />
                                             </Box>
+                                            <Typography variant="h6" fontWeight={700}>
+                                                Seleccioná el medio de pago
+                                            </Typography>
                                         </Stack>
 
                                         <Stack spacing={1.5}>

@@ -60,6 +60,7 @@ export interface EligiblePaymentMethod {
     description: string;
     isEligible: boolean;
     eligibilityMessage?: string | null;
+    icon?: string | null;
 }
 
 export interface StorefrontPaymentMetadataPublic {

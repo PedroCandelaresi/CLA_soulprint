@@ -358,6 +358,7 @@ export const GET_ELIGIBLE_PAYMENT_METHODS_QUERY = /* GraphQL */ `
             description
             isEligible
             eligibilityMessage
+            icon
         }
     }
 `;
