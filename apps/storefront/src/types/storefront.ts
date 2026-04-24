@@ -95,6 +95,16 @@ export interface StorefrontOrderPayment {
     metadata?: StorefrontPaymentMetadata | null;
 }
 
+export type PersonalizationSideMode = 'text' | 'image';
+export type PersonalizationBackMode = 'none' | 'text' | 'image';
+
+export interface ActiveOrderLineCustomFields {
+    frontMode: PersonalizationSideMode;
+    frontText?: string | null;
+    backMode: PersonalizationBackMode;
+    backText?: string | null;
+}
+
 export interface ActiveOrderLine {
     id: string;
     quantity: number;
@@ -102,6 +112,7 @@ export interface ActiveOrderLine {
     linePriceWithTax: number;
     featuredAsset?: ActiveOrderLineAsset | null;
     productVariant: ActiveOrderLineVariant;
+    customFields?: ActiveOrderLineCustomFields | null;
 }
 
 export interface ActiveOrder {

@@ -72,8 +72,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     zIndex: 0,
                 },
                 '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 20px 40px rgba(0,72,37,0.12)',
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 8px 20px rgba(0,72,37,0.10)',
                     borderColor: 'rgba(0,72,37,0.16)',
                 },
             }}

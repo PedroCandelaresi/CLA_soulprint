@@ -128,23 +128,21 @@ function CheckoutPersonalizationContent() {
     );
 
     const handlePersonalizationUpload = useCallback(
-        async (line: PersonalizationLineData, file: File, notes: string) => {
-            if (!orderCode) {
-                return;
-            }
+        async (line: PersonalizationLineData, side: 'front' | 'back', file: File, notes: string) => {
+            if (!orderCode) return;
 
-            setPersonalizationUploadingLineId(line.orderLineId);
+            setPersonalizationUploadingLineId(`${line.orderLineId}:${side}`);
             setPersonalizationError(null);
 
             try {
                 const data = await uploadPersonalizationFile({
                     orderCode,
                     orderLineId: line.orderLineId,
+                    side,
                     file,
                     notes,
                     accessToken: personalization?.accessToken,
                 });
-
                 setPersonalization(data);
             } catch (error) {
                 setPersonalizationError(

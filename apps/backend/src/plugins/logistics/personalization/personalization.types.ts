@@ -11,6 +11,12 @@ export type PersonalizationOverallStatus =
     | 'partial'
     | 'complete';
 
+export type PersonalizationSide = 'front' | 'back';
+
+export type PersonalizationSideMode = 'text' | 'image';
+
+export type PersonalizationBackMode = 'none' | 'text' | 'image';
+
 export interface PersonalizationOrderAccess {
     orderCode: string;
     transactionId?: string;
@@ -20,6 +26,7 @@ export interface PersonalizationOrderAccess {
 
 export interface PersonalizationLineUploadInput extends PersonalizationOrderAccess {
     orderLineId: string;
+    side: PersonalizationSide;
     notes?: string;
     file: UploadedPersonalizationFile;
 }
@@ -43,8 +50,23 @@ export interface PersonalizationLineData {
     orderLineId: string;
     productName: string;
     variantName: string;
+    quantity: number;
     requiresPersonalization: boolean;
     personalizationStatus: PersonalizationLineStatus;
+    // Frente
+    frontMode: PersonalizationSideMode;
+    frontText: string | null;
+    frontAsset: PersonalizationAssetSummary | null;
+    frontUploadedAt: string | null;
+    frontSnapshotFileName: string | null;
+    // Dorso
+    backMode: PersonalizationBackMode;
+    backText: string | null;
+    backAsset: PersonalizationAssetSummary | null;
+    backStatus: PersonalizationLineStatus;
+    backUploadedAt: string | null;
+    backSnapshotFileName: string | null;
+    // Legacy (kept for backwards compat)
     asset: PersonalizationAssetSummary | null;
     notes: string | null;
     uploadedAt: string | null;

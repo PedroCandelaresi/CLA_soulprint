@@ -19,6 +19,8 @@ import {
     PersonalizationOrderAccess,
     PersonalizationLineUploadInput,
     UploadedPersonalizationFile,
+    PersonalizationSideMode,
+    PersonalizationBackMode,
 } from './personalization.types';
 import {
     buildPersonalizationToken,
@@ -111,32 +113,57 @@ export class PersonalizationService {
             throw new Error('Este producto no requiere personalización.');
         }
 
+        const cf = (line.customFields ?? {}) as Record<string, unknown>;
+        const side = input.side ?? 'front';
+
+        // Validate that the requested side actually requires an image
+        if (side === 'front') {
+            const frontMode = (cf['frontMode'] as string) ?? 'image';
+            if (frontMode !== 'image') throw new Error('El frente de esta línea usa texto, no imagen.');
+        } else {
+            const backMode = (cf['backMode'] as string) ?? 'none';
+            if (backMode !== 'image') throw new Error('El dorso de esta línea no requiere imagen.');
+        }
+
         const stream = Readable.from(input.file.buffer);
         const assetResult = await this.assetService.createFromFileStream(stream, input.file.originalname, ctx);
         if (!('id' in assetResult)) throw new Error('Vendure no pudo procesar el archivo subido.');
 
-        const prevAsset = this.getLineAsset(line);
-        if (prevAsset?.id && prevAsset.id !== assetResult.id) {
-            try {
-                await this.assetService.delete(ctx, [prevAsset.id], true, true);
-            } catch {
-                console.warn(`${LOG_PREFIX} Cleanup of previous asset failed`);
+        if (side === 'front') {
+            const prevAsset = this.getLineFrontAsset(line);
+            if (prevAsset?.id && prevAsset.id !== assetResult.id) {
+                try { await this.assetService.delete(ctx, [prevAsset.id], true, true); } catch { /* noop */ }
             }
+            await this.connection.getRepository(ctx, OrderLine).update(
+                { id: line.id as any },
+                {
+                    customFields: {
+                        personalizationStatus: 'uploaded' as PersonalizationLineStatus,
+                        personalizationAsset: { id: assetResult.id } as any,
+                        personalizationNotes: sanitizeNotes(input.notes) ?? null,
+                        personalizationUploadedAt: new Date(),
+                        personalizationSnapshotFileName: input.file.originalname,
+                        personalizationRejectedReason: null,
+                    } as any,
+                },
+            );
+        } else {
+            const prevBackAsset = this.getLineBackAsset(line);
+            if (prevBackAsset?.id && prevBackAsset.id !== assetResult.id) {
+                try { await this.assetService.delete(ctx, [prevBackAsset.id], true, true); } catch { /* noop */ }
+            }
+            await this.connection.getRepository(ctx, OrderLine).update(
+                { id: line.id as any },
+                {
+                    customFields: {
+                        personalizationBackStatus: 'uploaded' as PersonalizationLineStatus,
+                        personalizationBackAsset: { id: assetResult.id } as any,
+                        personalizationBackUploadedAt: new Date(),
+                        personalizationBackSnapshotFileName: input.file.originalname,
+                    } as any,
+                },
+            );
         }
-
-        await this.connection.getRepository(ctx, OrderLine).update(
-            { id: line.id as any },
-            {
-                customFields: {
-                    personalizationStatus: 'uploaded' as PersonalizationLineStatus,
-                    personalizationAsset: { id: assetResult.id } as any,
-                    personalizationNotes: sanitizeNotes(input.notes) ?? null,
-                    personalizationUploadedAt: new Date(),
-                    personalizationSnapshotFileName: input.file.originalname,
-                    personalizationRejectedReason: null,
-                } as any,
-            },
-        );
 
         const reloadedOrder = await this.loadOrder(ctx, input.orderCode);
         if (reloadedOrder) {
@@ -183,26 +210,73 @@ export class PersonalizationService {
         return (order.lines ?? []) as OrderLine[];
     }
 
-    private getLineAsset(line: OrderLine): Asset | undefined {
+    private getLineFrontAsset(line: OrderLine): Asset | undefined {
         const cf = (line.customFields ?? {}) as Record<string, unknown>;
         const asset = cf['personalizationAsset'];
         return asset && typeof asset === 'object' ? (asset as Asset) : undefined;
     }
 
-    private getStoredLineStatus(line: OrderLine): PersonalizationLineStatus {
+    // Legacy alias
+    private getLineAsset(line: OrderLine): Asset | undefined {
+        return this.getLineFrontAsset(line);
+    }
+
+    private getLineBackAsset(line: OrderLine): Asset | undefined {
+        const cf = (line.customFields ?? {}) as Record<string, unknown>;
+        const asset = cf['personalizationBackAsset'];
+        return asset && typeof asset === 'object' ? (asset as Asset) : undefined;
+    }
+
+    private getLineFrontMode(line: OrderLine): PersonalizationSideMode {
+        const cf = (line.customFields ?? {}) as Record<string, unknown>;
+        return ((cf['frontMode'] as string) === 'text' ? 'text' : 'image') as PersonalizationSideMode;
+    }
+
+    private getLineBackMode(line: OrderLine): PersonalizationBackMode {
+        const cf = (line.customFields ?? {}) as Record<string, unknown>;
+        const raw = cf['backMode'] as string | undefined;
+        if (raw === 'text') return 'text';
+        if (raw === 'image') return 'image';
+        return 'none';
+    }
+
+    private frontIsComplete(line: OrderLine): boolean {
+        if (this.getLineFrontMode(line) === 'text') return true;
+        const status = this.getStoredFrontStatus(line);
+        return status === 'uploaded' || status === 'approved';
+    }
+
+    private backIsComplete(line: OrderLine): boolean {
+        const backMode = this.getLineBackMode(line);
+        if (backMode === 'none' || backMode === 'text') return true;
+        const status = this.getStoredBackStatus(line);
+        return status === 'uploaded' || status === 'approved';
+    }
+
+    private getStoredFrontStatus(line: OrderLine): PersonalizationLineStatus {
         const cf = (line.customFields ?? {}) as Record<string, unknown>;
         return (cf['personalizationStatus'] as PersonalizationLineStatus) ?? 'not-required';
     }
 
+    private getStoredBackStatus(line: OrderLine): PersonalizationLineStatus {
+        const cf = (line.customFields ?? {}) as Record<string, unknown>;
+        return (cf['personalizationBackStatus'] as PersonalizationLineStatus) ?? 'not-required';
+    }
+
+    // Legacy alias
+    private getStoredLineStatus(line: OrderLine): PersonalizationLineStatus {
+        return this.getStoredFrontStatus(line);
+    }
+
     private getEffectiveLineStatus(line: OrderLine): PersonalizationLineStatus {
-        const storedStatus = this.getStoredLineStatus(line);
-        if (!this.lineRequiresPersonalization(line)) {
-            return 'not-required';
+        if (!this.lineRequiresPersonalization(line)) return 'not-required';
+        if (this.frontIsComplete(line) && this.backIsComplete(line)) {
+            // Both sides done — return the front status (uploaded/approved)
+            const s = this.getStoredFrontStatus(line);
+            return s === 'not-required' ? 'uploaded' : s;
         }
-        if (REQUIRED_LINE_PENDING_STATUSES.has(storedStatus)) {
-            return 'pending-upload';
-        }
-        return storedStatus;
+        // Still pending
+        return 'pending-upload';
     }
 
     private deriveOverallStatus(order: Order): PersonalizationOverallStatus {
@@ -210,12 +284,10 @@ export class PersonalizationService {
         const required = lines.filter(l => this.lineRequiresPersonalization(l));
         if (required.length === 0) return 'not-required';
 
-        const uploaded = required.filter(l =>
-            ['uploaded', 'approved'].includes(this.getEffectiveLineStatus(l)),
-        );
+        const complete = required.filter(l => this.frontIsComplete(l) && this.backIsComplete(l));
 
-        if (uploaded.length === 0) return 'pending';
-        if (uploaded.length < required.length) return 'partial';
+        if (complete.length === 0) return 'pending';
+        if (complete.length < required.length) return 'partial';
         return 'complete';
     }
 
@@ -228,20 +300,28 @@ export class PersonalizationService {
 
         for (const line of lines) {
             const shouldRequire = this.lineRequiresPersonalization(line);
-            const currentStatus = this.getStoredLineStatus(line);
+            const currentStatus = this.getStoredFrontStatus(line);
 
             if (!shouldRequire && currentStatus !== 'not-required') {
                 await this.connection.getRepository(ctx, OrderLine).update(
                     { id: line.id as any },
-                    { customFields: { personalizationStatus: 'not-required' } as any },
+                    { customFields: { personalizationStatus: 'not-required', personalizationBackStatus: 'not-required' } as any },
                 );
                 changed = true;
             } else if (shouldRequire && currentStatus === 'not-required') {
-                await this.connection.getRepository(ctx, OrderLine).update(
-                    { id: line.id as any },
-                    { customFields: { personalizationStatus: 'pending-upload' } as any },
-                );
-                changed = true;
+                // Only set to pending if an image is actually needed
+                const frontNeedsUpload = this.getLineFrontMode(line) === 'image';
+                const backNeedsUpload = this.getLineBackMode(line) === 'image';
+                const updates: Record<string, unknown> = {};
+                if (frontNeedsUpload) updates['personalizationStatus'] = 'pending-upload';
+                if (backNeedsUpload) updates['personalizationBackStatus'] = 'pending-upload';
+                if (Object.keys(updates).length > 0) {
+                    await this.connection.getRepository(ctx, OrderLine).update(
+                        { id: line.id as any },
+                        { customFields: updates as any },
+                    );
+                    changed = true;
+                }
             }
         }
 
@@ -307,22 +387,35 @@ export class PersonalizationService {
 
         const lineItems: PersonalizationLineData[] = lines.map(line => {
             const cf = (line.customFields ?? {}) as Record<string, unknown>;
-            const asset = this.getLineAsset(line);
+            const frontAsset = this.getLineFrontAsset(line);
+            const backAsset = this.getLineBackAsset(line);
+
+            const toAssetSummary = (a: Asset | undefined) => a
+                ? { id: String(a.id), source: a.source, preview: a.preview, mimeType: a.mimeType, fileSize: a.fileSize }
+                : null;
+
             return {
                 orderLineId: String(line.id),
                 productName: line.productVariant?.product?.name ?? 'Producto',
                 variantName: line.productVariant?.name ?? '',
+                quantity: line.quantity,
                 requiresPersonalization: this.lineRequiresPersonalization(line),
                 personalizationStatus: this.getEffectiveLineStatus(line),
-                asset: asset
-                    ? {
-                        id: String(asset.id),
-                        source: asset.source,
-                        preview: asset.preview,
-                        mimeType: asset.mimeType,
-                        fileSize: asset.fileSize,
-                    }
-                    : null,
+                // Frente
+                frontMode: this.getLineFrontMode(line),
+                frontText: (cf['frontText'] as string | undefined) ?? null,
+                frontAsset: toAssetSummary(frontAsset),
+                frontUploadedAt: this.formatDate(cf['personalizationUploadedAt'] as Date | string | undefined),
+                frontSnapshotFileName: (cf['personalizationSnapshotFileName'] as string | undefined) ?? null,
+                // Dorso
+                backMode: this.getLineBackMode(line),
+                backText: (cf['backText'] as string | undefined) ?? null,
+                backAsset: toAssetSummary(backAsset),
+                backStatus: this.getStoredBackStatus(line),
+                backUploadedAt: this.formatDate(cf['personalizationBackUploadedAt'] as Date | string | undefined),
+                backSnapshotFileName: (cf['personalizationBackSnapshotFileName'] as string | undefined) ?? null,
+                // Legacy aliases
+                asset: toAssetSummary(frontAsset),
                 notes: (cf['personalizationNotes'] as string | undefined) ?? null,
                 uploadedAt: this.formatDate(cf['personalizationUploadedAt'] as Date | string | undefined),
                 snapshotFileName: (cf['personalizationSnapshotFileName'] as string | undefined) ?? null,

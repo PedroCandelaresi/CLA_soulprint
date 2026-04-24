@@ -9,9 +9,12 @@ type PersonalizationApiResponse = {
     error?: string;
 };
 
+export type PersonalizationSide = 'front' | 'back';
+
 export type UploadPersonalizationInput = PersonalizationAccessInput & {
     orderCode: string;
     orderLineId: string;
+    side: PersonalizationSide;
     file: File;
     notes?: string;
 };
@@ -71,6 +74,7 @@ export async function uploadPersonalizationFile(
     const formData = new FormData();
     formData.set('orderCode', input.orderCode);
     formData.set('orderLineId', input.orderLineId);
+    formData.set('side', input.side);
     formData.set('file', input.file);
 
     if (input.notes?.trim()) {

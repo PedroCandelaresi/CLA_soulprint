@@ -29,13 +29,47 @@ const configurationHook: PluginConfigurationFn = config => {
 
     const existingOrderLineFields = config.customFields.OrderLine ?? [];
     const orderLineFieldsToAdd = [
+        // ── Modo de personalización (se establece al agregar al carrito) ──
+        {
+            name: 'frontMode',
+            type: 'string' as const,
+            defaultValue: 'image',
+            public: true,
+            nullable: false,
+            label: [{ languageCode: LanguageCode.es, value: 'Modo frente' }],
+            description: [{ languageCode: LanguageCode.es, value: '"text" o "image"' }],
+        },
+        {
+            name: 'frontText',
+            type: 'text' as const,
+            public: true,
+            nullable: true,
+            label: [{ languageCode: LanguageCode.es, value: 'Texto del frente' }],
+        },
+        {
+            name: 'backMode',
+            type: 'string' as const,
+            defaultValue: 'none',
+            public: true,
+            nullable: false,
+            label: [{ languageCode: LanguageCode.es, value: 'Modo dorso' }],
+            description: [{ languageCode: LanguageCode.es, value: '"none", "text" o "image"' }],
+        },
+        {
+            name: 'backText',
+            type: 'text' as const,
+            public: true,
+            nullable: true,
+            label: [{ languageCode: LanguageCode.es, value: 'Texto del dorso' }],
+        },
+        // ── Estado y assets (se establecen post-pago) ──
         {
             name: 'personalizationStatus',
             type: 'string' as const,
             defaultValue: 'not-required',
             public: false,
             nullable: false,
-            label: [{ languageCode: LanguageCode.es, value: 'Estado de personalización de la línea' }],
+            label: [{ languageCode: LanguageCode.es, value: 'Estado personalización frente' }],
         },
         {
             name: 'personalizationAsset',
@@ -45,7 +79,25 @@ const configurationHook: PluginConfigurationFn = config => {
             public: false,
             nullable: true,
             eager: true,
-            label: [{ languageCode: LanguageCode.es, value: 'Archivo de personalización' }],
+            label: [{ languageCode: LanguageCode.es, value: 'Imagen frente' }],
+        },
+        {
+            name: 'personalizationBackStatus',
+            type: 'string' as const,
+            defaultValue: 'not-required',
+            public: false,
+            nullable: false,
+            label: [{ languageCode: LanguageCode.es, value: 'Estado personalización dorso' }],
+        },
+        {
+            name: 'personalizationBackAsset',
+            type: 'relation' as const,
+            entity: require('@vendure/core').Asset,
+            graphQLType: 'Asset',
+            public: false,
+            nullable: true,
+            eager: true,
+            label: [{ languageCode: LanguageCode.es, value: 'Imagen dorso' }],
         },
         {
             name: 'personalizationNotes',
@@ -59,7 +111,14 @@ const configurationHook: PluginConfigurationFn = config => {
             type: 'datetime' as const,
             public: false,
             nullable: true,
-            label: [{ languageCode: LanguageCode.es, value: 'Fecha de subida' }],
+            label: [{ languageCode: LanguageCode.es, value: 'Fecha de subida frente' }],
+        },
+        {
+            name: 'personalizationBackUploadedAt',
+            type: 'datetime' as const,
+            public: false,
+            nullable: true,
+            label: [{ languageCode: LanguageCode.es, value: 'Fecha de subida dorso' }],
         },
         {
             name: 'personalizationApprovedAt',
@@ -80,7 +139,14 @@ const configurationHook: PluginConfigurationFn = config => {
             type: 'string' as const,
             public: false,
             nullable: true,
-            label: [{ languageCode: LanguageCode.es, value: 'Nombre original del archivo' }],
+            label: [{ languageCode: LanguageCode.es, value: 'Nombre archivo frente' }],
+        },
+        {
+            name: 'personalizationBackSnapshotFileName',
+            type: 'string' as const,
+            public: false,
+            nullable: true,
+            label: [{ languageCode: LanguageCode.es, value: 'Nombre archivo dorso' }],
         },
     ];
     for (const field of orderLineFieldsToAdd) {
@@ -95,7 +161,7 @@ const configurationHook: PluginConfigurationFn = config => {
         existingVariantFields.push({
             name: 'requiresPersonalization',
             type: 'boolean',
-            defaultValue: false,
+            defaultValue: true,
             public: true,
             nullable: false,
             label: [{ languageCode: LanguageCode.es, value: 'Requiere personalización' }],

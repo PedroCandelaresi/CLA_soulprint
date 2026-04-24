@@ -19,12 +19,30 @@ export interface PersonalizationAssetSummary {
     fileSize: number;
 }
 
+export type PersonalizationSideMode = 'text' | 'image';
+export type PersonalizationBackMode = 'none' | 'text' | 'image';
+
 export interface PersonalizationLineData {
     orderLineId: string;
     productName: string;
     variantName: string;
+    quantity: number;
     requiresPersonalization: boolean;
     personalizationStatus: PersonalizationLineStatus;
+    // Frente
+    frontMode: PersonalizationSideMode;
+    frontText: string | null;
+    frontAsset: PersonalizationAssetSummary | null;
+    frontUploadedAt: string | null;
+    frontSnapshotFileName: string | null;
+    // Dorso
+    backMode: PersonalizationBackMode;
+    backText: string | null;
+    backAsset: PersonalizationAssetSummary | null;
+    backStatus: PersonalizationLineStatus;
+    backUploadedAt: string | null;
+    backSnapshotFileName: string | null;
+    // Legacy
     asset: PersonalizationAssetSummary | null;
     notes: string | null;
     uploadedAt: string | null;

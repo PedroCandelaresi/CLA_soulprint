@@ -101,6 +101,8 @@ export class PersonalizationController {
         const notes = typeof body?.notes === 'string' ? body.notes : undefined;
         const transactionId = typeof body?.transactionId === 'string' ? body.transactionId : undefined;
         const accessToken = typeof body?.accessToken === 'string' ? body.accessToken : undefined;
+        const sideRaw = typeof body?.side === 'string' ? body.side.trim() : 'front';
+        const side = sideRaw === 'back' ? 'back' : 'front';
 
         if (!orderCode) {
             return res?.status(400).json({ success: false, error: 'Falta el código de orden.' });
@@ -117,6 +119,7 @@ export class PersonalizationController {
             const data = await this.personalizationService.uploadForLine({
                 orderCode,
                 orderLineId,
+                side,
                 notes,
                 transactionId,
                 accessToken,

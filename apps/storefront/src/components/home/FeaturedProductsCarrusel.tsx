@@ -102,7 +102,7 @@ const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) =
                                 overflowX: 'auto',
                                 scrollBehavior: 'smooth',
                                 px: { xs: 0, md: 0.5 },
-                                py: 1.5,
+                                py: 2,
                                 scrollbarWidth: 'none',
                                 '&::-webkit-scrollbar': {
                                     display: 'none',

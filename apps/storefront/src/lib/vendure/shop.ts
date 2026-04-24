@@ -98,6 +98,12 @@ const ACTIVE_ORDER_FRAGMENT = /* GraphQL */ `
                 name
                 sku
             }
+            customFields {
+                frontMode
+                frontText
+                backMode
+                backText
+            }
         }
     }
 `;
@@ -238,8 +244,8 @@ export const LOGOUT_MUTATION = /* GraphQL */ `
 `;
 
 export const ADD_ITEM_TO_ORDER_MUTATION = /* GraphQL */ `
-    mutation AddItemToOrder($productVariantId: ID!, $quantity: Int!) {
-        addItemToOrder(productVariantId: $productVariantId, quantity: $quantity) {
+    mutation AddItemToOrder($productVariantId: ID!, $quantity: Int!, $customFields: OrderLineCustomFieldsInput) {
+        addItemToOrder(productVariantId: $productVariantId, quantity: $quantity, customFields: $customFields) {
             ...ActiveOrderFields
             ... on ErrorResult {
                 errorCode
