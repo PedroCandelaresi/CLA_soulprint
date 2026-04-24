@@ -3,7 +3,6 @@ import type {
     EligiblePaymentMethod,
     EligibleShippingMethod,
     OperationResult,
-    StorefrontPaymentSettings,
     StorefrontCustomer,
 } from '@/types/storefront';
 
@@ -359,23 +358,6 @@ export const GET_ELIGIBLE_PAYMENT_METHODS_QUERY = /* GraphQL */ `
             description
             isEligible
             eligibilityMessage
-            storefrontDisplay {
-                title
-                cardDescription
-                instructionsTitle
-                instructions
-                buttonLabel
-                icon
-            }
-        }
-    }
-`;
-
-export const GET_STOREFRONT_PAYMENT_SETTINGS_QUERY = /* GraphQL */ `
-    query GetStorefrontPaymentSettings {
-        storefrontPaymentSettings {
-            sectionTitle
-            footerText
         }
     }
 `;
@@ -492,10 +474,6 @@ export interface EligibleShippingMethodsResponse {
 
 export interface EligiblePaymentMethodsResponse {
     eligiblePaymentMethods: EligiblePaymentMethod[];
-}
-
-export interface StorefrontPaymentSettingsResponse {
-    storefrontPaymentSettings: StorefrontPaymentSettings;
 }
 
 export interface OrderByCodeResponse {

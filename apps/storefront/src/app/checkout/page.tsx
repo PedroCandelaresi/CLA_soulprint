@@ -30,7 +30,6 @@ import TooltipButton from '@/components/ui/TooltipButton';
 import {
     ADD_PAYMENT_TO_ORDER_MUTATION,
     GET_ELIGIBLE_PAYMENT_METHODS_QUERY,
-    GET_STOREFRONT_PAYMENT_SETTINGS_QUERY,
     GET_ELIGIBLE_SHIPPING_METHODS_QUERY,
     SET_ORDER_BILLING_ADDRESS_MUTATION,
     SET_ORDER_SHIPPING_ADDRESS_MUTATION,
@@ -41,7 +40,6 @@ import {
     getOperationResultMessage,
     isActiveOrder,
     type EligiblePaymentMethodsResponse,
-    type StorefrontPaymentSettingsResponse,
     type EligibleShippingMethodsResponse,
 } from '@/lib/vendure/shop';
 import { formatCurrency } from '@/lib/checkout/demo';
@@ -52,7 +50,6 @@ import type {
     StorefrontOrderAddress,
     StorefrontOrderPayment,
     StorefrontPaymentMetadata,
-    StorefrontPaymentSettings,
 } from '@/types/storefront';
 
 const MERCADOPAGO_ORDER_CODE_STORAGE_KEY = 'mercadopago:last-order-code';
@@ -268,7 +265,14 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
 
 // ─── Payment method card ───────────────────────────────────────────────────────
 
-type PaymentDisplay = EligiblePaymentMethod['storefrontDisplay'];
+type PaymentDisplay = {
+    title: string;
+    cardDescription: string;
+    instructionsTitle: string | null;
+    instructions: string | null;
+    buttonLabel: string;
+    icon: string | null;
+};
 
 function displayText(value: string | null | undefined): string {
     return cleanPaymentDescription(value);
@@ -276,16 +280,12 @@ function displayText(value: string | null | undefined): string {
 
 function getPaymentDisplay(method: EligiblePaymentMethod): PaymentDisplay {
     return {
-        title: displayText(method.storefrontDisplay?.title) || displayText(method.name),
-        cardDescription:
-            displayText(method.storefrontDisplay?.cardDescription) || displayText(method.description),
-        instructionsTitle: displayText(method.storefrontDisplay?.instructionsTitle) || null,
-        instructions: displayText(method.storefrontDisplay?.instructions) || null,
-        buttonLabel:
-            displayText(method.storefrontDisplay?.buttonLabel) ||
-            displayText(method.storefrontDisplay?.title) ||
-            displayText(method.name),
-        icon: displayText(method.storefrontDisplay?.icon) || null,
+        title: displayText(method.name),
+        cardDescription: displayText(method.description),
+        instructionsTitle: null,
+        instructions: null,
+        buttonLabel: displayText(method.name),
+        icon: null,
     };
 }
 
@@ -431,7 +431,6 @@ function CheckoutContent() {
 
     const [checkoutOrder, setCheckoutOrder] = useState<ActiveOrder | null>(activeOrder);
     const [paymentMethods, setPaymentMethods] = useState<EligiblePaymentMethod[]>([]);
-    const [paymentSettings, setPaymentSettings] = useState<StorefrontPaymentSettings | null>(null);
     const [selectedPaymentCode, setSelectedPaymentCode] = useState('');
     const [form, setForm] = useState<CheckoutFormState>(() =>
         getInitialForm(customer, activeOrder?.shippingAddress),
@@ -504,13 +503,6 @@ function CheckoutContent() {
             const ok = methods.some((m) => m.code === cur);
             return ok ? cur : (methods[0]?.code ?? '');
         });
-
-        // Cargamos los textos globales por separado para que un fallo aquí
-        // no impida mostrar los métodos de pago.
-        fetchShopApi<StorefrontPaymentSettingsResponse>(GET_STOREFRONT_PAYMENT_SETTINGS_QUERY)
-            .then((s) => setPaymentSettings(s.storefrontPaymentSettings ?? null))
-            .catch(() => { /* textos no críticos */ });
-
         return methods;
     }, []);
 
@@ -655,8 +647,6 @@ function CheckoutContent() {
     const currencyCode = checkoutOrder?.currencyCode || 'ARS';
     const selectedPaymentMethod = paymentMethods.find((method) => method.code === selectedPaymentCode) ?? null;
     const selectedPaymentDisplay = selectedPaymentMethod ? getPaymentDisplay(selectedPaymentMethod) : null;
-    const paymentSectionTitle = displayText(paymentSettings?.sectionTitle) || null;
-    const paymentFooterText = displayText(paymentSettings?.footerText) || null;
     const busy = savingData || paying;
 
     // ── Loading ──
@@ -982,11 +972,6 @@ function CheckoutContent() {
                                             >
                                                 <PaymentOutlinedIcon sx={{ color: 'primary.main' }} />
                                             </Box>
-                                            {paymentSectionTitle && (
-                                                <Typography variant="h6" fontWeight={700}>
-                                                    {paymentSectionTitle}
-                                                </Typography>
-                                            )}
                                         </Stack>
 
                                         <Stack spacing={1.5}>
@@ -1026,15 +1011,6 @@ function CheckoutContent() {
                                             </TooltipButton>
                                         )}
 
-                                        {paymentFooterText && (
-                                            <Typography
-                                                variant="caption"
-                                                color="text.secondary"
-                                                textAlign="center"
-                                            >
-                                                {paymentFooterText}
-                                            </Typography>
-                                        )}
                                     </Stack>
                                 </Paper>
                             )}
