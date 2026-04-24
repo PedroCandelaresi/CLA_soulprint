@@ -135,18 +135,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     gap: 1.4,
                 }}
             >
-                <Typography
-                    variant="caption"
-                    sx={{
-                        color: 'secondary.dark',
-                        letterSpacing: 2.4,
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                    }}
-                >
-                    Curaduría CLA
-                </Typography>
-
                 <Stack spacing={1.25} sx={{ flexGrow: 1 }}>
                     <Typography
                         variant="body1"

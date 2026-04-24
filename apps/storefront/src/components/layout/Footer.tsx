@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Box, Chip, Container, Grid, Stack, Typography } from "@mui/material";
+import { Box, Container, Grid, Stack, Typography } from "@mui/material";
 import { IconBrandInstagram } from "@tabler/icons-react";
 import BrandLogo from "@/components/branding/BrandLogo";
 import TooltipIconButton from "@/components/ui/TooltipIconButton";
@@ -43,16 +43,6 @@ const Footer = () => {
                                 <BrandLogo label="CLA Soulprint" />
                             </Box>
 
-                            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                                <Chip label="Elegancia cálida" size="small" sx={{ color: 'common.white', borderColor: 'rgba(244,234,213,0.18)' }} variant="outlined" />
-                                <Chip label="Editorial" size="small" sx={{ color: 'common.white', borderColor: 'rgba(244,234,213,0.18)' }} variant="outlined" />
-                                <Chip label="Con identidad" size="small" sx={{ color: 'common.white', borderColor: 'rgba(244,234,213,0.18)' }} variant="outlined" />
-                            </Stack>
-
-                            <Typography sx={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.8, maxWidth: 420 }}>
-                                Una tienda con estética cálida, piezas con memoria y una mirada sensible sobre los
-                                vínculos entre personas, mascotas y objetos que acompañan la vida cotidiana.
-                            </Typography>
                         </Stack>
                     </Grid>
 
