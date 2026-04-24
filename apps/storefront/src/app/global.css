@@ -23,14 +23,15 @@
 }
 
 html {
-  overflow-y: scroll;
+  height: 100%;
+  overflow: hidden;
   background: var(--cla-brand-mist);
-  scroll-behavior: smooth;
 }
 
 body {
+  height: 100%;
+  overflow: hidden;
   margin: 0;
-  min-height: 100vh;
   position: relative;
   isolation: isolate;
   background:
@@ -95,6 +96,55 @@ select {
 
 main {
   position: relative;
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #005a2e rgba(0, 72, 37, 0.06);
+  scroll-behavior: smooth;
+}
+
+/* Chrome / Safari / Edge — scrollbar verde metálica */
+main::-webkit-scrollbar {
+  width: 8px;
+}
+
+main::-webkit-scrollbar-track {
+  background: rgba(0, 72, 37, 0.05);
+}
+
+main::-webkit-scrollbar-thumb {
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(
+    180deg,
+    #3fa86a 0%,
+    #006535 22%,
+    #004825 50%,
+    #006535 78%,
+    #3fa86a 100%
+  );
+  box-shadow:
+    inset 1px 0 1px rgba(255, 255, 255, 0.28),
+    inset -1px 0 1px rgba(0, 0, 0, 0.22);
+}
+
+main::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    #52c47e 0%,
+    #007a40 22%,
+    #005c2e 50%,
+    #007a40 78%,
+    #52c47e 100%
+  );
+}
+
+main::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(
+    180deg,
+    #2d8a58 0%,
+    #004825 50%,
+    #2d8a58 100%
+  );
 }
 
 ::selection {

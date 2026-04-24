@@ -30,14 +30,14 @@ export default async function RootLayout({
 
         <ThemeRegistry>
           <StorefrontProvider initialState={initialState}>
-            <Box display="flex" flexDirection="column" minHeight="100vh">
+            <Box display="flex" flexDirection="column" sx={{ height: '100vh', overflow: 'hidden' }}>
               <Suspense fallback={null}>
                 <Header />
               </Suspense>
-              <Box component="main" flexGrow={1}>
+              <Box component="main" sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
                 {children}
+                <Footer />
               </Box>
-              <Footer />
             </Box>
           </StorefrontProvider>
         </ThemeRegistry>

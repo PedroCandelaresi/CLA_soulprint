@@ -332,12 +332,175 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                     ? "opacity 0.9s ease-in-out"
                     : "opacity 0.5s ease, transform 0.7s ease";
                 const slideOpacity = effect === "slide" ? 1 : isActive ? 1 : 0;
-                const textBackground = textOnRight
-                    ? "linear-gradient(135deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)"
-                    : "linear-gradient(225deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)";
-                const imageOverlay = textOnRight
-                    ? "linear-gradient(90deg, rgba(0,72,37,0.28) 0%, rgba(0,72,37,0.08) 18%, rgba(3,25,15,0.08) 100%)"
-                    : "linear-gradient(270deg, rgba(0,72,37,0.28) 0%, rgba(0,72,37,0.08) 18%, rgba(3,25,15,0.08) 100%)";
+                // Dirección del degradado que une panel con imagen
+                const panelEdgeFade = textOnRight
+                    ? "linear-gradient(90deg, rgba(4,26,15,0) 0%, rgba(4,26,15,0.72) 100%)"
+                    : "linear-gradient(270deg, rgba(4,26,15,0) 0%, rgba(4,26,15,0.72) 100%)";
+
+                // Contenido de texto — reutilizado tanto en split como en full_image
+                const textContent = (
+                    <Stack
+                        spacing={{ xs: 1.2, sm: 1.5, md: 1.8 }}
+                        sx={{
+                            width: "100%",
+                            maxWidth: { xs: "100%", md: 430 },
+                            mx: "auto",
+                            textAlign: "center",
+                            alignItems: "center",
+                            fontFamily: "Arial, Helvetica, sans-serif",
+                            opacity: isActive ? 1 : 0,
+                            transform: isActive ? "translateY(0)" : "translateY(16px)",
+                            transition: transicionContenido,
+                            transitionDelay: reduceMotion || !isActive ? "0s" : "0.15s",
+                            position: "relative",
+                            zIndex: 1,
+                        }}
+                    >
+                        {slide.badgeText ? (
+                            <Box
+                                component="span"
+                                sx={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    px: slide.badgeVariant === "pill" ? 1.6 : 1.2,
+                                    py: 0.4,
+                                    fontSize: "0.7rem",
+                                    fontWeight: 700,
+                                    letterSpacing: 1.2,
+                                    textTransform: "uppercase",
+                                    borderRadius: slide.badgeVariant === "pill" ? 999 : 1.2,
+                                    color: slide.badgeVariant === "outline"
+                                        ? slide.badgeColor || "var(--cla-brand-cream)"
+                                        : "#06261A",
+                                    bgcolor: slide.badgeVariant === "outline"
+                                        ? "transparent"
+                                        : slide.badgeColor || "var(--cla-brand-cream)",
+                                    border: slide.badgeVariant === "outline"
+                                        ? `1px solid ${slide.badgeColor || "var(--cla-brand-cream)"}`
+                                        : "none",
+                                }}
+                            >
+                                {slide.badgeText}
+                            </Box>
+                        ) : null}
+
+                        <Typography
+                            component="p"
+                            variant="overline"
+                            sx={{
+                                color: slide.textTheme === "light"
+                                    ? "rgba(6,38,22,0.72)"
+                                    : "var(--cla-brand-cream)",
+                                fontFamily: "Arial, Helvetica, sans-serif",
+                                letterSpacing: { xs: 2.5, sm: 3.5, md: 4.5 },
+                                fontSize: { xs: "0.68rem", sm: "0.72rem", md: "0.74rem" },
+                                fontWeight: 600,
+                            }}
+                        >
+                            CLA Soulprint
+                        </Typography>
+
+                        <Typography
+                            component="h2"
+                            color="common.white"
+                            fontWeight={700}
+                            sx={{
+                                fontFamily: "Arial, Helvetica, sans-serif",
+                                fontSize: {
+                                    xs: "clamp(1.95rem, 7vw, 2.5rem)",
+                                    sm: "clamp(2.2rem, 4.8vw, 3rem)",
+                                    md: "clamp(2.35rem, 3.3vw, 3.3rem)",
+                                },
+                                lineHeight: 1.06,
+                                letterSpacing: "-0.04em",
+                            }}
+                        >
+                            {slide.titulo}
+                        </Typography>
+
+                        <Typography
+                            variant="h6"
+                            sx={{
+                                color: "rgba(255,248,238,0.82)",
+                                fontFamily: "Arial, Helvetica, sans-serif",
+                                fontWeight: 400,
+                                lineHeight: 1.45,
+                                fontSize: { xs: "0.92rem", sm: "0.98rem", md: "1rem" },
+                                maxWidth: { xs: "100%", md: 400 },
+                            }}
+                        >
+                            {slide.descripcion}
+                        </Typography>
+
+                        <Stack
+                            direction={{ xs: "column", sm: "row" }}
+                            spacing={1.5}
+                            justifyContent="center"
+                            width="100%"
+                            pt={{ xs: 0.5, md: 1 }}
+                            alignItems="center"
+                        >
+                            <TooltipButton
+                                variant="contained"
+                                href={slide.enlace}
+                                size="large"
+                                tabIndex={isActive ? 0 : -1}
+                                target={slide.abrirEnNuevaPestana || slide.esExterno ? "_blank" : undefined}
+                                rel={slide.esExterno ? "noopener noreferrer" : undefined}
+                                tooltip={`Explorar ${slide.titulo}`}
+                                sx={{
+                                    width: { xs: "100%", sm: "auto" },
+                                    px: { xs: 3, md: 4 },
+                                    py: 1.15,
+                                    fontSize: { xs: "0.92rem", md: "0.96rem" },
+                                    fontFamily: "Arial, Helvetica, sans-serif",
+                                    fontWeight: 700,
+                                    borderRadius: 10,
+                                    border: "1px solid rgba(226,207,170,0.82)",
+                                    background: "linear-gradient(135deg, rgba(226,207,170,1) 0%, rgba(199,164,107,1) 100%)",
+                                    boxShadow: "none",
+                                    color: "var(--cla-brand-green-deep)",
+                                    "&:hover": {
+                                        background: "linear-gradient(135deg, rgba(235,217,184,1) 0%, rgba(210,176,118,1) 100%)",
+                                        boxShadow: "none",
+                                    },
+                                }}
+                            >
+                                {slide.textoBoton ?? "Explorar colección"}
+                            </TooltipButton>
+
+                            {slide.enlaceSecundario ? (
+                                <TooltipButton
+                                    variant="outlined"
+                                    href={slide.enlaceSecundario}
+                                    size="large"
+                                    tabIndex={isActive ? 0 : -1}
+                                    target={slide.abrirEnNuevaPestana || slide.esExterno ? "_blank" : undefined}
+                                    rel={slide.esExterno ? "noopener noreferrer" : undefined}
+                                    tooltip={slide.textoBotonSecundario ?? "Ir al catálogo general"}
+                                    sx={{
+                                        width: { xs: "100%", sm: "auto" },
+                                        px: { xs: 3, md: 4 },
+                                        py: 1.15,
+                                        fontSize: { xs: "0.92rem", md: "0.96rem" },
+                                        fontFamily: "Arial, Helvetica, sans-serif",
+                                        fontWeight: 600,
+                                        borderRadius: 10,
+                                        borderColor: "rgba(244,234,213,0.5)",
+                                        backgroundColor: "rgba(255,250,242,0.06)",
+                                        color: "var(--cla-brand-paper)",
+                                        "&:hover": {
+                                            borderColor: "rgba(244,234,213,0.72)",
+                                            backgroundColor: "rgba(244,234,213,0.14)",
+                                        },
+                                    }}
+                                >
+                                    {slide.textoBotonSecundario ?? "Ver catálogo"}
+                                </TooltipButton>
+                            ) : null}
+                        </Stack>
+                    </Stack>
+                );
 
                 return (
                     <Box
@@ -357,249 +520,80 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                             pointerEvents: isActive ? "auto" : "none",
                         }}
                     >
-                        <Box
-                            sx={{
-                                position: "relative",
-                                zIndex: 1,
-                                display: "grid",
-                                height: "100%",
-                                gridTemplateColumns: { xs: "1fr", md: desktopColumns },
-                                gridTemplateRows: isFullImage
-                                    ? "1fr"
-                                    : { xs: "minmax(0, 0.9fr) minmax(0, 1.1fr)", md: "1fr" },
-                            }}
-                        >
+                        {/* Imagen full-bleed detrás de todo */}
+                        <Image
+                            src={isMobile && slide.imagenMobile ? slide.imagenMobile : slide.imagen}
+                            alt={slide.alt ?? slide.titulo}
+                            fill
+                            priority={index === 0}
+                            sizes="100vw"
+                            style={{ objectFit: "cover", objectPosition: slide.posicion }}
+                        />
+
+                        {isFullImage ? (
+                            /* Layout full_image: overlay degradado en la base */
                             <Box
                                 sx={{
-                                    position: isFullImage ? "absolute" : "relative",
-                                    inset: isFullImage ? 0 : undefined,
-                                    zIndex: isFullImage ? 2 : undefined,
-                                    order: isFullImage ? undefined : { xs: 1, md: textOnRight ? 2 : 1 },
-                                    width: "100%",
+                                    position: "absolute",
+                                    inset: 0,
                                     display: "flex",
-                                    alignItems: "center",
+                                    alignItems: "flex-end",
                                     justifyContent: "center",
-                                    px: { xs: 3, sm: 4, md: 4.5, lg: 6 },
+                                    background: "linear-gradient(180deg, rgba(6,38,22,0.04) 30%, rgba(6,38,22,0.78) 100%)",
+                                    px: { xs: 3, sm: 4, md: 6 },
                                     py: { xs: 3.5, sm: 4, md: 4.5 },
-                                    background: isFullImage
-                                        ? "linear-gradient(180deg, rgba(6,38,22,0.1) 0%, rgba(6,38,22,0.72) 100%)"
-                                        : {
-                                              xs: "linear-gradient(180deg, rgba(0,72,37,0.98) 0%, rgba(6,38,22,0.94) 100%)",
-                                              md: textBackground,
-                                          },
                                 }}
                             >
-                                <Stack
-                                    spacing={{ xs: 1.2, sm: 1.5, md: 1.8 }}
-                                    sx={{
-                                        width: "100%",
-                                        maxWidth: { xs: "100%", md: 430 },
-                                        mx: "auto",
-                                        textAlign: "center",
-                                        alignItems: "center",
-                                        fontFamily: "Arial, Helvetica, sans-serif",
-                                        opacity: isActive ? 1 : 0,
-                                        transform: isActive ? "translateY(0)" : "translateY(16px)",
-                                        transition: transicionContenido,
-                                        transitionDelay: reduceMotion || !isActive ? "0s" : "0.15s",
-                                    }}
-                                >
-                                    {slide.badgeText ? (
-                                        <Box
-                                            component="span"
-                                            sx={{
-                                                display: "inline-flex",
-                                                alignItems: "center",
-                                                px: slide.badgeVariant === "pill" ? 1.6 : 1.2,
-                                                py: 0.4,
-                                                fontSize: "0.7rem",
-                                                fontWeight: 700,
-                                                letterSpacing: 1.2,
-                                                textTransform: "uppercase",
-                                                borderRadius: slide.badgeVariant === "pill" ? 999 : 1.2,
-                                                color:
-                                                    slide.badgeVariant === "outline"
-                                                        ? slide.badgeColor || "var(--cla-brand-cream)"
-                                                        : "#06261A",
-                                                bgcolor:
-                                                    slide.badgeVariant === "outline"
-                                                        ? "transparent"
-                                                        : slide.badgeColor || "var(--cla-brand-cream)",
-                                                border:
-                                                    slide.badgeVariant === "outline"
-                                                        ? `1px solid ${slide.badgeColor || "var(--cla-brand-cream)"}`
-                                                        : "none",
-                                            }}
-                                        >
-                                            {slide.badgeText}
-                                        </Box>
-                                    ) : null}
-
-                                    <Typography
-                                        component="p"
-                                        variant="overline"
-                                        sx={{
-                                            color:
-                                                slide.textTheme === "light"
-                                                    ? "rgba(6,38,22,0.72)"
-                                                    : "var(--cla-brand-cream)",
-                                            fontFamily: "Arial, Helvetica, sans-serif",
-                                            letterSpacing: { xs: 2.5, sm: 3.5, md: 4.5 },
-                                            fontSize: { xs: "0.68rem", sm: "0.72rem", md: "0.74rem" },
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        CLA Soulprint
-                                    </Typography>
-
-                                    <Typography
-                                        component="h2"
-                                        color="common.white"
-                                        fontWeight={700}
-                                        sx={{
-                                            fontFamily: "Arial, Helvetica, sans-serif",
-                                            fontSize: {
-                                                xs: "clamp(1.95rem, 7vw, 2.5rem)",
-                                                sm: "clamp(2.2rem, 4.8vw, 3rem)",
-                                                md: "clamp(2.35rem, 3.3vw, 3.3rem)",
-                                            },
-                                            lineHeight: 1.06,
-                                            letterSpacing: "-0.04em",
-                                        }}
-                                    >
-                                        {slide.titulo}
-                                    </Typography>
-
-                                    <Typography
-                                        variant="h6"
-                                        sx={{
-                                            color: "rgba(255,248,238,0.82)",
-                                            fontFamily: "Arial, Helvetica, sans-serif",
-                                            fontWeight: 400,
-                                            lineHeight: 1.45,
-                                            fontSize: { xs: "0.92rem", sm: "0.98rem", md: "1rem" },
-                                            maxWidth: { xs: "100%", md: 400 },
-                                        }}
-                                    >
-                                        {slide.descripcion}
-                                    </Typography>
-
-                                    <Stack
-                                        direction={{ xs: "column", sm: "row" }}
-                                        spacing={1.5}
-                                        justifyContent="center"
-                                        width="100%"
-                                        pt={{ xs: 0.5, md: 1 }}
-                                        alignItems="center"
-                                    >
-                                        <TooltipButton
-                                            variant="contained"
-                                            href={slide.enlace}
-                                            size="large"
-                                            tabIndex={isActive ? 0 : -1}
-                                            target={slide.abrirEnNuevaPestana || slide.esExterno ? "_blank" : undefined}
-                                            rel={slide.esExterno ? "noopener noreferrer" : undefined}
-                                            tooltip={`Explorar ${slide.titulo}`}
-                                            sx={{
-                                                width: { xs: "100%", sm: "auto" },
-                                                px: { xs: 3, md: 4 },
-                                                py: 1.15,
-                                                fontSize: { xs: "0.92rem", md: "0.96rem" },
-                                                fontFamily: "Arial, Helvetica, sans-serif",
-                                                fontWeight: 700,
-                                                borderRadius: 10,
-                                                border: "1px solid rgba(226,207,170,0.82)",
-                                                background:
-                                                    "linear-gradient(135deg, rgba(226,207,170,1) 0%, rgba(199,164,107,1) 100%)",
-                                                boxShadow: "none",
-                                                color: "var(--cla-brand-green-deep)",
-                                                "&:hover": {
-                                                    background:
-                                                        "linear-gradient(135deg, rgba(235,217,184,1) 0%, rgba(210,176,118,1) 100%)",
-                                                    boxShadow: "none",
-                                                },
-                                            }}
-                                        >
-                                            {slide.textoBoton ?? "Explorar colección"}
-                                        </TooltipButton>
-
-                                        {slide.enlaceSecundario ? (
-                                        <TooltipButton
-                                            variant="outlined"
-                                            href={slide.enlaceSecundario}
-                                            size="large"
-                                            tabIndex={isActive ? 0 : -1}
-                                            target={slide.abrirEnNuevaPestana || slide.esExterno ? "_blank" : undefined}
-                                            rel={slide.esExterno ? "noopener noreferrer" : undefined}
-                                            tooltip={slide.textoBotonSecundario ?? "Ir al catálogo general"}
-                                            sx={{
-                                                width: { xs: "100%", sm: "auto" },
-                                                px: { xs: 3, md: 4 },
-                                                py: 1.15,
-                                                fontSize: { xs: "0.92rem", md: "0.96rem" },
-                                                fontFamily: "Arial, Helvetica, sans-serif",
-                                                fontWeight: 600,
-                                                borderRadius: 10,
-                                                borderColor: "rgba(244,234,213,0.5)",
-                                                backgroundColor: "rgba(255,250,242,0.06)",
-                                                color: "var(--cla-brand-paper)",
-                                                "&:hover": {
-                                                    borderColor: "rgba(244,234,213,0.72)",
-                                                    backgroundColor: "rgba(244,234,213,0.14)",
-                                                },
-                                            }}
-                                        >
-                                            {slide.textoBotonSecundario ?? "Ver catálogo"}
-                                        </TooltipButton>
-                                        ) : null}
-                                    </Stack>
-                                </Stack>
+                                {textContent}
                             </Box>
-
+                        ) : (
+                            /* Layout split: panel glassmorphism a la izquierda o derecha */
                             <Box
                                 sx={{
-                                    position: "relative",
-                                    order: isFullImage ? 1 : { xs: 2, md: textOnRight ? 1 : 2 },
-                                    gridColumn: isFullImage ? "1 / -1" : undefined,
-                                    gridRow: isFullImage ? "1 / -1" : undefined,
-                                    width: "100%",
-                                    minHeight: { xs: 260, sm: 320, md: "100%" },
-                                    overflow: "hidden",
-                                    "&::before": {
-                                        content: '""',
-                                        position: "absolute",
-                                        top: 0,
-                                        bottom: 0,
-                                        [textOnRight ? "right" : "left"]: 0,
-                                        width: "1px",
-                                        bgcolor: "rgba(244,234,213,0.16)",
-                                        zIndex: 1,
-                                    },
+                                    position: "absolute",
+                                    inset: 0,
+                                    display: "flex",
+                                    alignItems: "stretch",
+                                    flexDirection: textOnRight ? "row-reverse" : "row",
                                 }}
                             >
-                                <Image
-                                    src={isMobile && slide.imagenMobile ? slide.imagenMobile : slide.imagen}
-                                    alt={slide.alt ?? slide.titulo}
-                                    fill
-                                    priority={index === 0}
-                                    sizes={SLIDE_IMAGE_SIZES}
-                                    style={{
-                                        objectFit: "cover",
-                                        objectPosition: slide.posicion,
-                                    }}
-                                />
+                                {/* Panel de texto con blur sobre la imagen */}
                                 <Box
                                     sx={{
-                                        position: "absolute",
-                                        inset: 0,
+                                        width: { xs: "100%", md: "44%" },
+                                        flexShrink: 0,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        px: { xs: 3, sm: 4, md: 4.5, lg: 6 },
+                                        py: { xs: 3.5, sm: 4, md: 4.5 },
+                                        backdropFilter: "blur(26px) saturate(1.25)",
+                                        WebkitBackdropFilter: "blur(26px) saturate(1.25)",
                                         background: {
-                                            xs: "linear-gradient(180deg, rgba(6,38,22,0.06) 0%, rgba(6,38,22,0.24) 100%)",
-                                            md: imageOverlay,
+                                            xs: "linear-gradient(180deg, rgba(4,26,15,0.82) 0%, rgba(6,38,22,0.88) 100%)",
+                                            md: "rgba(4,26,15,0.62)",
                                         },
+                                        // Degradado suave hacia la imagen en el borde interior
+                                        "&::after": {
+                                            content: '""',
+                                            position: "absolute",
+                                            top: 0,
+                                            bottom: 0,
+                                            [textOnRight ? "left" : "right"]: 0,
+                                            width: 80,
+                                            background: panelEdgeFade,
+                                            pointerEvents: "none",
+                                        },
+                                        position: "relative",
                                     }}
-                                />
+                                >
+                                    {textContent}
+                                </Box>
+
+                                {/* Espacio de imagen — visible, sin overlay */}
+                                <Box sx={{ flex: 1 }} />
                             </Box>
-                        </Box>
+                        )}
                     </Box>
                 );
             })}

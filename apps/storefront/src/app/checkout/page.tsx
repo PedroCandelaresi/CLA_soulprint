@@ -25,7 +25,6 @@ import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalance
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
-import BrandLogoImage from '@/components/branding/BrandLogoImage';
 import TooltipButton from '@/components/ui/TooltipButton';
 import {
     ADD_PAYMENT_TO_ORDER_MUTATION,
@@ -687,13 +686,6 @@ function CheckoutContent() {
                         sx={{ p: { xs: 4, md: 6 }, borderRadius: 4, border: '1px solid', borderColor: 'divider', textAlign: 'center' }}
                     >
                         <Stack spacing={3} alignItems="center">
-                            <Box
-                                sx={{
-                                    width: 220,
-                                }}
-                            >
-                                <BrandLogoImage label="CLA Soulprint" />
-                            </Box>
                             <Stack spacing={1}>
                                 <Typography variant="h5" fontWeight={800}>
                                     Tu carrito está vacío
@@ -739,9 +731,6 @@ function CheckoutContent() {
                         }}
                     >
                         <Stack spacing={3} alignItems="center">
-                            <Box sx={{ width: 220 }}>
-                                <BrandLogoImage label="CLA Soulprint" />
-                            </Box>
                             <Stack spacing={1}>
                                 <Typography variant="h5" fontWeight={800}>
                                     Ingresá para finalizar la compra
@@ -782,13 +771,6 @@ function CheckoutContent() {
                         }}
                     >
                         <Stack spacing={1.25}>
-                            <Box
-                                sx={{
-                                    width: { xs: 180, md: 220 },
-                                }}
-                            >
-                                <BrandLogoImage label="CLA Soulprint" />
-                            </Box>
                             <Typography variant="h4" fontWeight={800}>
                                 Finalizar compra
                             </Typography>

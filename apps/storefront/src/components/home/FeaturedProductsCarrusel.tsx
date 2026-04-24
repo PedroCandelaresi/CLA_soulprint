@@ -47,62 +47,20 @@ const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) =
     if (products.length === 0) return null;
 
     return (
-        <Box
-            sx={{
-                py: { xs: 6, md: 10 },
-                bgcolor: 'transparent',
-            }}
-        >
+        <Box sx={{ pt: { xs: 4, md: 5 }, pb: { xs: 4, md: 6 } }}>
             <Container maxWidth="lg">
-                <Box
-                    sx={{
-                        p: { xs: 3, md: 4 },
-                        borderRadius: 4,
-                        border: '1px solid rgba(0,72,37,0.08)',
-                        background: 'linear-gradient(180deg, rgba(255,250,242,0.92) 0%, rgba(255,255,255,0.66) 100%)',
-                        boxShadow: '0 24px 46px rgba(0,72,37,0.08)',
-                    }}
-                >
-                    <Stack
-                        direction={{ xs: 'column', sm: 'row' }}
-                        alignItems={{ xs: 'flex-start', sm: 'flex-end' }}
-                        justifyContent="space-between"
-                        mb={4}
-                        gap={2}
+                <Stack alignItems="center" textAlign="center" spacing={0.75} mb={3}>
+                    <Typography
+                        variant="h3"
+                        fontWeight={700}
+                        sx={{ lineHeight: 1.15, letterSpacing: '-0.02em' }}
                     >
-                        <Box>
-                            <Typography
-                                variant="overline"
-                                sx={{ color: 'secondary.dark', letterSpacing: 4, fontSize: '0.72rem', fontWeight: 700 }}
-                            >
-                                Curaduría especial
-                            </Typography>
-                            <Typography variant="h3" fontWeight={700} sx={{ mt: 0.5, lineHeight: 1.2 }}>
-                                Productos Destacados
-                            </Typography>
-                            <Typography color="text.secondary" sx={{ mt: 1, maxWidth: 620 }}>
-                                Una pasada por las piezas más expresivas del catálogo, presentadas en una grilla más limpia y contemporánea.
-                            </Typography>
-                        </Box>
-                        <TooltipButton
-                            variant="outlined"
-                            href="/productos"
-                            size="medium"
-                            tooltip="Ver el catálogo completo"
-                            sx={{
-                                borderColor: 'rgba(0,72,37,0.16)',
-                                color: 'primary.main',
-                                bgcolor: 'rgba(255,255,255,0.5)',
-                                fontWeight: 600,
-                                px: 3,
-                                whiteSpace: 'nowrap',
-                                '&:hover': { bgcolor: 'primary.main', color: 'common.white' },
-                                transition: 'all 0.2s ease',
-                            }}
-                        >
-                            Ver todos
-                        </TooltipButton>
-                    </Stack>
+                        Destacados
+                    </Typography>
+                    <Typography color="text.secondary" sx={{ fontSize: '1.05rem' }}>
+                        Las piezas más bellas de nuestra tienda
+                    </Typography>
+                </Stack>
 
                     <Box sx={{ position: 'relative' }}>
                         <TooltipIconButton
@@ -198,13 +156,12 @@ const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) =
                     </Box>
 
                     {products.length > 4 && (
-                        <Stack direction="row" justifyContent="center" mt={4} spacing={1}>
+                        <Stack direction="row" justifyContent="center" mt={3} spacing={1}>
                             <Typography variant="caption" color="text.secondary">
-                                {products.length} piezas disponibles · Deslizá para ver más
+                                {products.length} piezas · Deslizá para ver más
                             </Typography>
                         </Stack>
                     )}
-                </Box>
             </Container>
         </Box>
     );

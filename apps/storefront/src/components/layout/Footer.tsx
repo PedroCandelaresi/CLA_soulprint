@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { Box, Chip, Container, Grid, Stack, Typography } from "@mui/material";
-import { IconBrandFacebook, IconBrandInstagram } from "@tabler/icons-react";
+import { IconBrandInstagram } from "@tabler/icons-react";
 import BrandLogo from "@/components/branding/BrandLogo";
-import TooltipButton from "@/components/ui/TooltipButton";
 import TooltipIconButton from "@/components/ui/TooltipIconButton";
 
 const Footer = () => {
@@ -30,63 +29,6 @@ const Footer = () => {
             }}
         >
             <Container maxWidth="lg">
-                <Box
-                    sx={{
-                        mb: { xs: 4, md: 5 },
-                        p: { xs: 3, md: 3.5 },
-                        borderRadius: 4,
-                        border: '1px solid rgba(244,234,213,0.12)',
-                        background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
-                        backdropFilter: 'blur(14px)',
-                    }}
-                >
-                    <Grid container spacing={{ xs: 3, md: 4 }} alignItems="center">
-                        <Grid size={{ xs: 12, md: 7 }}>
-                            <Stack spacing={1.25}>
-                                <Typography variant="overline" sx={{ color: 'rgba(244,234,213,0.72)' }}>
-                                    Universo CLA Soulprint
-                                </Typography>
-                                <Typography variant="h4" sx={{ color: 'common.white' }}>
-                                    Una tienda sensible, cálida y contemporánea para vínculos que dejan huella.
-                                </Typography>
-                            </Stack>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 5 }}>
-                            <Stack
-                                direction={{ xs: 'column', sm: 'row' }}
-                                spacing={1.25}
-                                justifyContent={{ xs: 'stretch', md: 'flex-end' }}
-                            >
-                                <TooltipButton
-                                    href="/productos"
-                                    variant="contained"
-                                    color="secondary"
-                                    tooltip="Explorar la tienda completa"
-                                >
-                                    Explorar piezas
-                                </TooltipButton>
-                                <TooltipButton
-                                    href="/sobre-nosotros"
-                                    variant="outlined"
-                                    color="inherit"
-                                    tooltip="Conocer la identidad de la marca"
-                                    sx={{
-                                        color: 'common.white',
-                                        borderColor: 'rgba(244,234,213,0.22)',
-                                        bgcolor: 'rgba(255,255,255,0.03)',
-                                        '&:hover': {
-                                            borderColor: 'rgba(244,234,213,0.4)',
-                                            bgcolor: 'rgba(255,255,255,0.08)',
-                                        },
-                                    }}
-                                >
-                                    Ver identidad
-                                </TooltipButton>
-                            </Stack>
-                        </Grid>
-                    </Grid>
-                </Box>
-
                 <Grid container spacing={{ xs: 4, md: 6 }} alignItems="flex-start" sx={{ position: 'relative', zIndex: 1 }}>
                     <Grid size={{ xs: 12, md: 5 }}>
                         <Stack spacing={2.5}>
@@ -137,26 +79,21 @@ const Footer = () => {
                             </Typography>
                             <Stack direction="row" spacing={1}>
                                 <TooltipIconButton
-                                    href="#"
-                                    tooltip="Ir al Instagram de CLA Soulprint"
+                                    href="https://www.instagram.com/huellas.cla/"
+                                    tooltip="Seguinos en Instagram"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     sx={{
                                         color: 'common.white',
                                         border: '1px solid rgba(255,255,255,0.22)',
                                         bgcolor: 'rgba(255,255,255,0.06)',
+                                        '&:hover': {
+                                            bgcolor: 'rgba(255,255,255,0.14)',
+                                            borderColor: 'rgba(255,255,255,0.4)',
+                                        },
                                     }}
                                 >
                                     <IconBrandInstagram />
-                                </TooltipIconButton>
-                                <TooltipIconButton
-                                    href="#"
-                                    tooltip="Ir al Facebook de CLA Soulprint"
-                                    sx={{
-                                        color: 'common.white',
-                                        border: '1px solid rgba(255,255,255,0.22)',
-                                        bgcolor: 'rgba(255,255,255,0.06)',
-                                    }}
-                                >
-                                    <IconBrandFacebook />
                                 </TooltipIconButton>
                             </Stack>
                         </Stack>

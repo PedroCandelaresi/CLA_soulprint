@@ -52,9 +52,19 @@ export default function SobreNosotrosPage() {
                             <Box
                                 sx={{
                                     width: '100%',
-                                    maxWidth: { xs: 320, sm: 460, md: 680 },
-                                    '--brand-logo-fg': 'var(--surface-logo-fg)',
-                                    '--brand-logo-bg': 'transparent',
+                                    maxWidth: { xs: 300, sm: 440, md: 640 },
+                                    // Bloque del logo: ámbar cálido muy sutil sobre el fondo crema
+                                    '--brand-logo-bg': 'rgba(168, 128, 72, 0.16)',
+                                    // Letras: tono cálido oscuro muy transparente
+                                    '--brand-logo-fg': 'rgba(195, 158, 100, 0.28)',
+                                    '& svg': {
+                                        // Sombra doble: oscura arriba-izquierda + clara abajo-derecha
+                                        // → efecto de huella/troquel hundido en la superficie
+                                        filter: [
+                                            'drop-shadow(-1.5px -2px 0px rgba(138, 100, 52, 0.30))',
+                                            'drop-shadow(2px 3px 0px rgba(255, 252, 245, 0.88))',
+                                        ].join(' '),
+                                    },
                                 }}
                             >
                                 <BrandLogo label="CLA Soulprint" />
