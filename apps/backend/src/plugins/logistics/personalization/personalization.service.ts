@@ -229,14 +229,16 @@ export class PersonalizationService {
 
     private getLineFrontMode(line: OrderLine): PersonalizationSideMode {
         const cf = (line.customFields ?? {}) as Record<string, unknown>;
+        // null means not yet configured in checkout step 2 → treat as image (requires upload)
         return ((cf['frontMode'] as string) === 'text' ? 'text' : 'image') as PersonalizationSideMode;
     }
 
     private getLineBackMode(line: OrderLine): PersonalizationBackMode {
         const cf = (line.customFields ?? {}) as Record<string, unknown>;
-        const raw = cf['backMode'] as string | undefined;
+        const raw = cf['backMode'] as string | undefined | null;
         if (raw === 'text') return 'text';
         if (raw === 'image') return 'image';
+        // null or 'none' → no back personalization configured yet
         return 'none';
     }
 

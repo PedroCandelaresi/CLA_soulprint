@@ -72,7 +72,7 @@ type StorefrontContextValue = {
     verifyCustomer: (input: { token: string; password?: string }) => Promise<OperationResult>;
     resetPassword: (input: { token: string; password: string }) => Promise<OperationResult>;
     logout: () => Promise<OperationResult>;
-    addItemToOrder: (productVariantId: string, quantity: number, customFields?: Record<string, unknown>) => Promise<OperationResult>;
+    addItemToOrder: (productVariantId: string, quantity: number) => Promise<OperationResult>;
     adjustOrderLine: (orderLineId: string, quantity: number) => Promise<OperationResult>;
     removeOrderLine: (orderLineId: string) => Promise<OperationResult>;
 };
@@ -568,11 +568,11 @@ export function StorefrontProvider({ children, initialState }: StorefrontProvide
     );
 
     const addItemToOrder = useCallback(
-        (productVariantId: string, quantity: number, customFields?: Record<string, unknown>) =>
+        (productVariantId: string, quantity: number) =>
             runOrderMutation(
                 'addItemToOrder',
                 ADD_ITEM_TO_ORDER_MUTATION,
-                { productVariantId, quantity, customFields },
+                { productVariantId, quantity },
                 'Producto agregado al carrito.',
                 'No se pudo agregar el producto al carrito.',
             ),

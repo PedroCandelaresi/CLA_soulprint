@@ -244,8 +244,8 @@ export const LOGOUT_MUTATION = /* GraphQL */ `
 `;
 
 export const ADD_ITEM_TO_ORDER_MUTATION = /* GraphQL */ `
-    mutation AddItemToOrder($productVariantId: ID!, $quantity: Int!, $customFields: OrderLineCustomFieldsInput) {
-        addItemToOrder(productVariantId: $productVariantId, quantity: $quantity, customFields: $customFields) {
+    mutation AddItemToOrder($productVariantId: ID!, $quantity: Int!) {
+        addItemToOrder(productVariantId: $productVariantId, quantity: $quantity) {
             ...ActiveOrderFields
             ... on ErrorResult {
                 errorCode

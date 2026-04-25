@@ -33,11 +33,10 @@ const configurationHook: PluginConfigurationFn = config => {
         {
             name: 'frontMode',
             type: 'string' as const,
-            defaultValue: 'image',
             public: true,
-            nullable: false,
+            nullable: true,
             label: [{ languageCode: LanguageCode.es, value: 'Modo frente' }],
-            description: [{ languageCode: LanguageCode.es, value: '"text" o "image"' }],
+            description: [{ languageCode: LanguageCode.es, value: '"text" o "image". Se configura en el checkout.' }],
         },
         {
             name: 'frontText',
@@ -49,11 +48,10 @@ const configurationHook: PluginConfigurationFn = config => {
         {
             name: 'backMode',
             type: 'string' as const,
-            defaultValue: 'none',
             public: true,
-            nullable: false,
+            nullable: true,
             label: [{ languageCode: LanguageCode.es, value: 'Modo dorso' }],
-            description: [{ languageCode: LanguageCode.es, value: '"none", "text" o "image"' }],
+            description: [{ languageCode: LanguageCode.es, value: '"none", "text" o "image". Se configura en el checkout.' }],
         },
         {
             name: 'backText',
