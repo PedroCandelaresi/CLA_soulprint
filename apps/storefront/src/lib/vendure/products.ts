@@ -144,29 +144,28 @@ const GET_PRODUCTS_QUERY = `
   }
 `;
 
+// Vendure 2.x no tiene filter { collections } en el query products.
+// La forma correcta es usar la Search API con collectionSlug.
 const GET_PRODUCTS_BY_COLLECTION_QUERY = `
   query GetProductsByCollection($collectionSlug: String!, $take: Int, $skip: Int) {
-    products(options: { take: $take, skip: $skip, filter: { collections: { slug: { eq: $collectionSlug } } } }) {
+    search(input: { collectionSlug: $collectionSlug, take: $take, skip: $skip, groupByProduct: true }) {
       totalItems
       items {
-        id
-        name
+        productId
+        productName
         slug
         description
-        facetValues {
-          id
-          code
-          name
+        productAsset { ${ASSET_FIELDS} }
+        productVariantAsset { ${ASSET_FIELDS} }
+        price {
+          ... on PriceRange { min max }
+          ... on SinglePrice { value }
         }
-        featuredAsset {
-            ${ASSET_FIELDS}
+        priceWithTax {
+          ... on PriceRange { min max }
+          ... on SinglePrice { value }
         }
-        assets {
-            ${ASSET_FIELDS}
-        }
-        ${PRODUCT_BADGE_CUSTOM_FIELDS}
-        ${PRODUCT_COLLECTION_BADGE_FIELDS}
-        variants { price currencyCode }
+        currencyCode
       }
     }
   }
@@ -385,20 +384,12 @@ export async function listCollections(): Promise<CollectionItem[]> {
 
 export async function listProductsByCollection(collectionSlug: string, options: PaginationOptions = {}): Promise<Product[]> {
     const { take = 24, skip = 0 } = options;
-
-    try {
-        const data = await fetchVendure<{ products: ProductsResult }>(GET_PRODUCTS_BY_COLLECTION_QUERY, {
-            collectionSlug,
-            take,
-            skip,
-        });
-        return data.products.items;
-    } catch (error) {
-        console.warn('Fallback to search API for collection', error);
-        const input = { take, skip, groupByProduct: true, collectionSlug };
-        const searchData = await fetchVendure<{ search: SearchResult }>(SEARCH_PRODUCTS_QUERY, { input });
-        return enrichProductsWithBadges(searchData.search.items.map(mapSearchProduct));
-    }
+    const data = await fetchVendure<{ search: SearchResult }>(GET_PRODUCTS_BY_COLLECTION_QUERY, {
+        collectionSlug,
+        take,
+        skip,
+    });
+    return enrichProductsWithBadges(data.search.items.map(mapSearchProduct));
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
