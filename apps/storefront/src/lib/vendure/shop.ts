@@ -264,6 +264,19 @@ export const ADD_ITEM_TO_ORDER_MUTATION = /* GraphQL */ `
     ${ACTIVE_ORDER_FRAGMENT}
 `;
 
+export const SET_ORDER_LINE_PERSONALIZATION_MUTATION = /* GraphQL */ `
+    mutation SetOrderLinePersonalization($orderLineId: ID!, $quantity: Int!, $customFields: OrderLineCustomFieldsInput) {
+        adjustOrderLine(orderLineId: $orderLineId, quantity: $quantity, customFields: $customFields) {
+            ...ActiveOrderFields
+            ... on ErrorResult {
+                errorCode
+                message
+            }
+        }
+    }
+    ${ACTIVE_ORDER_FRAGMENT}
+`;
+
 export const ADJUST_ORDER_LINE_MUTATION = /* GraphQL */ `
     mutation AdjustOrderLine($orderLineId: ID!, $quantity: Int!) {
         adjustOrderLine(orderLineId: $orderLineId, quantity: $quantity) {

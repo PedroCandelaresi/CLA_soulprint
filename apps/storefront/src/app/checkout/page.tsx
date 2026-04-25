@@ -25,6 +25,15 @@ import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalance
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
+import { PersonalizationUploadPanel } from '@/components/checkout/PersonalizationUploadPanel';
+import PersonalizationForm, {
+    defaultPersonalizationValues,
+    validatePersonalization,
+    type PersonalizationValues,
+} from '@/components/checkout/PersonalizationForm';
+import { fetchPersonalizationOrder, uploadPersonalizationFile } from '@/lib/personalization/client';
+import type { PersonalizationOrderData, PersonalizationLineData } from '@/lib/personalization/types';
+import { SET_ORDER_LINE_PERSONALIZATION_MUTATION } from '@/lib/vendure/shop';
 import TooltipButton from '@/components/ui/TooltipButton';
 import {
     ADD_PAYMENT_TO_ORDER_MUTATION,
@@ -187,77 +196,48 @@ function cleanPaymentDescription(description: string | null | undefined): string
 
 // ─── Step indicator ────────────────────────────────────────────────────────────
 
-function StepIndicator({ step }: { step: 1 | 2 }) {
+function StepIndicator({ step }: { step: 1 | 2 | 3 }) {
+    const bubble = (n: 1 | 2 | 3) => {
+        const done = step > n;
+        const active = step === n;
+        return (
+            <Stack direction="row" alignItems="center" spacing={1}>
+                <Box sx={{
+                    width: 36, height: 36, borderRadius: '50%', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    bgcolor: done || active ? CLA_SURFACE_STRONG : CLA_GOLD_TINT,
+                    border: `1px solid ${done || active ? CLA_GREEN_BORDER : CLA_GOLD_BORDER}`,
+                    transition: 'background-color 0.3s, border-color 0.3s',
+                    ...(active && { boxShadow: `0 8px 18px ${CLA_GREEN_TINT_SOFT}` }),
+                }}>
+                    {done
+                        ? <CheckCircleIcon sx={{ fontSize: 20, color: 'primary.main' }} />
+                        : <Typography variant="caption" fontWeight={700} color={active ? 'primary.main' : 'text.disabled'}>{n}</Typography>
+                    }
+                </Box>
+                <Typography variant="body2" fontWeight={active ? 700 : 500}
+                    color={active ? 'primary.main' : done ? 'text.secondary' : 'text.disabled'}>
+                    {n === 1 ? 'Tus datos' : n === 2 ? 'Tu archivo' : 'Forma de pago'}
+                </Typography>
+            </Stack>
+        );
+    };
+
+    const connector = (filled: boolean) => (
+        <Box sx={{
+            flex: 1, height: 2, mx: 1.5, minWidth: 24,
+            bgcolor: filled ? 'primary.main' : CLA_GOLD_BORDER,
+            transition: 'background-color 0.3s',
+        }} />
+    );
+
     return (
         <Stack direction="row" alignItems="center" spacing={0}>
-            <Stack direction="row" alignItems="center" spacing={1}>
-                <Box
-                    sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: '50%',
-                        bgcolor: CLA_SURFACE_STRONG,
-                        border: `1px solid ${CLA_GREEN_BORDER}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: `0 8px 18px ${CLA_GREEN_TINT_SOFT}`,
-                    }}
-                >
-                    {step > 1 ? (
-                        <CheckCircleIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                    ) : (
-                        <Typography variant="caption" fontWeight={700} color="primary.main">
-                            1
-                        </Typography>
-                    )}
-                </Box>
-                <Typography
-                    variant="body2"
-                    fontWeight={step === 1 ? 700 : 500}
-                    color={step === 1 ? 'primary.main' : 'text.secondary'}
-                >
-                    Tus datos
-                </Typography>
-            </Stack>
-
-            <Box
-                sx={{
-                    flex: 1,
-                    height: 2,
-                    mx: 1.5,
-                    bgcolor: step >= 2 ? 'primary.main' : CLA_GOLD_BORDER,
-                    minWidth: 40,
-                    transition: 'background-color 0.3s',
-                }}
-            />
-
-            <Stack direction="row" alignItems="center" spacing={1}>
-                <Box
-                    sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: '50%',
-                        bgcolor: step >= 2 ? CLA_SURFACE_STRONG : CLA_GOLD_TINT,
-                        border: step >= 2 ? `1px solid ${CLA_GREEN_BORDER}` : `1px solid ${CLA_GOLD_BORDER}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'background-color 0.3s, border-color 0.3s',
-                    }}
-                >
-                    <Typography variant="caption" fontWeight={700} color={step >= 2 ? 'primary.main' : 'text.secondary'}>
-                        2
-                    </Typography>
-                </Box>
-                <Typography
-                    variant="body2"
-                    fontWeight={step === 2 ? 700 : 500}
-                    color={step === 2 ? 'primary.main' : 'text.secondary'}
-                >
-                    Forma de pago
-                </Typography>
-            </Stack>
+            {bubble(1)}
+            {connector(step >= 2)}
+            {bubble(2)}
+            {connector(step >= 3)}
+            {bubble(3)}
         </Stack>
     );
 }
@@ -447,8 +427,13 @@ function CheckoutContent() {
     const [savingData, setSavingData] = useState(false);
     const [paying, setPaying] = useState(false);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
-
-    const step: 1 | 2 = paymentMethods.length > 0 ? 2 : 1;
+    const [step, setStep] = useState<1 | 2 | 3>(1);
+    const [personalization, setPersonalization] = useState<PersonalizationOrderData | null>(null);
+    const [personalizationLoading, setPersonalizationLoading] = useState(false);
+    const [personalizationError, setPersonalizationError] = useState<string | null>(null);
+    const [uploadingLineId, setUploadingLineId] = useState<string | null>(null);
+    const [lineValues, setLineValues] = useState<Record<string, PersonalizationValues>>({});
+    const [savingPersonalization, setSavingPersonalization] = useState(false);
 
     useEffect(() => {
         setCheckoutOrder(activeOrder);
@@ -515,6 +500,44 @@ function CheckoutContent() {
         return methods;
     }, []);
 
+    const loadPersonalization = useCallback(async (orderCode: string) => {
+        setPersonalizationLoading(true);
+        setPersonalizationError(null);
+        try {
+            const data = await fetchPersonalizationOrder(orderCode);
+            setPersonalization(data);
+        } catch {
+            setPersonalizationError('No pudimos cargar el estado de personalización.');
+        } finally {
+            setPersonalizationLoading(false);
+        }
+    }, []);
+
+    const handleUpload = useCallback(async (
+        line: PersonalizationLineData,
+        side: 'front' | 'back',
+        file: File,
+        notes: string,
+    ) => {
+        if (!checkoutOrder?.code) return;
+        setUploadingLineId(`${line.orderLineId}:${side}`);
+        setPersonalizationError(null);
+        try {
+            const data = await uploadPersonalizationFile({
+                orderCode: checkoutOrder.code,
+                orderLineId: line.orderLineId,
+                side,
+                file,
+                notes,
+            });
+            setPersonalization(data);
+        } catch (err) {
+            setPersonalizationError(err instanceof Error ? err.message : 'No pudimos subir el archivo.');
+        } finally {
+            setUploadingLineId(null);
+        }
+    }, [checkoutOrder?.code]);
+
     const confirmData = useCallback(async () => {
         const err = validateForm(form);
         if (err) {
@@ -578,9 +601,10 @@ function CheckoutContent() {
                 return;
             }
 
-            const methods = await loadPaymentMethods();
-            if (methods.length === 0) {
-                setFeedback({ severity: 'error', message: 'Por el momento no hay formas de pago disponibles. Contactanos.' });
+            // Ir al paso 2 (archivos) antes de mostrar el pago
+            setStep(2);
+            if (checkoutOrder?.code) {
+                void loadPersonalization(checkoutOrder.code);
             }
         } catch (error) {
             const r = getOperationResultMessage(error, '');
@@ -588,7 +612,70 @@ function CheckoutContent() {
         } finally {
             setSavingData(false);
         }
-    }, [customer, form, loadPaymentMethods, router, runMutation]);
+    }, [checkoutOrder?.code, customer, form, loadPersonalization, router, runMutation]);
+
+    const savePersonalizationAndContinue = useCallback(async () => {
+        if (!checkoutOrder) return;
+        setFeedback(null);
+
+        // Validate all lines
+        for (const line of checkoutOrder.lines) {
+            const vals = lineValues[line.id] ?? defaultPersonalizationValues();
+            const err = validatePersonalization(vals);
+            if (err) {
+                setFeedback({ severity: 'error', message: `${line.productVariant.name}: ${err}` });
+                return;
+            }
+        }
+
+        setSavingPersonalization(true);
+        try {
+            for (const line of checkoutOrder.lines) {
+                const vals = lineValues[line.id] ?? defaultPersonalizationValues();
+                await fetchShopApi(SET_ORDER_LINE_PERSONALIZATION_MUTATION, {
+                    orderLineId: line.id,
+                    quantity: line.quantity,
+                    customFields: {
+                        frontMode: vals.frontMode,
+                        frontText: vals.frontMode === 'text' ? vals.frontText.trim() : null,
+                        backMode: vals.backMode,
+                        backText: vals.backMode === 'text' ? vals.backText.trim() : null,
+                    },
+                });
+            }
+            // Reload personalization to show upload slots for image lines
+            if (checkoutOrder.code) await loadPersonalization(checkoutOrder.code);
+        } catch (err) {
+            setFeedback({ severity: 'error', message: err instanceof Error ? err.message : 'No se pudo guardar la personalización.' });
+            setSavingPersonalization(false);
+            return;
+        }
+        setSavingPersonalization(false);
+    }, [checkoutOrder, lineValues, loadPersonalization]);
+
+    // Whether all image-required sides have been uploaded
+    const allImagesUploaded = personalization
+        ? personalization.lines
+            .filter(l => l.requiresPersonalization)
+            .every(l => {
+                const frontOk = l.frontMode !== 'image' || (l.frontAsset != null);
+                const backOk = l.backMode !== 'image' || (l.backAsset != null);
+                return frontOk && backOk;
+            })
+        : true;
+
+    // Whether personalization forms have been saved (customFields set on lines)
+    const personalizationSaved = checkoutOrder?.lines.every(l => l.customFields?.frontMode != null) ?? false;
+
+    const goToPayment = useCallback(async () => {
+        setFeedback(null);
+        const methods = await loadPaymentMethods();
+        if (methods.length === 0) {
+            setFeedback({ severity: 'error', message: 'Por el momento no hay formas de pago disponibles. Contactanos.' });
+            return;
+        }
+        setStep(3);
+    }, [loadPaymentMethods]);
 
     const pay = useCallback(async () => {
         if (!customer) {
@@ -805,7 +892,7 @@ function CheckoutContent() {
                                     p: { xs: 3, md: 4 },
                                     borderRadius: 3,
                                     border: '1px solid',
-                                    borderColor: step === 2 ? 'rgba(47,125,78,0.24)' : 'divider',
+                                    borderColor: step >= 2 ? 'rgba(47,125,78,0.24)' : 'divider',
                                     bgcolor: CLA_SURFACE,
                                 }}
                             >
@@ -814,19 +901,19 @@ function CheckoutContent() {
                                         <Box
                                             sx={{
                                                 ...claIconSurfaceSx,
-                                                bgcolor: step === 2 ? 'rgba(232,242,236,0.9)' : CLA_SURFACE_STRONG,
-                                                borderColor: step === 2 ? 'rgba(47,125,78,0.24)' : CLA_GREEN_BORDER,
+                                                bgcolor: step >= 2 ? 'rgba(232,242,236,0.9)' : CLA_SURFACE_STRONG,
+                                                borderColor: step >= 2 ? 'rgba(47,125,78,0.24)' : CLA_GREEN_BORDER,
                                             }}
                                         >
                                             <LocalShippingOutlinedIcon
-                                                sx={{ color: step === 2 ? 'success.main' : 'primary.main' }}
+                                                sx={{ color: step >= 2 ? 'success.main' : 'primary.main' }}
                                             />
                                         </Box>
                                         <Stack>
                                             <Typography variant="h6" fontWeight={700}>
                                                 Datos de entrega
                                             </Typography>
-                                            {step === 2 && (
+                                            {step >= 2 && (
                                                 <Typography variant="caption" color="success.main" fontWeight={600}>
                                                     Datos guardados correctamente
                                                 </Typography>
@@ -943,16 +1030,94 @@ function CheckoutContent() {
                                                 <CircularProgress size={18} color="inherit" />
                                                 <span>Guardando...</span>
                                             </Stack>
-                                        ) : step === 2 ? (
+                                        ) : step >= 2 ? (
                                             'Actualizar datos'
                                         ) : (
-                                            'Continuar al pago'
+                                            'Continuar'
                                         )}
                                     </TooltipButton>
                                 </Stack>
                             </Paper>
 
                             {step === 2 && (
+                                <Paper
+                                    elevation={0}
+                                    sx={{ p: { xs: 3, md: 4 }, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: CLA_SURFACE }}
+                                >
+                                    <Stack spacing={3}>
+                                        <Stack direction="row" spacing={1.5} alignItems="center">
+                                            <Box sx={claIconSurfaceSx}>
+                                                <PaymentOutlinedIcon sx={{ color: 'primary.main' }} />
+                                            </Box>
+                                            <Stack>
+                                                <Typography variant="h6" fontWeight={700}>Tu personalización</Typography>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    Indicá qué querés grabar en cada pieza. El frente es obligatorio; el dorso es opcional.
+                                                </Typography>
+                                            </Stack>
+                                        </Stack>
+
+                                        {/* Formulario por línea — se muestra hasta que se guarda */}
+                                        {!personalizationSaved && checkoutOrder?.lines.map(line => (
+                                            <Stack key={line.id} spacing={1.5}>
+                                                <Typography variant="subtitle2" fontWeight={700} color="text.secondary">
+                                                    {line.productVariant.name}
+                                                    {line.quantity > 1 && ` · x${line.quantity}`}
+                                                </Typography>
+                                                <PersonalizationForm
+                                                    values={lineValues[line.id] ?? defaultPersonalizationValues()}
+                                                    onChange={vals => setLineValues(prev => ({ ...prev, [line.id]: vals }))}
+                                                    disabled={savingPersonalization}
+                                                />
+                                            </Stack>
+                                        ))}
+
+                                        {!personalizationSaved && (
+                                            <TooltipButton
+                                                variant="contained"
+                                                color="primary"
+                                                size="large"
+                                                disabled={savingPersonalization}
+                                                onClick={() => void savePersonalizationAndContinue()}
+                                                tooltip="Guardar personalización y continuar"
+                                                sx={{ borderRadius: 2, py: 1.5, fontWeight: 700 }}
+                                            >
+                                                {savingPersonalization ? 'Guardando...' : 'Guardar y continuar'}
+                                            </TooltipButton>
+                                        )}
+
+                                        {/* Panel de subida de imágenes — se muestra después de guardar */}
+                                        {personalizationSaved && (
+                                            <PersonalizationUploadPanel
+                                                data={personalization}
+                                                loading={personalizationLoading}
+                                                error={personalizationError}
+                                                uploadingLineId={uploadingLineId}
+                                                onReload={() => {
+                                                    if (checkoutOrder?.code) void loadPersonalization(checkoutOrder.code);
+                                                }}
+                                                onUpload={handleUpload}
+                                            />
+                                        )}
+
+                                        {personalizationSaved && (
+                                            <TooltipButton
+                                                variant="contained"
+                                                color="primary"
+                                                size="large"
+                                                disabled={!allImagesUploaded}
+                                                onClick={() => void goToPayment()}
+                                                tooltip={allImagesUploaded ? 'Continuar a elegir la forma de pago' : 'Subí todas las imágenes requeridas para continuar'}
+                                                sx={{ borderRadius: 2, py: 1.5, fontWeight: 700 }}
+                                            >
+                                                Continuar al pago
+                                            </TooltipButton>
+                                        )}
+                                    </Stack>
+                                </Paper>
+                            )}
+
+                            {step === 3 && (
                                 <Paper
                                     elevation={0}
                                     sx={{ p: { xs: 3, md: 4 }, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: CLA_SURFACE }}
