@@ -12,6 +12,7 @@ const DEFAULT_DESCRIPTION =
     'Storefront inspirado en CLA Soulprint para una experiencia visual mas calida, editorial y premium.';
 const DEFAULT_IMAGE = '/images/products/placeholder.png';
 const META_DESCRIPTION_MAX_LENGTH = 155;
+const PRODUCT_BRAND_NAME = 'CLA Soulprint';
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -47,7 +48,11 @@ function normalizeImageUrl(imageUrl?: string | null): string {
 }
 
 function cleanDescription(description?: string | null): string {
-    const text = (description || DEFAULT_DESCRIPTION)
+    return cleanText(description, META_DESCRIPTION_MAX_LENGTH) || DEFAULT_DESCRIPTION;
+}
+
+function cleanText(value?: string | null, maxLength?: number): string {
+    const text = (value || '')
         .replace(/<[^>]*>/g, ' ')
         .replace(/&nbsp;/gi, ' ')
         .replace(/&amp;/gi, '&')
@@ -58,19 +63,94 @@ function cleanDescription(description?: string | null): string {
         .replace(/\s+/g, ' ')
         .trim();
 
-    if (text.length <= META_DESCRIPTION_MAX_LENGTH) {
+    if (!maxLength || text.length <= maxLength) {
         return text;
     }
 
-    const truncated = text.slice(0, META_DESCRIPTION_MAX_LENGTH).replace(/\s+\S*$/, '').trim();
+    const truncated = text.slice(0, maxLength).replace(/\s+\S*$/, '').trim();
     return `${truncated}...`;
+}
+
+function getProductUrl(slug: string): string {
+    return absoluteUrl(`/productos/${slug}`);
+}
+
+function getPrimaryProductImage(product: Product): string {
+    return normalizeImageUrl(product.featuredAsset?.preview || product.assets?.[0]?.preview);
+}
+
+function getSchemaAvailability(stockLevel?: string): string {
+    return stockLevel === 'OUT_OF_STOCK'
+        ? 'https://schema.org/OutOfStock'
+        : 'https://schema.org/InStock';
+}
+
+function formatSchemaPrice(amount: number): string {
+    return (amount / 100).toFixed(2);
+}
+
+function compactObject<T extends Record<string, unknown>>(value: T): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(value).filter(([, item]) => {
+            if (item == null) {
+                return false;
+            }
+
+            if (Array.isArray(item)) {
+                return item.length > 0;
+            }
+
+            if (typeof item === 'string') {
+                return item.length > 0;
+            }
+
+            return true;
+        }),
+    ) as Partial<T>;
+}
+
+function buildProductJsonLd(product: Product, slug: string): Record<string, unknown> {
+    const primaryVariant = product.variants[0];
+    const price = primaryVariant?.priceWithTax ?? primaryVariant?.price;
+    const url = getProductUrl(slug);
+    const category = product.collections?.find((collection) => collection.name)?.name;
+    const offer =
+        typeof price === 'number' && Number.isFinite(price)
+            ? compactObject({
+                  '@type': 'Offer',
+                  price: formatSchemaPrice(price),
+                  priceCurrency: primaryVariant?.currencyCode || 'ARS',
+                  availability: getSchemaAvailability(primaryVariant?.stockLevel),
+                  url,
+              })
+            : undefined;
+
+    return compactObject({
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: cleanText(product.name),
+        description: cleanText(product.description) || DEFAULT_DESCRIPTION,
+        image: getPrimaryProductImage(product),
+        sku: primaryVariant?.sku ? cleanText(primaryVariant.sku) : undefined,
+        brand: {
+            '@type': 'Brand',
+            name: PRODUCT_BRAND_NAME,
+        },
+        category: category ? cleanText(category) : undefined,
+        url,
+        offers: offer,
+    });
+}
+
+function stringifyJsonLd(jsonLd: Record<string, unknown>): string {
+    return JSON.stringify(jsonLd).replace(/</g, '\\u003c');
 }
 
 function buildProductMetadata(product: Product, slug: string): Metadata {
     const title = `${product.name || 'Producto'} | CLA Soulprint`;
     const description = cleanDescription(product.description);
-    const image = normalizeImageUrl(product.featuredAsset?.preview || product.assets?.[0]?.preview);
-    const url = absoluteUrl(`/productos/${slug}`);
+    const image = getPrimaryProductImage(product);
+    const url = getProductUrl(slug);
 
     return {
         title,
@@ -102,7 +182,7 @@ function buildProductMetadata(product: Product, slug: string): Metadata {
 function buildProductNotFoundMetadata(slug: string): Metadata {
     const title = 'Producto no encontrado | CLA Soulprint';
     const description = 'El producto solicitado no esta disponible en CLA Soulprint.';
-    const url = absoluteUrl(`/productos/${slug}`);
+    const url = getProductUrl(slug);
     const image = absoluteUrl(DEFAULT_IMAGE);
 
     return {
@@ -176,8 +256,14 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
         notFound();
     }
 
+    const productJsonLd = buildProductJsonLd(product, slug);
+
     return (
         <Container maxWidth="lg" sx={{ py: 5 }}>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: stringifyJsonLd(productJsonLd) }}
+            />
             <ProductDetail product={product} initialSearchParams={resolvedSearchParams} />
         </Container>
     );

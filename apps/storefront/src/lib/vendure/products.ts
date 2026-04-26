@@ -82,6 +82,8 @@ const PRODUCT_BADGE_CUSTOM_FIELDS = `
 const PRODUCT_COLLECTION_BADGE_FIELDS = `
     collections {
         id
+        name
+        slug
         customFields {
             badges {
                 ${BADGE_FIELDS}
