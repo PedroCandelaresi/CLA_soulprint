@@ -8,10 +8,11 @@ interface PaginationOptions {
 
 interface ProductsResult {
     items: Product[];
+    totalItems: number;
 }
 
 interface ProductBadgeLookupResult {
-    items: Array<Pick<Product, 'id' | 'customFields' | 'collections'>>;
+    items: Array<Pick<Product, 'id' | 'customFields' | 'collections' | 'facetValues'>>;
 }
 
 interface CollectionResult {
@@ -146,8 +147,6 @@ const GET_PRODUCTS_QUERY = `
   }
 `;
 
-// Vendure 2.x no tiene filter { collections } en el query products.
-// La forma correcta es usar la Search API con collectionSlug.
 const GET_PRODUCTS_BY_COLLECTION_QUERY = `
   query GetProductsByCollection($collectionSlug: String!, $take: Int, $skip: Int) {
     search(input: { collectionSlug: $collectionSlug, take: $take, skip: $skip, groupByProduct: true }) {
@@ -234,6 +233,11 @@ const GET_PRODUCTS_BADGES_BY_IDS_QUERY = `
         products(options: { take: $take, filter: { id: { in: $ids } } }) {
             items {
                 id
+                facetValues {
+                    id
+                    code
+                    name
+                }
                 ${PRODUCT_BADGE_CUSTOM_FIELDS}
                 ${PRODUCT_COLLECTION_BADGE_FIELDS}
             }
@@ -335,6 +339,19 @@ function mapSearchProduct(item: SearchProductItem): Product {
     };
 }
 
+function normalizeSlug(value: string): string {
+    return value.trim().toLowerCase();
+}
+
+function productMatchesCollectionOrFacet(product: Product, collectionSlug: string): boolean {
+    const normalizedSlug = normalizeSlug(collectionSlug);
+
+    return Boolean(
+        product.collections?.some((collection) => normalizeSlug(collection.slug ?? '') === normalizedSlug) ||
+        product.facetValues?.some((facetValue) => normalizeSlug(facetValue.code) === normalizedSlug),
+    );
+}
+
 async function enrichProductsWithBadges(products: Product[]): Promise<Product[]> {
     const productIds = Array.from(new Set(products.map((product) => product.id).filter(Boolean)));
 
@@ -365,6 +382,7 @@ async function enrichProductsWithBadges(products: Product[]): Promise<Product[]>
                     badges: enriched.customFields?.badges ?? [],
                 },
                 collections: enriched.collections,
+                facetValues: enriched.facetValues ?? product.facetValues,
             };
         });
     } catch (error) {
@@ -386,12 +404,75 @@ export async function listCollections(): Promise<CollectionItem[]> {
 
 export async function listProductsByCollection(collectionSlug: string, options: PaginationOptions = {}): Promise<Product[]> {
     const { take = 24, skip = 0 } = options;
-    const data = await fetchVendure<{ search: SearchResult }>(GET_PRODUCTS_BY_COLLECTION_QUERY, {
-        collectionSlug,
-        take,
-        skip,
-    });
-    return enrichProductsWithBadges(data.search.items.map(mapSearchProduct));
+    const normalizedSlug = normalizeSlug(collectionSlug);
+
+    try {
+        const data = await fetchVendure<{ search: SearchResult }>(GET_PRODUCTS_BY_COLLECTION_QUERY, {
+            collectionSlug: normalizedSlug,
+            take: Math.max(take + skip, take),
+            skip: 0,
+        });
+        const products = await enrichProductsWithBadges(data.search.items.map(mapSearchProduct));
+        const filtered = products.filter((product) => productMatchesCollectionOrFacet(product, normalizedSlug));
+
+        if (filtered.length > 0) {
+            return filtered.slice(skip, skip + take);
+        }
+    } catch (error) {
+        console.warn('listProductsByCollection: search collectionSlug failed', error);
+    }
+
+    try {
+        const facetsData = await fetchVendure<{ facets: FacetsResult }>(GET_FACETS_QUERY);
+        const facetValue = facetsData.facets.items
+            .flatMap((facet) => facet.values)
+            .find((value) => normalizeSlug(value.code) === normalizedSlug);
+
+        if (facetValue) {
+            const searchData = await fetchVendure<{ search: SearchResult }>(SEARCH_PRODUCTS_QUERY, {
+                input: {
+                    facetValueIds: [facetValue.id],
+                    groupByProduct: true,
+                    take: Math.max(take + skip, take),
+                    skip: 0,
+                },
+            });
+            const products = await enrichProductsWithBadges(searchData.search.items.map(mapSearchProduct));
+            const filtered = products.filter((product) => productMatchesCollectionOrFacet(product, normalizedSlug));
+
+            if (filtered.length > 0) {
+                return filtered.slice(skip, skip + take);
+            }
+        }
+    } catch (error) {
+        console.warn('listProductsByCollection: facet fallback failed', error);
+    }
+
+    const pageSize = 100;
+    const maxProductsToInspect = 2000;
+    const matched: Product[] = [];
+    let fetched = 0;
+
+    while (fetched < maxProductsToInspect && matched.length < skip + take) {
+        const data = await fetchVendure<{ products: ProductsResult }>(GET_PRODUCTS_QUERY, {
+            take: pageSize,
+            skip: fetched,
+        });
+        const items = data.products.items;
+
+        if (items.length === 0) {
+            break;
+        }
+
+        matched.push(...items.filter((product) => productMatchesCollectionOrFacet(product, normalizedSlug)));
+        fetched += items.length;
+
+        if (fetched >= data.products.totalItems) {
+            break;
+        }
+    }
+
+    return matched.slice(skip, skip + take);
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {

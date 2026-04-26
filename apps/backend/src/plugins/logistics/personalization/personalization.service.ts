@@ -151,6 +151,7 @@ export class PersonalizationService {
                     } as any,
                 },
             );
+            await this.setLineAssetId(line.id, 'front', assetResult.id);
         } else {
             const prevBackAsset = this.getLineBackAsset(line);
             if (prevBackAsset?.id && prevBackAsset.id !== assetResult.id) {
@@ -167,6 +168,7 @@ export class PersonalizationService {
                     } as any,
                 },
             );
+            await this.setLineAssetId(line.id, 'back', assetResult.id);
         }
 
         const reloadedOrder = await this.loadOrder(ctx, input.orderCode);
@@ -391,13 +393,15 @@ export class PersonalizationService {
         const orderCf = (order.customFields ?? {}) as Record<string, unknown>;
         const lines = this.getLines(order);
         const overallPersonalizationStatus = this.deriveOverallStatus(order);
+        const lineAssetIds = await this.getLineAssetIds(lines);
 
         // Collect all asset IDs that need to be loaded
         const assetIdSet = new Set<number>();
         for (const line of lines) {
             const cf = (line.customFields ?? {}) as Record<string, unknown>;
-            const frontId = (cf['personalizationAssetId'] ?? (cf['personalizationAsset'] as any)?.id) as number | undefined;
-            const backId = (cf['personalizationBackAssetId'] ?? (cf['personalizationBackAsset'] as any)?.id) as number | undefined;
+            const rawIds = lineAssetIds.get(String(line.id));
+            const frontId = rawIds?.frontAssetId ?? this.extractAssetId(cf['personalizationAsset']);
+            const backId = rawIds?.backAssetId ?? this.extractAssetId(cf['personalizationBackAsset']);
             if (frontId) assetIdSet.add(frontId);
             if (backId) assetIdSet.add(backId);
         }
@@ -415,8 +419,9 @@ export class PersonalizationService {
 
         const lineItems: PersonalizationLineData[] = lines.map(line => {
             const cf = (line.customFields ?? {}) as Record<string, unknown>;
-            const frontId = (cf['personalizationAssetId'] ?? (cf['personalizationAsset'] as any)?.id) as number | undefined;
-            const backId = (cf['personalizationBackAssetId'] ?? (cf['personalizationBackAsset'] as any)?.id) as number | undefined;
+            const rawIds = lineAssetIds.get(String(line.id));
+            const frontId = rawIds?.frontAssetId ?? this.extractAssetId(cf['personalizationAsset']);
+            const backId = rawIds?.backAssetId ?? this.extractAssetId(cf['personalizationBackAsset']);
             const frontAsset = frontId ? assetMap.get(frontId) : undefined;
             const backAsset = backId ? assetMap.get(backId) : undefined;
 
@@ -467,6 +472,65 @@ export class PersonalizationService {
         if (!value) return null;
         const d = value instanceof Date ? value : new Date(value);
         return isNaN(d.getTime()) ? null : d.toISOString();
+    }
+
+    private extractAssetId(value: unknown): number | undefined {
+        if (!value || typeof value !== 'object') return undefined;
+        const id = (value as { id?: unknown }).id;
+        const numericId = Number(id);
+        return Number.isFinite(numericId) && numericId > 0 ? numericId : undefined;
+    }
+
+    private async setLineAssetId(
+        orderLineId: unknown,
+        side: 'front' | 'back',
+        assetId: unknown,
+    ): Promise<void> {
+        const column =
+            side === 'front'
+                ? 'customFieldsPersonalizationassetid'
+                : 'customFieldsPersonalizationbackassetid';
+
+        await this.connection.rawConnection.query(
+            `UPDATE \`order_line\` SET \`${column}\` = ? WHERE \`id\` = ?`,
+            [assetId, orderLineId],
+        );
+    }
+
+    private async getLineAssetIds(
+        lines: OrderLine[],
+    ): Promise<Map<string, { frontAssetId?: number; backAssetId?: number }>> {
+        const ids = lines.map((line) => line.id).filter((id) => id != null);
+
+        if (ids.length === 0) {
+            return new Map();
+        }
+
+        const placeholders = ids.map(() => '?').join(', ');
+        const rows = await this.connection.rawConnection.query(
+            `SELECT
+                \`id\`,
+                \`customFieldsPersonalizationassetid\` AS \`frontAssetId\`,
+                \`customFieldsPersonalizationbackassetid\` AS \`backAssetId\`
+             FROM \`order_line\`
+             WHERE \`id\` IN (${placeholders})`,
+            ids,
+        ) as Array<{ id: unknown; frontAssetId: unknown; backAssetId: unknown }>;
+
+        return new Map(
+            rows.map((row) => [
+                String(row.id),
+                {
+                    frontAssetId: this.normalizeAssetId(row.frontAssetId),
+                    backAssetId: this.normalizeAssetId(row.backAssetId),
+                },
+            ]),
+        );
+    }
+
+    private normalizeAssetId(value: unknown): number | undefined {
+        const numericId = Number(value);
+        return Number.isFinite(numericId) && numericId > 0 ? numericId : undefined;
     }
 
     private validateFile(file: UploadedPersonalizationFile): void {
