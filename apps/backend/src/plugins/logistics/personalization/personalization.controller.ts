@@ -74,6 +74,7 @@ export class PersonalizationController {
             });
             return res?.status(200).json({ success: true, data });
         } catch (error) {
+            console.error('[personalization] getOrderPersonalization error:', error);
             return res?.status(getMappedStatusCode(error)).json({
                 success: false,
                 error: mapError(error).message,

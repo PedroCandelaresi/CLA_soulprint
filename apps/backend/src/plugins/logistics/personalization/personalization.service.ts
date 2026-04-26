@@ -43,8 +43,6 @@ const ORDER_RELATIONS = [
     'lines',
     'lines.productVariant',
     'lines.productVariant.product',
-    'lines.customFields.personalizationAsset',
-    'lines.customFields.personalizationBackAsset',
     'payments',
     'fulfillments',
 ] as const;
@@ -97,7 +95,7 @@ export class PersonalizationService {
 
         const token = buildPersonalizationToken(order.code, this.config.tokenSecret);
         const finalOrder = (await this.loadOrder(ctx, access.orderCode)) ?? syncedOrder;
-        return this.mapToResponse(finalOrder, token);
+        return this.mapToResponse(ctx, finalOrder, token);
     }
 
     async uploadForLine(input: PersonalizationLineUploadInput): Promise<PersonalizationOrderData> {
@@ -186,7 +184,7 @@ export class PersonalizationService {
 
         const finalOrder = await this.loadOrder(ctx, input.orderCode) ?? order;
         const token = buildPersonalizationToken(order.code, this.config.tokenSecret);
-        return this.mapToResponse(finalOrder, token);
+        return this.mapToResponse(ctx, finalOrder, token);
     }
 
     private async loadOrder(
@@ -385,19 +383,38 @@ export class PersonalizationService {
         return { accessToken: buildPersonalizationToken(order.code, this.config.tokenSecret) };
     }
 
-    private mapToResponse(order: Order, accessToken: string): PersonalizationOrderData {
+    private async mapToResponse(ctx: Awaited<ReturnType<RequestContextService['create']>>, order: Order, accessToken: string): Promise<PersonalizationOrderData> {
         const orderCf = (order.customFields ?? {}) as Record<string, unknown>;
         const lines = this.getLines(order);
         const overallPersonalizationStatus = this.deriveOverallStatus(order);
 
+        // Collect all asset IDs that need to be loaded
+        const assetIdSet = new Set<number>();
+        for (const line of lines) {
+            const cf = (line.customFields ?? {}) as Record<string, unknown>;
+            const frontId = (cf['personalizationAssetId'] ?? (cf['personalizationAsset'] as any)?.id) as number | undefined;
+            const backId = (cf['personalizationBackAssetId'] ?? (cf['personalizationBackAsset'] as any)?.id) as number | undefined;
+            if (frontId) assetIdSet.add(frontId);
+            if (backId) assetIdSet.add(backId);
+        }
+
+        const assetMap = new Map<number, Asset>();
+        if (assetIdSet.size > 0) {
+            const assetRepo = this.connection.getRepository(ctx, Asset);
+            const assets = await assetRepo.findBy({ id: { $in: [...assetIdSet] } as any });
+            for (const a of assets) assetMap.set(Number(a.id), a);
+        }
+
+        const toAssetSummary = (a: Asset | undefined) => a
+            ? { id: String(a.id), source: a.source, preview: a.preview, mimeType: a.mimeType, fileSize: a.fileSize }
+            : null;
+
         const lineItems: PersonalizationLineData[] = lines.map(line => {
             const cf = (line.customFields ?? {}) as Record<string, unknown>;
-            const frontAsset = this.getLineFrontAsset(line);
-            const backAsset = this.getLineBackAsset(line);
-
-            const toAssetSummary = (a: Asset | undefined) => a
-                ? { id: String(a.id), source: a.source, preview: a.preview, mimeType: a.mimeType, fileSize: a.fileSize }
-                : null;
+            const frontId = (cf['personalizationAssetId'] ?? (cf['personalizationAsset'] as any)?.id) as number | undefined;
+            const backId = (cf['personalizationBackAssetId'] ?? (cf['personalizationBackAsset'] as any)?.id) as number | undefined;
+            const frontAsset = frontId ? assetMap.get(frontId) : undefined;
+            const backAsset = backId ? assetMap.get(backId) : undefined;
 
             return {
                 orderLineId: String(line.id),
