@@ -415,7 +415,13 @@ export class PersonalizationService {
         }
 
         const toAssetSummary = (a: Asset | undefined) => a
-            ? { id: String(a.id), source: a.source, preview: a.preview, mimeType: a.mimeType, fileSize: a.fileSize }
+            ? {
+                id: String(a.id),
+                source: this.normalizeAssetUrl(a.source),
+                preview: this.normalizeAssetUrl(a.preview),
+                mimeType: a.mimeType,
+                fileSize: a.fileSize,
+            }
             : null;
 
         const lineItems: PersonalizationLineData[] = lines.map(line => {
@@ -532,6 +538,12 @@ export class PersonalizationService {
     private normalizeAssetId(value: unknown): number | undefined {
         const numericId = Number(value);
         return Number.isFinite(numericId) && numericId > 0 ? numericId : undefined;
+    }
+
+    private normalizeAssetUrl(value: string | null | undefined): string {
+        if (!value) return '';
+        if (/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
+        return `/assets/${value.replace(/^assets\//, '')}`;
     }
 
     private validateFile(file: UploadedPersonalizationFile): void {
