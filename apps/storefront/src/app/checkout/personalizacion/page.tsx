@@ -34,6 +34,7 @@ import {
 import type { ActiveOrder, StorefrontOrderPayment } from '@/types/storefront';
 
 const PERSONALIZATION_ORDER_CODE_STORAGE_KEY = 'personalization:last-order-code';
+const PERSONALIZATION_EDITABLE_ORDER_STATES = new Set(['AddingItems', 'ArrangingPayment', 'PaymentAuthorized']);
 
 function getLatestPayment(order: ActiveOrder | null | undefined): StorefrontOrderPayment | null {
     const payments = order?.payments ?? [];
@@ -78,6 +79,7 @@ function CheckoutPersonalizationContent() {
     const [personalizationUploadingLineId, setPersonalizationUploadingLineId] = useState<string | null>(null);
     const latestPayment = useMemo(() => getLatestPayment(order), [order]);
     const currencyCode = order?.currencyCode || 'ARS';
+    const personalizationReadOnly = order ? !PERSONALIZATION_EDITABLE_ORDER_STATES.has(order.state) : false;
 
     const loadPersonalizationStatus = useCallback(
         async (code: string) => {
@@ -184,10 +186,10 @@ function CheckoutPersonalizationContent() {
             <Stack spacing={3}>
                 <Stack spacing={1}>
                     <Typography variant="h3" fontWeight={800}>
-                        Cargá la foto para personalizar
+                        Verificá la imagen para personalizar
                     </Typography>
                     <Typography color="text.secondary">
-                        Ya registramos tu selección de pago. Para avanzar con el pedido, subí el archivo del producto personalizado.
+                        Revisá el archivo o la frase cargada para tu pieza. Si falta algo o necesitás corregirlo, podés modificarlo antes de que el pedido quede confirmado.
                     </Typography>
                 </Stack>
 
@@ -239,6 +241,7 @@ function CheckoutPersonalizationContent() {
                                 loading={personalizationLoading}
                                 error={personalizationError}
                                 uploadingLineId={personalizationUploadingLineId}
+                                readOnly={personalizationReadOnly}
                                 onReload={() => {
                                     void loadPersonalizationStatus(orderCode);
                                 }}
@@ -250,10 +253,12 @@ function CheckoutPersonalizationContent() {
                     <Paper variant="outlined" sx={{ width: '100%', maxWidth: 360, p: 3, borderRadius: 3 }}>
                         <Stack spacing={2}>
                             <Typography variant="h5" fontWeight={800}>
-                                Próximo paso
+                                Revisión
                             </Typography>
                             <Typography color="text.secondary">
-                                Cuando el archivo quede cargado, lo vas a ver asociado a tu pedido.
+                                {personalizationReadOnly
+                                    ? 'El pedido ya quedó confirmado. Los archivos cargados se mantienen asociados y no pueden modificarse desde esta pantalla.'
+                                    : 'Verificá que la imagen o frase sea correcta. Mientras el pedido no esté confirmado, podés reemplazar el archivo.'}
                             </Typography>
                             {orderCode && personalization?.overallPersonalizationStatus === 'complete' && (
                                 <Button

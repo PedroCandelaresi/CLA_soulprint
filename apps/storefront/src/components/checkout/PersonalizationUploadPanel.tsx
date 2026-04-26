@@ -29,6 +29,7 @@ type PersonalizationUploadPanelProps = {
     loading: boolean;
     error: string | null;
     uploadingLineId: string | null;
+    readOnly?: boolean;
     onReload: () => void;
     onUpload: (line: PersonalizationLineData, side: Side, file: File, notes: string) => Promise<void>;
 };
@@ -49,12 +50,14 @@ function UploadSlot({
     sideKey,
     line,
     uploadingLineId,
+    readOnly = false,
     onUpload,
 }: {
     label: string;
     sideKey: Side;
     line: PersonalizationLineData;
     uploadingLineId: string | null;
+    readOnly?: boolean;
     onUpload: PersonalizationUploadPanelProps['onUpload'];
 }) {
     const [file, setFile] = useState<File | null>(null);
@@ -95,30 +98,38 @@ function UploadSlot({
                     />
                 )}
 
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
-                    <Button
-                        component="label"
-                        variant="outlined"
-                        size="small"
-                        startIcon={<UploadFileOutlinedIcon />}
-                        disabled={isUploading}
-                        sx={{ minWidth: 160 }}
-                    >
-                        {file ? 'Cambiar' : existingAsset ? 'Reemplazar' : 'Elegir archivo'}
-                        <Box
-                            component="input"
-                            type="file"
-                            accept={ACCEPTED_FILE_TYPES}
-                            sx={{ display: 'none' }}
-                            onChange={e => setFile(e.currentTarget.files?.[0] ?? null)}
-                        />
-                    </Button>
-                    <Typography variant="caption" color="text.secondary">
-                        {file ? file.name : 'JPG, PNG, WEBP o PDF'}
-                    </Typography>
-                </Stack>
+                {!existingAsset && (
+                    <Alert severity={readOnly ? 'warning' : 'info'} sx={{ py: 0.5 }}>
+                        No hay imagen cargada para {label.toLowerCase()}.
+                    </Alert>
+                )}
 
-                {file && (
+                {!readOnly && (
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
+                        <Button
+                            component="label"
+                            variant="outlined"
+                            size="small"
+                            startIcon={<UploadFileOutlinedIcon />}
+                            disabled={isUploading}
+                            sx={{ minWidth: 160 }}
+                        >
+                            {file ? 'Cambiar selección' : existingAsset ? 'Modificar archivo' : 'Elegir archivo'}
+                            <Box
+                                component="input"
+                                type="file"
+                                accept={ACCEPTED_FILE_TYPES}
+                                sx={{ display: 'none' }}
+                                onChange={e => setFile(e.currentTarget.files?.[0] ?? null)}
+                            />
+                        </Button>
+                        <Typography variant="caption" color="text.secondary">
+                            {file ? file.name : 'JPG, PNG, WEBP o PDF'}
+                        </Typography>
+                    </Stack>
+                )}
+
+                {file && !readOnly && (
                     <Stack direction="row" justifyContent="flex-end">
                         <Button
                             variant="contained"
@@ -129,7 +140,7 @@ function UploadSlot({
                                 setFile(null);
                             }}
                         >
-                            {isUploading ? <><CircularProgress size={14} sx={{ mr: 1 }} />Subiendo...</> : 'Subir imagen'}
+                            {isUploading ? <><CircularProgress size={14} sx={{ mr: 1 }} />Subiendo...</> : existingAsset ? 'Guardar cambio' : 'Subir imagen'}
                         </Button>
                     </Stack>
                 )}
@@ -163,10 +174,15 @@ function TextSlot({ label, text }: { label: string; text: string | null }) {
     );
 }
 
-function getOverallCopy(data: PersonalizationOrderData | null): string {
+function getOverallCopy(data: PersonalizationOrderData | null, readOnly: boolean): string {
     if (!data) return 'Verificando el estado de personalización del pedido...';
     if (!data.requiresPersonalization) return 'Este pedido no requiere archivos adicionales.';
-    if (data.overallPersonalizationStatus === 'complete') return 'Ya tenemos todo lo necesario para producir tu pedido.';
+    if (readOnly && data.overallPersonalizationStatus === 'complete') {
+        return 'Estos son los archivos y frases asociados a tu pedido.';
+    }
+    if (data.overallPersonalizationStatus === 'complete') {
+        return 'Verificá la imagen o archivo cargado. Si necesitás corregirlo, podés modificarlo antes de que el pedido quede confirmado.';
+    }
     if (data.overallPersonalizationStatus === 'partial') return 'Recibimos parte de los archivos. Completá los pendientes.';
     return 'Subí las imágenes requeridas para que podamos producir tu pedido.';
 }
@@ -176,6 +192,7 @@ export function PersonalizationUploadPanel({
     loading,
     error,
     uploadingLineId,
+    readOnly = false,
     onReload,
     onUpload,
 }: PersonalizationUploadPanelProps) {
@@ -201,7 +218,7 @@ export function PersonalizationUploadPanel({
                     <Box>
                         <Typography variant="h5" fontWeight={800}>Personalización del pedido</Typography>
                         <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                            {getOverallCopy(data)}
+                            {getOverallCopy(data, readOnly)}
                         </Typography>
                     </Box>
                     {data?.requiresPersonalization && (
@@ -262,6 +279,7 @@ export function PersonalizationUploadPanel({
                                     sideKey="front"
                                     line={line}
                                     uploadingLineId={uploadingLineId}
+                                    readOnly={readOnly}
                                     onUpload={onUpload}
                                 />
                             }
@@ -275,6 +293,7 @@ export function PersonalizationUploadPanel({
                                         sideKey="back"
                                         line={line}
                                         uploadingLineId={uploadingLineId}
+                                        readOnly={readOnly}
                                         onUpload={onUpload}
                                     />
                             )}

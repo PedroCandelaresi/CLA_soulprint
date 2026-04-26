@@ -49,6 +49,7 @@ const ORDER_RELATIONS = [
 
 const PAID_PAYMENT_STATES = new Set(['Authorized', 'Settled']);
 const REQUIRED_LINE_PENDING_STATUSES = new Set<PersonalizationLineStatus>(['not-required', 'pending-upload']);
+const UPLOAD_EDITABLE_ORDER_STATES = new Set(['AddingItems', 'ArrangingPayment', 'PaymentAuthorized']);
 
 @Injectable()
 export class PersonalizationService {
@@ -104,6 +105,9 @@ export class PersonalizationService {
         const ctx = await this.requestContextService.create({ apiType: 'admin' });
         const order = await this.loadOrder(ctx, input.orderCode);
         if (!order) throw new Error('La orden no existe.');
+        if (!UPLOAD_EDITABLE_ORDER_STATES.has(order.state)) {
+            throw new Error('El pedido ya fue confirmado y no permite modificar archivos de personalización.');
+        }
 
         await this.authorize(input, order, false);
 
