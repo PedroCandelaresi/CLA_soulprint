@@ -1,7 +1,30 @@
 import type { MetadataRoute } from "next";
-import { listProducts } from "@/lib/vendure";
 
 const rawSiteUrl = process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const PRODUCTS_SITEMAP_QUERY = `
+  query SitemapProducts($take: Int!, $skip: Int!) {
+    products(options: { take: $take, skip: $skip }) {
+      items {
+        slug
+      }
+    }
+  }
+`;
+
+interface SitemapProduct {
+  slug?: string | null;
+}
+
+interface SitemapProductsResponse {
+  data?: {
+    products?: {
+      items?: SitemapProduct[];
+    };
+  };
+  errors?: Array<{ message?: string }>;
+}
+
+export const revalidate = 3600;
 
 function getSiteUrl(): string {
   try {
@@ -13,6 +36,47 @@ function getSiteUrl(): string {
 
 function absoluteUrl(path: string): string {
   return new URL(path, getSiteUrl()).toString();
+}
+
+function getVendureInternalApiUrl(): string | null {
+  const value = process.env.VENDURE_INTERNAL_API_URL?.trim();
+  return value || null;
+}
+
+async function listSitemapProducts(): Promise<SitemapProduct[]> {
+  const vendureApiUrl = getVendureInternalApiUrl();
+
+  if (!vendureApiUrl) {
+    console.warn("sitemap.xml: VENDURE_INTERNAL_API_URL no está configurado; se omiten productos.");
+    return [];
+  }
+
+  const response = await fetch(vendureApiUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: PRODUCTS_SITEMAP_QUERY,
+      variables: {
+        take: 200,
+        skip: 0,
+      },
+    }),
+    next: { revalidate },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Vendure sitemap query failed: ${response.status} ${response.statusText}`);
+  }
+
+  const payload = (await response.json()) as SitemapProductsResponse;
+
+  if (payload.errors?.length) {
+    throw new Error(`Vendure sitemap GraphQL error: ${payload.errors[0]?.message || "unknown error"}`);
+  }
+
+  return payload.data?.products?.items ?? [];
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -51,7 +115,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const products = await listProducts({ take: 200, skip: 0 });
+    const products = await listSitemapProducts();
     const productRoutes = products
       .filter((product) => product.slug)
       .map((product) => ({
@@ -61,9 +125,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       }));
 
-    return [...staticRoutes, ...productRoutes];
+    return [...new Map([...staticRoutes, ...productRoutes].map((route) => [route.url, route])).values()];
   } catch (error) {
-    console.error("No se pudieron incluir productos en sitemap.xml", error);
+    console.warn("sitemap.xml: no se pudieron incluir productos; se devuelven rutas estáticas.", error);
     return staticRoutes;
   }
 }
