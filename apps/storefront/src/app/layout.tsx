@@ -9,21 +9,12 @@ import Footer from "@/components/layout/Footer";
 import { StorefrontProvider } from "@/components/providers/StorefrontProvider";
 import { Box } from "@mui/material";
 import { getServerStorefrontState } from "@/lib/auth/session";
+import { buildStoreJsonLd, getPublicSiteUrl, stringifyJsonLd } from "@/lib/seo/schema";
 
 export const dynamic = "force-dynamic";
 
-function getSiteUrl(): string {
-  const rawSiteUrl = process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-
-  try {
-    return new URL(rawSiteUrl).origin;
-  } catch {
-    return "http://localhost:3000";
-  }
-}
-
 export const metadata: Metadata = {
-  metadataBase: new URL(getSiteUrl()),
+  metadataBase: new URL(getPublicSiteUrl()),
   title: "CLA Soulprint",
   description: "Storefront inspirado en CLA Soulprint para una experiencia visual más cálida, editorial y premium.",
   applicationName: "CLA Soulprint",
@@ -58,10 +49,15 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const initialState = await getServerStorefrontState();
+  const storeJsonLd = buildStoreJsonLd();
 
   return (
     <html lang="es">
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: stringifyJsonLd(storeJsonLd) }}
+        />
 
         <ThemeRegistry>
           <StorefrontProvider initialState={initialState}>
