@@ -43,6 +43,8 @@ const ORDER_RELATIONS = [
     'lines',
     'lines.productVariant',
     'lines.productVariant.product',
+    'lines.customFields.personalizationAsset',
+    'lines.customFields.personalizationBackAsset',
     'payments',
     'fulfillments',
 ] as const;

@@ -76,7 +76,7 @@ const configurationHook: PluginConfigurationFn = config => {
             graphQLType: 'Asset',
             public: false,
             nullable: true,
-            eager: true,
+            eager: false,
             label: [{ languageCode: LanguageCode.es, value: 'Imagen frente' }],
         },
         {
@@ -94,7 +94,7 @@ const configurationHook: PluginConfigurationFn = config => {
             graphQLType: 'Asset',
             public: false,
             nullable: true,
-            eager: true,
+            eager: false,
             label: [{ languageCode: LanguageCode.es, value: 'Imagen dorso' }],
         },
         {
