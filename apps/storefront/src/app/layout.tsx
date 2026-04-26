@@ -9,12 +9,38 @@ import Footer from "@/components/layout/Footer";
 import { StorefrontProvider } from "@/components/providers/StorefrontProvider";
 import { Box } from "@mui/material";
 import { getServerStorefrontState } from "@/lib/auth/session";
+import { buildStoreJsonLd, getPublicSiteUrl, stringifyJsonLd } from "@/lib/seo/schema";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getPublicSiteUrl()),
   title: "CLA Soulprint",
   description: "Storefront inspirado en CLA Soulprint para una experiencia visual más cálida, editorial y premium.",
+  applicationName: "CLA Soulprint",
+  openGraph: {
+    title: "CLA Soulprint",
+    description: "Storefront inspirado en CLA Soulprint para una experiencia visual más cálida, editorial y premium.",
+    siteName: "CLA Soulprint",
+    locale: "es_AR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CLA Soulprint",
+    description: "Storefront inspirado en CLA Soulprint para una experiencia visual más cálida, editorial y premium.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default async function RootLayout({
@@ -23,10 +49,15 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const initialState = await getServerStorefrontState();
+  const storeJsonLd = buildStoreJsonLd();
 
   return (
     <html lang="es">
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: stringifyJsonLd(storeJsonLd) }}
+        />
 
         <ThemeRegistry>
           <StorefrontProvider initialState={initialState}>

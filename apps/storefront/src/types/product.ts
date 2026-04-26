@@ -41,6 +41,8 @@ export interface CollectionCustomFields {
 
 export interface ProductCollection {
     id: string;
+    name?: string;
+    slug?: string;
     customFields?: CollectionCustomFields;
 }
 

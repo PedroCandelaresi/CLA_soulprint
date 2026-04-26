@@ -1,6 +1,6 @@
-import type { ComponentPropsWithoutRef } from 'react';
+import Image, { type ImageProps } from 'next/image';
 
-type BrandLogoImageProps = Omit<ComponentPropsWithoutRef<'img'>, 'src' | 'alt'> & {
+type BrandLogoImageProps = Omit<ImageProps, 'src' | 'alt' | 'width' | 'height'> & {
     decorative?: boolean;
     label?: string;
 };
@@ -13,10 +13,13 @@ export default function BrandLogoImage({
     ...props
 }: BrandLogoImageProps) {
     return (
-        <img
+        <Image
             {...props}
             src="/images/logos/CLA.svg"
             alt={decorative ? '' : label}
+            width={772}
+            height={142}
+            unoptimized
             aria-hidden={decorative || undefined}
             className={className}
             style={{

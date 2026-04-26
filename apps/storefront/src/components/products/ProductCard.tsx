@@ -103,6 +103,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     src={imgSrc}
                     alt={product.name}
                     fill
+                    sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 272px"
                     style={{ objectFit: 'contain', padding: '22px' }}
                     onError={() => setImgSrc('/images/backgrounds/errorimg.svg')}
                 />
