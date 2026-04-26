@@ -45,21 +45,31 @@ export default function PersonalizationAssetPreview({
                 onClick={() => setOpen(true)}
                 sx={{
                     justifyContent: 'flex-start',
-                    p: 0,
+                    width: '100%',
+                    p: 1,
                     textAlign: 'left',
                     color: 'inherit',
                     textTransform: 'none',
+                    borderRadius: 2.5,
+                    border: '1px solid rgba(0,72,37,0.1)',
+                    bgcolor: 'rgba(255,253,248,0.78)',
+                    transition: 'border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease',
+                    '&:hover': {
+                        bgcolor: 'rgba(246,237,222,0.92)',
+                        borderColor: 'rgba(0,72,37,0.2)',
+                        transform: 'translateY(-1px)',
+                    },
                 }}
             >
-                <Stack direction="row" spacing={1.25} alignItems="center">
+                <Stack direction="row" spacing={1.25} alignItems="center" width="100%">
                     <Box
                         sx={{
-                            width: 64,
-                            height: 64,
+                            width: 72,
+                            height: 72,
                             borderRadius: 2,
                             overflow: 'hidden',
                             border: '1px solid rgba(0,72,37,0.14)',
-                            bgcolor: 'rgba(255,252,248,0.9)',
+                            bgcolor: 'rgba(255,252,248,0.95)',
                             display: 'grid',
                             placeItems: 'center',
                             flexShrink: 0,
@@ -82,22 +92,38 @@ export default function PersonalizationAssetPreview({
                         <Typography variant="caption" color="text.secondary" display="block">
                             {label}
                         </Typography>
-                        <Typography variant="body2" fontWeight={700} noWrap sx={{ maxWidth: 220 }}>
+                        <Typography variant="body2" fontWeight={700} sx={{ wordBreak: 'break-word' }}>
                             {title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            Clic para ampliar
                         </Typography>
                     </Box>
                 </Stack>
             </Button>
 
-            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
-                <DialogTitle>{title}</DialogTitle>
-                <DialogContent dividers>
+            <Dialog
+                open={open}
+                onClose={() => setOpen(false)}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 4, overflow: 'hidden' } }}
+            >
+                <DialogTitle sx={{ fontWeight: 800 }}>{title}</DialogTitle>
+                <DialogContent dividers sx={{ bgcolor: 'rgba(255,251,244,0.72)' }}>
                     {image && (
                         <Box
                             component="img"
                             src={asset.source || asset.preview}
                             alt={title}
-                            sx={{ display: 'block', width: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+                            sx={{
+                                display: 'block',
+                                width: '100%',
+                                maxHeight: '70vh',
+                                objectFit: 'contain',
+                                borderRadius: 2,
+                                bgcolor: 'common.white',
+                            }}
                         />
                     )}
                     {pdf && (

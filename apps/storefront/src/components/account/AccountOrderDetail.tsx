@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
     Box,
     Button,
+    Chip,
     Divider,
     Stack,
     Typography,
@@ -39,6 +40,173 @@ import {
     getPrimaryShippingMethod,
     getTimelineProgressValue,
 } from './accountPresentation';
+
+function PersonalizationSideCard({
+    title,
+    mode,
+    text,
+    asset,
+    fileName,
+    uploadedAt,
+}: {
+    title: string;
+    mode: 'text' | 'image' | 'none';
+    text?: string | null;
+    asset?: PersonalizationLineData['frontAsset'];
+    fileName?: string | null;
+    uploadedAt?: string | null;
+}) {
+    const isText = mode === 'text';
+    const isImage = mode === 'image';
+    const isReady = Boolean((isText && text) || (isImage && asset));
+
+    if (mode === 'none' && !text && !asset) {
+        return null;
+    }
+
+    return (
+        <Box
+            sx={{
+                p: 1.5,
+                borderRadius: 3,
+                border: '1px solid rgba(0,72,37,0.1)',
+                bgcolor: 'rgba(255,253,248,0.86)',
+                minWidth: 0,
+            }}
+        >
+            <Stack spacing={1.25}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+                    <Typography variant="subtitle2" fontWeight={800}>
+                        {title}
+                    </Typography>
+                    <Chip
+                        size="small"
+                        label={isReady ? 'Recibido' : 'Pendiente'}
+                        color={isReady ? 'success' : 'warning'}
+                        sx={{ fontWeight: 700 }}
+                    />
+                </Stack>
+
+                {isText && text && (
+                    <Box
+                        sx={{
+                            p: 1.5,
+                            borderRadius: 2,
+                            bgcolor: 'rgba(0,72,37,0.06)',
+                            border: '1px solid rgba(0,72,37,0.08)',
+                        }}
+                    >
+                        <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                            Frase cargada
+                        </Typography>
+                        <Typography variant="body2" fontWeight={700} sx={{ whiteSpace: 'pre-wrap' }}>
+                            {text}
+                        </Typography>
+                    </Box>
+                )}
+
+                {isImage && asset && (
+                    <PersonalizationAssetPreview
+                        asset={asset}
+                        fileName={fileName}
+                        label={`Archivo ${title.toLowerCase()}`}
+                    />
+                )}
+
+                {isImage && !asset && (
+                    <Typography variant="body2" color="text.secondary">
+                        Todavía no hay archivo cargado para esta cara.
+                    </Typography>
+                )}
+
+                {uploadedAt && (
+                    <Typography variant="caption" color="text.secondary">
+                        Recibido el {formatAccountDateTime(uploadedAt)}
+                    </Typography>
+                )}
+            </Stack>
+        </Box>
+    );
+}
+
+function LinePersonalizationBlock({ line }: { line: PersonalizationLineData }) {
+    const hasFront =
+        line.requiresPersonalization ||
+        line.frontMode === 'text' ||
+        Boolean(line.frontText || line.frontAsset);
+    const hasBack =
+        line.backMode !== 'none' ||
+        Boolean(line.backText || line.backAsset);
+
+    if (!line.requiresPersonalization && !hasFront && !hasBack) {
+        return null;
+    }
+
+    return (
+        <Box
+            sx={{
+                mt: 1.5,
+                p: 1.5,
+                borderRadius: 3,
+                border: '1px solid rgba(199,164,107,0.24)',
+                bgcolor: 'rgba(246,237,222,0.46)',
+            }}
+        >
+            <Stack spacing={1.5}>
+                <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    justifyContent="space-between"
+                    alignItems={{ xs: 'flex-start', sm: 'center' }}
+                    spacing={1}
+                >
+                    <Box>
+                        <Typography variant="subtitle2" fontWeight={800}>
+                            Personalización del artículo
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            Archivos y frases cargadas para preparar tu pieza.
+                        </Typography>
+                    </Box>
+                    <Chip
+                        size="small"
+                        label={line.personalizationStatus === 'pending-upload' ? 'Incompleta' : 'Completa'}
+                        color={line.personalizationStatus === 'pending-upload' ? 'warning' : 'success'}
+                        sx={{ fontWeight: 700 }}
+                    />
+                </Stack>
+
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gap: 1.25,
+                        gridTemplateColumns: { xs: '1fr', md: hasBack ? 'repeat(2, minmax(0, 1fr))' : '1fr' },
+                    }}
+                >
+                    {hasFront && (
+                        <PersonalizationSideCard
+                            title="Frente"
+                            mode={line.frontMode}
+                            text={line.frontText}
+                            asset={line.frontAsset}
+                            fileName={line.frontSnapshotFileName}
+                            uploadedAt={line.frontUploadedAt}
+                        />
+                    )}
+                    {hasBack && (
+                        <PersonalizationSideCard
+                            title="Dorso"
+                            mode={line.backMode}
+                            text={line.backText}
+                            asset={line.backAsset}
+                            fileName={line.backSnapshotFileName}
+                            uploadedAt={line.backUploadedAt}
+                        />
+                    )}
+                </Box>
+            </Stack>
+        </Box>
+    );
+}
 
 function SummaryCard({
     label,
@@ -324,32 +492,7 @@ export default function AccountOrderDetail({ code }: { code: string }) {
                                                     )}
                                                 </Typography>
                                                 {linePersonalization && (
-                                                    <Stack spacing={1} mt={1}>
-                                                        {linePersonalization.frontMode === 'text' && linePersonalization.frontText && (
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                Frente: &ldquo;{linePersonalization.frontText}&rdquo;
-                                                            </Typography>
-                                                        )}
-                                                        {linePersonalization.frontAsset && (
-                                                            <PersonalizationAssetPreview
-                                                                asset={linePersonalization.frontAsset}
-                                                                fileName={linePersonalization.frontSnapshotFileName}
-                                                                label="Archivo frente"
-                                                            />
-                                                        )}
-                                                        {linePersonalization.backMode === 'text' && linePersonalization.backText && (
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                Dorso: &ldquo;{linePersonalization.backText}&rdquo;
-                                                            </Typography>
-                                                        )}
-                                                        {linePersonalization.backAsset && (
-                                                            <PersonalizationAssetPreview
-                                                                asset={linePersonalization.backAsset}
-                                                                fileName={linePersonalization.backSnapshotFileName}
-                                                                label="Archivo dorso"
-                                                            />
-                                                        )}
-                                                    </Stack>
+                                                    <LinePersonalizationBlock line={linePersonalization} />
                                                 )}
                                             </Stack>
 
