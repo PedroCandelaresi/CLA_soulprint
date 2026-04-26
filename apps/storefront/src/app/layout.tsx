@@ -12,9 +12,44 @@ import { getServerStorefrontState } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
+function getSiteUrl(): string {
+  const rawSiteUrl = process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+  try {
+    return new URL(rawSiteUrl).origin;
+  } catch {
+    return "http://localhost:3000";
+  }
+}
+
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: "CLA Soulprint",
   description: "Storefront inspirado en CLA Soulprint para una experiencia visual más cálida, editorial y premium.",
+  applicationName: "CLA Soulprint",
+  openGraph: {
+    title: "CLA Soulprint",
+    description: "Storefront inspirado en CLA Soulprint para una experiencia visual más cálida, editorial y premium.",
+    siteName: "CLA Soulprint",
+    locale: "es_AR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CLA Soulprint",
+    description: "Storefront inspirado en CLA Soulprint para una experiencia visual más cálida, editorial y premium.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default async function RootLayout({
