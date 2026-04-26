@@ -1,5 +1,6 @@
 import { Readable } from 'node:stream';
 import { Inject, Injectable, Optional } from '@nestjs/common';
+import { In } from 'typeorm';
 import {
     Asset,
     AssetService,
@@ -409,7 +410,7 @@ export class PersonalizationService {
         const assetMap = new Map<number, Asset>();
         if (assetIdSet.size > 0) {
             const assetRepo = this.connection.getRepository(ctx, Asset);
-            const assets = await assetRepo.findBy({ id: { $in: [...assetIdSet] } as any });
+            const assets = await assetRepo.findBy({ id: In([...assetIdSet]) as any });
             for (const a of assets) assetMap.set(Number(a.id), a);
         }
 
