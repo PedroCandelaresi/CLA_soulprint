@@ -61,7 +61,7 @@ export default function PersonalizationForm({ values, onChange, disabled }: Pers
                             onChange={(_e, v) => set({ frontMode: v as PersonalizationSideMode, frontText: '' })}
                         >
                             <FormControlLabel value="text" control={<Radio size="small" />} label="Frase / texto" />
-                            <FormControlLabel value="image" control={<Radio size="small" />} label="Imagen (la subís luego del pago)" />
+                            <FormControlLabel value="image" control={<Radio size="small" />} label="Imagen" />
                         </RadioGroup>
                     </FormControl>
 
@@ -84,7 +84,7 @@ export default function PersonalizationForm({ values, onChange, disabled }: Pers
 
                     {values.frontMode === 'image' && (
                         <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                            Una vez que confirmés el pago, te pediremos que subas la imagen para el frente.
+                            Guardá y a continuación podrás subir la imagen para el frente.
                         </Typography>
                     )}
                 </Stack>
@@ -140,7 +140,7 @@ export default function PersonalizationForm({ values, onChange, disabled }: Pers
 
                     {values.backMode === 'image' && (
                         <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                            Una vez que confirmés el pago, te pediremos que subas la imagen para el dorso.
+                            Guardá y a continuación podrás subir la imagen para el dorso.
                         </Typography>
                     )}
                 </Stack>

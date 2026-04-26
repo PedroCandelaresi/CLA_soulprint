@@ -244,8 +244,8 @@ export const LOGOUT_MUTATION = /* GraphQL */ `
 `;
 
 export const ADD_ITEM_TO_ORDER_MUTATION = /* GraphQL */ `
-    mutation AddItemToOrder($productVariantId: ID!, $quantity: Int!) {
-        addItemToOrder(productVariantId: $productVariantId, quantity: $quantity) {
+    mutation AddItemToOrder($productVariantId: ID!, $quantity: Int!, $customFields: OrderLineCustomFieldsInput) {
+        addItemToOrder(productVariantId: $productVariantId, quantity: $quantity, customFields: $customFields) {
             ...ActiveOrderFields
             ... on ErrorResult {
                 errorCode
@@ -258,19 +258,6 @@ export const ADD_ITEM_TO_ORDER_MUTATION = /* GraphQL */ `
                 order {
                     ...ActiveOrderFields
                 }
-            }
-        }
-    }
-    ${ACTIVE_ORDER_FRAGMENT}
-`;
-
-export const SET_ORDER_LINE_PERSONALIZATION_MUTATION = /* GraphQL */ `
-    mutation SetOrderLinePersonalization($orderLineId: ID!, $quantity: Int!, $customFields: OrderLineCustomFieldsInput) {
-        adjustOrderLine(orderLineId: $orderLineId, quantity: $quantity, customFields: $customFields) {
-            ...ActiveOrderFields
-            ... on ErrorResult {
-                errorCode
-                message
             }
         }
     }

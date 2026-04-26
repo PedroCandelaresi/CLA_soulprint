@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Alert, Box, Chip, Divider, Grid, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Divider, Grid, Stack, Typography } from '@mui/material';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
@@ -22,6 +23,11 @@ import { useStorefront } from '@/components/providers/StorefrontProvider';
 import { resolveBadges } from '@/lib/badges/resolveBadges';
 import TooltipButton from '@/components/ui/TooltipButton';
 import TooltipIconButton from '@/components/ui/TooltipIconButton';
+import PersonalizationForm, {
+    defaultPersonalizationValues,
+    validatePersonalization,
+    type PersonalizationValues,
+} from '@/components/checkout/PersonalizationForm';
 
 interface ProductDetailProps {
     product: Product;
@@ -55,9 +61,10 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const { addItemToOrder, cartLoading } = useStorefront();
+    const { addItemToOrder, cartLoading, customer } = useStorefront();
     const [quantity, setQuantity] = useState(1);
     const [feedback, setFeedback] = useState<{ severity: 'success' | 'error'; message: string } | null>(null);
+    const [personalization, setPersonalization] = useState<PersonalizationValues>(defaultPersonalizationValues);
     const optionGroups = product.optionGroups ?? [];
     const hasOptionGroups = optionGroups.length > 0;
     const hasMultipleVariants = product.variants.length > 1;
@@ -274,13 +281,34 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
             return;
         }
 
-        const result = await addItemToOrder(selectedVariant.id, quantity);
+        if (!customer) {
+            router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
+            return;
+        }
+
+        const personalizationError = validatePersonalization(personalization);
+        if (personalizationError) {
+            setFeedback({ severity: 'error', message: personalizationError });
+            return;
+        }
+
+        const customFields = {
+            frontMode: personalization.frontMode,
+            frontText: personalization.frontMode === 'text' ? personalization.frontText.trim() : null,
+            backMode: personalization.backMode,
+            backText: personalization.backMode === 'text' ? personalization.backText.trim() : null,
+        };
+
+        const result = await addItemToOrder(selectedVariant.id, quantity, customFields);
         setFeedback({
             severity: result.success ? 'success' : 'error',
             message:
                 result.message ||
                 (result.success ? 'Producto agregado al carrito.' : 'No se pudo agregar el producto al carrito.'),
         });
+        if (result.success) {
+            setPersonalization(defaultPersonalizationValues());
+        }
     };
 
     return (
@@ -451,6 +479,54 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
                                 </Stack>
                             </>
                         )}
+
+                        <Divider />
+
+                        {/* ── Personalización ── */}
+                        <Stack spacing={1}>
+                            <Typography variant="subtitle1" fontWeight={700}>
+                                Personalización
+                            </Typography>
+                            {customer ? (
+                                <>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Cada pieza se graba según tu indicación. El frente es obligatorio; el dorso es opcional.
+                                    </Typography>
+                                    <PersonalizationForm
+                                        values={personalization}
+                                        onChange={setPersonalization}
+                                        disabled={cartLoading || !canAddToCart}
+                                    />
+                                </>
+                            ) : (
+                                <Box
+                                    sx={{
+                                        p: 2.5,
+                                        borderRadius: 3,
+                                        border: '1px solid rgba(0,72,37,0.14)',
+                                        bgcolor: 'rgba(255,251,244,0.88)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1.5,
+                                    }}
+                                >
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                        <LockOutlinedIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                                        <Typography variant="body2" color="text.secondary">
+                                            Para personalizar tu pieza necesitás tener una cuenta.
+                                        </Typography>
+                                    </Stack>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        onClick={() => router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`)}
+                                        sx={{ alignSelf: 'flex-start', borderRadius: 2 }}
+                                    >
+                                        Iniciá sesión o creá una cuenta
+                                    </Button>
+                                </Box>
+                            )}
+                        </Stack>
 
                         <Divider />
 
