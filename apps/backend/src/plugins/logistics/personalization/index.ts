@@ -21,7 +21,7 @@ const configurationHook: PluginConfigurationFn = config => {
             type: 'string',
             defaultValue: 'not-required',
             public: false,
-            nullable: false,
+            nullable: true,
             label: [{ languageCode: LanguageCode.es, value: 'Estado global de personalización' }],
         });
     }
@@ -66,7 +66,7 @@ const configurationHook: PluginConfigurationFn = config => {
             type: 'string' as const,
             defaultValue: 'not-required',
             public: false,
-            nullable: false,
+            nullable: true,
             label: [{ languageCode: LanguageCode.es, value: 'Estado personalización frente' }],
         },
         {
@@ -84,7 +84,7 @@ const configurationHook: PluginConfigurationFn = config => {
             type: 'string' as const,
             defaultValue: 'not-required',
             public: false,
-            nullable: false,
+            nullable: true,
             label: [{ languageCode: LanguageCode.es, value: 'Estado personalización dorso' }],
         },
         {
