@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Alert,
@@ -24,6 +24,7 @@ import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlin
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
+import PersonalizationAssetPreview from '@/components/checkout/PersonalizationAssetPreview';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
 import TooltipButton from '@/components/ui/TooltipButton';
 import {
@@ -42,6 +43,8 @@ import {
     type EligibleShippingMethodsResponse,
 } from '@/lib/vendure/shop';
 import { formatCurrency } from '@/lib/checkout/demo';
+import { fetchPersonalizationOrder } from '@/lib/personalization/client';
+import type { PersonalizationLineData, PersonalizationOrderData } from '@/lib/personalization/types';
 import type {
     ActiveOrder,
     EligiblePaymentMethod,
@@ -447,12 +450,47 @@ function CheckoutContent() {
     const [savingData, setSavingData] = useState(false);
     const [paying, setPaying] = useState(false);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+    const [personalization, setPersonalization] = useState<PersonalizationOrderData | null>(null);
 
     const step: 1 | 2 = paymentMethods.length > 0 ? 2 : 1;
 
     useEffect(() => {
         setCheckoutOrder(activeOrder);
     }, [activeOrder]);
+
+    useEffect(() => {
+        let cancelled = false;
+        const orderCode = checkoutOrder?.code;
+
+        if (!orderCode) {
+            setPersonalization(null);
+            return;
+        }
+
+        async function loadPersonalization() {
+            try {
+                const data = await fetchPersonalizationOrder(orderCode);
+                if (!cancelled) {
+                    setPersonalization(data);
+                }
+            } catch {
+                if (!cancelled) {
+                    setPersonalization(null);
+                }
+            }
+        }
+
+        void loadPersonalization();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [checkoutOrder?.code]);
+
+    const personalizationByLineId = useMemo(() => {
+        const entries = personalization?.lines.map((line) => [line.orderLineId, line] as const) ?? [];
+        return new Map<string, PersonalizationLineData>(entries);
+    }, [personalization?.lines]);
 
     useEffect(() => {
         if (!initialized || customer || !checkoutOrder?.lines.length) {
@@ -1030,33 +1068,52 @@ function CheckoutContent() {
                                     <Divider />
 
                                     <Stack spacing={1.5}>
-                                        {checkoutOrder.lines.map((line) => (
-                                            <Stack
-                                                key={line.id}
-                                                direction="row"
-                                                justifyContent="space-between"
-                                                spacing={2}
-                                                alignItems="flex-start"
-                                            >
-                                                <Typography
-                                                    color="text.secondary"
-                                                    sx={{ flex: 1, lineHeight: 1.4 }}
-                                                    variant="body2"
-                                                >
-                                                    {line.productVariant.name}
-                                                    <Typography
-                                                        component="span"
-                                                        variant="body2"
-                                                        color="text.disabled"
+                                        {checkoutOrder.lines.map((line) => {
+                                            const linePersonalization = personalizationByLineId.get(line.id);
+
+                                            return (
+                                                <Stack key={line.id} spacing={1}>
+                                                    <Stack
+                                                        direction="row"
+                                                        justifyContent="space-between"
+                                                        spacing={2}
+                                                        alignItems="flex-start"
                                                     >
-                                                        {' '}× {line.quantity}
-                                                    </Typography>
-                                                </Typography>
-                                                <Typography fontWeight={600} variant="body2" noWrap>
-                                                    {formatCurrency(line.linePriceWithTax, currencyCode)}
-                                                </Typography>
-                                            </Stack>
-                                        ))}
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            sx={{ flex: 1, lineHeight: 1.4 }}
+                                                            variant="body2"
+                                                        >
+                                                            {line.productVariant.name}
+                                                            <Typography
+                                                                component="span"
+                                                                variant="body2"
+                                                                color="text.disabled"
+                                                            >
+                                                                {' '}× {line.quantity}
+                                                            </Typography>
+                                                        </Typography>
+                                                        <Typography fontWeight={600} variant="body2" noWrap>
+                                                            {formatCurrency(line.linePriceWithTax, currencyCode)}
+                                                        </Typography>
+                                                    </Stack>
+                                                    {linePersonalization?.frontAsset && (
+                                                        <PersonalizationAssetPreview
+                                                            asset={linePersonalization.frontAsset}
+                                                            fileName={linePersonalization.frontSnapshotFileName}
+                                                            label="Archivo frente"
+                                                        />
+                                                    )}
+                                                    {linePersonalization?.backAsset && (
+                                                        <PersonalizationAssetPreview
+                                                            asset={linePersonalization.backAsset}
+                                                            fileName={linePersonalization.backSnapshotFileName}
+                                                            label="Archivo dorso"
+                                                        />
+                                                    )}
+                                                </Stack>
+                                            );
+                                        })}
                                     </Stack>
 
                                     <Divider />

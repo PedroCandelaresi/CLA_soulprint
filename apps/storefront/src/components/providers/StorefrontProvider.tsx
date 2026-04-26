@@ -545,11 +545,12 @@ export function StorefrontProvider({ children, initialState }: StorefrontProvide
 
                 if (isActiveOrder(result)) {
                     setActiveOrder(result);
-                    return { success: true, message: successMessage };
+                    return { success: true, message: successMessage, order: result };
                 }
 
                 if (isNonNullableOrderResult(result) && result.order && isActiveOrder(result.order)) {
                     setActiveOrder(result.order);
+                    return { success: true, message: successMessage, order: result.order };
                 }
 
                 if (isErrorResultLike(result) && result.errorCode) {

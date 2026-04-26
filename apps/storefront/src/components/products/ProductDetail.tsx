@@ -21,6 +21,7 @@ import {
 } from './productVariantSelection';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
 import { resolveBadges } from '@/lib/badges/resolveBadges';
+import { uploadPersonalizationFile } from '@/lib/personalization/client';
 import TooltipButton from '@/components/ui/TooltipButton';
 import TooltipIconButton from '@/components/ui/TooltipIconButton';
 import PersonalizationForm, {
@@ -28,6 +29,7 @@ import PersonalizationForm, {
     validatePersonalization,
     type PersonalizationValues,
 } from '@/components/checkout/PersonalizationForm';
+import type { ActiveOrder, ActiveOrderLine } from '@/types/storefront';
 
 interface ProductDetailProps {
     product: Product;
@@ -65,6 +67,7 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
     const [quantity, setQuantity] = useState(1);
     const [feedback, setFeedback] = useState<{ severity: 'success' | 'error'; message: string } | null>(null);
     const [personalization, setPersonalization] = useState<PersonalizationValues>(defaultPersonalizationValues);
+    const [uploadingPersonalization, setUploadingPersonalization] = useState(false);
     const optionGroups = product.optionGroups ?? [];
     const hasOptionGroups = optionGroups.length > 0;
     const hasMultipleVariants = product.variants.length > 1;
@@ -224,6 +227,7 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
     const stockChip = getStockChip(selectedVariant?.stockLevel);
     const isOutOfStock = selectedVariant?.stockLevel === 'OUT_OF_STOCK';
     const canAddToCart = Boolean(selectedVariant?.id) && !isOutOfStock;
+    const addToCartBusy = cartLoading || uploadingPersonalization;
     const description = (product.description || '')
         .replace(/<[^>]+>/g, ' ')
         .replace(/\s+/g, ' ')
@@ -272,6 +276,51 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
         setFeedback(null);
     };
 
+    const findPersonalizationLine = (order: ActiveOrder | null | undefined): ActiveOrderLine | null => {
+        if (!order || !selectedVariant?.id) {
+            return null;
+        }
+
+        const matchingLines = order.lines.filter((line) => {
+            const customFields = line.customFields;
+            if (!customFields) {
+                return false;
+            }
+
+            return (
+                line.productVariant.id === selectedVariant.id &&
+                customFields.frontMode === personalization.frontMode &&
+                (customFields.frontText ?? null) ===
+                    (personalization.frontMode === 'text' ? personalization.frontText.trim() : null) &&
+                customFields.backMode === personalization.backMode &&
+                (customFields.backText ?? null) ===
+                    (personalization.backMode === 'text' ? personalization.backText.trim() : null)
+            );
+        });
+
+        return matchingLines[matchingLines.length - 1] ?? null;
+    };
+
+    const uploadSelectedFiles = async (order: ActiveOrder, line: ActiveOrderLine) => {
+        if (personalization.frontMode === 'image' && personalization.frontFile) {
+            await uploadPersonalizationFile({
+                orderCode: order.code,
+                orderLineId: line.id,
+                side: 'front',
+                file: personalization.frontFile,
+            });
+        }
+
+        if (personalization.backMode === 'image' && personalization.backFile) {
+            await uploadPersonalizationFile({
+                orderCode: order.code,
+                orderLineId: line.id,
+                side: 'back',
+                file: personalization.backFile,
+            });
+        }
+    };
+
     const handleAddToCart = async () => {
         if (!selectedVariant?.id) {
             setFeedback({
@@ -300,14 +349,45 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
         };
 
         const result = await addItemToOrder(selectedVariant.id, quantity, customFields);
-        setFeedback({
-            severity: result.success ? 'success' : 'error',
-            message:
-                result.message ||
-                (result.success ? 'Producto agregado al carrito.' : 'No se pudo agregar el producto al carrito.'),
-        });
-        if (result.success) {
+        if (!result.success) {
+            setFeedback({
+                severity: 'error',
+                message: result.message || 'No se pudo agregar el producto al carrito.',
+            });
+            return;
+        }
+
+        const line = findPersonalizationLine(result.order);
+        if (!result.order || !line) {
+            setFeedback({
+                severity: 'error',
+                message: 'Producto agregado, pero no pudimos identificar la línea para subir el archivo.',
+            });
+            return;
+        }
+
+        setUploadingPersonalization(true);
+        try {
+            const hasImageUpload =
+                personalization.frontMode === 'image' || personalization.backMode === 'image';
+            await uploadSelectedFiles(result.order, line);
+            setFeedback({
+                severity: 'success',
+                message: hasImageUpload
+                    ? 'Producto agregado al carrito y archivo recibido correctamente.'
+                    : 'Producto agregado al carrito con la personalización indicada.',
+            });
             setPersonalization(defaultPersonalizationValues());
+        } catch (error) {
+            setFeedback({
+                severity: 'error',
+                message:
+                    error instanceof Error && error.message
+                        ? `Producto agregado, pero no pudimos subir el archivo: ${error.message}`
+                        : 'Producto agregado, pero no pudimos subir el archivo.',
+            });
+        } finally {
+            setUploadingPersonalization(false);
         }
     };
 
@@ -495,7 +575,7 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
                                     <PersonalizationForm
                                         values={personalization}
                                         onChange={setPersonalization}
-                                        disabled={cartLoading || !canAddToCart}
+                                        disabled={addToCartBusy || !canAddToCart}
                                     />
                                 </>
                             ) : (
@@ -546,7 +626,7 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
                                 <TooltipIconButton
                                     aria-label="Restar cantidad"
                                     onClick={() => setQuantity((previous) => Math.max(1, previous - 1))}
-                                    disabled={cartLoading || quantity <= 1 || !canAddToCart}
+                                    disabled={addToCartBusy || quantity <= 1 || !canAddToCart}
                                     tooltip="Disminuir cantidad"
                                 >
                                     <RemoveRoundedIcon />
@@ -557,7 +637,7 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
                                 <TooltipIconButton
                                     aria-label="Sumar cantidad"
                                     onClick={() => setQuantity((previous) => previous + 1)}
-                                    disabled={cartLoading || !canAddToCart}
+                                    disabled={addToCartBusy || !canAddToCart}
                                     tooltip="Aumentar cantidad"
                                 >
                                     <AddRoundedIcon />
@@ -569,7 +649,7 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
                                 size="large"
                                 startIcon={<ShoppingBagOutlinedIcon />}
                                 onClick={handleAddToCart}
-                                disabled={!canAddToCart || cartLoading}
+                                disabled={!canAddToCart || addToCartBusy}
                                 tooltip={
                                     !selectedVariant
                                         ? 'Elegí una combinación válida antes de agregar'
@@ -579,19 +659,17 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
                                 }
                                 sx={{ alignSelf: 'flex-start' }}
                             >
-                                {!selectedVariant
-                                    ? 'Seleccioná una combinación válida'
-                                    : isOutOfStock
+                                {uploadingPersonalization
+                                    ? 'Subiendo archivo...'
+                                    : !selectedVariant
+                                      ? 'Seleccioná una combinación válida'
+                                      : isOutOfStock
                                         ? 'Sin stock'
                                         : 'Agregar al carrito'}
                             </TooltipButton>
 
                             {feedback && <Alert severity={feedback.severity}>{feedback.message}</Alert>}
 
-                            <Typography variant="body2" color="text.secondary">
-                                El carrito opera siempre con la variante seleccionada. Si iniciás sesión, tu pedido puede
-                                mantenerse asociado a tu cuenta.
-                            </Typography>
                         </Stack>
                     </Stack>
                 </Grid>

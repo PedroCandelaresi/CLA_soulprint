@@ -20,6 +20,7 @@ import type {
     PersonalizationLineStatus,
     PersonalizationOrderData,
 } from '@/lib/personalization/types';
+import PersonalizationAssetPreview from './PersonalizationAssetPreview';
 
 type Side = 'front' | 'back';
 
@@ -87,9 +88,11 @@ function UploadSlot({
                 </Stack>
 
                 {existingAsset && (
-                    <Typography variant="caption" color="success.dark">
-                        Archivo: {existingFileName ?? 'imagen recibida'}. Podés reemplazarlo si es necesario.
-                    </Typography>
+                    <PersonalizationAssetPreview
+                        asset={existingAsset}
+                        fileName={existingFileName}
+                        label={`Vista previa ${label.toLowerCase()}`}
+                    />
                 )}
 
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>

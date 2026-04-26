@@ -137,6 +137,7 @@ export interface OperationResult {
     success: boolean;
     message?: string;
     errorCode?: string;
+    order?: ActiveOrder | null;
 }
 
 export interface StorefrontCountry {

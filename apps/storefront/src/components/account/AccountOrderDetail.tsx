@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     Box,
     Button,
@@ -13,6 +13,9 @@ import {
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import type { CustomerOrderDetail as CustomerOrderDetailType } from '@/types/storefront';
+import PersonalizationAssetPreview from '@/components/checkout/PersonalizationAssetPreview';
+import { fetchPersonalizationOrder } from '@/lib/personalization/client';
+import type { PersonalizationLineData, PersonalizationOrderData } from '@/lib/personalization/types';
 import { useCustomerAccount } from './CustomerAccountProvider';
 import {
     AccountEmptyState,
@@ -114,10 +117,39 @@ export default function AccountOrderDetail({ code }: { code: string }) {
     const { loadOrderDetail, orderDetailLoading, orderDetails } = useCustomerAccount();
     const order = orderDetails[code];
     const loading = orderDetailLoading[code];
+    const [personalization, setPersonalization] = useState<PersonalizationOrderData | null>(null);
 
     useEffect(() => {
         void loadOrderDetail(code);
     }, [code, loadOrderDetail]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadPersonalization() {
+            try {
+                const data = await fetchPersonalizationOrder(code);
+                if (!cancelled) {
+                    setPersonalization(data);
+                }
+            } catch {
+                if (!cancelled) {
+                    setPersonalization(null);
+                }
+            }
+        }
+
+        void loadPersonalization();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [code]);
+
+    const personalizationByLineId = useMemo(() => {
+        const entries = personalization?.lines.map((line) => [line.orderLineId, line] as const) ?? [];
+        return new Map<string, PersonalizationLineData>(entries);
+    }, [personalization?.lines]);
 
     if (loading && !order) {
         return (
@@ -239,6 +271,7 @@ export default function AccountOrderDetail({ code }: { code: string }) {
                         <Stack spacing={0}>
                             {order.lines.map((line, index) => {
                                 const image = line.featuredAsset?.preview || '/images/products/placeholder.png';
+                                const linePersonalization = personalizationByLineId.get(line.id);
 
                                 return (
                                     <Box key={line.id}>
@@ -290,6 +323,34 @@ export default function AccountOrderDetail({ code }: { code: string }) {
                                                         order.currencyCode,
                                                     )}
                                                 </Typography>
+                                                {linePersonalization && (
+                                                    <Stack spacing={1} mt={1}>
+                                                        {linePersonalization.frontMode === 'text' && linePersonalization.frontText && (
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Frente: &ldquo;{linePersonalization.frontText}&rdquo;
+                                                            </Typography>
+                                                        )}
+                                                        {linePersonalization.frontAsset && (
+                                                            <PersonalizationAssetPreview
+                                                                asset={linePersonalization.frontAsset}
+                                                                fileName={linePersonalization.frontSnapshotFileName}
+                                                                label="Archivo frente"
+                                                            />
+                                                        )}
+                                                        {linePersonalization.backMode === 'text' && linePersonalization.backText && (
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Dorso: &ldquo;{linePersonalization.backText}&rdquo;
+                                                            </Typography>
+                                                        )}
+                                                        {linePersonalization.backAsset && (
+                                                            <PersonalizationAssetPreview
+                                                                asset={linePersonalization.backAsset}
+                                                                fileName={linePersonalization.backSnapshotFileName}
+                                                                label="Archivo dorso"
+                                                            />
+                                                        )}
+                                                    </Stack>
+                                                )}
                                             </Stack>
 
                                             <Typography variant="h6" fontWeight={700}>
