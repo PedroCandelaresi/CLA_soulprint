@@ -368,12 +368,13 @@ export class PersonalizationService {
             ? await this.pspResolver.findTransactionById(access.transactionId)
             : null;
         const customerOwns = this.isOwnedByCustomer(order, access.customerUserId);
+        const isActiveCheckout = ['AddingItems', 'ArrangingPayment'].includes(order.state);
 
         if (transaction && transaction.vendureOrderCode !== order.code) {
             throw new Error('La transacción no corresponde a la orden indicada.');
         }
 
-        if (!hasValidToken && !transaction && !customerOwns) {
+        if (!hasValidToken && !transaction && !customerOwns && !isActiveCheckout) {
             throw new Error('No autorizado para consultar esta orden.');
         }
 
