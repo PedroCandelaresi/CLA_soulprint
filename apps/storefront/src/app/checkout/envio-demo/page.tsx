@@ -7,7 +7,6 @@ import Link from 'next/link';
 import {
     Alert,
     Button,
-    Chip,
     CircularProgress,
     Container,
     Divider,
@@ -44,7 +43,7 @@ export default function DemoShippingGatewayPage() {
                     <Stack alignItems="center" py={10} spacing={2}>
                         <CircularProgress />
                         <Typography color="text.secondary">
-                            Conectando con el operador logístico demo...
+                            Confirmando el método de envío...
                         </Typography>
                     </Stack>
                 </Container>
@@ -73,7 +72,7 @@ function DemoShippingGatewayPageContent() {
         if (!activeOrder || activeOrder.lines.length === 0) {
             setFeedback({
                 severity: 'error',
-                message: 'No encontramos un pedido activo para cotizar el envío demo.',
+                message: 'No encontramos un pedido activo para cotizar el envío.',
             });
             setLoading(false);
             return;
@@ -112,10 +111,10 @@ function DemoShippingGatewayPageContent() {
                 }
             } catch (error) {
                 if (!cancelled) {
-                    const result = getOperationResultMessage(error, 'No se pudo cotizar el envío demo.');
+                    const result = getOperationResultMessage(error, 'No se pudo cotizar el envío.');
                     setFeedback({
                         severity: 'error',
-                        message: result.message || 'No se pudo cotizar el envío demo.',
+                        message: result.message || 'No se pudo cotizar el envío.',
                     });
                 }
             } finally {
@@ -160,7 +159,7 @@ function DemoShippingGatewayPageContent() {
             <Container maxWidth="md" sx={{ py: { xs: 4, md: 6 } }}>
                 <Stack alignItems="center" py={10} spacing={2}>
                     <CircularProgress />
-                    <Typography color="text.secondary">Conectando con el operador logístico demo...</Typography>
+                    <Typography color="text.secondary">Confirmando el método de envío...</Typography>
                 </Stack>
             </Container>
         );
@@ -191,24 +190,15 @@ function DemoShippingGatewayPageContent() {
                         >
                             <Stack spacing={1}>
                                 <Typography variant="overline" sx={{ letterSpacing: 2.5, opacity: 0.9 }}>
-                                    Operador Logístico Demo
+                                    Envío
                                 </Typography>
                                 <Typography variant="h3" fontWeight={700}>
-                                    Confirmación de Envío
+                                    Confirmación de envío
                                 </Typography>
                                 <Typography sx={{ opacity: 0.82, maxWidth: 680 }}>
-                                    Esta pantalla simula la validación externa del envío. Al aprobarla, el cargo se
-                                    aplica al pedido real en Vendure y pasa al paso de pago.
+                                    Revisá el servicio seleccionado y confirmá el envío para continuar con el pago.
                                 </Typography>
                             </Stack>
-                            <Chip
-                                label="Sandbox"
-                                sx={{
-                                    bgcolor: 'rgba(255,255,255,0.12)',
-                                    color: 'common.white',
-                                    fontWeight: 700,
-                                }}
-                            />
                         </Stack>
                     </Stack>
                 </Paper>
@@ -253,10 +243,10 @@ function DemoShippingGatewayPageContent() {
                                         Servicio seleccionado
                                     </Typography>
                                     <Typography variant="h6" fontWeight={700}>
-                                        {shippingMethod?.name || 'Envío demo'}
+                                        {shippingMethod?.name || 'Envío'}
                                     </Typography>
                                     <Typography color="text.secondary">
-                                        {shippingMethod?.description || 'Entrega simulada para la demo comercial.'}
+                                        {shippingMethod?.description || 'Entrega a coordinar según tu dirección.'}
                                     </Typography>
                                     <Typography color="text.secondary">
                                         {getDemoShippingEta(shippingAddress?.province)}
@@ -264,8 +254,7 @@ function DemoShippingGatewayPageContent() {
                                 </Stack>
                             </Paper>
                             <Alert severity="info">
-                                Al confirmar, la tarifa demo se suma al pedido y el cliente continúa a la pasarela de
-                                pago real de Mercado Pago.
+                                Al confirmar, la tarifa de envío se suma al pedido y vas a continuar al pago.
                             </Alert>
                         </Stack>
                     </Paper>
@@ -298,10 +287,10 @@ function DemoShippingGatewayPageContent() {
                                 size="large"
                                 disabled={!shippingMethod || !activeOrder}
                             >
-                                Aprobar envío demo
+                                Confirmar envío
                             </Button>
                             <Button component={Link} href={cancelUrl} variant="outlined" color="inherit">
-                                Cancelar simulación
+                                Elegir otro envío
                             </Button>
                             <Button component={Link} href={returnTo} variant="text" color="inherit">
                                 Volver al checkout

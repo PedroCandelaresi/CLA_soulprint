@@ -15,9 +15,13 @@ export const metadata = {
 export default async function ProductosPage({
     searchParams,
 }: {
-    searchParams: { [key: string]: string | string[] | undefined };
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    const collectionSlug = typeof searchParams.collection === 'string' ? searchParams.collection : undefined;
+    const resolvedSearchParams = await searchParams;
+    const collectionSlug =
+        typeof resolvedSearchParams.collection === 'string'
+            ? resolvedSearchParams.collection
+            : undefined;
 
     // Fetch Collections
     let collections: CollectionItem[] = [];

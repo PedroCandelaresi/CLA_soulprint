@@ -261,9 +261,6 @@ export default function CarritoPage() {
                                             {formatCurrency(activeOrder?.totalWithTax ?? 0, currencyCode)}
                                         </Typography>
                                     </Stack>
-                                    <Alert severity="info">
-                                        El checkout demo ya permite completar el pedido con envío y pago simulados.
-                                    </Alert>
                                     <TooltipButton
                                         href={customer ? '/checkout' : CHECKOUT_LOGIN_HREF}
                                         variant="contained"

@@ -139,6 +139,7 @@ export class PersonalizationService {
                 {
                     customFields: {
                         personalizationStatus: 'uploaded' as PersonalizationLineStatus,
+                        personalizationAssetId: assetResult.id,
                         personalizationAsset: { id: assetResult.id } as any,
                         personalizationNotes: sanitizeNotes(input.notes) ?? null,
                         personalizationUploadedAt: new Date(),
@@ -157,6 +158,7 @@ export class PersonalizationService {
                 {
                     customFields: {
                         personalizationBackStatus: 'uploaded' as PersonalizationLineStatus,
+                        personalizationBackAssetId: assetResult.id,
                         personalizationBackAsset: { id: assetResult.id } as any,
                         personalizationBackUploadedAt: new Date(),
                         personalizationBackSnapshotFileName: input.file.originalname,

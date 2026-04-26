@@ -16,12 +16,22 @@ export const ORDER_PERSONALIZATION_QUERY = gql`
                     customFields { requiresPersonalization }
                 }
                 customFields {
+                    frontMode
+                    frontText
+                    backMode
+                    backText
                     personalizationStatus
                     personalizationNotes
                     personalizationUploadedAt
                     personalizationApprovedAt
                     personalizationSnapshotFileName
                     personalizationAsset {
+                        id preview source mimeType fileSize
+                    }
+                    personalizationBackStatus
+                    personalizationBackUploadedAt
+                    personalizationBackSnapshotFileName
+                    personalizationBackAsset {
                         id preview source mimeType fileSize
                     }
                 }

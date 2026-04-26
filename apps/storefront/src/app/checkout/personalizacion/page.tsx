@@ -117,9 +117,9 @@ function CheckoutPersonalizationContent() {
             } catch (error) {
                 const result = getOperationResultMessage(
                     error,
-                    'No pudimos consultar el pedido en Vendure.',
+                    'No pudimos consultar el pedido.',
                 );
-                setOrderError(result.message || 'No pudimos consultar el pedido en Vendure.');
+                setOrderError(result.message || 'No pudimos consultar el pedido.');
             } finally {
                 setLoadingOrder(false);
             }
@@ -193,7 +193,7 @@ function CheckoutPersonalizationContent() {
 
                 {paymentMethod === 'transferencia-bancaria' && (
                     <Alert severity="info">
-                        Si elegiste transferencia, podés cargar la foto ahora. La acreditación se revisa después desde Vendure.
+                        Si elegiste transferencia, podés cargar la foto ahora. La acreditación se revisa después.
                     </Alert>
                 )}
 
@@ -253,7 +253,7 @@ function CheckoutPersonalizationContent() {
                                 Próximo paso
                             </Typography>
                             <Typography color="text.secondary">
-                                Cuando el archivo quede cargado, lo vas a ver asociado al pedido en el panel de Vendure.
+                                Cuando el archivo quede cargado, lo vas a ver asociado a tu pedido.
                             </Typography>
                             {orderCode && personalization?.overallPersonalizationStatus === 'complete' && (
                                 <Button
@@ -278,4 +278,3 @@ function CheckoutPersonalizationContent() {
         </Container>
     );
 }
-

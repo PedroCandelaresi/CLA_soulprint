@@ -50,48 +50,77 @@ import {
                         </span>
                     </div>
 
-                    <div class="cla-line-grid">
-                        <div class="cla-preview" *ngIf="line.personalizationAssetPreview; else noPreview">
-                            <img
-                                [src]="line.personalizationAssetPreview"
-                                [alt]="line.personalizationSnapshotFileName || line.productName"
-                                class="cla-preview__image">
-                        </div>
-                        <ng-template #noPreview>
-                            <div class="cla-preview cla-preview--empty">
-                                <span *ngIf="line.personalizationAssetSource; else noAssetText">Hay archivo, pero sin miniatura</span>
-                                <ng-template #noAssetText>El cliente todavía no cargó un archivo para esta línea.</ng-template>
+                    <div class="cla-side-list">
+                        <div class="cla-side-card" *ngFor="let side of line.sides">
+                            <div class="cla-side-card__header">
+                                <strong>{{ side.label }}</strong>
+                                <span class="cla-side-mode">{{ side.mode === 'text' ? 'Frase' : (side.mode === 'image' ? 'Archivo' : 'Sin dorso') }}</span>
                             </div>
-                        </ng-template>
 
-                        <div class="cla-line-meta">
-                            <div class="cla-detail-row">
-                                <span>Archivo</span>
-                                <strong>{{ line.personalizationSnapshotFileName || 'Sin archivo todavía' }}</strong>
+                            <div class="cla-side-grid" *ngIf="side.mode === 'image'; else textPersonalization">
+                                <div class="cla-preview" *ngIf="side.assetPreview; else noPreview">
+                                    <a
+                                        [href]="side.assetSource || side.assetPreview"
+                                        target="_blank"
+                                        rel="noreferrer noopener"
+                                        data-cla-tip="Abrir el archivo del cliente en una pestaña nueva."
+                                    >
+                                        <img
+                                            [src]="side.assetPreview"
+                                            [alt]="side.snapshotFileName || line.productName"
+                                            class="cla-preview__image">
+                                    </a>
+                                </div>
+                                <ng-template #noPreview>
+                                    <div class="cla-preview cla-preview--empty">
+                                        <span *ngIf="side.assetSource; else noAssetText">Hay archivo, pero sin miniatura</span>
+                                        <ng-template #noAssetText>El cliente todavía no cargó un archivo para {{ side.label | lowercase }}.</ng-template>
+                                    </div>
+                                </ng-template>
+
+                                <div class="cla-line-meta">
+                                    <div class="cla-detail-row">
+                                        <span>Archivo</span>
+                                        <strong>{{ side.snapshotFileName || 'Sin archivo todavía' }}</strong>
+                                    </div>
+                                    <div class="cla-detail-row" *ngIf="side.uploadedAt">
+                                        <span>Subido el</span>
+                                        <strong>{{ side.uploadedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+                                    </div>
+                                    <div class="cla-detail-row" *ngIf="side.assetMimeType">
+                                        <span>Tipo</span>
+                                        <strong>{{ side.assetMimeType }}</strong>
+                                    </div>
+                                    <div class="cla-link-row" *ngIf="side.assetSource">
+                                        <a
+                                            [href]="side.assetSource"
+                                            target="_blank"
+                                            rel="noreferrer noopener"
+                                            data-cla-tip="Abrir el archivo del cliente en una pestaña nueva."
+                                        >
+                                            Abrir archivo completo
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="cla-detail-row" *ngIf="line.personalizationUploadedAt">
-                                <span>Subido el</span>
-                                <strong>{{ line.personalizationUploadedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
-                            </div>
-                            <div class="cla-detail-row" *ngIf="line.personalizationApprovedAt">
-                                <span>Aprobado el</span>
-                                <strong>{{ line.personalizationApprovedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
-                            </div>
-                            <div class="cla-notes" *ngIf="line.personalizationNotes">
-                                <span class="cla-notes__label">Indicaciones del cliente</span>
-                                <p>{{ line.personalizationNotes }}</p>
-                            </div>
-                            <div class="cla-link-row" *ngIf="line.personalizationAssetSource">
-                                <a
-                                    [href]="line.personalizationAssetSource"
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                    data-cla-tip="Abrir el archivo del cliente en una pestaña nueva."
-                                >
-                                    Abrir archivo completo
-                                </a>
-                            </div>
+
+                            <ng-template #textPersonalization>
+                                <div class="cla-text-box" *ngIf="side.text; else noText">
+                                    <span class="cla-notes__label">Frase del cliente</span>
+                                    <p>{{ side.text }}</p>
+                                </div>
+                                <ng-template #noText>
+                                    <div class="cla-preview cla-preview--empty">
+                                        El cliente todavía no cargó una frase para {{ side.label | lowercase }}.
+                                    </div>
+                                </ng-template>
+                            </ng-template>
                         </div>
+                    </div>
+
+                    <div class="cla-notes" *ngIf="line.personalizationNotes">
+                        <span class="cla-notes__label">Indicaciones del cliente</span>
+                        <p>{{ line.personalizationNotes }}</p>
                     </div>
                 </article>
             </div>
@@ -118,8 +147,13 @@ import {
         .cla-line-card__header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
         .cla-line-card__header h4 { margin: 0; font-size: 17px; color: var(--cla-green-dk); }
         .cla-line-card__header p { margin: 4px 0 0; color: var(--cla-muted); font-size: 13px; }
-        .cla-line-grid { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; }
+        .cla-side-list { display: grid; gap: 14px; }
+        .cla-side-card { display: grid; gap: 12px; padding: 14px; border-radius: 16px; background: rgba(249, 245, 237, 0.58); border: 1px solid var(--cla-border); }
+        .cla-side-card__header { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--cla-green-dk); }
+        .cla-side-mode { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; background: rgba(0, 72, 37, 0.08); color: var(--cla-ink-soft); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+        .cla-side-grid { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; }
         .cla-preview { display: flex; align-items: center; justify-content: center; min-height: 220px; border-radius: 18px; background: linear-gradient(180deg, rgba(249, 245, 237, 0.92), rgba(255, 255, 255, 0.98)); border: 1px dashed rgba(0, 72, 37, 0.16); color: var(--cla-ink-soft); text-align: center; padding: 16px; }
+        .cla-preview a { display: block; width: 100%; }
         .cla-preview--empty { font-size: 14px; line-height: 1.5; }
         .cla-preview__image { width: 100%; height: 220px; object-fit: cover; border-radius: 14px; border: 1px solid var(--cla-border); box-shadow: 0 10px 22px rgba(2, 44, 24, 0.08); }
         .cla-line-meta { display: grid; gap: 10px; }
@@ -128,11 +162,13 @@ import {
         .cla-notes { padding: 12px 14px; border-radius: 14px; background: rgba(199, 164, 107, 0.12); border: 1px solid rgba(199, 164, 107, 0.18); }
         .cla-notes__label { display: block; margin-bottom: 4px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--cla-muted); }
         .cla-notes p { margin: 0; line-height: 1.5; color: var(--cla-ink-soft); }
+        .cla-text-box { padding: 14px 16px; border-radius: 14px; background: rgba(255, 255, 255, 0.84); border: 1px solid var(--cla-border); }
+        .cla-text-box p { margin: 0; white-space: pre-wrap; line-height: 1.55; color: var(--cla-green-dk); font-weight: 600; }
         .cla-link-row a { color: var(--cla-green); font-weight: 700; text-decoration: none; }
         .cla-link-row a:hover { color: var(--cla-green-lt); text-decoration: underline; }
         @media (max-width: 840px) {
             .cla-panel__header, .cla-line-card__header { flex-direction: column; }
-            .cla-line-grid { grid-template-columns: 1fr; }
+            .cla-side-grid { grid-template-columns: 1fr; }
         }
     `],
 })

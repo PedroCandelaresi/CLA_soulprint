@@ -229,7 +229,7 @@ function getStatusCopy(status: ReturnStatus): {
         return {
             title: 'Verificando pago',
             severity: 'info',
-            description: 'Todavía estamos esperando que Vendure confirme el estado final con la información real del backend.',
+            description: 'Todavía estamos esperando la confirmación final del pago.',
         };
     }
 
@@ -237,7 +237,7 @@ function getStatusCopy(status: ReturnStatus): {
         return {
             title: 'No pudimos identificar el pedido',
             severity: 'warning',
-            description: 'Necesitamos el código real de la orden para consultar el estado en Vendure.',
+            description: 'Necesitamos identificar el pedido para consultar su estado.',
         };
     }
 
@@ -245,14 +245,14 @@ function getStatusCopy(status: ReturnStatus): {
         return {
             title: 'No pudimos confirmar el estado final',
             severity: 'error',
-            description: 'La URL de retorno no alcanza para validar el pago. Usá la consulta real del pedido o generá un nuevo intento si el link anterior falló.',
+            description: 'No pudimos validar el pago. Podés volver al checkout o generar un nuevo intento.',
         };
     }
 
     return {
         title: 'Consultando pedido',
         severity: 'info',
-        description: 'Estamos leyendo el estado real de la orden desde Vendure.',
+        description: 'Estamos consultando el estado actualizado del pedido.',
     };
 }
 
@@ -412,14 +412,14 @@ function CheckoutReturnPageContent() {
             } catch (error) {
                 const result = getOperationResultMessage(
                     error,
-                    'No pudimos consultar el estado del pedido en Vendure.',
+                    'No pudimos consultar el estado del pedido.',
                 );
 
                 applyStatus('error');
                 setFeedback({
                     severity: 'error',
                     message:
-                        result.message || 'No pudimos consultar el estado del pedido en Vendure.',
+                        result.message || 'No pudimos consultar el estado del pedido.',
                 });
                 return false;
             } finally {
@@ -484,7 +484,7 @@ function CheckoutReturnPageContent() {
                 setPersonalizationLoadedForOrderCode(orderCode);
                 setFeedback({
                     severity: 'success',
-                    message: 'Archivo recibido. Ya quedó asociado al pedido en Vendure.',
+                    message: 'Archivo recibido. Ya quedó asociado al pedido.',
                 });
             } catch (error) {
                 const message =
@@ -542,7 +542,7 @@ function CheckoutReturnPageContent() {
                     setFeedback({
                         severity: 'warning',
                         message:
-                            'Generamos un nuevo intento, pero Vendure no devolvió una URL válida de Checkout Pro. Reconsultá el pedido antes de seguir.',
+                            'Generamos un nuevo intento, pero no recibimos un enlace de pago válido. Reintentá en unos instantes.',
                     });
                     return;
                 }
@@ -699,7 +699,7 @@ function CheckoutReturnPageContent() {
                         Retorno de pago
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                        Esta pantalla usa la URL solo como pista. La decisión final sale del estado real que Vendure registra para la orden.
+                        Estamos confirmando el estado de tu pago y del pedido.
                     </Typography>
                 </Stack>
 
@@ -734,14 +734,14 @@ function CheckoutReturnPageContent() {
                                     <Typography color="text.secondary">
                                         {retrying
                                             ? 'Generando un nuevo intento de pago...'
-                                            : 'Consultando estado actualizado en Vendure...'}
+                                            : 'Consultando estado actualizado...'}
                                     </Typography>
                                 </Stack>
                             )}
 
                             {!orderCode && (
                                 <Alert severity="warning">
-                                    No llegó `external_reference` y tampoco encontramos una orden previa guardada en la sesión del navegador.
+                                    No pudimos identificar el pedido. Volvé al checkout para retomar la compra.
                                 </Alert>
                             )}
 
@@ -821,7 +821,7 @@ function CheckoutReturnPageContent() {
                                     )}
                                     {paymentMetadata?.lastDecision && (
                                         <Typography color="text.secondary">
-                                            Última validación backend: {paymentMetadata.lastDecision}
+                                            Última validación: {paymentMetadata.lastDecision}
                                         </Typography>
                                     )}
                                 </Stack>
@@ -838,22 +838,13 @@ function CheckoutReturnPageContent() {
                     <Paper variant="outlined" sx={{ width: '100%', maxWidth: 380, p: 3, borderRadius: 3 }}>
                         <Stack spacing={2}>
                             <Typography variant="h5" fontWeight={700}>
-                                Referencias
+                                Acciones
                             </Typography>
                             <Divider />
-                            <Typography color="text.secondary">
-                                result: {hints.result || 'sin dato'}
-                            </Typography>
-                            <Typography color="text.secondary">
-                                payment_id: {hints.paymentId || 'sin dato'}
-                            </Typography>
-                            <Typography color="text.secondary">
-                                external_reference: {hints.externalReference || 'sin dato'}
-                            </Typography>
 
                             {forceRetryAvailable && (
                                 <Alert severity="warning">
-                                    El intento actual sigue en verificación local. Si el link anterior venció o quedó inválido, podemos generar una preferencia nueva sin reciclar la URL previa.
+                                    El pago sigue en verificación. Si el enlace anterior venció o quedó inválido, podés generar un nuevo intento.
                                 </Alert>
                             )}
 
