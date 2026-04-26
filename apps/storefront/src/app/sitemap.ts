@@ -1,6 +1,22 @@
 import type { MetadataRoute } from 'next';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
+const PRODUCTS_PAGE_SIZE = 100;
+const MAX_PRODUCTS_FOR_SITEMAP = 5000;
+const MAX_SITEMAP_PRODUCT_PAGES = Math.ceil(MAX_PRODUCTS_FOR_SITEMAP / PRODUCTS_PAGE_SIZE);
+const PRODUCTS_SITEMAP_QUERY = `
+  query SitemapProducts($take: Int!, $skip: Int!) {
+    products(options: { take: $take, skip: $skip }) {
+      totalItems
+      items {
+        id
+        name
+        slug
+      }
+    }
+  }
+`;
 
 type VendureProduct = {
     id: string;
@@ -11,6 +27,7 @@ type VendureProduct = {
 type VendureProductsResponse = {
     data?: {
         products?: {
+            totalItems?: number;
             items?: VendureProduct[];
         };
     };
@@ -26,48 +43,68 @@ function getSiteUrl(): string {
 }
 
 async function getSitemapProducts(): Promise<VendureProduct[]> {
-    const apiUrl = process.env.VENDURE_INTERNAL_API_URL;
+    const apiUrl = process.env.VENDURE_INTERNAL_API_URL?.trim();
 
     if (!apiUrl) {
         console.warn('[sitemap] VENDURE_INTERNAL_API_URL is not configured');
         return [];
     }
 
+    const products: VendureProduct[] = [];
+    let totalItems: number | null = null;
+    let fetchedItems = 0;
+    let skip = 0;
+
     try {
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json',
-            },
-            cache: 'no-store',
-            body: JSON.stringify({
-                query: `
-          query SitemapProducts {
-            products(options: { take: 200 }) {
-              items {
-                id
-                name
-                slug
-              }
+        for (let page = 0; page < MAX_SITEMAP_PRODUCT_PAGES; page += 1) {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                },
+                next: { revalidate },
+                body: JSON.stringify({
+                    query: PRODUCTS_SITEMAP_QUERY,
+                    variables: {
+                        take: PRODUCTS_PAGE_SIZE,
+                        skip,
+                    },
+                }),
+            });
+
+            if (!response.ok) {
+                console.warn('[sitemap] Vendure request failed:', response.status);
+                return [];
             }
-          }
-        `,
-            }),
-        });
 
-        if (!response.ok) {
-            console.warn('[sitemap] Vendure request failed:', response.status);
-            return [];
+            const json = (await response.json()) as VendureProductsResponse;
+
+            if (json.errors) {
+                console.warn('[sitemap] Vendure GraphQL errors:', JSON.stringify(json.errors));
+                return [];
+            }
+
+            const pageProducts = json.data?.products?.items ?? [];
+            totalItems = json.data?.products?.totalItems ?? totalItems;
+
+            if (pageProducts.length === 0) {
+                break;
+            }
+
+            fetchedItems += pageProducts.length;
+            products.push(...pageProducts.filter((product) => Boolean(product.slug)));
+            skip += PRODUCTS_PAGE_SIZE;
+
+            if (totalItems != null && skip >= totalItems) {
+                break;
+            }
         }
 
-        const json = (await response.json()) as VendureProductsResponse;
-
-        if (json.errors) {
-            console.warn('[sitemap] Vendure GraphQL errors:', JSON.stringify(json.errors));
-            return [];
+        if (totalItems != null && fetchedItems < totalItems && skip >= MAX_PRODUCTS_FOR_SITEMAP) {
+            console.warn(`[sitemap] Product sitemap reached safety limit of ${MAX_PRODUCTS_FOR_SITEMAP} products`);
         }
 
-        return json.data?.products?.items?.filter((product) => Boolean(product.slug)) ?? [];
+        return products;
     } catch (error) {
         console.warn('[sitemap] Could not fetch products:', error);
         return [];
@@ -120,5 +157,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
     }));
 
-    return [...staticRoutes, ...productRoutes];
+    return [...new Map([...staticRoutes, ...productRoutes].map((route) => [route.url, route])).values()];
 }
