@@ -2,8 +2,11 @@ const DEFAULT_SITE_URL = 'http://localhost:3000';
 const DEFAULT_STORE_NAME = 'CLA Soulprint';
 const DEFAULT_STORE_LOGO = '/images/logos/CLA.svg';
 
-type JsonLdValue = string | number | boolean | JsonLdObject | JsonLdValue[];
-type JsonLdObject = Record<string, JsonLdValue | null | undefined>;
+type JsonLdPrimitive = string | number | boolean;
+interface JsonLdObject {
+    [key: string]: JsonLdPrimitive | JsonLdObject | JsonLdArray | null | undefined;
+}
+type JsonLdArray = Array<JsonLdPrimitive | JsonLdObject | JsonLdArray>;
 
 function readEnv(name: string): string | null {
     const value = process.env[name]?.trim();
