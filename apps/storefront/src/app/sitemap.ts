@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const PRODUCTS_PAGE_SIZE = 100;
 const MAX_PRODUCTS_FOR_SITEMAP = 5000;
@@ -62,7 +62,7 @@ async function getSitemapProducts(): Promise<VendureProduct[]> {
                 headers: {
                     'content-type': 'application/json',
                 },
-                next: { revalidate },
+                cache: 'no-store',
                 body: JSON.stringify({
                     query: PRODUCTS_SITEMAP_QUERY,
                     variables: {
@@ -86,6 +86,9 @@ async function getSitemapProducts(): Promise<VendureProduct[]> {
 
             const pageProducts = json.data?.products?.items ?? [];
             totalItems = json.data?.products?.totalItems ?? totalItems;
+            console.log(
+                `[sitemap] page ${page + 1}: skip=${skip}, received=${pageProducts.length}, totalItems=${totalItems ?? 'unknown'}`,
+            );
 
             if (pageProducts.length === 0) {
                 break;
@@ -104,6 +107,8 @@ async function getSitemapProducts(): Promise<VendureProduct[]> {
             console.warn(`[sitemap] Product sitemap reached safety limit of ${MAX_PRODUCTS_FOR_SITEMAP} products`);
         }
 
+        console.log(`[sitemap] totalItems received: ${totalItems ?? 'unknown'}`);
+        console.log(`[sitemap] fetched products: ${products.length}`);
         return products;
     } catch (error) {
         console.warn('[sitemap] Could not fetch products:', error);
@@ -149,13 +154,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
 
     const products = await getSitemapProducts();
+    const seenProductSlugs = new Set<string>();
 
-    const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
-        url: `${siteUrl}/productos/${product.slug}`,
-        lastModified: now,
-        changeFrequency: 'weekly',
-        priority: 0.7,
-    }));
+    const productRoutes: MetadataRoute.Sitemap = products
+        .filter((product) => {
+            if (!product.slug || seenProductSlugs.has(product.slug)) {
+                return false;
+            }
+
+            seenProductSlugs.add(product.slug);
+            return true;
+        })
+        .map((product) => ({
+            url: `${siteUrl}/productos/${product.slug}`,
+            lastModified: now,
+            changeFrequency: 'weekly',
+            priority: 0.7,
+        }));
+
+    console.log(`[sitemap] product routes added: ${productRoutes.length}`);
 
     return [...new Map([...staticRoutes, ...productRoutes].map((route) => [route.url, route])).values()];
 }
