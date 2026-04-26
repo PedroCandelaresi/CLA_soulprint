@@ -1,133 +1,124 @@
-import type { MetadataRoute } from "next";
+import type { MetadataRoute } from 'next';
 
-const rawSiteUrl = process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-const PRODUCTS_SITEMAP_QUERY = `
-  query SitemapProducts($take: Int!, $skip: Int!) {
-    products(options: { take: $take, skip: $skip }) {
-      items {
-        slug
-      }
-    }
-  }
-`;
+export const dynamic = 'force-dynamic';
 
-interface SitemapProduct {
-  slug?: string | null;
-}
+type VendureProduct = {
+    id: string;
+    name: string;
+    slug: string;
+};
 
-interface SitemapProductsResponse {
-  data?: {
-    products?: {
-      items?: SitemapProduct[];
+type VendureProductsResponse = {
+    data?: {
+        products?: {
+            items?: VendureProduct[];
+        };
     };
-  };
-  errors?: Array<{ message?: string }>;
-}
-
-export const revalidate = 3600;
+    errors?: unknown;
+};
 
 function getSiteUrl(): string {
-  try {
-    return new URL(rawSiteUrl).origin;
-  } catch {
-    return "http://localhost:3000";
-  }
+    return (
+        process.env.SITE_URL ||
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        'http://localhost:3000'
+    ).replace(/\/$/, '');
 }
 
-function absoluteUrl(path: string): string {
-  return new URL(path, getSiteUrl()).toString();
-}
+async function getSitemapProducts(): Promise<VendureProduct[]> {
+    const apiUrl = process.env.VENDURE_INTERNAL_API_URL;
 
-function getVendureInternalApiUrl(): string | null {
-  const value = process.env.VENDURE_INTERNAL_API_URL?.trim();
-  return value || null;
-}
+    if (!apiUrl) {
+        console.warn('[sitemap] VENDURE_INTERNAL_API_URL is not configured');
+        return [];
+    }
 
-async function listSitemapProducts(): Promise<SitemapProduct[]> {
-  const vendureApiUrl = getVendureInternalApiUrl();
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+            },
+            cache: 'no-store',
+            body: JSON.stringify({
+                query: `
+          query SitemapProducts {
+            products(options: { take: 200 }) {
+              items {
+                id
+                name
+                slug
+              }
+            }
+          }
+        `,
+            }),
+        });
 
-  if (!vendureApiUrl) {
-    console.warn("sitemap.xml: VENDURE_INTERNAL_API_URL no está configurado; se omiten productos.");
-    return [];
-  }
+        if (!response.ok) {
+            console.warn('[sitemap] Vendure request failed:', response.status);
+            return [];
+        }
 
-  const response = await fetch(vendureApiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      query: PRODUCTS_SITEMAP_QUERY,
-      variables: {
-        take: 200,
-        skip: 0,
-      },
-    }),
-    next: { revalidate },
-  });
+        const json = (await response.json()) as VendureProductsResponse;
 
-  if (!response.ok) {
-    throw new Error(`Vendure sitemap query failed: ${response.status} ${response.statusText}`);
-  }
+        if (json.errors) {
+            console.warn('[sitemap] Vendure GraphQL errors:', JSON.stringify(json.errors));
+            return [];
+        }
 
-  const payload = (await response.json()) as SitemapProductsResponse;
-
-  if (payload.errors?.length) {
-    throw new Error(`Vendure sitemap GraphQL error: ${payload.errors[0]?.message || "unknown error"}`);
-  }
-
-  return payload.data?.products?.items ?? [];
+        return json.data?.products?.items?.filter((product) => Boolean(product.slug)) ?? [];
+    } catch (error) {
+        console.warn('[sitemap] Could not fetch products:', error);
+        return [];
+    }
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
-  const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: absoluteUrl("/"),
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-    {
-      url: absoluteUrl("/productos"),
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.9,
-    },
-    {
-      url: absoluteUrl("/destacados"),
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: absoluteUrl("/como-comprar"),
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
-      url: absoluteUrl("/sobre-nosotros"),
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-  ];
+    const siteUrl = getSiteUrl();
+    const now = new Date();
 
-  try {
-    const products = await listSitemapProducts();
-    const productRoutes = products
-      .filter((product) => product.slug)
-      .map((product) => ({
-        url: absoluteUrl(`/productos/${product.slug}`),
+    const staticRoutes: MetadataRoute.Sitemap = [
+        {
+            url: `${siteUrl}/`,
+            lastModified: now,
+            changeFrequency: 'weekly',
+            priority: 1,
+        },
+        {
+            url: `${siteUrl}/productos`,
+            lastModified: now,
+            changeFrequency: 'daily',
+            priority: 0.9,
+        },
+        {
+            url: `${siteUrl}/destacados`,
+            lastModified: now,
+            changeFrequency: 'weekly',
+            priority: 0.8,
+        },
+        {
+            url: `${siteUrl}/como-comprar`,
+            lastModified: now,
+            changeFrequency: 'monthly',
+            priority: 0.6,
+        },
+        {
+            url: `${siteUrl}/sobre-nosotros`,
+            lastModified: now,
+            changeFrequency: 'monthly',
+            priority: 0.6,
+        },
+    ];
+
+    const products = await getSitemapProducts();
+
+    const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
+        url: `${siteUrl}/productos/${product.slug}`,
         lastModified: now,
-        changeFrequency: "weekly" as const,
+        changeFrequency: 'weekly',
         priority: 0.7,
-      }));
+    }));
 
-    return [...new Map([...staticRoutes, ...productRoutes].map((route) => [route.url, route])).values()];
-  } catch (error) {
-    console.warn("sitemap.xml: no se pudieron incluir productos; se devuelven rutas estáticas.", error);
-    return staticRoutes;
-  }
+    return [...staticRoutes, ...productRoutes];
 }
