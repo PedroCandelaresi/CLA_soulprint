@@ -467,9 +467,11 @@ function CheckoutContent() {
             return;
         }
 
+        const personalizationOrderCode = orderCode;
+
         async function loadPersonalization() {
             try {
-                const data = await fetchPersonalizationOrder(orderCode);
+                const data = await fetchPersonalizationOrder(personalizationOrderCode);
                 if (!cancelled) {
                     setPersonalization(data);
                 }

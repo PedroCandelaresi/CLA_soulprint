@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Container, Stack } from '@mui/material';
+import { useRef, useState, useEffect, useCallback, type FocusEvent } from 'react';
+import { Box, Typography, Container, Stack, useMediaQuery } from '@mui/material';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import ProductCard from '@/components/products/ProductCard';
 import type { Product } from '@/types/product';
@@ -15,11 +15,14 @@ interface FeaturedProductsCarruselProps {
 const CARD_WIDTH = 272;
 const CARD_GAP = 24;
 const SCROLL_STEP = CARD_WIDTH + CARD_GAP;
+const AUTOPLAY_INTERVAL = 4200;
 
 const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) => {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)', { noSsr: true });
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
+    const [isPaused, setIsPaused] = useState(false);
 
     const updateScrollState = useCallback(() => {
         const el = scrollRef.current;
@@ -44,6 +47,36 @@ const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) =
         scrollRef.current?.scrollBy({ left: -SCROLL_STEP, behavior: 'smooth' });
     };
 
+    const handleAutoAdvance = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+
+        if (el.scrollLeft >= el.scrollWidth - el.clientWidth - 4) {
+            el.scrollTo({ left: 0, behavior: 'smooth' });
+            return;
+        }
+
+        el.scrollBy({ left: SCROLL_STEP, behavior: 'smooth' });
+    }, []);
+
+    const handleBlurCapture = useCallback((event: FocusEvent<HTMLDivElement>) => {
+        const nextFocusedElement = event.relatedTarget;
+
+        if (!event.currentTarget.contains(nextFocusedElement as Node | null)) {
+            setIsPaused(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (reduceMotion || isPaused || products.length <= 1) {
+            return undefined;
+        }
+
+        const timer = window.setInterval(handleAutoAdvance, AUTOPLAY_INTERVAL);
+
+        return () => window.clearInterval(timer);
+    }, [handleAutoAdvance, isPaused, products.length, reduceMotion]);
+
     if (products.length === 0) return null;
 
     return (
@@ -62,7 +95,13 @@ const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) =
                     </Typography>
                 </Stack>
 
-                    <Box sx={{ position: 'relative' }}>
+                    <Box
+                        onMouseEnter={() => setIsPaused(true)}
+                        onMouseLeave={() => setIsPaused(false)}
+                        onFocusCapture={() => setIsPaused(true)}
+                        onBlurCapture={handleBlurCapture}
+                        sx={{ position: 'relative' }}
+                    >
                         <TooltipIconButton
                             onClick={handlePrev}
                             disabled={!canScrollLeft}
