@@ -15,7 +15,9 @@
         "migration:run:prod": "node dist/migrations/run-migrations.js",
         "reset:db": "node scripts/reset-database.js",
         "migration:revert": "ts-node src/migrations/revert-last-migration.ts",
-        "migration:revert:prod": "node dist/migrations/revert-last-migration.js"
+        "migration:revert:prod": "node dist/migrations/revert-last-migration.js",
+        "reprocess:webp": "ts-node src/scripts/reprocess-webp.ts",
+        "reprocess:webp:prod": "node dist/scripts/reprocess-webp.js"
     },
     "dependencies": {
         "@nestjs/common": "~10.3.10",
