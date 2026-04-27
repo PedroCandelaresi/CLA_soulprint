@@ -1,11 +1,11 @@
 'use client';
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import type { Product } from '@/types/product';
 import ProductBadges from './ProductBadges';
 import { resolveBadges } from '@/lib/badges/resolveBadges';
+import VendureImage from '@/components/common/VendureImage';
 
 interface ProductCardProps {
     product: Product;
@@ -42,12 +42,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
             }),
         [product.customFields?.badges, collectionBadges],
     );
-
-    const [imgSrc, setImgSrc] = useState(image);
-
-    useEffect(() => {
-        setImgSrc(image);
-    }, [image]);
 
     return (
         <Card
@@ -99,13 +93,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     },
                 }}
             >
-                <Image
-                    src={imgSrc}
+                <VendureImage
+                    src={image}
                     alt={product.name}
                     fill
                     sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 272px"
                     style={{ objectFit: 'contain', padding: '22px' }}
-                    onError={() => setImgSrc('/images/backgrounds/errorimg.svg')}
                 />
                 {productBadges.length > 0 && (
                     <Box

@@ -6,6 +6,11 @@ import type { Stream } from 'stream';
 import sharp from 'sharp';
 
 const logCtx = 'WebpStorageStrategy';
+const rasterPreviewPattern = /^preview\/.+\.(jpe?g|png)$/i;
+
+function shouldGenerateWebpPreview(fileName: string): boolean {
+    return rasterPreviewPattern.test(fileName) && !fileName.startsWith('preview-webp/');
+}
 
 export class WebpStorageStrategy implements AssetStorageStrategy {
     constructor(private readonly inner: LocalAssetStorageStrategy) {}
@@ -38,10 +43,7 @@ export class WebpStorageStrategy implements AssetStorageStrategy {
     async writeFileFromBuffer(fileName: string, data: Buffer): Promise<string> {
         const identifier = await this.inner.writeFileFromBuffer(fileName, data);
 
-        if (
-            !fileName.startsWith('preview/') ||
-            /\.(svg|webp)$/i.test(fileName)
-        ) {
+        if (!shouldGenerateWebpPreview(fileName)) {
             return identifier;
         }
 
@@ -51,7 +53,18 @@ export class WebpStorageStrategy implements AssetStorageStrategy {
             .replace(/\.[^.]+$/, '.webp');
 
         try {
-            const webpBuffer = await sharp(data)
+            const image = sharp(data);
+            const metadata = await image.metadata();
+
+            if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
+                Logger.warn(
+                    `WebP generation skipped for "${fileName}": unsupported image format "${metadata.format ?? 'unknown'}"`,
+                    logCtx,
+                );
+                return identifier;
+            }
+
+            const webpBuffer = await image
                 .resize(2000, 2000, { fit: 'inside', withoutEnlargement: true })
                 .webp({ quality: 82 })
                 .toBuffer();
