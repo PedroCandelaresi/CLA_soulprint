@@ -6,7 +6,8 @@
       "Bash(echo \"EXIT=$?\")",
       "Bash(git rm *)",
       "Bash(ln -s ../admin-ui-branding/admin-ui-branding.css /home/candelaresi/Proyectos/CLA_soulprint/apps/backend/static/admin-ui/admin-ui-branding.css)",
-      "Bash(pnpm run *)"
+      "Bash(pnpm run *)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); pkgs=['@vendure/core','@vendure/asset-server-plugin','sharp']; [print\\(k, d.get\\('packages',{}\\).get\\('node_modules/'+k,{}\\).get\\('version','not found'\\)\\) for k in pkgs]\")"
     ]
   }
 }

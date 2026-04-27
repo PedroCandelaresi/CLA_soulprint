@@ -8,6 +8,7 @@ import {
     defaultShippingEligibilityChecker,
 } from '@vendure/core';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
+import { createWebpStorageStrategy } from '../plugins/asset-webp/webp-storage-strategy';
 import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
 import 'dotenv/config';
 import path from 'path';
@@ -280,6 +281,7 @@ export const config: VendureConfig = {
             route: 'assets',
             assetUploadDir: path.join(__dirname, '../../static/assets'),
             assetUrlPrefix: ASSET_URL_PREFIX.endsWith('/') ? ASSET_URL_PREFIX : `${ASSET_URL_PREFIX}/`,
+            storageStrategyFactory: createWebpStorageStrategy,
         }),
         DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
         DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: true }),
