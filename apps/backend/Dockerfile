@@ -21,7 +21,9 @@ COPY apps/backend ./apps/backend
 RUN pnpm install --frozen-lockfile
 
 WORKDIR /usr/src/app/apps/backend
-RUN pnpm build
+# The compiled Admin UI is committed under apps/backend/static/admin-ui.
+# Rebuilding Angular inside small VPS builders can be killed by the kernel due to memory pressure.
+RUN pnpm exec tsc
 
 FROM node:20-slim AS runner
 WORKDIR /usr/src/app
