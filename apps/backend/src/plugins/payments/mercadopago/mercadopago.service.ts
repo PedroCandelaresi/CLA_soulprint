@@ -32,6 +32,7 @@ const EXTERNAL_REFERENCE_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 type NormalizedWebhookPayload = {
     paymentId?: string;
+    signaturePaymentId?: string;
     topic?: string;
     action?: string;
 };
@@ -179,6 +180,7 @@ export class MercadoPagoService {
         if (
             !this.isValidWebhookSignature({
                 paymentId: normalized.paymentId,
+                signaturePaymentId: normalized.signaturePaymentId ?? normalized.paymentId,
                 signatureHeader: request.signatureHeader,
                 requestIdHeader: request.requestIdHeader,
             })
@@ -858,13 +860,15 @@ export class MercadoPagoService {
             body.type ||
             body.topic;
         const action = body.action;
+        const signaturePaymentId = this.getQueryPaymentId(query);
         const paymentId =
             this.normalizeStringId(body.data?.id) ||
-            this.getNestedQueryDataId(query) ||
+            signaturePaymentId ||
             this.getSingleValue(query.id);
 
         return {
             paymentId,
+            signaturePaymentId,
             topic,
             action,
         };
@@ -879,6 +883,7 @@ export class MercadoPagoService {
 
     private isValidWebhookSignature(input: {
         paymentId: string;
+        signaturePaymentId?: string;
         signatureHeader?: string;
         requestIdHeader?: string;
     }): boolean {
@@ -914,15 +919,16 @@ export class MercadoPagoService {
             return false;
         }
 
-        const tsMs = Number(timestamp) * 1000;
+        const tsMs = Number(timestamp);
         const ageSecs = Math.abs(Date.now() - tsMs) / 1000;
 
         if (!Number.isFinite(tsMs) || ageSecs > 300) {
             return false;
         }
 
+        const signedPaymentId = input.signaturePaymentId ?? input.paymentId;
         const manifest = [
-            `id:${input.paymentId.toLowerCase()};`,
+            `id:${signedPaymentId.toLowerCase()};`,
             `request-id:${input.requestIdHeader};`,
             `ts:${timestamp};`,
         ].join('');
@@ -1216,6 +1222,14 @@ export class MercadoPagoService {
 
         return this.normalizeStringId(
             (data as { id?: number | string | undefined }).id,
+        );
+    }
+
+    private getQueryPaymentId(query: Record<string, unknown>): string | undefined {
+        return (
+            this.getSingleValue(query['data.id']) ||
+            this.getNestedQueryDataId(query) ||
+            this.getSingleValue(query.id)
         );
     }
 

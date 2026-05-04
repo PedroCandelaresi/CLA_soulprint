@@ -7,6 +7,30 @@
  */
 const mysql = require('mysql2/promise');
 
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function connectWithRetry(options) {
+    const attempts = Number(process.env.DB_CONNECT_RETRIES || 30);
+    const delayMs = Number(process.env.DB_CONNECT_RETRY_DELAY_MS || 2000);
+    let lastError;
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+        try {
+            return await mysql.createConnection(options);
+        } catch (error) {
+            lastError = error;
+            console.warn(`[reset-db] Database unavailable (${attempt}/${attempts}): ${error.message}`);
+            if (attempt < attempts) {
+                await sleep(delayMs);
+            }
+        }
+    }
+
+    throw lastError;
+}
+
 async function main() {
     if (process.env.RECREATE_DB_ON_START !== 'true') {
         console.log('[reset-db] RECREATE_DB_ON_START != "true" — skipping.');
@@ -21,7 +45,7 @@ async function main() {
 
     console.log(`[reset-db] Dropping and recreating database "${database}" on ${host}:${port}...`);
 
-    const connection = await mysql.createConnection({ host, port, user, password, multipleStatements: true });
+    const connection = await connectWithRetry({ host, port, user, password, multipleStatements: true });
     try {
         await connection.query(`DROP DATABASE IF EXISTS \`${database}\`;`);
         await connection.query(

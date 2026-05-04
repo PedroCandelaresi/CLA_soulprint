@@ -4,6 +4,41 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as mysql from 'mysql2/promise';
 
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForDatabase(): Promise<void> {
+    const attempts = Number(process.env.DB_CONNECT_RETRIES || 30);
+    const delayMs = Number(process.env.DB_CONNECT_RETRY_DELAY_MS || 2000);
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+            const connection = await mysql.createConnection({
+                host: process.env.DB_HOST || 'localhost',
+                port: Number(process.env.DB_PORT || 3306),
+                user: process.env.DB_USER,
+                password: process.env.DB_PASSWORD,
+                database: process.env.DB_NAME,
+                multipleStatements: false,
+            });
+            await connection.ping();
+            await connection.end();
+            return;
+        } catch (err) {
+            lastError = err;
+            const message = (err as Error).message;
+            console.warn(`[migrations] Database unavailable (${attempt}/${attempts}): ${message}`);
+            if (attempt < attempts) {
+                await sleep(delayMs);
+            }
+        }
+    }
+
+    throw lastError;
+}
+
 async function baselineIfNeeded(): Promise<void> {
     const connection = await mysql.createConnection({
         host: process.env.DB_HOST || 'localhost',
@@ -110,6 +145,8 @@ async function main(): Promise<void> {
         console.log('Skipping migrations because RECREATE_DB_ON_START=true (schema will be synchronized from entities).');
         return;
     }
+
+    await waitForDatabase();
 
     try {
         await baselineIfNeeded();
