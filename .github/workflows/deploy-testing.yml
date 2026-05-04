@@ -31,6 +31,7 @@ jobs:
       BEFORE_SHA: ${{ github.event.before }}
       DOCKER_BUILDKIT: "1"
       COMPOSE_DOCKER_CLI_BUILD: "1"
+      COMPOSE_PARALLEL_LIMIT: "1"
 
     steps:
       - name: Sync testing checkout to pushed SHA
@@ -169,6 +170,20 @@ jobs:
           cd "$REPO_PATH"
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" config
 
+      - name: Ensure build swap
+        if: steps.detect.outputs.scope != 'none'
+        run: |
+          set -euo pipefail
+          if ! swapon --show=NAME | grep -qx '/swapfile'; then
+            if [ ! -f /swapfile ]; then
+              sudo fallocate -l 4G /swapfile
+            fi
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile
+          fi
+          free -h
+
       - name: Build and deploy backend
         if: steps.detect.outputs.scope == 'backend'
         run: |
@@ -192,7 +207,8 @@ jobs:
           set -euo pipefail
           cd "$REPO_PATH"
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d mysql
-          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend storefront
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build storefront
           docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d backend storefront
 
       - name: Smoke test backend
