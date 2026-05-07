@@ -277,7 +277,7 @@ jobs:
           }
 
           wait_for_health cla_soulprint_storefront 90
-          wait_for_http http://127.0.0.1:3400 30
+          wait_for_http http://127.0.0.1:3400/api/health/live 30
 
       - name: Smoke test stack
         if: steps.detect.outputs.scope == 'stack'
@@ -314,7 +314,7 @@ jobs:
           wait_for_health cla_soulprint_backend 60
           wait_for_health cla_soulprint_storefront 90
           wait_for_http http://127.0.0.1:3402/health/live 20
-          wait_for_http http://127.0.0.1:3400 30 -I
+          wait_for_http http://127.0.0.1:3400/api/health/live 30 -I
 
       - name: Show Docker status
         if: always() && steps.detect.outputs.scope != 'none'
