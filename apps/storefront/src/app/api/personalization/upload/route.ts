@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { fetchWithTimeout } from '@/lib/network/timeoutFetch';
 import {
     buildPersonalizationForwardHeaders,
     buildPersonalizationProxyError,
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const upstreamResponse = await fetch(`${getPersonalizationUpstreamBaseUrl()}/upload`, {
+        const upstreamResponse = await fetchWithTimeout(`${getPersonalizationUpstreamBaseUrl()}/upload`, {
             method: 'POST',
             headers: buildPersonalizationForwardHeaders(request),
             body: formData,
@@ -66,4 +67,3 @@ export async function POST(request: NextRequest) {
         );
     }
 }
-

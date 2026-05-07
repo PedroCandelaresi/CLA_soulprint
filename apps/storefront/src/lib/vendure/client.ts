@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from '@/lib/network/timeoutFetch';
+
 const DEFAULT_BROWSER_VENDURE_API_URL = '/api/shop';
 const DEFAULT_SERVER_VENDURE_API_URL = 'http://localhost:3001/shop-api';
 
@@ -55,7 +57,7 @@ interface GraphQLResponse<T> {
 export async function fetchVendure<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
     const vendureApiUrl = resolveVendureApiUrl();
 
-    const res = await fetch(vendureApiUrl, {
+    const res = await fetchWithTimeout(vendureApiUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

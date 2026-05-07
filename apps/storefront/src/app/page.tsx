@@ -5,6 +5,7 @@ import ProductCard from '@/components/products/ProductCard';
 import { Grid, Container, Typography, Box } from '@mui/material';
 import CarruselDestacado from '@/components/home/CarruselDestacado';
 import FeaturedProductsCarrusel from '@/components/home/FeaturedProductsCarrusel';
+import { getErrorMessage } from '@/lib/network/timeoutFetch';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,13 +17,13 @@ export default async function Home() {
     try {
         carouselConfig = await getHomeCarouselConfig();
     } catch (error) {
-        console.error('Error fetching home carousel config', error);
+        console.warn('Error fetching home carousel config:', getErrorMessage(error));
     }
 
     try {
         products = await listProducts({ take: 24, skip: 0 });
     } catch (error) {
-        console.error('Error fetching homepage products', error);
+        console.warn('Error fetching homepage products:', getErrorMessage(error));
     }
 
     try {

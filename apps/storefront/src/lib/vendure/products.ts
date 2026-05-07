@@ -1,4 +1,5 @@
 import { fetchVendure } from './client';
+import { getErrorMessage } from '@/lib/network/timeoutFetch';
 import type { Product } from '@/types/product';
 
 interface PaginationOptions {
@@ -537,7 +538,7 @@ export async function getFeaturedProducts(options: PaginationOptions = {}): Prom
             )
             .slice(skip, skip + take);
     } catch (error) {
-        console.warn('getFeaturedProducts: no se pudieron obtener productos destacados', error);
+        console.warn('getFeaturedProducts: no se pudieron obtener productos destacados:', getErrorMessage(error));
         return [];
     }
 }

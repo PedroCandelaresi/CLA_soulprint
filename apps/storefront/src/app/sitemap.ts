@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from '@/lib/network/timeoutFetch';
+
 import type { MetadataRoute } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -57,7 +59,7 @@ async function getSitemapProducts(): Promise<VendureProduct[]> {
 
     try {
         for (let page = 0; page < MAX_SITEMAP_PRODUCT_PAGES; page += 1) {
-            const response = await fetch(apiUrl, {
+            const response = await fetchWithTimeout(apiUrl, {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json',

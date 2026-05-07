@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { fetchWithTimeout } from '@/lib/network/timeoutFetch';
 import {
     buildPersonalizationForwardHeaders,
     buildPersonalizationProxyError,
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
             upstreamUrl.searchParams.set('accessToken', accessToken);
         }
 
-        const upstreamResponse = await fetch(upstreamUrl, {
+        const upstreamResponse = await fetchWithTimeout(upstreamUrl, {
             method: 'GET',
             headers: buildPersonalizationForwardHeaders(request),
             cache: 'no-store',
@@ -68,4 +69,3 @@ export async function GET(request: NextRequest, context: RouteContext) {
         );
     }
 }
-

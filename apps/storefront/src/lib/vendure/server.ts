@@ -5,6 +5,7 @@ import {
     STOREFRONT_VENDURE_SESSION_COOKIE,
     stripVendureSessionTokenFromCookieHeader,
 } from '@/lib/auth/storefrontVendureSession';
+import { fetchWithTimeout } from '@/lib/network/timeoutFetch';
 import { getServerVendureApiUrl } from './server-config';
 
 interface GraphQLError {
@@ -33,7 +34,7 @@ export async function fetchServerShopApi<T>(
     const vendureSessionToken =
         cookieStore.get(STOREFRONT_VENDURE_SESSION_COOKIE)?.value?.trim() || null;
 
-    const response = await fetch(getServerVendureApiUrl(), {
+    const response = await fetchWithTimeout(getServerVendureApiUrl(), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

@@ -104,6 +104,7 @@ services:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       NEXT_PUBLIC_REQUIRE_CUSTOMER_VERIFICATION: ${REQUIRE_CUSTOMER_VERIFICATION}
       VENDURE_INTERNAL_API_URL: http://backend:3001/shop-api
+      STOREFRONT_UPSTREAM_TIMEOUT_MS: ${STOREFRONT_UPSTREAM_TIMEOUT_MS:-8000}
     ports:
       # Loopback and direct local access for the storefront.
       - "127.0.0.1:3400:3000"

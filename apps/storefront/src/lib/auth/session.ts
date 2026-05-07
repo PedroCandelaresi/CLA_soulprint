@@ -2,6 +2,7 @@ import 'server-only';
 
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { getErrorMessage } from '@/lib/network/timeoutFetch';
 import { GET_STOREFRONT_STATE_QUERY, type StorefrontStateResponse } from '@/lib/vendure/shop';
 import { fetchServerShopApi } from '@/lib/vendure/server';
 import { buildLoginRedirectHref, resolveRedirectTarget } from './redirects';
@@ -10,7 +11,7 @@ export async function getServerStorefrontState(): Promise<StorefrontStateRespons
     try {
         return await fetchServerShopApi<StorefrontStateResponse>(GET_STOREFRONT_STATE_QUERY);
     } catch (error) {
-        console.error('No se pudo resolver la sesión del storefront desde servidor', error);
+        console.warn('No se pudo resolver la sesión del storefront desde servidor:', getErrorMessage(error));
         return null;
     }
 }

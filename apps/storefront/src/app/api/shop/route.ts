@@ -7,6 +7,7 @@ import {
     STOREFRONT_VENDURE_SESSION_COOKIE,
     stripVendureSessionTokenFromCookieHeader,
 } from '@/lib/auth/storefrontVendureSession';
+import { fetchWithTimeout } from '@/lib/network/timeoutFetch';
 import {
     applyRateLimitHeaders,
     consumeShopProxyRateLimit,
@@ -116,7 +117,7 @@ export async function POST(request: NextRequest) {
         const forwardedCookieHeader =
             stripVendureSessionTokenFromCookieHeader(incomingCookieHeader);
 
-        const upstreamResponse = await fetch(shopApiUrl, {
+        const upstreamResponse = await fetchWithTimeout(shopApiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
