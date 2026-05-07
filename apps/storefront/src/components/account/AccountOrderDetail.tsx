@@ -17,6 +17,7 @@ import type { CustomerOrderDetail as CustomerOrderDetailType } from '@/types/sto
 import PersonalizationAssetPreview from '@/components/checkout/PersonalizationAssetPreview';
 import { fetchPersonalizationOrder } from '@/lib/personalization/client';
 import type { PersonalizationLineData, PersonalizationOrderData } from '@/lib/personalization/types';
+import { isVendureAssetUrl } from '@/lib/utils/asset-url';
 import { useCustomerAccount } from './CustomerAccountProvider';
 import {
     AccountEmptyState,
@@ -465,6 +466,7 @@ export default function AccountOrderDetail({ code }: { code: string }) {
                                                     src={image}
                                                     alt={line.productVariant.name}
                                                     fill
+                                                    unoptimized={isVendureAssetUrl(image)}
                                                     style={{ objectFit: 'contain', padding: '10px' }}
                                                 />
                                             </Box>

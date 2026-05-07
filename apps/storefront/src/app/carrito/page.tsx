@@ -19,6 +19,7 @@ import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import { useStorefront } from '@/components/providers/StorefrontProvider';
 import TooltipButton from '@/components/ui/TooltipButton';
 import TooltipIconButton from '@/components/ui/TooltipIconButton';
+import { isVendureAssetUrl } from '@/lib/utils/asset-url';
 
 type FeedbackState = {
     severity: 'success' | 'error';
@@ -161,6 +162,7 @@ export default function CarritoPage() {
                                                         src={image}
                                                         alt={line.productVariant.name}
                                                         fill
+                                                        unoptimized={isVendureAssetUrl(image)}
                                                         style={{ objectFit: 'contain', padding: '12px' }}
                                                     />
                                                 </Box>

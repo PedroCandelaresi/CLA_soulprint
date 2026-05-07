@@ -2,7 +2,7 @@
 
 import Image, { type ImageProps } from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
-import { getVendurePreviewWebpUrl } from '@/lib/utils/asset-url';
+import { getVendurePreviewWebpUrl, isVendureAssetUrl } from '@/lib/utils/asset-url';
 
 type VendureImageProps = Omit<ImageProps, 'src' | 'onError'> & {
     src: string;
@@ -41,7 +41,14 @@ const VendureImage = ({
         onError?.(event);
     };
 
-    return <Image {...props} src={currentSrc} onError={handleError} />;
+    return (
+        <Image
+            {...props}
+            src={currentSrc}
+            unoptimized={props.unoptimized ?? isVendureAssetUrl(currentSrc)}
+            onError={handleError}
+        />
+    );
 };
 
 export default VendureImage;

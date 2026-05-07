@@ -14,6 +14,7 @@ import { Box, Stack, Typography, useMediaQuery } from "@mui/material";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import TooltipButton from "@/components/ui/TooltipButton";
 import TooltipIconButton from "@/components/ui/TooltipIconButton";
+import { isVendureAssetUrl } from "@/lib/utils/asset-url";
 import type {
     HomeCarouselBadgeVariant,
     HomeCarouselSettings,
@@ -525,6 +526,7 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                             src={isMobile && slide.imagenMobile ? slide.imagenMobile : slide.imagen}
                             alt={slide.alt ?? slide.titulo}
                             fill
+                            unoptimized={isVendureAssetUrl(isMobile && slide.imagenMobile ? slide.imagenMobile : slide.imagen)}
                             priority={index === 0}
                             sizes="100vw"
                             style={{ objectFit: "cover", objectPosition: slide.posicion }}

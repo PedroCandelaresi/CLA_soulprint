@@ -4,6 +4,7 @@ import { Box, useTheme, MobileStepper } from '@mui/material';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import Image from 'next/image';
 import TooltipIconButton from '@/components/ui/TooltipIconButton';
+import { isVendureAssetUrl } from '@/lib/utils/asset-url';
 
 interface ProductCarouselProps {
     images: string[];
@@ -67,6 +68,7 @@ const ProductCarousel = ({ images, alt, overlay }: ProductCarouselProps) => {
                     src={currentImages[activeStep]}
                     alt={`${alt} - Image ${activeStep + 1}`}
                     fill
+                    unoptimized={isVendureAssetUrl(currentImages[activeStep])}
                     sizes="(max-width: 900px) 100vw, 50vw"
                     style={{ objectFit: 'contain', padding: 22 }}
                     priority={activeStep === 0}
