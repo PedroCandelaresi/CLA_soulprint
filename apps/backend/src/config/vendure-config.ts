@@ -4,6 +4,7 @@ import {
     DefaultSearchPlugin,
     VendureConfig,
     LanguageCode,
+    TypeORMHealthCheckStrategy,
     defaultShippingCalculator,
     defaultShippingEligibilityChecker,
 } from '@vendure/core';
@@ -21,6 +22,7 @@ import { mercadopagoPaymentHandler } from '../plugins/payments/mercadopago/merca
 import { MercadoPagoPlugin } from '../plugins/payments/mercadopago/mercadopago.plugin';
 import { transferenciaPaymentHandler } from '../plugins/payments/transferencia-payment.plugin';
 import { PaymentMethodIconPlugin } from '../plugins/payments/payment-method-icon.plugin';
+import { ClaHealthPlugin } from '../plugins/health';
 import {
     manualShippingCalculator,
     manualShippingEligibilityChecker,
@@ -108,7 +110,7 @@ const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const EMAIL_TEMPLATE_PATH = path.join(path.dirname(require.resolve('@vendure/email-plugin/package.json')), 'templates');
 const EMAIL_TEMPLATE_LOADER = createEmailTemplateLoader(EMAIL_TEMPLATE_PATH);
 const BRAND_NAME = 'CLA Soulprint';
-const ALLOW_DESTRUCTIVE_SYNC = process.env.RECREATE_DB_ON_START === 'true' || parseBooleanEnv('ALLOW_DESTRUCTIVE_SYNC', false);
+const ALLOW_DESTRUCTIVE_SYNC = parseBooleanEnv('ALLOW_DESTRUCTIVE_SYNC', false);
 const MIGRATIONS = [
     path.join(__dirname, '../migrations/history/*.js'),
     path.join(__dirname, '../migrations/history/*.ts'),
@@ -163,7 +165,7 @@ const promotionBadgeCustomField = {
 if (IS_PERSISTENT_ENV && DB_SYNCHRONIZE && !ALLOW_DESTRUCTIVE_SYNC) {
     throw new Error(
         'DB_SYNCHRONIZE=true is not allowed in testing/production. Generate and run migrations instead, ' +
-            'or set RECREATE_DB_ON_START=true (or ALLOW_DESTRUCTIVE_SYNC=true) if you intentionally want to ' +
+            'or set ALLOW_DESTRUCTIVE_SYNC=true if you intentionally want to ' +
             'rebuild the schema from entities on each boot.',
     );
 }
@@ -258,6 +260,9 @@ export const config: VendureConfig = {
         migrations: MIGRATIONS,
         migrationsTableName: 'vendure_migrations',
     },
+    systemOptions: {
+        healthChecks: [new TypeORMHealthCheckStrategy({ key: 'database', timeout: 5000 })],
+    },
     paymentOptions: {
         paymentMethodHandlers: [
             mercadopagoPaymentHandler,
@@ -343,6 +348,7 @@ export const config: VendureConfig = {
         BadgesPlugin,
         HomeCarouselPlugin,
         PersonalizationPlugin,
+        ClaHealthPlugin,
         AdminUiPlugin.init({
             route: 'admin',
             port: 3002,

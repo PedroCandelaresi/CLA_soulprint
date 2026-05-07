@@ -37,6 +37,14 @@ async function main() {
         return;
     }
 
+    const appEnv = process.env.APP_ENV || 'local';
+    const isPersistentEnv = appEnv === 'testing' || appEnv === 'production';
+    if (isPersistentEnv && process.env.ALLOW_DESTRUCTIVE_SYNC !== 'true') {
+        throw new Error(
+            `[reset-db] Refusing to recreate the database in APP_ENV=${appEnv} without ALLOW_DESTRUCTIVE_SYNC=true.`,
+        );
+    }
+
     const host = process.env.DB_HOST || 'localhost';
     const port = Number(process.env.DB_PORT) || 3306;
     const user = process.env.DB_USER || 'root';

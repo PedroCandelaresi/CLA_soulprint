@@ -28,8 +28,8 @@ WORKDIR /usr/src/app
 
 RUN corepack enable
 
-# Install curl for healthcheck
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Install curl for healthcheck and tini to reap orphaned child processes.
+RUN apt-get update && apt-get install -y curl tini && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/src/app/package.json ./
 COPY --from=builder /usr/src/app/pnpm-workspace.yaml ./
@@ -49,5 +49,8 @@ RUN mkdir -p ./apps/backend/static/assets ./apps/backend/static/email/test-email
 
 WORKDIR /usr/src/app/apps/backend
 
+RUN chmod +x ./scripts/start-production.sh
+
 EXPOSE 3001
-CMD ["sh", "-c", "node scripts/reset-database.js && node dist/migrations/run-migrations.js && node dist/bootstrap/index.js"]
+ENTRYPOINT ["tini", "--"]
+CMD ["./scripts/start-production.sh"]
