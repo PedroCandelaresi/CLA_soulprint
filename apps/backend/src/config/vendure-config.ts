@@ -111,6 +111,7 @@ const EMAIL_TEMPLATE_PATH = path.join(path.dirname(require.resolve('@vendure/ema
 const EMAIL_TEMPLATE_LOADER = createEmailTemplateLoader(EMAIL_TEMPLATE_PATH);
 const BRAND_NAME = 'CLA Soulprint';
 const ALLOW_DESTRUCTIVE_SYNC = parseBooleanEnv('ALLOW_DESTRUCTIVE_SYNC', false);
+const ADMIN_TESTING_MODE = parseBooleanEnv('ADMIN_TESTING_MODE', false);
 const MIGRATIONS = [
     path.join(__dirname, '../migrations/history/*.js'),
     path.join(__dirname, '../migrations/history/*.ts'),
@@ -218,6 +219,14 @@ if (!IS_MIGRATION_COMMAND) {
         console.log(`[email]   smtpUser=${process.env.SMTP_USER || '(unset)'}`);
         console.log(`[email]   smtpFrom=${process.env.SMTP_FROM || '(unset)'}`);
         console.log(`[email]   smtpSecure=${String(parseBooleanEnv('SMTP_SECURE', SMTP_PORT === 465))}`);
+    }
+
+    if (ADMIN_TESTING_MODE) {
+        console.warn('');
+        console.warn('⚠️  ⚠️  ⚠️  ADMIN_TESTING_MODE ENABLED ⚠️  ⚠️  ⚠️');
+        console.warn('  Admin UI will be accessible WITHOUT LOGIN at http://localhost:3001/admin');
+        console.warn('  NEVER enable this in production!');
+        console.warn('');
     }
 }
 

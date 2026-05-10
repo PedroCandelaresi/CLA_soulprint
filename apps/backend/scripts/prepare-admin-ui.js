@@ -42,7 +42,7 @@ const extensions = [
             },
         ],
         providers: ['providers.ts'],
-        globalStyles: [path.join(brandingDir, 'admin-ui-branding.css')],
+        globalStyles: [path.join(brandingDir, 'admin-ui-branding.css'), path.join(brandingDir, 'notifications.css')],
         staticAssets: [
             {
                 path: path.join(brandingDir, 'admin-login-hero.svg'),
@@ -184,13 +184,23 @@ async function finalizeBuild() {
 /**
  * CLA Soulprint post-build:
  *  - copia cla-admin-enhancements.js al output
- *  - parchea index.html: título, favicon, script de enhancements
+ *  - copia auto-login.js si ADMIN_TESTING_MODE está habilitado
+ *  - parchea index.html: título, favicon, scripts, credenciales
  */
 async function applyClaBrandingPostBuild() {
     const enhancementsSrc = path.join(brandingDir, 'cla-admin-enhancements.js');
     const enhancementsDst = path.join(outputPath, 'cla-admin-enhancements.js');
     if (fs.existsSync(enhancementsSrc)) {
         await fsp.copyFile(enhancementsSrc, enhancementsDst);
+    }
+
+    const adminTestingMode = process.env.ADMIN_TESTING_MODE === 'true';
+    const autoLoginSrc = path.join(brandingDir, 'auto-login.js');
+    const autoLoginDst = path.join(outputPath, 'auto-login.js');
+    
+    if (adminTestingMode && fs.existsSync(autoLoginSrc)) {
+        await fsp.copyFile(autoLoginSrc, autoLoginDst);
+        process.stdout.write('[cla] ADMIN_TESTING_MODE enabled - auto-login.js copied\n');
     }
 
     const indexHtmlPath = path.join(outputPath, 'index.html');
@@ -209,11 +219,26 @@ async function applyClaBrandingPostBuild() {
         '<link rel="icon" type="image/svg+xml" href="assets/cla-logo.svg"/>',
     );
 
+    // Inyectar credentials en window si está en ADMIN_TESTING_MODE
+    let scriptsToInject = '';
+    if (adminTestingMode) {
+        const adminUser = process.env.SUPERADMIN_USERNAME || 'superadmin';
+        const adminPass = process.env.SUPERADMIN_PASSWORD || 'superadmin';
+        scriptsToInject += `    <script>
+        window.__CLA_ADMIN_USER = '${adminUser}';
+        window.__CLA_ADMIN_PASS = '${adminPass}';
+        window.__CLA_TESTING_MODE = true;
+    </script>\n`;
+    }
+
+    scriptsToInject += '    <script src="cla-admin-enhancements.js" defer></script>\n';
+    
+    if (adminTestingMode) {
+        scriptsToInject += '    <script src="auto-login.js" defer></script>\n';
+    }
+
     if (!html.includes('cla-admin-enhancements.js')) {
-        html = html.replace(
-            /<\/body>/i,
-            '    <script src="cla-admin-enhancements.js" defer></script>\n</body>',
-        );
+        html = html.replace(/<\/body>/i, scriptsToInject + '</body>');
     }
 
     await fsp.writeFile(indexHtmlPath, html, 'utf8');

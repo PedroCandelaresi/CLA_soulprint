@@ -1,5 +1,7 @@
 /* =========================================================================
-   CLA Soulprint — Admin UI branding overlay
+   CLA Soulprint — Admin UI UX Refactor 2026
+   =========================================================================
+   
    Paleta (idéntica al storefront):
      --cla-green     #004825   verde profundo, superficie principal oscura
      --cla-green-dk  #062616   sombras / fondos dramáticos
@@ -9,13 +11,25 @@
      --cla-gold      #c7a46b   acentos, links, botones secundarios
      --cla-mist      #f7f1e8   fondo general del admin
      --cla-ink       #173428   texto principal sobre claro
+   
+   Mejoras:
+   ✓ Animaciones suaves (transitions, keyframes)
+   ✓ Tipografía refinada (escala modular)
+   ✓ Componentes pulidos (buttons, inputs, cards)
+   ✓ Espaciado consistente (escala 8px)
+   ✓ Micro-interacciones mejoradas
+   ✓ Mejor contraste y accesibilidad
    ========================================================================= */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 :root {
+    /* Colores — Paleta CLA */
     --cla-green: #004825;
     --cla-green-dk: #062616;
     --cla-green-deep: #03190f;
     --cla-green-lt: #0a5a31;
+    --cla-green-xl: #1a8449;
     --cla-cream: #f5ebd9;
     --cla-cream-strong: #f0e1c3;
     --cla-sand: #e2cfaa;
@@ -26,46 +40,164 @@
     --cla-ink: #173428;
     --cla-ink-soft: #2c4c3c;
     --cla-muted: #617268;
-    --cla-border: rgba(0, 72, 37, 0.14);
-    --cla-border-strong: rgba(0, 72, 37, 0.24);
-    --cla-shadow-sm: 0 2px 6px rgba(6, 38, 22, 0.08);
-    --cla-shadow-md: 0 12px 30px rgba(6, 38, 22, 0.12);
-    --cla-shadow-lg: 0 28px 64px rgba(6, 38, 22, 0.18);
+    
+    /* Variantes semánticas */
+    --cla-success: #1a8449;
+    --cla-warning: #d9854d;
+    --cla-error: #8a2b1f;
+    --cla-info: #0068a8;
+    
+    /* Borders */
+    --cla-border: rgba(0, 72, 37, 0.12);
+    --cla-border-strong: rgba(0, 72, 37, 0.22);
+    --cla-border-subtle: rgba(0, 72, 37, 0.06);
+    
+    /* Sombras — Elevación system */
+    --cla-shadow-xs: 0 1px 2px rgba(6, 38, 22, 0.04);
+    --cla-shadow-sm: 0 2px 8px rgba(6, 38, 22, 0.08);
+    --cla-shadow-md: 0 8px 20px rgba(6, 38, 22, 0.12);
+    --cla-shadow-lg: 0 16px 40px rgba(6, 38, 22, 0.16);
+    --cla-shadow-xl: 0 28px 64px rgba(6, 38, 22, 0.20);
+    
+    /* Radiuses */
     --cla-radius: 10px;
     --cla-radius-sm: 6px;
-
-    /* Override de variables Clarity en todo el documento */
+    --cla-radius-xs: 4px;
+    --cla-radius-lg: 12px;
+    
+    /* Animaciones */
+    --cla-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --cla-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --cla-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Tipografía — escala modular (1.125) */
+    --cla-font-size-xs: 0.75rem;     /* 12px */
+    --cla-font-size-sm: 0.875rem;    /* 14px */
+    --cla-font-size-base: 1rem;      /* 16px */
+    --cla-font-size-lg: 1.125rem;    /* 18px */
+    --cla-font-size-xl: 1.25rem;     /* 20px */
+    --cla-font-size-2xl: 1.5rem;     /* 24px */
+    --cla-font-size-3xl: 1.875rem;   /* 30px */
+    
+    --cla-line-height-tight: 1.2;
+    --cla-line-height-base: 1.5;
+    --cla-line-height-relaxed: 1.75;
+    
+    /* Espaciado — escala 8px */
+    --cla-space-xs: 0.25rem;   /* 4px */
+    --cla-space-sm: 0.5rem;    /* 8px */
+    --cla-space-md: 1rem;      /* 16px */
+    --cla-space-lg: 1.5rem;    /* 24px */
+    --cla-space-xl: 2rem;      /* 32px */
+    --cla-space-2xl: 3rem;     /* 48px */
+    
+    /* Overrides de Clarity */
     --clr-color-action-600: var(--cla-green);
     --clr-color-action-700: var(--cla-green-dk);
     --clr-btn-primary-bg-color: var(--cla-green);
     --clr-btn-primary-hover-bg-color: var(--cla-green-lt);
     --clr-btn-primary-color: #ffffff;
+    --clr-btn-primary-active-bg-color: var(--cla-green-dk);
     --clr-link-color: var(--cla-green);
     --clr-link-hover-color: var(--cla-green-lt);
     --clr-link-active-color: var(--cla-green-dk);
 }
 
-/* ---------- Tipografía + fondo global ---------- */
+/* ======================================================================
+   GLOBAL — Tipografía, colores, animaciones
+   ====================================================================== */
+
+html {
+    scroll-behavior: smooth;
+}
+
 html, body {
     background: var(--cla-mist);
     color: var(--cla-ink);
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: var(--cla-font-size-base);
+    line-height: var(--cla-line-height-base);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
 }
 
 body {
     background:
-        radial-gradient(circle at top left, rgba(245, 235, 217, 0.55), transparent 34%),
-        radial-gradient(circle at bottom right, rgba(199, 164, 107, 0.12), transparent 28%),
+        radial-gradient(circle at top left, rgba(245, 235, 217, 0.45), transparent 40%),
+        radial-gradient(circle at bottom right, rgba(199, 164, 107, 0.08), transparent 32%),
         linear-gradient(180deg, var(--cla-paper) 0%, var(--cla-mist) 100%) !important;
+    min-height: 100vh;
 }
 
-h1, h2, h3, h4, .page-title {
+/* Tipografía — Escalas de tamaño */
+h1 {
+    font-size: var(--cla-font-size-3xl);
+    font-weight: 700;
+    line-height: var(--cla-line-height-tight);
+    letter-spacing: -0.02em;
     color: var(--cla-green-dk);
+    margin: var(--cla-space-xl) 0 var(--cla-space-lg);
+}
+
+h2 {
+    font-size: var(--cla-font-size-2xl);
     font-weight: 600;
+    line-height: var(--cla-line-height-tight);
+    letter-spacing: -0.015em;
+    color: var(--cla-green-dk);
+    margin: var(--cla-space-lg) 0 var(--cla-space-md);
+}
+
+h3 {
+    font-size: var(--cla-font-size-xl);
+    font-weight: 600;
+    line-height: var(--cla-line-height-tight);
+    color: var(--cla-green);
+    margin: var(--cla-space-md) 0 var(--cla-space-sm);
+}
+
+h4 {
+    font-size: var(--cla-font-size-lg);
+    font-weight: 600;
+    color: var(--cla-ink);
+    margin: var(--cla-space-md) 0 var(--cla-space-sm);
+}
+
+.page-title {
+    font-size: var(--cla-font-size-2xl);
+    font-weight: 700;
+    color: var(--cla-green-dk);
     letter-spacing: -0.01em;
+    margin-bottom: var(--cla-space-lg);
+}
+
+p {
+    margin: 0 0 var(--cla-space-md);
+    color: var(--cla-ink-soft);
+}
+
+small, .text-small {
+    font-size: var(--cla-font-size-xs);
+    color: var(--cla-muted);
+    line-height: var(--cla-line-height-base);
+}
+
+a {
+    color: var(--cla-green);
+    text-decoration: none;
+    transition: color var(--cla-transition-base), text-decoration var(--cla-transition-base);
+    font-weight: 500;
+}
+
+a:hover {
+    color: var(--cla-green-lt);
+    text-decoration: underline;
+}
+
+a:active {
+    color: var(--cla-green-dk);
 }
 
 /* ======================================================================
@@ -2227,4 +2359,644 @@ body.cla-tooltips-ready [data-cla-tip]::after {
     background: var(--cla-gold);
     background-clip: padding-box;
     border: 2px solid transparent;
+}
+
+/* ======================================================================
+   ANIMACIONES — Keyframes para transiciones suaves
+   ====================================================================== */
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ======================================================================
+   BOTONES — Sistema de botones mejorado con variantes
+   ====================================================================== */
+
+button,
+.btn,
+[role="button"],
+.clr-btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--cla-space-sm);
+    padding: 0.6rem 1.2rem;
+    font-size: var(--cla-font-size-sm);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    border-radius: var(--cla-radius-sm);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all var(--cla-transition-base);
+    text-decoration: none;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+    outline: none;
+}
+
+button:disabled,
+.btn:disabled,
+[role="button"][disabled],
+.clr-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Botones primarios — verde profundo */
+button.btn-primary,
+.btn-primary,
+.clr-btn-primary {
+    background: var(--cla-green);
+    color: #ffffff;
+    box-shadow: var(--cla-shadow-sm);
+}
+
+button.btn-primary:hover,
+.btn-primary:hover,
+.clr-btn-primary:hover {
+    background: var(--cla-green-lt);
+    box-shadow: var(--cla-shadow-md);
+    transform: translateY(-2px);
+}
+
+button.btn-primary:active,
+.btn-primary:active,
+.clr-btn-primary:active {
+    background: var(--cla-green-dk);
+    box-shadow: var(--cla-shadow-sm);
+    transform: translateY(0);
+}
+
+button.btn-primary:focus,
+.btn-primary:focus,
+.clr-btn-primary:focus {
+    outline: 2px solid var(--cla-green-lt);
+    outline-offset: 2px;
+}
+
+/* Botones secundarios — contorno */
+button.btn-secondary,
+.btn-secondary,
+.clr-btn-secondary {
+    background: transparent;
+    color: var(--cla-green);
+    border-color: var(--cla-green);
+    box-shadow: var(--cla-shadow-xs);
+}
+
+button.btn-secondary:hover,
+.btn-secondary:hover,
+.clr-btn-secondary:hover {
+    background: rgba(0, 72, 37, 0.06);
+    color: var(--cla-green-lt);
+    border-color: var(--cla-green-lt);
+    box-shadow: var(--cla-shadow-sm);
+}
+
+button.btn-secondary:active,
+.btn-secondary:active,
+.clr-btn-secondary:active {
+    background: rgba(0, 72, 37, 0.12);
+    color: var(--cla-green-dk);
+    border-color: var(--cla-green-dk);
+}
+
+/* Botones destructivos — rojo */
+button.btn-danger,
+.btn-danger {
+    background: #c41c3b;
+    color: #ffffff;
+    box-shadow: var(--cla-shadow-sm);
+}
+
+button.btn-danger:hover,
+.btn-danger:hover {
+    background: #a01830;
+    box-shadow: var(--cla-shadow-md);
+    transform: translateY(-2px);
+}
+
+button.btn-danger:active,
+.btn-danger:active {
+    background: #8a142a;
+    box-shadow: var(--cla-shadow-sm);
+    transform: translateY(0);
+}
+
+/* ======================================================================
+   FORMULARIOS — Inputs, textareas, selects mejorados
+   ====================================================================== */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+input[type="date"],
+input[type="time"],
+textarea,
+select {
+    display: block;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 1.5px solid var(--cla-border-strong);
+    border-radius: var(--cla-radius-sm);
+    background: var(--cla-paper);
+    color: var(--cla-ink);
+    font-family: inherit;
+    font-size: var(--cla-font-size-sm);
+    line-height: var(--cla-line-height-base);
+    transition: all var(--cla-transition-base);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--cla-green);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(0, 72, 37, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+    outline: none;
+}
+
+input[type="text"]:disabled,
+input[type="email"]:disabled,
+input[type="password"]:disabled,
+input[type="number"]:disabled,
+textarea:disabled,
+select:disabled {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--cla-muted);
+    cursor: not-allowed;
+    border-color: var(--cla-border-subtle);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* Labels */
+label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--cla-space-sm);
+    margin-bottom: var(--cla-space-md);
+    font-weight: 600;
+    color: var(--cla-ink);
+    font-size: var(--cla-font-size-sm);
+}
+
+label > span {
+    font-weight: 500;
+    color: var(--cla-muted);
+    font-size: var(--cla-font-size-xs);
+}
+
+/* Checkboxes y Radios */
+input[type="checkbox"],
+input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--cla-green);
+}
+
+input[type="checkbox"]:focus,
+input[type="radio"]:focus {
+    outline: 2px solid var(--cla-green-lt);
+    outline-offset: 2px;
+}
+
+/* ======================================================================
+   CARDS y CONTENEDORES — Componentes visuales mejorados
+   ====================================================================== */
+
+.card,
+.panel,
+[class*="card"],
+[class*="panel"] {
+    background: var(--cla-paper);
+    border: 1px solid var(--cla-border);
+    border-radius: var(--cla-radius);
+    padding: var(--cla-space-lg);
+    box-shadow: var(--cla-shadow-xs);
+    transition: all var(--cla-transition-base);
+}
+
+.card:hover,
+.panel:hover,
+[class*="card"]:hover,
+[class*="panel"]:hover {
+    box-shadow: var(--cla-shadow-md);
+    border-color: var(--cla-border-strong);
+}
+
+/* Variantes de cards */
+.card--primary {
+    border-left: 4px solid var(--cla-green);
+}
+
+.card--warning {
+    border-left: 4px solid var(--cla-warning);
+    background: linear-gradient(135deg, rgba(217, 133, 77, 0.05), transparent);
+}
+
+.card--success {
+    border-left: 4px solid var(--cla-success);
+    background: linear-gradient(135deg, rgba(26, 132, 73, 0.05), transparent);
+}
+
+.card--error {
+    border-left: 4px solid var(--cla-error);
+    background: linear-gradient(135deg, rgba(138, 43, 31, 0.05), transparent);
+}
+
+/* ======================================================================
+   TABLAS — Mejor contraste y espaciado
+   ====================================================================== */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--cla-font-size-sm);
+}
+
+thead {
+    background: linear-gradient(180deg, rgba(0, 72, 37, 0.08), rgba(0, 72, 37, 0.04));
+    border-bottom: 2px solid var(--cla-border-strong);
+}
+
+thead th {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: var(--cla-green-dk);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-size: var(--cla-font-size-xs);
+}
+
+tbody tr {
+    border-bottom: 1px solid var(--cla-border);
+    transition: background-color var(--cla-transition-fast);
+}
+
+tbody tr:hover {
+    background: rgba(0, 72, 37, 0.04);
+}
+
+tbody tr:last-child {
+    border-bottom: none;
+}
+
+tbody td {
+    padding: 1rem;
+    color: var(--cla-ink-soft);
+}
+
+/* ======================================================================
+   NOTIFICACIONES y ALERTAS — Estados mejorados
+   ====================================================================== */
+
+.alert,
+.notification,
+[role="alert"],
+[class*="alert"],
+[class*="notification"] {
+    padding: var(--cla-space-md) var(--cla-space-lg);
+    border-radius: var(--cla-radius-sm);
+    border-left: 4px solid;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--cla-space-md);
+    animation: slideInFromTop var(--cla-transition-base);
+}
+
+.alert-success,
+.notification-success,
+.alert[data-type="success"],
+.notification[data-type="success"] {
+    background: rgba(26, 132, 73, 0.08);
+    border-left-color: var(--cla-success);
+    color: var(--cla-ink);
+}
+
+.alert-warning,
+.notification-warning,
+.alert[data-type="warning"],
+.notification[data-type="warning"] {
+    background: rgba(217, 133, 77, 0.08);
+    border-left-color: var(--cla-warning);
+    color: var(--cla-ink);
+}
+
+.alert-error,
+.notification-error,
+.alert[data-type="error"],
+.notification[data-type="error"] {
+    background: rgba(138, 43, 31, 0.08);
+    border-left-color: var(--cla-error);
+    color: var(--cla-ink);
+}
+
+.alert-info,
+.notification-info,
+.alert[data-type="info"],
+.notification[data-type="info"] {
+    background: rgba(0, 104, 168, 0.08);
+    border-left-color: var(--cla-info);
+    color: var(--cla-ink);
+}
+
+/* ======================================================================
+   BADGES — Etiquetas pequeñas
+   ====================================================================== */
+
+.badge,
+[class*="badge"],
+.tag,
+[class*="tag"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: var(--cla-font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    transition: all var(--cla-transition-fast);
+}
+
+.badge-primary {
+    background: rgba(0, 72, 37, 0.12);
+    color: var(--cla-green);
+}
+
+.badge-success {
+    background: rgba(26, 132, 73, 0.12);
+    color: var(--cla-success);
+}
+
+.badge-warning {
+    background: rgba(217, 133, 77, 0.12);
+    color: var(--cla-warning);
+}
+
+.badge-error {
+    background: rgba(138, 43, 31, 0.12);
+    color: var(--cla-error);
+}
+
+/* ======================================================================
+   MENUS y DROPDOWNS — Micro-interacciones
+   ====================================================================== */
+
+.dropdown,
+[class*="dropdown"],
+.menu,
+[class*="menu"] {
+    animation: scaleIn var(--cla-transition-base);
+}
+
+.dropdown-item,
+.menu-item {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background var(--cla-transition-fast);
+    border-left: 2px solid transparent;
+}
+
+.dropdown-item:hover,
+.menu-item:hover {
+    background: rgba(0, 72, 37, 0.08);
+    border-left-color: var(--cla-green);
+}
+
+.dropdown-item.active,
+.menu-item.active {
+    background: rgba(0, 72, 37, 0.12);
+    border-left-color: var(--cla-green);
+    font-weight: 600;
+}
+
+/* ======================================================================
+   MODALES y OVERLAYS — Profundidad y elevación
+   ====================================================================== */
+
+.modal,
+.dialog,
+[role="dialog"],
+.modal-overlay {
+    animation: fadeIn var(--cla-transition-base);
+}
+
+.modal-content,
+.dialog-content {
+    animation: slideInFromTop var(--cla-transition-base);
+    background: var(--cla-paper);
+    border-radius: var(--cla-radius-lg);
+    box-shadow: var(--cla-shadow-xl);
+}
+
+/* ======================================================================
+   ESTADO DE CARGA — Animaciones suaves
+   ====================================================================== */
+
+.loading,
+[class*="loading"],
+.spinner {
+    animation: pulse var(--cla-transition-slow) infinite;
+}
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--cla-border) 0%,
+        rgba(0, 72, 37, 0.06) 50%,
+        var(--cla-border) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+    border-radius: var(--cla-radius-sm);
+}
+
+/* ======================================================================
+   HEADER y NAVEGACIÓN — Mejoras de visibilidad
+   ====================================================================== */
+
+header,
+.header,
+[class*="header"],
+nav,
+[class*="nav"] {
+    box-shadow: var(--cla-shadow-sm);
+    background: var(--cla-paper);
+}
+
+header a,
+.header a,
+nav a,
+[class*="nav"] a {
+    position: relative;
+    overflow: hidden;
+}
+
+header a::after,
+.header a::after,
+nav a::after,
+[class*="nav"] a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: var(--cla-green);
+    transition: left var(--cla-transition-base);
+}
+
+header a:hover::after,
+.header a:hover::after,
+nav a:hover::after,
+[class*="nav"] a:hover::after {
+    left: 0;
+}
+
+/* ======================================================================
+   RESPONSIVE IMPROVEMENTS — Mobile-first approach
+   ====================================================================== */
+
+@media (max-width: 768px) {
+    html, body {
+        font-size: var(--cla-font-size-sm);
+    }
+
+    h1 {
+        font-size: var(--cla-font-size-2xl);
+    }
+
+    h2 {
+        font-size: var(--cla-font-size-xl);
+    }
+
+    h3 {
+        font-size: var(--cla-font-size-lg);
+    }
+
+    .page-title {
+        font-size: var(--cla-font-size-xl);
+    }
+
+    button,
+    .btn,
+    [role="button"] {
+        padding: 0.7rem 1.4rem;
+        font-size: var(--cla-font-size-sm);
+    }
+
+    input,
+    textarea,
+    select {
+        font-size: 16px; /* Prevenir zoom en iOS */
+        padding: 0.8rem 1rem;
+    }
+
+    .card,
+    .panel,
+    [class*="card"],
+    [class*="panel"] {
+        padding: var(--cla-space-md);
+    }
+
+    table {
+        font-size: var(--cla-font-size-xs);
+    }
+
+    tbody td {
+        padding: 0.75rem;
+    }
+
+    thead th {
+        padding: 0.6rem 0.75rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
