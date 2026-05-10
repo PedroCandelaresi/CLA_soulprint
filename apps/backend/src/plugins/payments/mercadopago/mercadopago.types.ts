@@ -128,3 +128,9 @@ export interface MercadoPagoWebhookRequest {
     signatureHeader?: string;
     requestIdHeader?: string;
 }
+
+export interface MercadoPagoWebhookAck {
+    received: true;
+    processed: boolean;
+    reason?: string;
+}

@@ -20,6 +20,7 @@ import {
     MercadoPagoPaymentResponse,
     MercadoPagoPreferenceItem,
     MercadoPagoPreferenceResult,
+    MercadoPagoWebhookAck,
     MercadoPagoWebhookDecision,
     MercadoPagoWebhookPayload,
     MercadoPagoWebhookRequest,
@@ -36,6 +37,17 @@ type NormalizedWebhookPayload = {
     topic?: string;
     action?: string;
 };
+
+type MercadoPagoWebhookSignatureValidation =
+    | {
+          valid: true;
+          timestampUnit: 'seconds' | 'milliseconds';
+          manifestIdSource: 'query' | 'body' | 'omitted';
+      }
+    | {
+          valid: false;
+          reason: string;
+      };
 
 type MercadoPagoSyncSource = 'webhook' | 'retry';
 
@@ -144,6 +156,32 @@ export class MercadoPagoService {
         });
     }
 
+    async handleWebhookSafely(request: MercadoPagoWebhookRequest): Promise<MercadoPagoWebhookAck> {
+        try {
+            await this.handleWebhook(request);
+            return { received: true, processed: true };
+        } catch (error) {
+            const normalized = this.normalizeWebhookPayloadSafely(request.body, request.query);
+            const isRejectedWebhook = error instanceof ForbiddenException;
+
+            this.log(isRejectedWebhook ? 'warn' : 'error', 'webhook_failure_acknowledged', {
+                paymentId: normalized.paymentId ?? null,
+                topic: normalized.topic ?? null,
+                action: normalized.action ?? null,
+                requestId: request.requestIdHeader ?? null,
+                reason: isRejectedWebhook ? 'rejected' : 'processing_failed',
+                errorName: error instanceof Error ? error.name : typeof error,
+                message: this.getErrorMessage(error, 'Unknown Mercado Pago webhook error'),
+            });
+
+            return {
+                received: true,
+                processed: false,
+                reason: isRejectedWebhook ? 'rejected' : 'processing_failed',
+            };
+        }
+    }
+
     async handleWebhook(request: MercadoPagoWebhookRequest): Promise<void> {
         const normalized = this.normalizeWebhookPayload(request.body, request.query);
 
@@ -177,20 +215,28 @@ export class MercadoPagoService {
             return;
         }
 
-        if (
-            !this.isValidWebhookSignature({
-                paymentId: normalized.paymentId,
-                signaturePaymentId: normalized.signaturePaymentId ?? normalized.paymentId,
-                signatureHeader: request.signatureHeader,
-                requestIdHeader: request.requestIdHeader,
-            })
-        ) {
+        const signatureValidation = this.validateWebhookSignature({
+            paymentId: normalized.paymentId,
+            signaturePaymentId: normalized.signaturePaymentId,
+            signatureHeader: request.signatureHeader,
+            requestIdHeader: request.requestIdHeader,
+        });
+
+        if (!signatureValidation.valid) {
             this.log('warn', 'webhook_invalid_signature', {
                 paymentId: normalized.paymentId,
                 requestId: request.requestIdHeader ?? null,
+                reason: signatureValidation.reason,
             });
             throw new ForbiddenException('Invalid Mercado Pago webhook signature');
         }
+
+        this.log('info', 'webhook_signature_valid', {
+            paymentId: normalized.paymentId,
+            requestId: request.requestIdHeader ?? null,
+            timestampUnit: signatureValidation.timestampUnit,
+            manifestIdSource: signatureValidation.manifestIdSource,
+        });
 
         const mercadoPagoPayment = await this.fetchPayment(normalized.paymentId);
         await this.syncVendurePayment(mercadoPagoPayment, {
@@ -874,6 +920,17 @@ export class MercadoPagoService {
         };
     }
 
+    private normalizeWebhookPayloadSafely(
+        body: MercadoPagoWebhookPayload | undefined,
+        query: Record<string, unknown> | undefined,
+    ): NormalizedWebhookPayload {
+        try {
+            return this.normalizeWebhookPayload(body ?? {}, query ?? {});
+        } catch {
+            return {};
+        }
+    }
+
     private isPaymentNotification(payload: NormalizedWebhookPayload): boolean {
         const topic = payload.topic?.toLowerCase();
         const action = payload.action?.toLowerCase();
@@ -881,27 +938,34 @@ export class MercadoPagoService {
         return topic === 'payment' || action?.startsWith('payment.') === true;
     }
 
-    private isValidWebhookSignature(input: {
+    private validateWebhookSignature(input: {
         paymentId: string;
         signaturePaymentId?: string;
         signatureHeader?: string;
         requestIdHeader?: string;
-    }): boolean {
+    }): MercadoPagoWebhookSignatureValidation {
         const secret = this.webhookSecret;
 
         if (!secret) {
-            return false;
+            return { valid: false, reason: 'missing_webhook_secret' };
         }
 
         if (!input.signatureHeader || !input.requestIdHeader) {
-            return false;
+            return { valid: false, reason: 'missing_signature_headers' };
         }
 
         const signatureParts = input.signatureHeader
             .split(',')
             .map((part) => part.trim())
             .reduce<Record<string, string>>((accumulator, part) => {
-                const [rawKey, rawValue] = part.split('=');
+                const separatorIndex = part.indexOf('=');
+
+                if (separatorIndex === -1) {
+                    return accumulator;
+                }
+
+                const rawKey = part.slice(0, separatorIndex);
+                const rawValue = part.slice(separatorIndex + 1);
                 const key = rawKey?.trim();
                 const value = rawValue?.trim();
 
@@ -916,37 +980,117 @@ export class MercadoPagoService {
         const receivedSignature = signatureParts.v1?.toLowerCase();
 
         if (!timestamp || !receivedSignature) {
-            return false;
+            return { valid: false, reason: 'missing_timestamp_or_signature' };
         }
 
-        const tsMs = Number(timestamp);
-        const ageSecs = Math.abs(Date.now() - tsMs) / 1000;
-
-        if (!Number.isFinite(tsMs) || ageSecs > 300) {
-            return false;
+        if (!/^[a-f0-9]+$/.test(receivedSignature)) {
+            return { valid: false, reason: 'malformed_signature' };
         }
 
-        const signedPaymentId = input.signaturePaymentId ?? input.paymentId;
-        const manifest = [
-            `id:${signedPaymentId.toLowerCase()};`,
-            `request-id:${input.requestIdHeader};`,
-            `ts:${timestamp};`,
-        ].join('');
+        const timestampAge = this.getMercadoPagoSignatureTimestampAge(timestamp);
 
-        const generatedSignature = crypto
-            .createHmac('sha256', secret)
-            .update(manifest)
-            .digest('hex')
-            .toLowerCase();
-
-        if (generatedSignature.length !== receivedSignature.length) {
-            return false;
+        if (!timestampAge) {
+            return { valid: false, reason: 'malformed_timestamp' };
         }
 
-        return crypto.timingSafeEqual(
-            Buffer.from(generatedSignature),
-            Buffer.from(receivedSignature),
-        );
+        if (timestampAge.ageSecs > 300) {
+            return { valid: false, reason: 'expired_timestamp' };
+        }
+
+        const manifestCandidates = this.buildMercadoPagoSignatureManifestCandidates({
+            paymentId: input.paymentId,
+            signaturePaymentId: input.signaturePaymentId,
+            requestIdHeader: input.requestIdHeader,
+            timestamp,
+        });
+
+        for (const candidate of manifestCandidates) {
+            const generatedSignature = crypto
+                .createHmac('sha256', secret)
+                .update(candidate.manifest)
+                .digest('hex')
+                .toLowerCase();
+
+            if (generatedSignature.length !== receivedSignature.length) {
+                continue;
+            }
+
+            if (
+                crypto.timingSafeEqual(
+                    Buffer.from(generatedSignature, 'hex'),
+                    Buffer.from(receivedSignature, 'hex'),
+                )
+            ) {
+                return {
+                    valid: true,
+                    timestampUnit: timestampAge.unit,
+                    manifestIdSource: candidate.idSource,
+                };
+            }
+        }
+
+        return { valid: false, reason: 'signature_mismatch' };
+    }
+
+    private getMercadoPagoSignatureTimestampAge(
+        timestamp: string,
+    ): { ageSecs: number; unit: 'seconds' | 'milliseconds' } | null {
+        if (!/^\d+$/.test(timestamp)) {
+            return null;
+        }
+
+        const rawTimestamp = Number(timestamp);
+
+        if (!Number.isFinite(rawTimestamp)) {
+            return null;
+        }
+
+        const unit = timestamp.length <= 10 ? 'seconds' : 'milliseconds';
+        const timestampMs = unit === 'seconds' ? rawTimestamp * 1000 : rawTimestamp;
+
+        return {
+            ageSecs: Math.abs(Date.now() - timestampMs) / 1000,
+            unit,
+        };
+    }
+
+    private buildMercadoPagoSignatureManifestCandidates(input: {
+        paymentId: string;
+        signaturePaymentId?: string;
+        requestIdHeader: string;
+        timestamp: string;
+    }): Array<{
+        manifest: string;
+        idSource: 'query' | 'body' | 'omitted';
+    }> {
+        const candidates: Array<{
+            manifest: string;
+            idSource: 'query' | 'body' | 'omitted';
+        }> = [];
+        const addCandidate = (
+            idSource: 'query' | 'body' | 'omitted',
+            signedPaymentId?: string,
+        ) => {
+            const manifest = [
+                signedPaymentId ? `id:${signedPaymentId.toLowerCase()};` : '',
+                `request-id:${input.requestIdHeader};`,
+                `ts:${input.timestamp};`,
+            ].join('');
+
+            if (!candidates.some((candidate) => candidate.manifest === manifest)) {
+                candidates.push({ manifest, idSource });
+            }
+        };
+
+        if (input.signaturePaymentId) {
+            addCandidate('query', input.signaturePaymentId);
+            return candidates;
+        }
+
+        addCandidate('omitted');
+        addCandidate('body', input.paymentId);
+
+        return candidates;
     }
 
     private buildInitialMetadata(input: {
