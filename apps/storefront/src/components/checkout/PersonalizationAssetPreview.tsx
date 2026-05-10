@@ -50,7 +50,7 @@ export default function PersonalizationAssetPreview({
                     textAlign: 'left',
                     color: 'inherit',
                     textTransform: 'none',
-                    borderRadius: 2.5,
+                    borderRadius: 2,
                     border: '1px solid rgba(0,72,37,0.1)',
                     bgcolor: 'rgba(255,253,248,0.78)',
                     transition: 'border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease',
@@ -95,9 +95,6 @@ export default function PersonalizationAssetPreview({
                         <Typography variant="body2" fontWeight={700} sx={{ wordBreak: 'break-word' }}>
                             {title}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            Clic para ampliar
-                        </Typography>
                     </Box>
                 </Stack>
             </Button>
@@ -107,7 +104,7 @@ export default function PersonalizationAssetPreview({
                 onClose={() => setOpen(false)}
                 maxWidth="md"
                 fullWidth
-                PaperProps={{ sx: { borderRadius: 4, overflow: 'hidden' } }}
+                PaperProps={{ sx: { borderRadius: 2, overflow: 'hidden' } }}
             >
                 <DialogTitle sx={{ fontWeight: 800 }}>{title}</DialogTitle>
                 <DialogContent dividers sx={{ bgcolor: 'rgba(255,251,244,0.72)' }}>

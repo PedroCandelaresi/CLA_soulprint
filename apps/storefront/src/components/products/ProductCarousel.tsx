@@ -48,17 +48,17 @@ const ProductCarousel = ({ images, alt, overlay }: ProductCarouselProps) => {
                 sx={{
                     position: 'relative',
                     width: '100%',
-                    height: { xs: 360, md: 560 },
+                    height: { xs: 380, md: 580 },
                     overflow: 'hidden',
-                    borderRadius: 5,
+                    borderRadius: 2,
                     border: `1px solid ${theme.palette.divider}`,
-                    background: 'linear-gradient(180deg, rgba(244,234,213,0.8) 0%, rgba(255,253,248,1) 100%)',
-                    boxShadow: '0 22px 42px rgba(0,72,37,0.08)',
+                    background: 'linear-gradient(180deg, rgba(239,246,239,0.86) 0%, rgba(255,253,248,1) 100%)',
+                    boxShadow: '0 20px 40px rgba(0,72,37,0.08)',
                     '&::after': {
                         content: '""',
                         position: 'absolute',
-                        inset: 18,
-                        borderRadius: 14,
+                        inset: 16,
+                        borderRadius: 2,
                         border: '1px solid rgba(255,255,255,0.58)',
                         pointerEvents: 'none',
                     },
@@ -70,7 +70,7 @@ const ProductCarousel = ({ images, alt, overlay }: ProductCarouselProps) => {
                     fill
                     unoptimized={isVendureAssetUrl(currentImages[activeStep])}
                     sizes="(max-width: 900px) 100vw, 50vw"
-                    style={{ objectFit: 'contain', padding: 22 }}
+                    style={{ objectFit: 'contain', padding: 26 }}
                     priority={activeStep === 0}
                     onError={handleImageError}
                 />

@@ -10,26 +10,18 @@ const Footer = () => {
             component="footer"
             sx={{
                 mt: 'auto',
-                pt: { xs: 7, md: 9 },
-                pb: 3.5,
+                pt: { xs: 7, md: 8 },
+                pb: 4,
                 background:
-                    'linear-gradient(180deg, rgba(5,37,23,1) 0%, rgba(3,25,15,1) 100%)',
+                    'linear-gradient(180deg, rgba(5,37,23,1) 0%, rgba(3,21,14,1) 100%)',
                 color: 'common.white',
                 position: 'relative',
                 overflow: 'hidden',
-                '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    inset: 'auto -8rem -10rem auto',
-                    width: '22rem',
-                    height: '22rem',
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(199,164,107,0.18) 0%, rgba(199,164,107,0) 72%)',
-                },
+                borderTop: '1px solid rgba(244,234,213,0.16)',
             }}
         >
             <Container maxWidth="lg">
-                <Grid container spacing={{ xs: 4, md: 6 }} alignItems="flex-start" sx={{ position: 'relative', zIndex: 1 }}>
+                <Grid container spacing={{ xs: 4, md: 7 }} alignItems="flex-start" sx={{ position: 'relative', zIndex: 1 }}>
                     <Grid size={{ xs: 12, md: 5 }}>
                         <Stack spacing={2.5}>
                             <Box
@@ -48,7 +40,7 @@ const Footer = () => {
 
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Stack spacing={1.2}>
-                            <Typography variant="overline" sx={{ color: 'var(--cla-brand-cream)', letterSpacing: 2 }}>
+                            <Typography variant="overline" sx={{ color: 'var(--cla-brand-cream)' }}>
                                 Navegación
                             </Typography>
                             <Link href="/" style={{ color: 'rgba(255,255,255,0.82)' }}>Inicio</Link>
@@ -60,7 +52,7 @@ const Footer = () => {
 
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <Stack spacing={2}>
-                            <Typography variant="overline" sx={{ color: 'var(--cla-brand-cream)', letterSpacing: 2 }}>
+                            <Typography variant="overline" sx={{ color: 'var(--cla-brand-cream)' }}>
                                 Comunidad
                             </Typography>
                             <Typography sx={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.8 }}>

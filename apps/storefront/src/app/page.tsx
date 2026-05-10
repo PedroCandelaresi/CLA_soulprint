@@ -43,20 +43,19 @@ export default async function Home() {
                 <FeaturedProductsCarrusel products={featuredProducts} />
             )}
 
-            <Container maxWidth="lg" sx={{ pb: { xs: 8, md: 12 } }}>
+            <Container maxWidth="lg" sx={{ pb: { xs: 9, md: 13 } }}>
                 <Box
-                    mb={6}
+                    mb={{ xs: 4, md: 6 }}
                     textAlign="center"
                     sx={{
-                        p: { xs: 3.5, md: 4.5 },
-                        borderRadius: 4,
-                        border: '1px solid rgba(0,72,37,0.08)',
-                        background: 'linear-gradient(180deg, rgba(255,250,242,0.92) 0%, rgba(255,255,255,0.56) 100%)',
+                        maxWidth: 760,
+                        mx: 'auto',
+                        pt: { xs: 1, md: 2 },
                     }}
                 >
                     <Typography
                         variant="overline"
-                        sx={{ color: 'secondary.dark', letterSpacing: 4, fontSize: '0.72rem', fontWeight: 700 }}
+                        sx={{ color: 'secondary.dark', fontSize: '0.72rem', fontWeight: 700 }}
                     >
                         Catálogo completo
                     </Typography>
@@ -69,7 +68,7 @@ export default async function Home() {
                 </Box>
 
                 {products.length > 0 ? (
-                    <Grid container spacing={3}>
+                    <Grid container spacing={{ xs: 2.5, md: 3.5 }}>
                         {products.map((product) => (
                             <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
                                 <ProductCard product={product} />

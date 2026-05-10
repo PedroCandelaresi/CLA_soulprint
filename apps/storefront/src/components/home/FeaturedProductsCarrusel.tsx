@@ -5,7 +5,6 @@ import { Box, Typography, Container, Stack, useMediaQuery } from '@mui/material'
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import ProductCard from '@/components/products/ProductCard';
 import type { Product } from '@/types/product';
-import TooltipButton from '@/components/ui/TooltipButton';
 import TooltipIconButton from '@/components/ui/TooltipIconButton';
 
 interface FeaturedProductsCarruselProps {
@@ -80,13 +79,13 @@ const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) =
     if (products.length === 0) return null;
 
     return (
-        <Box sx={{ pt: { xs: 4, md: 5 }, pb: { xs: 4, md: 6 } }}>
+        <Box sx={{ pt: { xs: 5, md: 7 }, pb: { xs: 5, md: 7 } }}>
             <Container maxWidth="lg">
-                <Stack alignItems="center" textAlign="center" spacing={0.75} mb={3}>
+                <Stack alignItems="center" textAlign="center" spacing={1} mb={{ xs: 3, md: 4 }}>
                     <Typography
                         variant="h3"
                         fontWeight={700}
-                        sx={{ lineHeight: 1.15, letterSpacing: '-0.02em' }}
+                        sx={{ lineHeight: 1.15, letterSpacing: 0 }}
                     >
                         Destacados
                     </Typography>
@@ -109,13 +108,14 @@ const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) =
                             tooltip="Desplazar hacia la izquierda"
                             sx={{
                                 position: 'absolute',
-                                left: { xs: 0, md: -24 },
+                                left: { xs: 0, md: -18 },
                                 top: '50%',
                                 transform: 'translateY(-50%)',
                                 zIndex: 2,
                                 bgcolor: '#fffaf2',
                                 border: '1px solid rgba(0,72,37,0.1)',
-                                boxShadow: '0 8px 18px rgba(0,72,37,0.08)',
+                                borderRadius: 2,
+                                boxShadow: '0 10px 24px rgba(0,72,37,0.08)',
                                 width: 44,
                                 height: 44,
                                 opacity: canScrollLeft ? 1 : 0.35,
@@ -137,11 +137,11 @@ const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) =
                             ref={scrollRef}
                             sx={{
                                 display: 'flex',
-                                gap: `${CARD_GAP}px`,
+                                gap: { xs: 2, md: `${CARD_GAP}px` },
                                 overflowX: 'auto',
                                 scrollBehavior: 'smooth',
-                                px: { xs: 0, md: 0.5 },
-                                py: 2,
+                                px: { xs: 0.5, md: 0.5 },
+                                py: 2.5,
                                 scrollbarWidth: 'none',
                                 '&::-webkit-scrollbar': {
                                     display: 'none',
@@ -169,13 +169,14 @@ const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) =
                             tooltip="Desplazar hacia la derecha"
                             sx={{
                                 position: 'absolute',
-                                right: { xs: 0, md: -24 },
+                                right: { xs: 0, md: -18 },
                                 top: '50%',
                                 transform: 'translateY(-50%)',
                                 zIndex: 2,
                                 bgcolor: '#fffaf2',
                                 border: '1px solid rgba(0,72,37,0.1)',
-                                boxShadow: '0 8px 18px rgba(0,72,37,0.08)',
+                                borderRadius: 2,
+                                boxShadow: '0 10px 24px rgba(0,72,37,0.08)',
                                 width: 44,
                                 height: 44,
                                 opacity: canScrollRight ? 1 : 0.35,
@@ -193,14 +194,6 @@ const FeaturedProductsCarrusel = ({ products }: FeaturedProductsCarruselProps) =
                             <IconChevronRight size={20} stroke={2} />
                         </TooltipIconButton>
                     </Box>
-
-                    {products.length > 4 && (
-                        <Stack direction="row" justifyContent="center" mt={3} spacing={1}>
-                            <Typography variant="caption" color="text.secondary">
-                                {products.length} piezas · Deslizá para ver más
-                            </Typography>
-                        </Stack>
-                    )}
             </Container>
         </Box>
     );

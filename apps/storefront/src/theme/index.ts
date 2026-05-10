@@ -5,13 +5,13 @@ import typography from './typography';
 
 const border = alpha('#004825', 0.08);
 const strongBorder = alpha('#004825', 0.14);
-const surfaceGlow = '0 22px 50px rgba(7, 35, 24, 0.08)';
+const surfaceGlow = '0 18px 38px rgba(7, 35, 24, 0.08)';
 
 export const theme = createTheme({
     ...baselightTheme,
     typography,
     shape: {
-        borderRadius: 3,
+        borderRadius: 4,
     },
     components: {
         MuiCssBaseline: {
@@ -27,25 +27,30 @@ export const theme = createTheme({
             },
             styleOverrides: {
                 root: {
-                    borderRadius: 10,
+                    borderRadius: 8,
                     textTransform: 'none',
                     fontWeight: 700,
-                    letterSpacing: '0.01em',
-                    paddingInline: '1.2rem',
-                    paddingBlock: '0.72rem',
+                    letterSpacing: 0,
+                    paddingInline: '1.25rem',
+                    paddingBlock: '0.78rem',
+                    transition:
+                        'transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease',
+                    '&:hover': {
+                        transform: 'translateY(-1px)',
+                    },
                 },
                 containedPrimary: {
-                    background: '#0A5A31',
-                    boxShadow: '0 14px 26px rgba(6, 38, 22, 0.16)',
+                    background: 'linear-gradient(180deg, #0E5A34 0%, #073A23 100%)',
+                    boxShadow: '0 14px 24px rgba(6, 38, 22, 0.16)',
                     '&:hover': {
-                        boxShadow: '0 16px 28px rgba(6, 38, 22, 0.18)',
-                        background: '#116D3D',
+                        boxShadow: '0 16px 26px rgba(6, 38, 22, 0.2)',
+                        background: 'linear-gradient(180deg, #12663B 0%, #084428 100%)',
                     },
                 },
                 containedSecondary: {
                     background: 'linear-gradient(135deg, #E4C28E 0%, #C7A46B 100%)',
                     color: '#173428',
-                    boxShadow: '0 14px 26px rgba(139, 102, 57, 0.16)',
+                    boxShadow: '0 14px 24px rgba(139, 102, 57, 0.14)',
                     '&:hover': {
                         background: 'linear-gradient(135deg, #E7CC9F 0%, #BE975E 100%)',
                     },
@@ -69,7 +74,7 @@ export const theme = createTheme({
         MuiIconButton: {
             styleOverrides: {
                 root: {
-                    borderRadius: 10,
+                    borderRadius: 8,
                     border: `1px solid ${border}`,
                     backgroundColor: alpha('#FFFDF8', 0.74),
                     backdropFilter: 'blur(12px)',
@@ -92,7 +97,7 @@ export const theme = createTheme({
         MuiCard: {
             styleOverrides: {
                 root: {
-                    borderRadius: 16,
+                    borderRadius: 8,
                     border: `1px solid ${border}`,
                     boxShadow: surfaceGlow,
                 },
@@ -105,16 +110,16 @@ export const theme = createTheme({
                     borderColor: border,
                 },
                 rounded: {
-                    borderRadius: 14,
+                    borderRadius: 8,
                 },
             },
         },
         MuiChip: {
             styleOverrides: {
                 root: {
-                    borderRadius: 10,
+                    borderRadius: 8,
                     fontWeight: 700,
-                    letterSpacing: '0.01em',
+                    letterSpacing: 0,
                     backdropFilter: 'blur(10px)',
                 },
                 outlined: {
@@ -138,7 +143,7 @@ export const theme = createTheme({
         MuiOutlinedInput: {
             styleOverrides: {
                 root: {
-                    borderRadius: 10,
+                    borderRadius: 8,
                     backgroundColor: alpha('#FFFDF8', 0.9),
                     '& fieldset': {
                         borderColor: strongBorder,
@@ -163,7 +168,7 @@ export const theme = createTheme({
         MuiAlert: {
             styleOverrides: {
                 root: {
-                    borderRadius: 12,
+                    borderRadius: 8,
                     border: `1px solid ${border}`,
                 },
                 standardInfo: {
@@ -186,11 +191,11 @@ export const theme = createTheme({
                     backgroundColor: alpha('#062616', 0.96),
                     color: '#FFF9F1',
                     border: `1px solid ${alpha('#E4C28E', 0.24)}`,
-                    borderRadius: 10,
+                    borderRadius: 8,
                     padding: '0.65rem 0.8rem',
                     fontSize: '0.78rem',
                     fontWeight: 600,
-                    letterSpacing: '0.01em',
+                    letterSpacing: 0,
                     boxShadow: '0 18px 34px rgba(6, 27, 18, 0.24)',
                 },
                 arrow: {
@@ -203,13 +208,13 @@ export const theme = createTheme({
                 root: {
                     minHeight: 52,
                     backgroundColor: alpha('#FFFDF8', 0.7),
-                    borderRadius: 12,
+                    borderRadius: 8,
                     border: `1px solid ${border}`,
                     padding: 4,
                 },
                 indicator: {
                     height: '100%',
-                    borderRadius: 10,
+                    borderRadius: 6,
                     background: 'linear-gradient(135deg, rgba(0,72,37,0.12), rgba(199,164,107,0.18))',
                 },
             },
@@ -220,7 +225,7 @@ export const theme = createTheme({
                     minHeight: 44,
                     textTransform: 'none',
                     fontWeight: 700,
-                    borderRadius: 10,
+                    borderRadius: 6,
                     zIndex: 1,
                 },
             },
@@ -228,7 +233,7 @@ export const theme = createTheme({
         MuiListItemButton: {
             styleOverrides: {
                 root: {
-                    borderRadius: 10,
+                    borderRadius: 8,
                     transition: 'background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease',
                     '&:hover': {
                         transform: 'translateY(-1px)',

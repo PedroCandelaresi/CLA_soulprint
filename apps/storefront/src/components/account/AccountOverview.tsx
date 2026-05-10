@@ -1,6 +1,4 @@
 'use client';
-
-import Link from 'next/link';
 import {
     Box,
     Divider,
@@ -205,7 +203,7 @@ export default function AccountOverview() {
                                     alignItems: 'flex-start',
                                     px: 2,
                                     py: 1.75,
-                                    borderRadius: 3,
+                                    borderRadius: 2,
                                 }}
                             >
                                 <Stack spacing={0.5} alignItems="flex-start">

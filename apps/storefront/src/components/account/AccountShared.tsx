@@ -24,11 +24,11 @@ export function AccountSectionCard({
             variant="outlined"
             {...paperProps}
             sx={{
-                p: { xs: 2.5, md: 3 },
-                borderRadius: 5,
+                p: { xs: 2.5, md: 3.25 },
+                borderRadius: 2,
                 borderColor: 'divider',
                 background:
-                    'linear-gradient(180deg, rgba(255,251,244,0.94) 0%, rgba(255,255,255,0.74) 100%)',
+                    'linear-gradient(180deg, rgba(255,253,248,0.96) 0%, rgba(247,249,244,0.8) 100%)',
                 boxShadow: '0 18px 34px rgba(0,72,37,0.06)',
                 ...paperProps.sx,
             }}
@@ -163,7 +163,7 @@ export function AccountProgress({
             <LinearProgress
                 variant="determinate"
                 value={Math.max(0, Math.min(100, value))}
-                sx={{ height: 8, borderRadius: 6 }}
+                sx={{ height: 8, borderRadius: 2 }}
             />
             {caption && (
                 <Typography variant="body2" color="text.secondary">

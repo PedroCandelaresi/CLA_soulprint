@@ -31,22 +31,22 @@ const valueCards = [
 
 export default function SobreNosotrosPage() {
     return (
-        <Box sx={{ py: { xs: 7, md: 10 }, bgcolor: '#faf7f2' }}>
+        <Box sx={{ py: { xs: 7, md: 10 }, bgcolor: 'transparent' }}>
             <Container maxWidth="lg">
                 <Stack spacing={8}>
                     <Box
                         sx={{
                             px: { xs: 3, md: 6 },
                             py: { xs: 5, md: 8 },
-                            borderRadius: 5,
+                            borderRadius: 2,
                             border: '1px solid rgba(124, 92, 67, 0.16)',
                             background:
-                                'linear-gradient(135deg, rgba(255,250,243,1) 0%, rgba(248,237,221,1) 48%, rgba(240,226,204,1) 100%)',
-                            boxShadow: '0 24px 50px rgba(129, 103, 80, 0.12)',
+                                'linear-gradient(135deg, rgba(255,253,248,1) 0%, rgba(239,246,239,0.94) 52%, rgba(248,237,221,0.98) 100%)',
+                            boxShadow: '0 22px 46px rgba(0,72,37,0.08)',
                         }}
                     >
                         <Stack spacing={3} alignItems="center" textAlign="center">
-                            <Typography variant="overline" color="primary" fontWeight={700} letterSpacing={2}>
+                            <Typography variant="overline" color="primary" fontWeight={700}>
                                 NUESTRA IDENTIDAD
                             </Typography>
                             <Box
@@ -79,7 +79,7 @@ export default function SobreNosotrosPage() {
                         </Stack>
                     </Box>
 
-                    <Grid container spacing={3}>
+                    <Grid container spacing={{ xs: 2.5, md: 3.5 }}>
                         {valueCards.map((card) => (
                             <Grid key={card.title} size={{ xs: 12, sm: 6 }}>
                                 <Paper
@@ -87,7 +87,7 @@ export default function SobreNosotrosPage() {
                                     sx={{
                                         height: '100%',
                                         p: { xs: 3, md: 4 },
-                                        borderRadius: 4,
+                                        borderRadius: 2,
                                         border: '1px solid',
                                         borderColor: 'divider',
                                         backgroundColor: 'common.white',
@@ -110,7 +110,7 @@ export default function SobreNosotrosPage() {
                         elevation={0}
                         sx={{
                             p: { xs: 3.5, md: 5 },
-                            borderRadius: 4,
+                            borderRadius: 2,
                             border: '1px solid',
                             borderColor: 'divider',
                             backgroundColor: '#fffdf9',

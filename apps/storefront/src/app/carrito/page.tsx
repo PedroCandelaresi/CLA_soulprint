@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import {
     Alert,
     Box,
@@ -69,18 +68,18 @@ export default function CarritoPage() {
     };
 
     return (
-        <Box sx={{ py: { xs: 4, md: 6 }, minHeight: '70vh' }}>
+        <Box sx={{ py: { xs: 5, md: 7 }, minHeight: '70vh' }}>
             <Container maxWidth="xl">
                 <Stack spacing={3}>
                     <Paper
                         elevation={0}
                         sx={{
-                            p: { xs: 3, md: 4 },
-                            borderRadius: 6,
+                            p: { xs: 3, md: 4.5 },
+                            borderRadius: 2,
                             border: '1px solid rgba(0,72,37,0.08)',
                             background:
                                 'linear-gradient(135deg, rgba(255,251,244,0.96) 0%, rgba(248,239,224,0.96) 100%)',
-                            boxShadow: '0 22px 46px rgba(0,72,37,0.08)',
+                            boxShadow: '0 20px 42px rgba(0,72,37,0.08)',
                         }}
                     >
                         <Stack spacing={1}>
@@ -103,7 +102,7 @@ export default function CarritoPage() {
                             <CircularProgress />
                         </Stack>
                     ) : lines.length === 0 ? (
-                        <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, borderRadius: 5 }}>
+                        <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, borderRadius: 2 }}>
                             <Stack spacing={2} alignItems={{ xs: 'stretch', md: 'flex-start' }}>
                                 <Typography variant="h5" fontWeight={700}>
                                     Tu carrito está vacío
@@ -136,7 +135,7 @@ export default function CarritoPage() {
                                             variant="outlined"
                                             sx={{
                                                 p: 2.5,
-                                                borderRadius: 4,
+                                                borderRadius: 2,
                                                 background:
                                                     'linear-gradient(180deg, rgba(255,251,244,0.92) 0%, rgba(255,255,255,0.72) 100%)',
                                             }}
@@ -151,7 +150,7 @@ export default function CarritoPage() {
                                                         width: { xs: '100%', sm: 120 },
                                                         aspectRatio: '1 / 1',
                                                         position: 'relative',
-                                                        borderRadius: 3,
+                                                        borderRadius: 2,
                                                         overflow: 'hidden',
                                                         bgcolor: 'grey.100',
                                                         border: '1px solid rgba(0,72,37,0.08)',
@@ -235,7 +234,7 @@ export default function CarritoPage() {
                                     width: '100%',
                                     maxWidth: 380,
                                     p: 3,
-                                    borderRadius: 5,
+                                    borderRadius: 2,
                                     position: { lg: 'sticky' },
                                     top: { lg: 110 },
                                     background:

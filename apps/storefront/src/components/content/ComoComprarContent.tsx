@@ -34,8 +34,8 @@ const steps = [
 
 export default function ComoComprarContent() {
     return (
-        <Container maxWidth="lg" sx={{ py: 8 }}>
-            <Box sx={{ textAlign: 'center', mb: 8 }}>
+        <Container maxWidth="lg" sx={{ py: { xs: 7, md: 10 } }}>
+            <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
                 <Stack direction="row" justifyContent="center" spacing={1} useFlexGap flexWrap="wrap" mb={2}>
                     <Chip label="Guía de compra" color="secondary" variant="outlined" />
                     <Chip label="Simple y clara" color="primary" variant="outlined" />
@@ -56,8 +56,8 @@ export default function ComoComprarContent() {
                         sm: 'repeat(2, minmax(0, 1fr))',
                         md: 'repeat(5, minmax(0, 1fr))',
                     },
-                    gap: 3,
-                    mb: 8,
+                    gap: { xs: 2.5, md: 3 },
+                    mb: { xs: 6, md: 8 },
                 }}
             >
                 {steps.map((step, index) => (
@@ -69,8 +69,8 @@ export default function ComoComprarContent() {
                             borderColor: 'rgba(0,72,37,0.14)',
                             bgcolor: 'rgba(255,251,244,0.9)',
                             backdropFilter: 'blur(12px)',
-                            borderRadius: 3,
-                            boxShadow: '0 18px 44px rgba(6,38,22,0.08)',
+                            borderRadius: 2,
+                            boxShadow: '0 16px 34px rgba(6,38,22,0.08)',
                         }}
                     >
                         <CardContent sx={{ textAlign: 'center', py: 4 }}>
@@ -79,8 +79,8 @@ export default function ComoComprarContent() {
                                     bgcolor: 'rgba(255,250,242,0.96)',
                                     color: 'primary.main',
                                     border: '1px solid rgba(199,164,107,0.28)',
-                                    width: 80,
-                                    height: 80,
+                                    width: 72,
+                                    height: 72,
                                     mx: 'auto',
                                     mb: 3,
                                     boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.68)',
@@ -105,7 +105,7 @@ export default function ComoComprarContent() {
                     size="large"
                     href="/productos"
                     tooltip="Ir a la tienda"
-                    sx={{ px: 6, py: 2, fontSize: '1.05rem' }}
+                    sx={{ px: 5, py: 1.4, fontSize: '1rem', borderRadius: 2 }}
                 >
                     Ver productos
                 </TooltipButton>

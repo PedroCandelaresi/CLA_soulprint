@@ -11,6 +11,8 @@
   --cla-brand-paper: #fffaf2;
   --cla-brand-ink: #173428;
   --cla-brand-muted: #617268;
+  --cla-brand-clay: #b86f58;
+  --cla-brand-sage: #dfe9df;
   --cla-header-border: rgba(244, 234, 213, 0.26);
   --brand-logo-bg: transparent;
   --brand-logo-fg: var(--cla-brand-green);
@@ -24,6 +26,8 @@
 
 html {
   height: 100%;
+  width: 100%;
+  max-width: 100%;
   overflow: hidden;
   background: var(--cla-brand-mist);
 }
@@ -31,47 +35,20 @@ html {
 body {
   height: 100%;
   overflow: hidden;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   position: relative;
   isolation: isolate;
   background:
-    radial-gradient(circle at top left, rgba(244, 234, 213, 0.76), transparent 32%),
-    radial-gradient(circle at 82% 18%, rgba(199, 164, 107, 0.18), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(9, 69, 40, 0.08), transparent 30%),
+    linear-gradient(120deg, rgba(255, 253, 248, 0.98) 0%, rgba(240, 246, 239, 0.92) 46%, rgba(248, 239, 224, 0.96) 100%),
     linear-gradient(180deg, #fffdf8 0%, #f6eee3 100%);
   color: var(--cla-brand-ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-body::before,
-body::after {
-  content: '';
-  position: fixed;
-  inset: auto;
-  pointer-events: none;
-  z-index: -1;
-}
-
-body::before {
-  top: -12rem;
-  right: -10rem;
-  width: 26rem;
-  height: 26rem;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(199, 164, 107, 0.16) 0%, rgba(199, 164, 107, 0) 70%);
-  filter: blur(8px);
-}
-
-body::after {
-  bottom: -14rem;
-  left: -12rem;
-  width: 30rem;
-  height: 30rem;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(0, 72, 37, 0.08) 0%, rgba(0, 72, 37, 0) 72%);
 }
 
 * {
@@ -85,6 +62,7 @@ a {
 
 img {
   max-width: 100%;
+  height: auto;
 }
 
 button,
@@ -96,10 +74,18 @@ select {
 
 main {
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   /* Firefox */
   scrollbar-width: thin;
   scrollbar-color: #005a2e rgba(0, 72, 37, 0.06);
   scroll-behavior: smooth;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(0, 72, 37, 0.58);
+  outline-offset: 3px;
 }
 
 /* Chrome / Safari / Edge — scrollbar verde metálica */

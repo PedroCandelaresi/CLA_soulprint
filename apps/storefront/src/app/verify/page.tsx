@@ -26,14 +26,14 @@ function VerifyPageFallback() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: 'grey.50',
-                py: 4,
+                background: 'linear-gradient(135deg, rgba(255,253,248,1) 0%, rgba(239,246,239,0.92) 100%)',
+                py: { xs: 5, md: 7 },
             }}
         >
             <Container maxWidth="sm">
                 <Paper
                     elevation={0}
-                    sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}
+                    sx={{ p: { xs: 3, md: 5 }, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}
                 >
                     <Stack spacing={3} alignItems="center" textAlign="center">
                         <Typography variant="h4" fontWeight={700}>
@@ -113,12 +113,12 @@ function VerifyPageContent() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: 'grey.50',
-                py: 4,
+                background: 'linear-gradient(135deg, rgba(255,253,248,1) 0%, rgba(239,246,239,0.92) 100%)',
+                py: { xs: 5, md: 7 },
             }}
         >
             <Container maxWidth="sm">
-                <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+                <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Stack spacing={3}>
                         <Stack spacing={1} textAlign="center">
                             <Typography variant="h4" fontWeight={700}>

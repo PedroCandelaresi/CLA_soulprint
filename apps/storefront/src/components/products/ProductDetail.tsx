@@ -72,7 +72,17 @@ const ProductDetailGallery = ({ images, alt, overlay }: ProductDetailGalleryProp
     const maxSteps = images.length;
 
     useEffect(() => {
-        setActiveStep(0);
+        let cancelled = false;
+
+        queueMicrotask(() => {
+            if (!cancelled) {
+                setActiveStep(0);
+            }
+        });
+
+        return () => {
+            cancelled = true;
+        };
     }, [images]);
 
     if (maxSteps === 0) {
@@ -85,17 +95,17 @@ const ProductDetailGallery = ({ images, alt, overlay }: ProductDetailGalleryProp
                 sx={{
                     position: 'relative',
                     width: '100%',
-                    height: { xs: 360, md: 560 },
+                    height: { xs: 380, md: 580 },
                     overflow: 'hidden',
-                    borderRadius: 5,
+                    borderRadius: 2,
                     border: `1px solid ${theme.palette.divider}`,
-                    background: 'linear-gradient(180deg, rgba(244,234,213,0.8) 0%, rgba(255,253,248,1) 100%)',
-                    boxShadow: '0 22px 42px rgba(0,72,37,0.08)',
+                    background: 'linear-gradient(180deg, rgba(239,246,239,0.86) 0%, rgba(255,253,248,1) 100%)',
+                    boxShadow: '0 20px 40px rgba(0,72,37,0.08)',
                     '&::after': {
                         content: '""',
                         position: 'absolute',
-                        inset: 18,
-                        borderRadius: 14,
+                        inset: 16,
+                        borderRadius: 2,
                         border: '1px solid rgba(255,255,255,0.58)',
                         pointerEvents: 'none',
                     },
@@ -106,7 +116,7 @@ const ProductDetailGallery = ({ images, alt, overlay }: ProductDetailGalleryProp
                     alt={`${alt} - Image ${activeStep + 1}`}
                     fill
                     sizes="(max-width: 900px) 100vw, 50vw"
-                    style={{ objectFit: 'contain', padding: 22 }}
+                    style={{ objectFit: 'contain', padding: 26 }}
                     priority={activeStep === 0}
                 />
                 {overlay && (
@@ -506,14 +516,14 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
         <Box
             sx={{
                 mt: 2,
-                p: { xs: 2.5, md: 4 },
-                borderRadius: 6,
+                p: { xs: 2.5, md: 4.5 },
+                borderRadius: 2,
                 border: '1px solid rgba(0,72,37,0.08)',
-                background: 'linear-gradient(180deg, rgba(255,250,242,0.94) 0%, rgba(255,255,255,0.72) 100%)',
-                boxShadow: '0 22px 44px rgba(0,72,37,0.08)',
+                background: 'linear-gradient(180deg, rgba(255,253,248,0.96) 0%, rgba(247,249,244,0.82) 100%)',
+                boxShadow: '0 20px 44px rgba(0,72,37,0.08)',
             }}
         >
-            <Grid container spacing={{ xs: 3, md: 4 }}>
+            <Grid container spacing={{ xs: 3.5, md: 5 }}>
                 <Grid size={{ xs: 12, md: 6 }}>
                     <Box sx={{ position: { md: 'sticky' }, top: { md: 108 } }}>
                         <ProductDetailGallery
@@ -524,8 +534,8 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
                     </Box>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <Stack spacing={2.75}>
-                        <Stack spacing={1}>
+                    <Stack spacing={3}>
+                        <Stack spacing={1.15}>
                             <Typography variant="overline" color="secondary.dark">
                                 Pieza seleccionada
                             </Typography>
@@ -624,10 +634,6 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
                                                     );
                                                 })}
                                             </Stack>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Las opciones tachadas corresponden a variantes sin stock. Las deshabilitadas
-                                                no existen para la combinación actual.
-                                            </Typography>
                                         </Stack>
                                     ))}
                                 </Stack>
@@ -693,7 +699,7 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
                                 <Box
                                     sx={{
                                         p: 2.5,
-                                        borderRadius: 3,
+                                        borderRadius: 2,
                                         border: '1px solid rgba(0,72,37,0.14)',
                                         bgcolor: 'rgba(255,251,244,0.88)',
                                         display: 'flex',
@@ -728,7 +734,7 @@ const ProductDetail = ({ product, initialSearchParams = {} }: ProductDetailProps
                                     alignItems: 'center',
                                     gap: 1,
                                     p: 0.75,
-                                    borderRadius: 10,
+                                    borderRadius: 2,
                                     border: '1px solid rgba(0,72,37,0.1)',
                                     bgcolor: 'rgba(255,255,255,0.68)',
                                     width: 'fit-content',

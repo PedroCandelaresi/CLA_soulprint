@@ -140,8 +140,8 @@ export function CustomerAccountShell({ children }: { children: React.ReactNode }
     }
 
     return (
-        <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
-            <Stack spacing={3}>
+        <Container maxWidth="xl" sx={{ py: { xs: 4, md: 6 } }}>
+            <Stack spacing={{ xs: 3, md: 4 }}>
                 <AccountSectionCard
                     sx={{
                         overflow: 'hidden',
@@ -151,7 +151,7 @@ export function CustomerAccountShell({ children }: { children: React.ReactNode }
                         )} 58%, ${alpha(theme.palette.secondary.dark, 0.72)} 100%)`,
                         color: 'common.white',
                         borderColor: alpha(theme.palette.common.white, 0.08),
-                        boxShadow: '0 28px 56px rgba(6,38,22,0.18)',
+                        boxShadow: '0 24px 46px rgba(6,38,22,0.18)',
                     }}
                 >
                     <Stack
@@ -291,7 +291,7 @@ export function CustomerAccountShell({ children }: { children: React.ReactNode }
                                             href={item.href}
                                             selected={selected}
                                             sx={{
-                                                borderRadius: 3,
+                                    borderRadius: 2,
                                                 px: 1.5,
                                                 py: 1.1,
                                                 border: '1px solid',

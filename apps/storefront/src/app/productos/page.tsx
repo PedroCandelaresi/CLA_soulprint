@@ -45,62 +45,59 @@ export default async function ProductosPage({
     }
 
     return (
-        <Container maxWidth="xl" sx={{ py: { xs: 4, md: 6 } }}>
+        <Container maxWidth="xl" sx={{ py: { xs: 5, md: 7 } }}>
             <Box
                 sx={{
-                    mb: 4,
-                    p: { xs: 3.5, md: 5 },
-                    borderRadius: 4,
+                    mb: { xs: 4, md: 6 },
+                    p: { xs: 3.5, md: 5.5 },
+                    borderRadius: 2,
                     border: '1px solid rgba(0,72,37,0.08)',
                     background:
-                        'linear-gradient(135deg, rgba(255,253,248,1) 0%, rgba(247,238,224,1) 46%, rgba(241,231,213,1) 100%)',
-                    boxShadow: '0 20px 44px rgba(0,72,37,0.06)',
+                        'linear-gradient(135deg, rgba(255,253,248,1) 0%, rgba(239,246,239,0.96) 52%, rgba(247,238,224,0.98) 100%)',
+                    boxShadow: '0 18px 38px rgba(0,72,37,0.06)',
+                    minWidth: 0,
                 }}
             >
                 <Typography
                     variant="overline"
-                    sx={{ color: 'secondary.dark', letterSpacing: 3.2, fontWeight: 700 }}
+                    sx={{ color: 'secondary.dark', fontWeight: 700 }}
                 >
                     CLA Soulprint
                 </Typography>
                 <Typography variant="h2" fontWeight="700" color="primary.dark" mt={0.5}>
                     Tienda
                 </Typography>
-                <Typography variant="body1" color="text.secondary" mt={1.5} sx={{ maxWidth: 760, lineHeight: 1.9 }}>
+                <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    mt={1.5}
+                    sx={{ maxWidth: 760, lineHeight: 1.9, overflowWrap: 'break-word' }}
+                >
                     {collectionSlug
                         ? `Filtrando por: ${collections.find(c => c.slug === collectionSlug)?.name || collectionSlug}.`
-                        : 'Explorá toda la colección desde una interfaz más cálida, editorial y alineada con la identidad visual de CLA.'}
+                        : 'Explorá piezas pensadas para llevar cerca recuerdos, afectos y pequeños rituales cotidianos.'}
                 </Typography>
             </Box>
 
-            <Grid container spacing={3} alignItems="flex-start">
-                <Grid size={{ xs: 12, md: 3 }}>
+            <Grid container spacing={{ xs: 4, md: 5 }} alignItems="flex-start" sx={{ minWidth: 0 }}>
+                <Grid size={{ xs: 12, md: 3 }} sx={{ minWidth: 0 }}>
                     <Paper
                         elevation={0}
                         sx={{
                             border: '1px solid rgba(0,72,37,0.08)',
                             bgcolor: '#fffdf8',
-                        position: { md: 'sticky' },
-                        top: { md: 96 },
-                        borderRadius: 4,
-                    }}
-                >
-                    <ProductFilter collections={collections} />
-                </Paper>
-            </Grid>
-
-                <Grid size={{ xs: 12, md: 9 }}>
-                    <Paper
-                        elevation={0}
-                        sx={{
-                            p: { xs: 2.5, md: 3.5 },
-                            border: '1px solid rgba(0,72,37,0.08)',
-                            bgcolor: '#fffdf8',
-                            borderRadius: 4,
+                            position: { md: 'sticky' },
+                            top: { md: 104 },
+                            borderRadius: 2,
+                            boxShadow: '0 14px 30px rgba(0,72,37,0.06)',
                         }}
                     >
-                        <ProductList products={products} />
+                        <ProductFilter collections={collections} />
                     </Paper>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 9 }} sx={{ minWidth: 0 }}>
+                    <ProductList products={products} />
                 </Grid>
             </Grid>
         </Container>

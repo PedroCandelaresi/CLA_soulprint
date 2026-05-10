@@ -710,7 +710,7 @@ function CheckoutReturnPageContent() {
                 {feedback && <Alert severity={feedback.severity}>{feedback.message}</Alert>}
 
                 <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3} alignItems="stretch">
-                    <Paper variant="outlined" sx={{ flex: 1, p: { xs: 3, md: 4 }, borderRadius: 3 }}>
+                    <Paper variant="outlined" sx={{ flex: 1, p: { xs: 3, md: 4 }, borderRadius: 2 }}>
                         <Stack spacing={2.5}>
                             <Stack
                                 direction={{ xs: 'column', sm: 'row' }}
@@ -750,7 +750,7 @@ function CheckoutReturnPageContent() {
                                     variant="outlined"
                                     sx={{
                                         p: 2.5,
-                                        borderRadius: 3,
+                                        borderRadius: 2,
                                         bgcolor: 'grey.50',
                                     }}
                                 >
@@ -835,7 +835,7 @@ function CheckoutReturnPageContent() {
                         </Stack>
                     </Paper>
 
-                    <Paper variant="outlined" sx={{ width: '100%', maxWidth: 380, p: 3, borderRadius: 3 }}>
+                    <Paper variant="outlined" sx={{ width: '100%', maxWidth: 380, p: 3, borderRadius: 2 }}>
                         <Stack spacing={2}>
                             <Typography variant="h5" fontWeight={700}>
                                 Acciones

@@ -43,23 +43,20 @@ const ProductFilter = ({ collections }: ProductFilterProps) => {
     };
 
     return (
-        <Box p={3}>
-            <Box px={1.5} mb={2.5}>
+        <Box p={{ xs: 2.25, md: 2.75 }}>
+            <Box px={1} mb={2.25}>
                 <Typography variant="h6" fontWeight={700}>
                     Filtrar colección
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-                    Elegí una categoría para recorrer el catálogo con una vista más precisa.
-                </Typography>
             </Box>
 
-            <List>
+            <List disablePadding sx={{ display: 'grid', gap: 0.75 }}>
                 <Typography
                     variant="overline"
                     fontWeight={700}
-                    px={1.5}
-                    mb={2}
-                    sx={{ color: 'secondary.dark', letterSpacing: 2.4 }}
+                    px={1}
+                    mb={1}
+                    sx={{ color: 'secondary.dark' }}
                 >
                     Categorías
                 </Typography>
@@ -69,10 +66,10 @@ const ProductFilter = ({ collections }: ProductFilterProps) => {
                         selected={activeCollection === collection.slug}
                         onClick={() => handleCollectionClick(collection.slug)}
                         sx={{
-                            borderRadius: 10,
-                            mb: 1,
+                            borderRadius: 2,
                             border: '1px solid transparent',
                             px: 1.5,
+                            py: 1.05,
                             '&.Mui-selected': {
                                 borderColor: 'rgba(0,72,37,0.14)',
                                 bgcolor: 'rgba(0,72,37,0.06)',
@@ -92,7 +89,7 @@ const ProductFilter = ({ collections }: ProductFilterProps) => {
 
             <Divider sx={{ my: 3 }} />
 
-            <Box px={2}>
+            <Box px={1}>
                 <TooltipButton
                     variant="outlined"
                     color="inherit"
@@ -101,7 +98,7 @@ const ProductFilter = ({ collections }: ProductFilterProps) => {
                     onClick={handleReset}
                     disabled={!activeCollection}
                     tooltip="Quitar el filtro de categoría activo"
-                    sx={{ borderRadius: 10 }}
+                    sx={{ borderRadius: 2 }}
                 >
                     Limpiar Filtros
                 </TooltipButton>

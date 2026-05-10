@@ -11,8 +11,8 @@ type DestacadosContentProps = {
 export default function DestacadosContent({ featuredProducts = [] }: DestacadosContentProps) {
     return (
         <>
-            <Container maxWidth="lg" sx={{ pt: 8, pb: 4 }}>
-                <Box sx={{ textAlign: 'center', mb: 8 }}>
+            <Container maxWidth="lg" sx={{ pt: { xs: 7, md: 9 }, pb: 4 }}>
+                <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
                     <Stack direction="row" justifyContent="center" spacing={1} useFlexGap flexWrap="wrap" mb={2}>
                         <Chip label="Selección destacada" color="secondary" variant="outlined" />
                         <Chip label="Curaduría CLA" color="primary" variant="outlined" />
@@ -33,11 +33,11 @@ export default function DestacadosContent({ featuredProducts = [] }: DestacadosC
                     sx={{
                         background:
                             'linear-gradient(135deg, rgba(255,250,242,0.96) 0%, rgba(245,235,217,0.86) 100%)',
-                        p: 6,
-                        borderRadius: 3,
+                        p: { xs: 3.5, md: 5 },
+                        borderRadius: 2,
                         textAlign: 'center',
                         border: '1px solid rgba(199,164,107,0.28)',
-                        boxShadow: '0 18px 44px rgba(6,38,22,0.08)',
+                        boxShadow: '0 16px 34px rgba(6,38,22,0.08)',
                     }}
                 >
                     <Typography variant="h4" fontStyle="italic" color="primary.dark" sx={{ lineHeight: 1.6 }}>

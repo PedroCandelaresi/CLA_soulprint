@@ -172,7 +172,7 @@ function DemoShippingGatewayPageContent() {
                     elevation={0}
                     sx={{
                         overflow: 'hidden',
-                        borderRadius: 4,
+                        borderRadius: 2,
                         border: '1px solid',
                         borderColor: 'divider',
                         background:
@@ -189,7 +189,7 @@ function DemoShippingGatewayPageContent() {
                             alignItems={{ xs: 'flex-start', sm: 'center' }}
                         >
                             <Stack spacing={1}>
-                                <Typography variant="overline" sx={{ letterSpacing: 2.5, opacity: 0.9 }}>
+                                <Typography variant="overline" sx={{ opacity: 0.9 }}>
                                     Envío
                                 </Typography>
                                 <Typography variant="h3" fontWeight={700}>
@@ -206,7 +206,7 @@ function DemoShippingGatewayPageContent() {
                 {feedback && <Alert severity={feedback.severity}>{feedback.message}</Alert>}
 
                 <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3} alignItems="stretch">
-                    <Paper variant="outlined" sx={{ flex: 1, p: 3, borderRadius: 3 }}>
+                    <Paper variant="outlined" sx={{ flex: 1, p: 3, borderRadius: 2 }}>
                         <Stack spacing={2.5}>
                             <Typography variant="h5" fontWeight={700}>
                                 Resumen del despacho
@@ -234,7 +234,7 @@ function DemoShippingGatewayPageContent() {
                                 variant="outlined"
                                 sx={{
                                     p: 2.5,
-                                    borderRadius: 3,
+                                    borderRadius: 2,
                                     bgcolor: 'grey.50',
                                 }}
                             >
@@ -259,7 +259,7 @@ function DemoShippingGatewayPageContent() {
                         </Stack>
                     </Paper>
 
-                    <Paper variant="outlined" sx={{ width: '100%', maxWidth: 360, p: 3, borderRadius: 3 }}>
+                    <Paper variant="outlined" sx={{ width: '100%', maxWidth: 360, p: 3, borderRadius: 2 }}>
                         <Stack spacing={2}>
                             <Typography variant="h5" fontWeight={700}>
                                 Cotización

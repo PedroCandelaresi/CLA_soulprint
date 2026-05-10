@@ -32,7 +32,7 @@ function VerificacionPendienteContent() {
                 minHeight: '70vh',
                 display: 'flex',
                 alignItems: 'center',
-                background: 'linear-gradient(135deg, #f0f7ff 0%, #fafafa 100%)',
+                background: 'linear-gradient(135deg, rgba(255,253,248,1) 0%, rgba(239,246,239,0.92) 100%)',
             }}
         >
             <Container maxWidth="sm">
@@ -40,7 +40,7 @@ function VerificacionPendienteContent() {
                     elevation={0}
                     sx={{
                         p: { xs: 4, md: 6 },
-                        borderRadius: 4,
+                        borderRadius: 2,
                         border: '1px solid',
                         borderColor: 'divider',
                         textAlign: 'center',
@@ -51,7 +51,7 @@ function VerificacionPendienteContent() {
                             sx={{
                                 width: 80,
                                 height: 80,
-                                borderRadius: '50%',
+                                borderRadius: 2,
                                 bgcolor: 'primary.50',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -88,7 +88,7 @@ function VerificacionPendienteContent() {
                             variant="outlined"
                             sx={{
                                 p: 2.5,
-                                borderRadius: 3,
+                                borderRadius: 2,
                                 bgcolor: 'success.50',
                                 borderColor: 'success.200',
                                 width: '100%',

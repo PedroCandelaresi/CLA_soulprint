@@ -1,70 +1,85 @@
-const fontFamily = 'Arial, Helvetica, sans-serif';
-const headingFamily = 'Arial, Helvetica, sans-serif';
+const fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+const headingFamily = fontFamily;
 
 const typography = {
     fontFamily,
     h1: {
         fontFamily: headingFamily,
         fontWeight: 700,
-        fontSize: 'clamp(2.8rem, 6vw, 4.2rem)',
-        lineHeight: 1.02,
-        letterSpacing: '-0.04em',
+        fontSize: '4rem',
+        lineHeight: 1.04,
+        letterSpacing: 0,
+        '@media (max-width:600px)': {
+            fontSize: '2.55rem',
+        },
     },
     h2: {
         fontFamily: headingFamily,
         fontWeight: 700,
-        fontSize: 'clamp(2.2rem, 4.8vw, 3.3rem)',
-        lineHeight: 1.05,
-        letterSpacing: '-0.032em',
+        fontSize: '3.15rem',
+        lineHeight: 1.08,
+        letterSpacing: 0,
+        '@media (max-width:600px)': {
+            fontSize: '2.15rem',
+        },
     },
     h3: {
         fontFamily: headingFamily,
         fontWeight: 700,
-        fontSize: 'clamp(1.85rem, 3.8vw, 2.65rem)',
-        lineHeight: 1.08,
-        letterSpacing: '-0.026em',
+        fontSize: '2.45rem',
+        lineHeight: 1.12,
+        letterSpacing: 0,
+        '@media (max-width:600px)': {
+            fontSize: '1.8rem',
+        },
     },
     h4: {
         fontFamily: headingFamily,
         fontWeight: 700,
-        fontSize: 'clamp(1.5rem, 3vw, 2.05rem)',
-        lineHeight: 1.14,
-        letterSpacing: '-0.02em',
+        fontSize: '2rem',
+        lineHeight: 1.18,
+        letterSpacing: 0,
+        '@media (max-width:600px)': {
+            fontSize: '1.55rem',
+        },
     },
     h5: {
         fontFamily: headingFamily,
         fontWeight: 700,
-        fontSize: 'clamp(1.22rem, 2.1vw, 1.6rem)',
-        lineHeight: 1.18,
-        letterSpacing: '-0.015em',
+        fontSize: '1.48rem',
+        lineHeight: 1.24,
+        letterSpacing: 0,
+        '@media (max-width:600px)': {
+            fontSize: '1.22rem',
+        },
     },
     h6: {
         fontFamily: headingFamily,
         fontWeight: 700,
-        fontSize: 'clamp(1rem, 1.8vw, 1.22rem)',
-        lineHeight: 1.24,
-        letterSpacing: '-0.01em',
+        fontSize: '1.12rem',
+        lineHeight: 1.32,
+        letterSpacing: 0,
     },
     button: {
         textTransform: 'none' as const,
         fontWeight: 700,
-        letterSpacing: '0.01em',
+        letterSpacing: 0,
     },
     body1: {
-        fontSize: '0.975rem',
+        fontSize: '1rem',
         fontWeight: 400,
-        lineHeight: 1.72,
+        lineHeight: 1.74,
     },
     body2: {
         fontSize: '0.875rem',
-        letterSpacing: '0.005em',
+        letterSpacing: 0,
         fontWeight: 400,
-        lineHeight: 1.58,
+        lineHeight: 1.62,
     },
     subtitle1: {
         fontSize: '1rem',
         fontWeight: 500,
-        lineHeight: 1.64,
+        lineHeight: 1.68,
     },
     subtitle2: {
         fontSize: '0.875rem',
@@ -74,7 +89,8 @@ const typography = {
     overline: {
         fontSize: '0.72rem',
         fontWeight: 700,
-        letterSpacing: '0.22em',
+        letterSpacing: 0,
+        textTransform: 'uppercase' as const,
     },
 };
 

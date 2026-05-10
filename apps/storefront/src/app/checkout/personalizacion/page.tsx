@@ -216,7 +216,7 @@ function CheckoutPersonalizationContent() {
                         )}
 
                         {order && (
-                            <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
+                            <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 2 }}>
                                 <Stack spacing={1.25}>
                                     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                                         <Chip label={`Pedido ${order.code}`} variant="outlined" />
@@ -250,7 +250,7 @@ function CheckoutPersonalizationContent() {
                         )}
                     </Stack>
 
-                    <Paper variant="outlined" sx={{ width: '100%', maxWidth: 360, p: 3, borderRadius: 3 }}>
+                    <Paper variant="outlined" sx={{ width: '100%', maxWidth: 360, p: 3, borderRadius: 2 }}>
                         <Stack spacing={2}>
                             <Typography variant="h5" fontWeight={800}>
                                 Revisión

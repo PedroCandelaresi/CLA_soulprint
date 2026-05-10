@@ -69,7 +69,7 @@ function PersonalizationSideCard({
         <Box
             sx={{
                 p: 1.5,
-                borderRadius: 3,
+                borderRadius: 2,
                 border: '1px solid rgba(0,72,37,0.1)',
                 bgcolor: 'rgba(255,253,248,0.86)',
                 minWidth: 0,
@@ -148,7 +148,7 @@ function LinePersonalizationBlock({ line }: { line: PersonalizationLineData }) {
             sx={{
                 mt: 1.5,
                 p: 1.5,
-                borderRadius: 3,
+                borderRadius: 2,
                 border: '1px solid rgba(199,164,107,0.24)',
                 bgcolor: 'rgba(246,237,222,0.46)',
             }}
@@ -456,7 +456,7 @@ export default function AccountOrderDetail({ code }: { code: string }) {
                                                     width: { xs: '100%', sm: 96 },
                                                     aspectRatio: '1 / 1',
                                                     position: 'relative',
-                                                    borderRadius: 3,
+                                                    borderRadius: 2,
                                                     overflow: 'hidden',
                                                     bgcolor: 'grey.100',
                                                     flexShrink: 0,

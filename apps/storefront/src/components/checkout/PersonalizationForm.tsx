@@ -46,7 +46,7 @@ export default function PersonalizationForm({ values, onChange, disabled }: Pers
             <Box
                 sx={{
                     p: 2.5,
-                    borderRadius: 3,
+                    borderRadius: 2,
                     border: `1px solid ${GREEN_BORDER}`,
                     bgcolor: SURFACE,
                 }}
@@ -120,7 +120,7 @@ export default function PersonalizationForm({ values, onChange, disabled }: Pers
             <Box
                 sx={{
                     p: 2.5,
-                    borderRadius: 3,
+                    borderRadius: 2,
                     border: `1px solid ${GREEN_BORDER}`,
                     bgcolor: SURFACE,
                 }}

@@ -340,7 +340,7 @@ function PaymentMethodCard({
             onClick={onSelect}
             sx={{
                 p: 2,
-                borderRadius: 2.5,
+                borderRadius: 2,
                 cursor: 'pointer',
                 border: '2px solid',
                 borderColor: selected ? 'primary.main' : 'divider',
@@ -398,7 +398,7 @@ function PaymentInstructions({ display }: { display: PaymentDisplay }) {
             variant="outlined"
             sx={{
                 p: 2.5,
-                borderRadius: 2.5,
+                borderRadius: 2,
                 bgcolor: 'rgba(232,242,236,0.62)',
                 borderColor: 'rgba(0,72,37,0.18)',
             }}
@@ -723,7 +723,7 @@ function CheckoutContent() {
                 <Container maxWidth="sm">
                     <Paper
                         elevation={0}
-                        sx={{ p: { xs: 4, md: 6 }, borderRadius: 4, border: '1px solid', borderColor: 'divider', textAlign: 'center' }}
+                        sx={{ p: { xs: 4, md: 6 }, borderRadius: 2, border: '1px solid', borderColor: 'divider', textAlign: 'center' }}
                     >
                         <Stack spacing={3} alignItems="center">
                             <Stack spacing={1}>
@@ -764,7 +764,7 @@ function CheckoutContent() {
                         elevation={0}
                         sx={{
                             p: { xs: 4, md: 6 },
-                            borderRadius: 4,
+                            borderRadius: 2,
                             border: '1px solid',
                             borderColor: 'divider',
                             textAlign: 'center',
@@ -796,18 +796,18 @@ function CheckoutContent() {
 
     // ── Checkout principal ──
     return (
-        <Box sx={{ minHeight: '100vh', py: { xs: 3, md: 5 } }}>
+        <Box sx={{ minHeight: '100vh', py: { xs: 4, md: 6 } }}>
             <Container maxWidth="lg">
-                <Stack spacing={3}>
+                <Stack spacing={{ xs: 3, md: 4 }}>
                     <Paper
                         elevation={0}
                         sx={{
                             p: { xs: 3, md: 4 },
-                            borderRadius: 5,
+                            borderRadius: 2,
                             border: '1px solid',
                             borderColor: 'divider',
                             background:
-                                'linear-gradient(135deg, rgba(255,251,244,0.96) 0%, rgba(247,238,224,0.96) 100%)',
+                                'linear-gradient(135deg, rgba(255,253,248,0.98) 0%, rgba(239,246,239,0.92) 52%, rgba(247,238,224,0.96) 100%)',
                         }}
                     >
                         <Stack spacing={1.25}>
@@ -822,7 +822,7 @@ function CheckoutContent() {
 
                     <Paper
                         elevation={0}
-                        sx={{ p: 2.5, borderRadius: 2.5, border: '1px solid', borderColor: 'divider', bgcolor: CLA_SURFACE }}
+                        sx={{ p: 2.5, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: CLA_SURFACE }}
                     >
                         <StepIndicator step={step} />
                     </Paper>
@@ -831,7 +831,7 @@ function CheckoutContent() {
                         <Alert
                             severity={feedback.severity}
                             onClose={() => setFeedback(null)}
-                            sx={{ borderRadius: 3 }}
+                            sx={{ borderRadius: 2 }}
                         >
                             {feedback.message}
                         </Alert>
@@ -843,7 +843,7 @@ function CheckoutContent() {
                                 elevation={0}
                                 sx={{
                                     p: { xs: 3, md: 4 },
-                                    borderRadius: 3,
+                                    borderRadius: 2,
                                     border: '1px solid',
                                     borderColor: step === 2 ? 'rgba(47,125,78,0.24)' : 'divider',
                                     bgcolor: CLA_SURFACE,
@@ -995,7 +995,7 @@ function CheckoutContent() {
                             {step === 2 && (
                                 <Paper
                                     elevation={0}
-                                    sx={{ p: { xs: 3, md: 4 }, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: CLA_SURFACE }}
+                                    sx={{ p: { xs: 3, md: 4 }, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: CLA_SURFACE }}
                                 >
                                     <Stack spacing={3}>
                                         <Stack direction="row" spacing={1.5} alignItems="center">
@@ -1054,7 +1054,7 @@ function CheckoutContent() {
                                 elevation={0}
                                 sx={{
                                     p: 3,
-                                    borderRadius: 5,
+                                    borderRadius: 2,
                                     border: '1px solid',
                                     borderColor: 'divider',
                                     position: { lg: 'sticky' },
@@ -1144,7 +1144,7 @@ function CheckoutContent() {
                                     <Paper
                                         sx={{
                                             p: 2,
-                                            borderRadius: 2.5,
+                                            borderRadius: 2,
                                             bgcolor: CLA_SURFACE_STRONG,
                                             border: '1px solid',
                                             borderColor: CLA_GOLD_BORDER,

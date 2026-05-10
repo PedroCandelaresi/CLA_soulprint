@@ -44,12 +44,24 @@ export default function AccountProfile() {
             return;
         }
 
-        setProfileForm({
-            title: customer.title || '',
-            firstName: customer.firstName || '',
-            lastName: customer.lastName || '',
-            phoneNumber: customer.phoneNumber || '',
+        let cancelled = false;
+
+        queueMicrotask(() => {
+            if (cancelled) {
+                return;
+            }
+
+            setProfileForm({
+                title: customer.title || '',
+                firstName: customer.firstName || '',
+                lastName: customer.lastName || '',
+                phoneNumber: customer.phoneNumber || '',
+            });
         });
+
+        return () => {
+            cancelled = true;
+        };
     }, [customer]);
 
     if (accountError) {

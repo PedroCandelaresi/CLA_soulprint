@@ -206,7 +206,7 @@ export function PersonalizationUploadPanel({
     return (
         <Paper
             variant="outlined"
-            sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3, bgcolor: 'rgba(255,253,248,0.88)' }}
+            sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 2, bgcolor: 'rgba(255,253,248,0.88)' }}
         >
             <Stack spacing={2.5}>
                 <Stack

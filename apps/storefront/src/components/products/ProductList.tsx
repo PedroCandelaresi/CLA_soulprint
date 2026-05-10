@@ -21,9 +21,9 @@ const ProductList = ({ products }: ProductListProps) => {
     }
 
     return (
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2.5, md: 3.5 }} sx={{ minWidth: 0 }}>
             {products.map((product) => (
-                <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={product.productId || product.id}>
+                <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={product.productId || product.id} sx={{ minWidth: 0 }}>
                     <ProductCard product={product} />
                 </Grid>
             ))}

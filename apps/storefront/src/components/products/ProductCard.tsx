@@ -51,23 +51,25 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 display: 'flex',
                 flexDirection: 'column',
                 position: 'relative',
+                width: '100%',
+                minWidth: 0,
                 border: '1px solid rgba(0,72,37,0.09)',
-                borderRadius: 4,
+                borderRadius: 2,
                 overflow: 'hidden',
-                background: 'linear-gradient(180deg, rgba(255,251,244,1) 0%, rgba(252,245,234,1) 100%)',
+                background: 'linear-gradient(180deg, rgba(255,253,248,1) 0%, rgba(246,244,237,1) 100%)',
                 transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
                 '&::before': {
                     content: '""',
                     position: 'absolute',
                     inset: 0,
                     background:
-                        'linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0) 28%)',
+                        'linear-gradient(180deg, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0) 32%)',
                     pointerEvents: 'none',
                     zIndex: 0,
                 },
                 '&:hover': {
-                    transform: 'translateY(-3px)',
-                    boxShadow: '0 8px 20px rgba(0,72,37,0.10)',
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 18px 34px rgba(0,72,37,0.12)',
                     borderColor: 'rgba(0,72,37,0.16)',
                 },
             }}
@@ -79,15 +81,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 sx={{
                     display: 'block',
                     overflow: 'hidden',
-                    bgcolor: 'rgba(244,234,213,0.74)',
+                    bgcolor: 'rgba(239,243,235,0.82)',
                     flexShrink: 0,
                     aspectRatio: '1 / 1',
                     position: 'relative',
                     '&::after': {
                         content: '""',
                         position: 'absolute',
-                        inset: '16px',
-                        borderRadius: '12px',
+                        inset: '14px',
+                        borderRadius: '8px',
                         border: '1px solid rgba(255,255,255,0.52)',
                         pointerEvents: 'none',
                     },
@@ -98,7 +100,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     alt={product.name}
                     fill
                     sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 272px"
-                    style={{ objectFit: 'contain', padding: '22px' }}
+                    style={{ objectFit: 'contain', padding: '24px' }}
                 />
                 {productBadges.length > 0 && (
                     <Box
@@ -120,13 +122,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 sx={{
                     position: 'relative',
                     zIndex: 1,
-                    p: 2.75,
-                    pt: 2.25,
+                    p: { xs: 2.5, md: 2.75 },
+                    pt: 2.35,
                     flexGrow: 1,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    gap: 1.4,
+                    gap: 1.6,
                 }}
             >
                 <Stack spacing={1.25} sx={{ flexGrow: 1 }}>
@@ -138,7 +140,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                         sx={{
                             textDecoration: 'none',
                             color: 'text.primary',
-                            lineHeight: 1.45,
+                            lineHeight: 1.5,
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
@@ -163,7 +165,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                             textDecoration: 'none',
                             color: 'text.secondary',
                             fontWeight: 600,
-                            letterSpacing: '0.01em',
+                            letterSpacing: 0,
                             '&:hover': { color: 'primary.main' },
                         }}
                     >

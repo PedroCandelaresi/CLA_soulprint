@@ -15,7 +15,6 @@ import {
     ListItemButton,
     ListItemText,
     Stack,
-    Typography,
     Toolbar,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -74,14 +73,14 @@ export default function HeaderClient({
             position="sticky"
             elevation={0}
             sx={{
-                backdropFilter: "blur(10px)",
+                backdropFilter: "blur(14px)",
                 borderBottom: "1px solid var(--cla-header-border)",
-                backgroundColor: "var(--cla-brand-green)",
+                background: "linear-gradient(180deg, rgba(3,25,15,0.98) 0%, rgba(0,72,37,0.96) 100%)",
                 color: "common.white",
             }}
         >
             <Container maxWidth="xl">
-                <Toolbar sx={{ gap: 2, py: 1.5, px: "0 !important" }}>
+                <Toolbar sx={{ gap: { xs: 1, md: 2.5 }, py: { xs: 1.25, md: 1.65 }, px: "0 !important" }}>
                     <Box sx={{ display: { xs: "flex", md: "none" } }}>
                         <TooltipIconButton
                             edge="start"
@@ -92,6 +91,7 @@ export default function HeaderClient({
                             sx={{
                                 bgcolor: "transparent",
                                 border: "1px solid rgba(255,255,255,0.2)",
+                                borderRadius: 2,
                                 "&:hover": {
                                     bgcolor: "rgba(255,255,255,0.08)",
                                     borderColor: "rgba(255,255,255,0.32)",
@@ -112,7 +112,7 @@ export default function HeaderClient({
                             alignItems: "center",
                             textDecoration: "none",
                             color: "common.white",
-                            width: { xs: "clamp(10rem, 44vw, 13rem)", md: "15.5rem" },
+                            width: { xs: "9.75rem", sm: "13rem", md: "15.5rem" },
                             flexShrink: 0,
                             lineHeight: 0,
                             "--brand-logo-fg": "var(--header-logo-fg)",
@@ -123,7 +123,7 @@ export default function HeaderClient({
                     </Box>
 
                     <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, justifyContent: "center" }}>
-                        <Stack direction="row" spacing={2} alignItems="center">
+                        <Stack direction="row" spacing={1.1} alignItems="center">
                             {opcionesMenu.map((opcion) => {
                                 const activa = pathname === opcion.ruta;
 
@@ -137,12 +137,14 @@ export default function HeaderClient({
                                             minWidth: "auto",
                                             fontWeight: activa ? 700 : 500,
                                             color: activa ? "var(--cla-brand-cream)" : "rgba(255,255,255,0.9)",
-                                            px: 1.6,
-                                            py: 0.7,
-                                            borderRadius: 10,
-                                            backgroundColor: activa ? "rgba(255,255,255,0.08)" : "transparent",
+                                            px: 1.45,
+                                            py: 0.82,
+                                            borderRadius: 2,
+                                            backgroundColor: activa ? "rgba(255,255,255,0.1)" : "transparent",
+                                            border: activa ? "1px solid rgba(244,234,213,0.18)" : "1px solid transparent",
                                             "&:hover": {
                                                 backgroundColor: "rgba(255,255,255,0.1)",
+                                                borderColor: "rgba(244,234,213,0.18)",
                                                 color: "common.white",
                                             },
                                         }}
@@ -154,7 +156,12 @@ export default function HeaderClient({
                         </Stack>
                     </Box>
 
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: { xs: "auto", md: 0 } }}>
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        sx={{ ml: { xs: "auto", md: 0 }, flexShrink: 0 }}
+                    >
                         {authLoading ? (
                             <TooltipButton
                                 color="inherit"
@@ -177,6 +184,7 @@ export default function HeaderClient({
                                     color: "inherit",
                                     bgcolor: "transparent",
                                     border: "1px solid rgba(255,255,255,0.18)",
+                                    borderRadius: 2,
                                     "&:hover": {
                                         bgcolor: "rgba(255,255,255,0.08)",
                                     },
@@ -198,6 +206,7 @@ export default function HeaderClient({
                                     color: "inherit",
                                     bgcolor: "transparent",
                                     border: "1px solid rgba(255,255,255,0.16)",
+                                    borderRadius: 2,
                                     "&:hover": {
                                         bgcolor: "rgba(255,255,255,0.08)",
                                     },
@@ -215,6 +224,7 @@ export default function HeaderClient({
                             sx={{
                                 bgcolor: "transparent",
                                 border: "1px solid rgba(255,255,255,0.2)",
+                                borderRadius: 2,
                                 "&:hover": {
                                     bgcolor: "rgba(255,255,255,0.08)",
                                     borderColor: "rgba(255,255,255,0.32)",
@@ -237,9 +247,9 @@ export default function HeaderClient({
                 onClose={() => setMenuAbierto(false)}
                 PaperProps={{
                     sx: {
-                        width: "clamp(240px, 80vw, 300px)",
-                        bgcolor: "rgba(255,250,242,0.98)",
-                        backdropFilter: "blur(12px)",
+                        width: { xs: 292, sm: 320 },
+                        bgcolor: "rgba(255,253,248,0.98)",
+                        backdropFilter: "blur(16px)",
                     },
                 }}
             >
@@ -249,11 +259,11 @@ export default function HeaderClient({
                             position: "relative",
                             overflow: "hidden",
                             px: 3,
-                            pt: 3,
-                            pb: 2.5,
+                            pt: 3.5,
+                            pb: 3,
                             borderBottom: "1px solid",
                             borderColor: "divider",
-                            backgroundColor: "rgba(255,250,242,0.98)",
+                            background: "linear-gradient(180deg, rgba(255,253,248,0.98) 0%, rgba(240,246,239,0.86) 100%)",
                             "--brand-logo-fg": "var(--muted-logo-fg)",
                             "--brand-logo-bg": "transparent",
                         }}
@@ -274,27 +284,23 @@ export default function HeaderClient({
                         </Box>
 
                         <Box sx={{ position: "relative", zIndex: 1, width: "10.5rem" }}>{drawerLogo}</Box>
-
-                        <Typography sx={{ position: "relative", zIndex: 1, mt: 1.5, color: "text.secondary" }}>
-                            Navegación curada para explorar la tienda CLA con una experiencia más serena.
-                        </Typography>
                     </Box>
 
-                    <List sx={{ py: 1 }}>
+                    <List sx={{ p: 1.25, display: "grid", gap: 0.5 }}>
                         {opcionesMenu.map((opcion) => (
                             <ListItem key={opcion.ruta} disablePadding>
-                                <ListItemButton component={Link} href={opcion.ruta} sx={{ mx: 1, my: 0.3 }}>
+                                <ListItemButton component={Link} href={opcion.ruta} sx={{ px: 1.5, py: 1.1 }}>
                                     <ListItemText primary={opcion.etiqueta} />
                                 </ListItemButton>
                             </ListItem>
                         ))}
                         <ListItem disablePadding>
-                            <ListItemButton component={Link} href="/carrito" sx={{ mx: 1, my: 0.3 }}>
+                            <ListItemButton component={Link} href="/carrito" sx={{ px: 1.5, py: 1.1 }}>
                                 <ListItemText primary={`Carrito${cartQuantity > 0 ? ` (${cartQuantity})` : ""}`} />
                             </ListItemButton>
                         </ListItem>
                         <ListItem disablePadding>
-                            <ListItemButton component={Link} href={customer ? "/mi-cuenta" : loginHref} sx={{ mx: 1, my: 0.3 }}>
+                            <ListItemButton component={Link} href={customer ? "/mi-cuenta" : loginHref} sx={{ px: 1.5, py: 1.1 }}>
                                 <ListItemText
                                     primary={customer ? nombreCuenta : "Ingresar"}
                                     secondary={customer?.emailAddress}
@@ -303,7 +309,7 @@ export default function HeaderClient({
                         </ListItem>
                         {customer && (
                             <ListItem disablePadding>
-                                <ListItemButton onClick={() => void handleLogout()} disabled={authLoading} sx={{ mx: 1, my: 0.3 }}>
+                                <ListItemButton onClick={() => void handleLogout()} disabled={authLoading} sx={{ px: 1.5, py: 1.1 }}>
                                     <ListItemText primary="Cerrar sesión" />
                                 </ListItemButton>
                             </ListItem>

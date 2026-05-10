@@ -87,7 +87,7 @@ const diapositivasFallback: Diapositiva[] = [
     {
         id: "alma-criolla",
         titulo: "Colecciones con alma criolla y urbana",
-        descripcion: "Un storefront más sensible, con identidad visual fuerte y una narrativa de marca mucho más cuidada.",
+        descripcion: "Piezas cálidas para llevar cerca esos vínculos que hacen casa en la memoria.",
         imagen: "/images/carrousel/carrousel3.png",
         enlace: "/destacados",
         posicion: "center center",
@@ -99,7 +99,6 @@ const diapositivasFallback: Diapositiva[] = [
 ];
 
 const SWIPE_THRESHOLD = 48;
-const SLIDE_IMAGE_SIZES = "(min-width: 900px) 58vw, 100vw";
 const VISUALLY_HIDDEN_STYLES = {
     position: "absolute",
     width: 1,
@@ -123,7 +122,7 @@ const navigationButtonStyles = {
     border: "1px solid rgba(255,255,255,0.2)",
     width: { xs: 40, md: 52 },
     height: { xs: 40, md: 52 },
-    borderRadius: 10,
+    borderRadius: 2,
     boxShadow: "none",
     "&:hover": {
         bgcolor: "rgba(255,250,242,0.28)",
@@ -281,7 +280,7 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
         const timer = window.setTimeout(goNext, cfg.autoplayInterval);
 
         return () => window.clearTimeout(timer);
-    }, [activeStep, autoplayActivo, goNext]);
+    }, [activeStep, autoplayActivo, cfg.autoplayInterval, goNext]);
 
     return (
         <Box
@@ -300,11 +299,12 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
             sx={{
                 position: "relative",
                 width: "100%",
-                height: "45vh",
-                minHeight: { xs: 440, md: 420 },
+                height: { xs: "auto", md: "62svh" },
+                minHeight: { xs: 520, md: 560 },
                 overflow: "hidden",
                 bgcolor: "var(--cla-brand-green)",
                 isolation: "isolate",
+                borderBottom: "1px solid rgba(0,72,37,0.1)",
             }}
         >
             <Box component="p" id={`${carouselId}-instructions`} sx={VISUALLY_HIDDEN_STYLES}>
@@ -317,11 +317,6 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                 const isActive = index === activeStep;
                 const isFullImage = slide.layout === "full_image";
                 const textOnRight = slide.layout === "split_right";
-                const desktopColumns = isFullImage
-                    ? "1fr"
-                    : textOnRight
-                    ? "minmax(0, 1.14fr) minmax(0, 0.86fr)"
-                    : "minmax(0, 0.86fr) minmax(0, 1.14fr)";
                 const offset = (index - activeStep) * 100;
                 const slideTranslate =
                     effect === "slide" ? `translateX(${offset}%)` : "translateX(0)";
@@ -341,15 +336,16 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                 // Contenido de texto — reutilizado tanto en split como en full_image
                 const textContent = (
                     <Stack
-                        spacing={{ xs: 1.2, sm: 1.5, md: 1.8 }}
+                            spacing={{ xs: 1.4, sm: 1.7, md: 2 }}
                         sx={{
                             width: "100%",
-                            maxWidth: { xs: "100%", md: 430 },
+                            maxWidth: { xs: "100%", md: 460 },
                             mx: "auto",
                             textAlign: "center",
                             alignItems: "center",
-                            fontFamily: "Arial, Helvetica, sans-serif",
-                            opacity: isActive ? 1 : 0,
+                            minWidth: 0,
+                            overflowWrap: "break-word",
+                                opacity: isActive ? 1 : 0,
                             transform: isActive ? "translateY(0)" : "translateY(16px)",
                             transition: transicionContenido,
                             transitionDelay: reduceMotion || !isActive ? "0s" : "0.15s",
@@ -367,9 +363,9 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                                     py: 0.4,
                                     fontSize: "0.7rem",
                                     fontWeight: 700,
-                                    letterSpacing: 1.2,
+                                    letterSpacing: 0,
                                     textTransform: "uppercase",
-                                    borderRadius: slide.badgeVariant === "pill" ? 999 : 1.2,
+                                    borderRadius: slide.badgeVariant === "pill" ? 2 : 1.2,
                                     color: slide.badgeVariant === "outline"
                                         ? slide.badgeColor || "var(--cla-brand-cream)"
                                         : "#06261A",
@@ -392,8 +388,7 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                                 color: slide.textTheme === "light"
                                     ? "rgba(6,38,22,0.72)"
                                     : "var(--cla-brand-cream)",
-                                fontFamily: "Arial, Helvetica, sans-serif",
-                                letterSpacing: { xs: 2.5, sm: 3.5, md: 4.5 },
+                                letterSpacing: 0,
                                 fontSize: { xs: "0.68rem", sm: "0.72rem", md: "0.74rem" },
                                 fontWeight: 600,
                             }}
@@ -406,14 +401,15 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                             color="common.white"
                             fontWeight={700}
                             sx={{
-                                fontFamily: "Arial, Helvetica, sans-serif",
                                 fontSize: {
-                                    xs: "clamp(1.95rem, 7vw, 2.5rem)",
-                                    sm: "clamp(2.2rem, 4.8vw, 3rem)",
-                                    md: "clamp(2.35rem, 3.3vw, 3.3rem)",
+                                    xs: "1.78rem",
+                                    sm: "2.55rem",
+                                    md: "3.15rem",
                                 },
-                                lineHeight: 1.06,
-                                letterSpacing: "-0.04em",
+                                lineHeight: 1.08,
+                                letterSpacing: 0,
+                                maxWidth: "100%",
+                                overflowWrap: "break-word",
                             }}
                         >
                             {slide.titulo}
@@ -423,11 +419,11 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                             variant="h6"
                             sx={{
                                 color: "rgba(255,248,238,0.82)",
-                                fontFamily: "Arial, Helvetica, sans-serif",
                                 fontWeight: 400,
-                                lineHeight: 1.45,
+                                lineHeight: 1.5,
                                 fontSize: { xs: "0.92rem", sm: "0.98rem", md: "1rem" },
-                                maxWidth: { xs: "100%", md: 400 },
+                                maxWidth: { xs: "100%", md: 430 },
+                                overflowWrap: "break-word",
                             }}
                         >
                             {slide.descripcion}
@@ -435,7 +431,7 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
 
                         <Stack
                             direction={{ xs: "column", sm: "row" }}
-                            spacing={1.5}
+                            spacing={1.25}
                             justifyContent="center"
                             width="100%"
                             pt={{ xs: 0.5, md: 1 }}
@@ -454,9 +450,8 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                                     px: { xs: 3, md: 4 },
                                     py: 1.15,
                                     fontSize: { xs: "0.92rem", md: "0.96rem" },
-                                    fontFamily: "Arial, Helvetica, sans-serif",
                                     fontWeight: 700,
-                                    borderRadius: 10,
+                                    borderRadius: 2,
                                     border: "1px solid rgba(226,207,170,0.82)",
                                     background: "linear-gradient(135deg, rgba(226,207,170,1) 0%, rgba(199,164,107,1) 100%)",
                                     boxShadow: "none",
@@ -484,9 +479,8 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                                         px: { xs: 3, md: 4 },
                                         py: 1.15,
                                         fontSize: { xs: "0.92rem", md: "0.96rem" },
-                                        fontFamily: "Arial, Helvetica, sans-serif",
                                         fontWeight: 600,
-                                        borderRadius: 10,
+                                        borderRadius: 2,
                                         borderColor: "rgba(244,234,213,0.5)",
                                         backgroundColor: "rgba(255,250,242,0.06)",
                                         color: "var(--cla-brand-paper)",
@@ -543,7 +537,7 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                                     justifyContent: "center",
                                     background: "linear-gradient(180deg, rgba(6,38,22,0.04) 30%, rgba(6,38,22,0.78) 100%)",
                                     px: { xs: 3, sm: 4, md: 6 },
-                                    py: { xs: 3.5, sm: 4, md: 4.5 },
+                                    py: { xs: 4, sm: 4.5, md: 5 },
                                 }}
                             >
                                 {textContent}
@@ -567,12 +561,18 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "center",
-                                        px: { xs: 3, sm: 4, md: 4.5, lg: 6 },
-                                        py: { xs: 3.5, sm: 4, md: 4.5 },
-                                        backdropFilter: "blur(26px) saturate(1.25)",
-                                        WebkitBackdropFilter: "blur(26px) saturate(1.25)",
+                                        px: { xs: 3, sm: 5, md: 5, lg: 6 },
+                                        py: { xs: 4, sm: 5, md: 5 },
+                                        backdropFilter: {
+                                            xs: "none",
+                                            md: "blur(26px) saturate(1.25)",
+                                        },
+                                        WebkitBackdropFilter: {
+                                            xs: "none",
+                                            md: "blur(26px) saturate(1.25)",
+                                        },
                                         background: {
-                                            xs: "linear-gradient(180deg, rgba(4,26,15,0.82) 0%, rgba(6,38,22,0.88) 100%)",
+                                            xs: "linear-gradient(180deg, rgba(4,26,15,0.56) 0%, rgba(6,38,22,0.7) 52%, rgba(6,38,22,0.86) 100%)",
                                             md: "rgba(4,26,15,0.62)",
                                         },
                                         // Degradado suave hacia la imagen en el borde interior
@@ -584,6 +584,7 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                                             [textOnRight ? "left" : "right"]: 0,
                                             width: 80,
                                             background: panelEdgeFade,
+                                            display: { xs: "none", md: "block" },
                                             pointerEvents: "none",
                                         },
                                         position: "relative",
@@ -608,6 +609,7 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                 sx={{
                     ...navigationButtonStyles,
                     left: { xs: 8, md: 16 },
+                    display: { xs: "none", sm: "inline-flex" },
                 }}
             >
                 <IconChevronLeft size={22} stroke={2} />
@@ -620,6 +622,7 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                 sx={{
                     ...navigationButtonStyles,
                     right: { xs: 8, md: 16 },
+                    display: { xs: "none", sm: "inline-flex" },
                 }}
             >
                 <IconChevronRight size={22} stroke={2} />
@@ -644,7 +647,7 @@ const CarruselDestacado = ({ slides, settings }: CarruselDestacadoProps = {}) =>
                     fontSize: { xs: "0.75rem", md: "0.8125rem" },
                     fontWeight: 600,
                     textTransform: "none",
-                    borderRadius: 10,
+                    borderRadius: 2,
                     bgcolor: "rgba(244,234,213,0.12)",
                     border: "1px solid rgba(244,234,213,0.2)",
                     backdropFilter: "blur(6px)",

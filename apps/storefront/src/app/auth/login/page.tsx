@@ -218,33 +218,22 @@ export default function LoginPage() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 background:
-                    'radial-gradient(circle at top left, rgba(244,234,213,0.62), transparent 34%), linear-gradient(180deg, #fffdf8 0%, #fbf6ed 100%)',
-                py: 4,
+                    'linear-gradient(135deg, rgba(255,253,248,1) 0%, rgba(239,246,239,0.92) 52%, rgba(248,239,224,0.96) 100%)',
+                py: { xs: 5, md: 7 },
             }}
         >
             <Container maxWidth="md">
                 <Paper
                     elevation={0}
                     sx={{
-                        p: { xs: 3, md: 6 },
-                        borderRadius: 4,
+                        p: { xs: 3, md: 5.5 },
+                        borderRadius: 2,
                         border: '1px solid',
                         borderColor: 'rgba(0,72,37,0.08)',
                         bgcolor: 'rgba(255,253,248,0.94)',
                         boxShadow: '0 24px 46px rgba(0,72,37,0.08)',
                         overflow: 'hidden',
                         position: 'relative',
-                        '&::before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: -70,
-                            right: -90,
-                            width: 220,
-                            height: 220,
-                            borderRadius: '50%',
-                            background:
-                                'radial-gradient(circle, rgba(199,164,107,0.18) 0%, rgba(199,164,107,0) 72%)',
-                        },
                     }}
                 >
                     <Stack spacing={3}>
@@ -277,7 +266,7 @@ export default function LoginPage() {
                                     Sesión activa como <strong>{customer.emailAddress}</strong>.
                                 </Alert>
 
-                                <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
+                                <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
                                     <Stack spacing={1.5}>
                                         <Typography variant="h6" fontWeight={700}>
                                             Hola, {customerName}
