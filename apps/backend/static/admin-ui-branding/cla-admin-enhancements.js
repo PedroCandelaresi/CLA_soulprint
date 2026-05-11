@@ -957,6 +957,72 @@
     let currentToast = null;
     let currentToastTimers = [];
 
+    function getRouteHelp(pathname) {
+        return ROUTE_HELP.find(function (entry) {
+            return entry.match.test(pathname);
+        }) || null;
+    }
+
+    function clearToastTimers() {
+        currentToastTimers.forEach(function (timer) {
+            clearTimeout(timer);
+        });
+        currentToastTimers = [];
+    }
+
+    function hideHelpToast() {
+        clearToastTimers();
+        if (!currentToast) {
+            return;
+        }
+
+        currentToast.classList.remove('is-visible');
+        currentToastTimers.push(setTimeout(function () {
+            if (currentToast && !currentToast.classList.contains('is-visible')) {
+                currentToast.remove();
+                currentToast = null;
+            }
+        }, 240));
+    }
+
+    function injectHelpBanner() {
+        const currentPath = window.location.pathname;
+        if (currentPath === lastPath) {
+            return;
+        }
+        lastPath = currentPath;
+
+        const help = getRouteHelp(currentPath);
+        if (!help) {
+            hideHelpToast();
+            return;
+        }
+
+        clearToastTimers();
+        if (!currentToast) {
+            currentToast = document.createElement('div');
+            currentToast.className = 'cla-help-toast';
+            currentToast.setAttribute('role', 'status');
+            currentToast.setAttribute('aria-live', 'polite');
+            document.body.appendChild(currentToast);
+        }
+
+        currentToast.innerHTML = '<div class="cla-help-toast-body">' + help.text + '</div>' +
+            '<button type="button" class="cla-help-toast-close" aria-label="Cerrar ayuda">&times;</button>';
+
+        const closeButton = currentToast.querySelector('.cla-help-toast-close');
+        if (closeButton) {
+            closeButton.addEventListener('click', hideHelpToast, { once: true });
+        }
+
+        currentToastTimers.push(setTimeout(function () {
+            if (currentToast) {
+                currentToast.classList.add('is-visible');
+            }
+        }, 20));
+        currentToastTimers.push(setTimeout(hideHelpToast, 8000));
+    }
+
 
 
     let lastRunTime = 0;

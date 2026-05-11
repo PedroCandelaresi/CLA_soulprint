@@ -6,6 +6,7 @@ import { ensureMercadoPagoPaymentMethod } from '../seed/ensure-mercadopago-payme
 const ENABLE_DEMO_BOOTSTRAP =
     process.env.BOOTSTRAP_DEMO_DATA !== 'false' && process.env.APP_ENV !== 'production';
 const RUN_JOB_QUEUE_IN_MAIN_PROCESS = process.env.RUN_JOB_QUEUE_IN_MAIN_PROCESS === 'true';
+const REINDEX_SEARCH_ON_START = process.env.REINDEX_SEARCH_ON_START === 'true';
 
 // Populate on start if needed or use separate script.
 // For this setup we will assume populate is run separately or via seed.
@@ -40,15 +41,18 @@ bootstrap(config)
             }
         }
 
-        // Reindex search to ensure colecciones/filtros reflejan cambios recientes
-        try {
-            const requestContextService = app.get(RequestContextService);
-            const searchService = app.get(SearchService);
-            const ctx = await requestContextService.create({ apiType: 'admin' });
-            await searchService.reindex(ctx);
-            console.log('Search index rebuilt');
-        } catch (err) {
-            console.warn('Search reindex failed (continuing):', err);
+        if (REINDEX_SEARCH_ON_START) {
+            try {
+                const requestContextService = app.get(RequestContextService);
+                const searchService = app.get(SearchService);
+                const ctx = await requestContextService.create({ apiType: 'admin' });
+                await searchService.reindex(ctx);
+                console.log('Search index rebuilt');
+            } catch (err) {
+                console.warn('Search reindex failed (continuing):', err);
+            }
+        } else {
+            console.log('Search reindex skipped. Set REINDEX_SEARCH_ON_START=true to run it at boot.');
         }
 
         console.log('Vendure server started!');
