@@ -27,6 +27,12 @@ services:
     build:
       context: ../../
       dockerfile: apps/backend/Dockerfile
+      args:
+        ADMIN_TESTING_MODE: ${ADMIN_TESTING_MODE:-false}
+        SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-superadmin}
+        SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-superadmin}
+        ENABLE_ADMIN_TESTING: ${ENABLE_ADMIN_TESTING:-false}
+        TESTING_MODE: ${TESTING_MODE:-false}
     container_name: cla_soulprint_backend
     restart: always
     depends_on:
@@ -35,6 +41,9 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV}
       APP_ENV: ${APP_ENV}
+      ADMIN_TESTING_MODE: ${ADMIN_TESTING_MODE:-false}
+      ENABLE_ADMIN_TESTING: ${ENABLE_ADMIN_TESTING:-false}
+      TESTING_MODE: ${TESTING_MODE:-false}
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: ${DB_NAME}

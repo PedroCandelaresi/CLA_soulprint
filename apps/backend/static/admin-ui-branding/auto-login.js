@@ -1,8 +1,13 @@
 /**
  * Auto-login para Vendure Admin en modo testing
  * 
- * Este script se inyecta en el index.html cuando ADMIN_TESTING_MODE=true
- * Realiza automáticamente un login con credenciales de superadmin
+ * Realiza automáticamente un login con credenciales de superadmin.
+ * Puede estar habilitado via:
+ * - ADMIN_TESTING_MODE=true (env var)
+ * - window.__CLA_AUTO_LOGIN_CONFIG (inyectado en HTML)
+ * - window.__CLA_ADMIN_USER y window.__CLA_ADMIN_PASS
+ * 
+ * Funciona en Docker, GitHub Actions, y local.
  */
 
 (function() {
@@ -20,9 +25,18 @@
         return;
     }
 
+    // Obtener configuración inyectada en HTML o variables globales
+    const config = window.__CLA_AUTO_LOGIN_CONFIG || {};
+    const enabled = config.enabled || window.__CLA_TESTING_MODE || false;
+    
+    if (!enabled) {
+        console.log('[AutoLogin] Auto-login disabled');
+        return;
+    }
+
     const credentials = {
-        username: window.__CLA_ADMIN_USER || 'superadmin',
-        password: window.__CLA_ADMIN_PASS || 'superadmin',
+        username: config.username || window.__CLA_ADMIN_USER || 'superadmin',
+        password: config.password || window.__CLA_ADMIN_PASS || 'superadmin',
     };
 
     console.log('[AutoLogin] Starting auto-login to Vendure Admin...');
