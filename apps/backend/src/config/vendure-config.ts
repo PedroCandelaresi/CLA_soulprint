@@ -163,13 +163,14 @@ const promotionBadgeCustomField = {
     ],
 };
 
-if (IS_PERSISTENT_ENV && ADMIN_TESTING_MODE && APP_ENV !== 'local') {
+if (IS_PERSISTENT_ENV && ADMIN_TESTING_MODE) {
     console.error('');
     console.error('❌ CRITICAL ERROR: ADMIN_TESTING_MODE cannot be enabled in testing/production!');
     console.error('   This is a security risk. Only use in local development.');
     console.error('');
     throw new Error('ADMIN_TESTING_MODE is not allowed in testing/production environments');
 }
+if (IS_PERSISTENT_ENV && DB_SYNCHRONIZE && !ALLOW_DESTRUCTIVE_SYNC) {
     throw new Error(
         'DB_SYNCHRONIZE=true is not allowed in testing/production. Generate and run migrations instead, ' +
             'or set ALLOW_DESTRUCTIVE_SYNC=true if you intentionally want to ' +

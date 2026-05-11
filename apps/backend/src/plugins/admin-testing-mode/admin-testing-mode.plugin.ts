@@ -1,5 +1,4 @@
 import {
-    VendurePlugin,
     PluginCommonModule,
     Logger,
     AuthService,
@@ -24,7 +23,7 @@ const loggerCtx = 'AdminTestingModePlugin';
 })
 export class AdminTestingModeModule {}
 
-export class AdminTestingModePlugin implements VendurePlugin {
+export class AdminTestingModePlugin {
     static options = {
         enabled: false,
     };
