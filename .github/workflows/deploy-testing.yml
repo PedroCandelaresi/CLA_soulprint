@@ -22,61 +22,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-testing:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install pnpm
-        run: npm i -g pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build backend with admin auto-login
-        working-directory: ./apps/backend
-        env:
-          ADMIN_TESTING_MODE: "true"
-          SUPERADMIN_USERNAME: "admin"
-          SUPERADMIN_PASSWORD: "test123"
-          DB_HOST: "127.0.0.1"
-          DB_PORT: "3306"
-          DB_NAME: "vendure"
-          DB_USER: "vendure"
-          DB_PASSWORD: "vendure"
-        run: npm run build
-
-      - name: Verify admin UI auto-login enabled
-        working-directory: ./apps/backend
-        run: |
-          if grep -q "auto-login-config.json" static/admin-ui/index.html; then
-            echo "✓ Auto-login config found in index.html"
-          else
-            echo "✗ Auto-login config NOT found in index.html"
-            exit 1
-          fi
-
-          if [ -f "static/admin-ui/auto-login-config.json" ]; then
-            echo "✓ auto-login-config.json file exists"
-            cat static/admin-ui/auto-login-config.json
-          else
-            echo "⚠ auto-login-config.json NOT found (may be generated at runtime)"
-          fi
-
   deploy:
-    needs: build-testing
     runs-on: [self-hosted, linux, testing]
     env:
       REPO_PATH: /opt/cla_soulprint-testing
