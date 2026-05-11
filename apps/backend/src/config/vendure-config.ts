@@ -76,6 +76,19 @@ function parseMercadoPagoEnv(value: string | undefined): 'testing' | 'production
     throw new Error('MERCADOPAGO_ENV must be "testing" or "production".');
 }
 
+function isLocalUrl(value: string | undefined): boolean {
+    if (!value) {
+        return true;
+    }
+
+    try {
+        const parsed = new URL(value);
+        return ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname);
+    } catch {
+        return false;
+    }
+}
+
 const APP_ENV = process.env.APP_ENV || 'local';
 const IS_DEV = APP_ENV === 'local' || APP_ENV === 'dev';
 const IS_PERSISTENT_ENV = APP_ENV === 'testing' || APP_ENV === 'production';
@@ -112,6 +125,11 @@ const EMAIL_TEMPLATE_LOADER = createEmailTemplateLoader(EMAIL_TEMPLATE_PATH);
 const BRAND_NAME = 'CLA Soulprint';
 const ALLOW_DESTRUCTIVE_SYNC = parseBooleanEnv('ALLOW_DESTRUCTIVE_SYNC', false);
 const ADMIN_TESTING_MODE = parseBooleanEnv('ADMIN_TESTING_MODE', false);
+const ALLOW_PUBLIC_ADMIN_TESTING_MODE = parseBooleanEnv('ALLOW_PUBLIC_ADMIN_TESTING_MODE', false);
+const HAS_PUBLIC_RUNTIME_SURFACE =
+    !isLocalUrl(SHOP_PUBLIC_URL) ||
+    !isLocalUrl(process.env.MERCADOPAGO_PUBLIC_BASE_URL) ||
+    CORS_ORIGINS.some(origin => !isLocalUrl(origin));
 const MIGRATIONS = [
     path.join(__dirname, '../migrations/history/*.js'),
     path.join(__dirname, '../migrations/history/*.ts'),
@@ -169,6 +187,12 @@ if (IS_PERSISTENT_ENV && ADMIN_TESTING_MODE) {
     console.error('   This is a security risk. Only use in local development.');
     console.error('');
     throw new Error('ADMIN_TESTING_MODE is not allowed in testing/production environments');
+}
+if (ADMIN_TESTING_MODE && HAS_PUBLIC_RUNTIME_SURFACE && !ALLOW_PUBLIC_ADMIN_TESTING_MODE) {
+    throw new Error(
+        'ADMIN_TESTING_MODE cannot be enabled while public URLs/origins are configured. ' +
+            'Disable ADMIN_TESTING_MODE, or set ALLOW_PUBLIC_ADMIN_TESTING_MODE=true only for an isolated throwaway environment.',
+    );
 }
 if (IS_PERSISTENT_ENV && DB_SYNCHRONIZE && !ALLOW_DESTRUCTIVE_SYNC) {
     throw new Error(
