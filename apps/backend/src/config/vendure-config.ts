@@ -125,7 +125,10 @@ const EMAIL_TEMPLATE_LOADER = createEmailTemplateLoader(EMAIL_TEMPLATE_PATH);
 const BRAND_NAME = 'CLA Soulprint';
 const ALLOW_DESTRUCTIVE_SYNC = parseBooleanEnv('ALLOW_DESTRUCTIVE_SYNC', false);
 const ADMIN_TESTING_MODE = parseBooleanEnv('ADMIN_TESTING_MODE', false);
+const ENABLE_ADMIN_TESTING = parseBooleanEnv('ENABLE_ADMIN_TESTING', false);
+const TESTING_MODE = parseBooleanEnv('TESTING_MODE', false);
 const ALLOW_PUBLIC_ADMIN_TESTING_MODE = parseBooleanEnv('ALLOW_PUBLIC_ADMIN_TESTING_MODE', false);
+const ADMIN_AUTO_LOGIN_ENABLED = ADMIN_TESTING_MODE || ENABLE_ADMIN_TESTING || TESTING_MODE;
 const HAS_PUBLIC_RUNTIME_SURFACE =
     !isLocalUrl(SHOP_PUBLIC_URL) ||
     !isLocalUrl(process.env.MERCADOPAGO_PUBLIC_BASE_URL) ||
@@ -181,17 +184,18 @@ const promotionBadgeCustomField = {
     ],
 };
 
-if (IS_PERSISTENT_ENV && ADMIN_TESTING_MODE) {
+if (APP_ENV === 'production' && ADMIN_AUTO_LOGIN_ENABLED) {
     console.error('');
-    console.error('❌ CRITICAL ERROR: ADMIN_TESTING_MODE cannot be enabled in testing/production!');
-    console.error('   This is a security risk. Only use in local development.');
+    console.error('❌ CRITICAL ERROR: admin auto-login cannot be enabled in production!');
+    console.error('   This is a security risk. Only use in local/testing demos.');
     console.error('');
-    throw new Error('ADMIN_TESTING_MODE is not allowed in testing/production environments');
+    throw new Error('Admin auto-login is not allowed in production environments');
 }
-if (ADMIN_TESTING_MODE && HAS_PUBLIC_RUNTIME_SURFACE && !ALLOW_PUBLIC_ADMIN_TESTING_MODE) {
+if (ADMIN_AUTO_LOGIN_ENABLED && HAS_PUBLIC_RUNTIME_SURFACE && !ALLOW_PUBLIC_ADMIN_TESTING_MODE) {
     throw new Error(
-        'ADMIN_TESTING_MODE cannot be enabled while public URLs/origins are configured. ' +
-            'Disable ADMIN_TESTING_MODE, or set ALLOW_PUBLIC_ADMIN_TESTING_MODE=true only for an isolated throwaway environment.',
+        'Admin auto-login cannot be enabled while public URLs/origins are configured. ' +
+            'Disable ADMIN_TESTING_MODE/ENABLE_ADMIN_TESTING/TESTING_MODE, or set ' +
+            'ALLOW_PUBLIC_ADMIN_TESTING_MODE=true only for an isolated throwaway environment.',
     );
 }
 if (IS_PERSISTENT_ENV && DB_SYNCHRONIZE && !ALLOW_DESTRUCTIVE_SYNC) {
@@ -252,10 +256,10 @@ if (!IS_MIGRATION_COMMAND) {
         console.log(`[email]   smtpSecure=${String(parseBooleanEnv('SMTP_SECURE', SMTP_PORT === 465))}`);
     }
 
-    if (ADMIN_TESTING_MODE) {
+    if (ADMIN_AUTO_LOGIN_ENABLED) {
         console.warn('');
-        console.warn('⚠️  ⚠️  ⚠️  ADMIN_TESTING_MODE ENABLED ⚠️  ⚠️  ⚠️');
-        console.warn('  Admin UI will be accessible WITHOUT LOGIN at http://localhost:3001/admin');
+        console.warn('⚠️  ⚠️  ⚠️  ADMIN AUTO-LOGIN ENABLED ⚠️  ⚠️  ⚠️');
+        console.warn('  Admin UI will auto-login at http://localhost:3001/admin');
         console.warn('  NEVER enable this in production!');
         console.warn('');
     }

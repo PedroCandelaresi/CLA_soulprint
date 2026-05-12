@@ -195,33 +195,12 @@ async function applyClaBrandingPostBuild() {
         await fsp.copyFile(enhancementsSrc, enhancementsDst);
     }
 
-    // Detectar modo testing
-    // Puede venir de: ADMIN_TESTING_MODE env var
-    const adminTestingMode = process.env.ADMIN_TESTING_MODE === 'true' || 
-                            process.env.ENABLE_ADMIN_TESTING === 'true' ||
-                            process.env.TESTING_MODE === 'true';
-    
     const autoLoginSrc = path.join(brandingDir, 'auto-login.js');
     const autoLoginDst = path.join(outputPath, 'auto-login.js');
-    
-    if (adminTestingMode && fs.existsSync(autoLoginSrc)) {
-        await fsp.copyFile(autoLoginSrc, autoLoginDst);
-        process.stdout.write('[cla] Auto-login enabled\n');
-    }
 
-    // Generar archivo de configuración JSON para auto-login
-    // Esto es más confiable en Docker/CI que variables inyectadas
-    const autoLoginConfigPath = path.join(outputPath, 'auto-login-config.json');
-    const autoLoginConfig = {
-        enabled: adminTestingMode,
-        username: process.env.SUPERADMIN_USERNAME || 'superadmin',
-        password: process.env.SUPERADMIN_PASSWORD || 'superadmin',
-        timestamp: new Date().toISOString(),
-    };
-    
-    if (adminTestingMode) {
-        await fsp.writeFile(autoLoginConfigPath, JSON.stringify(autoLoginConfig, null, 2), 'utf8');
-        process.stdout.write('[cla] Auto-login config generated\n');
+    if (fs.existsSync(autoLoginSrc)) {
+        await fsp.copyFile(autoLoginSrc, autoLoginDst);
+        process.stdout.write('[cla] Auto-login runtime hook available\n');
     }
 
     const indexHtmlPath = path.join(outputPath, 'index.html');
@@ -240,42 +219,8 @@ async function applyClaBrandingPostBuild() {
         '<link rel="icon" type="image/svg+xml" href="assets/cla-logo.svg"/>',
     );
 
-    // Inyectar configuración en window y script para cargar config JSON
-    let scriptsToInject = '';
-    
-    if (adminTestingMode) {
-        // Método 1: Inyectar directamente (fallback)
-        const adminUser = process.env.SUPERADMIN_USERNAME || 'superadmin';
-        const adminPass = process.env.SUPERADMIN_PASSWORD || 'superadmin';
-        
-        scriptsToInject += `    <script>
-        // CLA Auto-Login Configuration
-        window.__CLA_AUTO_LOGIN_CONFIG = ${JSON.stringify({
-            enabled: true,
-            username: adminUser,
-            password: adminPass,
-        })};
-        
-        // Cargar config desde archivo JSON (para Docker/CI)
-        (function() {
-            fetch('auto-login-config.json')
-                .then(r => r.json())
-                .then(config => {
-                    window.__CLA_AUTO_LOGIN_CONFIG = config;
-                    console.log('[AutoLogin] Config loaded from JSON');
-                })
-                .catch(err => {
-                    console.log('[AutoLogin] Could not load JSON config, using inline config');
-                });
-        })();
-    </script>\n`;
-    }
-
-    scriptsToInject += '    <script src="cla-admin-enhancements.js" defer></script>\n';
-    
-    if (adminTestingMode) {
-        scriptsToInject += '    <script src="auto-login.js" defer></script>\n';
-    }
+    let scriptsToInject = '    <script src="cla-admin-enhancements.js" defer></script>\n';
+    scriptsToInject += '    <script src="auto-login.js" defer></script>\n';
 
     if (!html.includes('cla-admin-enhancements.js')) {
         html = html.replace(/<\/body>/i, scriptsToInject + '</body>');

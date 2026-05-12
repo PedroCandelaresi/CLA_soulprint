@@ -18,6 +18,9 @@
         return;
     }
 
+    const scriptUrl = document.currentScript?.src || `${window.location.origin}/admin/auto-login.js`;
+    const configUrl = new URL('auto-login-config.json', scriptUrl).toString();
+
     localStorage.removeItem('vendure_auth_token');
     sessionStorage.removeItem('vendure_auth_token');
 
@@ -28,22 +31,26 @@
         return;
     }
 
-    // Obtener configuración inyectada en HTML o variables globales
-    const config = window.__CLA_AUTO_LOGIN_CONFIG || {};
-    const enabled = config.enabled || window.__CLA_TESTING_MODE || false;
-    
-    if (!enabled) {
-        console.log('[AutoLogin] Auto-login disabled');
-        return;
+    async function loadConfig() {
+        const inlineConfig = window.__CLA_AUTO_LOGIN_CONFIG || {};
+
+        try {
+            const response = await fetch(configUrl, {
+                cache: 'no-store',
+                credentials: 'same-origin',
+            });
+
+            if (response.ok) {
+                const jsonConfig = await response.json();
+                console.log('[AutoLogin] Config loaded from JSON');
+                return { ...inlineConfig, ...jsonConfig };
+            }
+        } catch (error) {
+            console.log('[AutoLogin] Could not load JSON config, using inline/global config');
+        }
+
+        return inlineConfig;
     }
-
-    const credentials = {
-        username: config.username || window.__CLA_ADMIN_USER || 'superadmin',
-        password: config.password || window.__CLA_ADMIN_PASS || 'superadmin',
-    };
-    const timeoutMs = Number(config.timeoutMs || window.__CLA_AUTO_LOGIN_TIMEOUT_MS || 8000);
-
-    console.log('[AutoLogin] Starting auto-login to Vendure Admin...');
 
     async function readGraphQlResponse(response) {
         const contentType = response.headers.get('content-type') || '';
@@ -73,9 +80,16 @@
     /**
      * Realizar login y guardar el token
      */
-    async function autoLogin() {
+    async function autoLogin(config) {
+        const credentials = {
+            username: config.username || window.__CLA_ADMIN_USER || 'superadmin',
+            password: config.password || window.__CLA_ADMIN_PASS || 'superadmin',
+        };
+        const timeoutMs = Number(config.timeoutMs || window.__CLA_AUTO_LOGIN_TIMEOUT_MS || 8000);
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+        console.log('[AutoLogin] Starting auto-login to Vendure Admin...');
 
         try {
             // GraphQL query para login
@@ -186,16 +200,31 @@
         }
     }
 
-    // Esperar a que el DOM esté listo y luego intentar login
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', autoLogin);
-    } else {
-        setTimeout(autoLogin, 500);
+    async function start() {
+        const config = await loadConfig();
+        const enabled = config.enabled || window.__CLA_TESTING_MODE || false;
+
+        if (!enabled) {
+            console.log('[AutoLogin] Auto-login disabled');
+            return;
+        }
+
+        window.CLAAutoLogin = {
+            config,
+            credentials: {
+                username: config.username || window.__CLA_ADMIN_USER || 'superadmin',
+                password: config.password || window.__CLA_ADMIN_PASS || 'superadmin',
+            },
+            tryLogin: () => autoLogin(config),
+        };
+
+        await autoLogin(config);
     }
 
-    // También crear un utility global para debugging
-    window.CLAAutoLogin = {
-        credentials,
-        tryLogin: autoLogin,
-    };
+    // Esperar a que el DOM esté listo y luego intentar login
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+    } else {
+        setTimeout(start, 500);
+    }
 })();
