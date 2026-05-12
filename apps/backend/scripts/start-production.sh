@@ -7,7 +7,44 @@ const path = require('path');
 
 const enabled = ['ADMIN_TESTING_MODE', 'ENABLE_ADMIN_TESTING', 'TESTING_MODE']
     .some(name => process.env[name] === 'true');
-const configPath = path.join(process.cwd(), 'static/admin-ui/auto-login-config.json');
+const adminUiPath = path.join(process.cwd(), 'static/admin-ui');
+const brandingPath = path.join(process.cwd(), 'static/admin-ui-branding');
+const configPath = path.join(adminUiPath, 'auto-login-config.json');
+const managedScripts = [
+    {
+        source: path.join(brandingPath, 'cla-admin-enhancements.js'),
+        target: path.join(adminUiPath, 'cla-admin-enhancements.js'),
+        src: '/admin/cla-admin-enhancements.js',
+    },
+    {
+        source: path.join(brandingPath, 'auto-login.js'),
+        target: path.join(adminUiPath, 'auto-login.js'),
+        src: '/admin/auto-login.js',
+    },
+];
+
+for (const script of managedScripts) {
+    if (fs.existsSync(script.source)) {
+        fs.mkdirSync(path.dirname(script.target), { recursive: true });
+        fs.copyFileSync(script.source, script.target);
+    }
+}
+
+const indexPath = path.join(adminUiPath, 'index.html');
+if (fs.existsSync(indexPath)) {
+    let html = fs.readFileSync(indexPath, 'utf8');
+    html = html
+        .replace(/\s*<script src="(?:\/admin\/)?cla-admin-enhancements\.js" defer><\/script>/g, '')
+        .replace(/\s*<script src="(?:\/admin\/)?auto-login\.js" defer><\/script>/g, '');
+
+    const scriptsToInject = managedScripts
+        .map(script => `    <script src="${script.src}" defer></script>`)
+        .join('\n') + '\n';
+
+    html = html.replace(/<\/body>/i, scriptsToInject + '</body>');
+    fs.writeFileSync(indexPath, html, 'utf8');
+    console.log('[cla] Runtime admin UI hooks ensured');
+}
 
 if (enabled) {
     fs.mkdirSync(path.dirname(configPath), { recursive: true });

@@ -20,13 +20,21 @@
 
     const scriptUrl = document.currentScript?.src || `${window.location.origin}/admin/auto-login.js`;
     const configUrl = new URL('auto-login-config.json', scriptUrl).toString();
+    const isLoginRoute = /\/admin\/login(?:[/?#]|$)|\/login(?:[/?#]|$)/.test(window.location.pathname);
 
     localStorage.removeItem('vendure_auth_token');
     sessionStorage.removeItem('vendure_auth_token');
 
-    // Verificar si ya hay un token válido
+    if (isLoginRoute) {
+        localStorage.removeItem('authToken');
+        sessionStorage.removeItem('authToken');
+        localStorage.removeItem('activeChannelToken');
+        sessionStorage.removeItem('activeChannelToken');
+    }
+
+    // Verificar si ya hay un token válido fuera de la pantalla de login.
     const existingToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    if (existingToken) {
+    if (existingToken && !isLoginRoute) {
         console.log('[AutoLogin] Token already exists, skipping auto-login');
         return;
     }
@@ -170,18 +178,17 @@
                 if (authToken || channel?.token) {
                     console.log('[AutoLogin] ✓ Auto-login successful!');
                     console.log('[AutoLogin] Logged in as:', loginResult.identifier);
-                    console.log('[AutoLogin] Reloading page...');
+                    console.log('[AutoLogin] Opening admin dashboard...');
                     
-                    // Recargar la página para que el admin pueda usarlo
                     setTimeout(() => {
-                        window.location.reload();
+                        window.location.replace('/admin/');
                     }, 500);
                     return true;
                 }
 
                 console.warn('[AutoLogin] Login succeeded but no auth token was exposed; relying on auth cookie.');
                 setTimeout(() => {
-                    window.location.reload();
+                    window.location.replace('/admin/');
                 }, 500);
                 return true;
             }

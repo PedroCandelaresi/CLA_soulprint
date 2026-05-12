@@ -219,12 +219,16 @@ async function applyClaBrandingPostBuild() {
         '<link rel="icon" type="image/svg+xml" href="assets/cla-logo.svg"/>',
     );
 
-    let scriptsToInject = '    <script src="cla-admin-enhancements.js" defer></script>\n';
-    scriptsToInject += '    <script src="auto-login.js" defer></script>\n';
+    html = html
+        .replace(/\s*<script src="(?:\/admin\/)?cla-admin-enhancements\.js" defer><\/script>/g, '')
+        .replace(/\s*<script src="(?:\/admin\/)?auto-login\.js" defer><\/script>/g, '');
 
-    if (!html.includes('cla-admin-enhancements.js')) {
-        html = html.replace(/<\/body>/i, scriptsToInject + '</body>');
-    }
+    const scriptsToInject = [
+        '    <script src="/admin/cla-admin-enhancements.js" defer></script>',
+        '    <script src="/admin/auto-login.js" defer></script>',
+    ].join('\n') + '\n';
+
+    html = html.replace(/<\/body>/i, scriptsToInject + '</body>');
 
     await fsp.writeFile(indexHtmlPath, html, 'utf8');
     process.stdout.write('[cla] branding post-build applied\n');
