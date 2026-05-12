@@ -31,6 +31,29 @@ function resolveServerVendureApiUrlFromPublicValue(publicApiUrl: string | null):
     }
 }
 
+function assertDirectServerVendureApiUrl(value: string, envName: string): string {
+    if (value.startsWith('/')) {
+        throw new Error(`${envName} debe apuntar directo a Vendure, no a una ruta relativa.`);
+    }
+
+    let pathname: string;
+    try {
+        pathname = new URL(value).pathname;
+    } catch {
+        throw new Error(`${envName} no es una URL válida.`);
+    }
+
+    if (pathname.replace(/\/$/, '') === '/api/shop') {
+        throw new Error(`${envName} no debe apuntar al proxy /api/shop del storefront; usá /shop-api directo a Vendure.`);
+    }
+
+    if (pathname.replace(/\/$/, '') !== '/shop-api') {
+        throw new Error(`${envName} debe terminar en /shop-api.`);
+    }
+
+    return value;
+}
+
 function resolveVendureApiUrl(): string {
     const publicApiUrl = readEnv('NEXT_PUBLIC_VENDURE_API_URL');
 
@@ -38,11 +61,21 @@ function resolveVendureApiUrl(): string {
         return publicApiUrl || DEFAULT_BROWSER_VENDURE_API_URL;
     }
 
-    return (
-        readEnv('VENDURE_INTERNAL_API_URL') ||
-        resolveServerVendureApiUrlFromPublicValue(publicApiUrl) ||
-        DEFAULT_SERVER_VENDURE_API_URL
-    );
+    const internalApiUrl = readEnv('VENDURE_INTERNAL_API_URL');
+    if (internalApiUrl) {
+        return assertDirectServerVendureApiUrl(internalApiUrl, 'VENDURE_INTERNAL_API_URL');
+    }
+
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('Falta configurar VENDURE_INTERNAL_API_URL para llamadas server-side a Vendure.');
+    }
+
+    const resolvedPublicApiUrl = resolveServerVendureApiUrlFromPublicValue(publicApiUrl);
+    if (resolvedPublicApiUrl) {
+        return assertDirectServerVendureApiUrl(resolvedPublicApiUrl, 'NEXT_PUBLIC_VENDURE_API_URL');
+    }
+
+    return DEFAULT_SERVER_VENDURE_API_URL;
 }
 
 interface GraphQLError {

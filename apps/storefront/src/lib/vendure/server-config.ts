@@ -7,6 +7,29 @@ function readEnv(name: string): string | null {
     return value ? value : null;
 }
 
+function assertDirectVendureShopApiUrl(value: string, envName: string): string {
+    if (value.startsWith('/')) {
+        throw new Error(`${envName} debe apuntar directo a Vendure, no a una ruta relativa.`);
+    }
+
+    let pathname: string;
+    try {
+        pathname = new URL(value).pathname;
+    } catch {
+        throw new Error(`${envName} no es una URL válida.`);
+    }
+
+    if (pathname.replace(/\/$/, '') === '/api/shop') {
+        throw new Error(`${envName} no debe apuntar al proxy /api/shop del storefront; usá /shop-api directo a Vendure.`);
+    }
+
+    if (pathname.replace(/\/$/, '') !== '/shop-api') {
+        throw new Error(`${envName} debe terminar en /shop-api.`);
+    }
+
+    return value;
+}
+
 export function isProductionServerRuntime(): boolean {
     return process.env.NODE_ENV === 'production';
 }
@@ -14,7 +37,7 @@ export function isProductionServerRuntime(): boolean {
 export function getServerVendureApiUrl(): string {
     const internalApiUrl = readEnv('VENDURE_INTERNAL_API_URL');
     if (internalApiUrl) {
-        return internalApiUrl;
+        return assertDirectVendureShopApiUrl(internalApiUrl, 'VENDURE_INTERNAL_API_URL');
     }
 
     // Production should always talk to Vendure through the internal/private address.

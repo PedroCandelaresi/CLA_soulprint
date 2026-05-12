@@ -4,7 +4,8 @@ import { ensureDemoData } from '../seed/ensure-demo-data';
 import { ensureMercadoPagoPaymentMethod } from '../seed/ensure-mercadopago-payment';
 
 const ENABLE_DEMO_BOOTSTRAP =
-    process.env.BOOTSTRAP_DEMO_DATA !== 'false' && process.env.APP_ENV !== 'production';
+    process.env.BOOTSTRAP_DEMO_DATA === 'true' ||
+    (process.env.BOOTSTRAP_DEMO_DATA == null && process.env.APP_ENV === 'local');
 const RUN_JOB_QUEUE_IN_MAIN_PROCESS = process.env.RUN_JOB_QUEUE_IN_MAIN_PROCESS === 'true';
 const REINDEX_SEARCH_ON_START = process.env.REINDEX_SEARCH_ON_START === 'true';
 
