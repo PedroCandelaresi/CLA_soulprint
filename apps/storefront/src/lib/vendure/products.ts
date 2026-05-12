@@ -7,15 +7,6 @@ interface PaginationOptions {
     skip?: number;
 }
 
-interface ProductsResult {
-    items: Product[];
-    totalItems: number;
-}
-
-interface ProductBadgeLookupResult {
-    items: Array<Pick<Product, 'id' | 'customFields' | 'collections' | 'facetValues'>>;
-}
-
 interface CollectionResult {
     items: CollectionItem[];
 }
@@ -117,37 +108,6 @@ export interface CollectionItem {
     slug: string;
 }
 
-const GET_PRODUCTS_QUERY = `
-  query GetProducts($take: Int, $skip: Int) {
-    products(options: { take: $take, skip: $skip }) {
-      totalItems
-      items {
-        id
-        name
-        slug
-        description
-        facetValues {
-          id
-          code
-          name
-        }
-        featuredAsset {
-            ${ASSET_FIELDS}
-        }
-        assets {
-          ${ASSET_FIELDS}
-        }
-        ${PRODUCT_BADGE_CUSTOM_FIELDS}
-        ${PRODUCT_COLLECTION_BADGE_FIELDS}
-        variants {
-          price
-          currencyCode
-        }
-      }
-    }
-  }
-`;
-
 const GET_PRODUCTS_BY_COLLECTION_QUERY = `
   query GetProductsByCollection($collectionSlug: String!, $take: Int, $skip: Int) {
     search(input: { collectionSlug: $collectionSlug, take: $take, skip: $skip, groupByProduct: true }) {
@@ -229,23 +189,6 @@ const GET_PRODUCT_QUERY = `
     }
 `;
 
-const GET_PRODUCTS_BADGES_BY_IDS_QUERY = `
-    query GetProductsBadgesByIds($ids: [String!]!, $take: Int!) {
-        products(options: { take: $take, filter: { id: { in: $ids } } }) {
-            items {
-                id
-                facetValues {
-                    id
-                    code
-                    name
-                }
-                ${PRODUCT_BADGE_CUSTOM_FIELDS}
-                ${PRODUCT_COLLECTION_BADGE_FIELDS}
-            }
-        }
-    }
-`;
-
 const GET_COLLECTIONS_QUERY = `
     query GetCollections {
         collections(options: { topLevelOnly: true }) {
@@ -322,6 +265,47 @@ const SEARCH_PRODUCTS_QUERY = `
     }
 `;
 
+const LIST_PRODUCTS_SEARCH_QUERY = `
+    query ListProductsSearch($input: SearchInput!) {
+        search(input: $input) {
+            totalItems
+            items {
+                productId
+                productName
+                slug
+                description
+                productVariantId
+                productVariantName
+                productVariantAsset {
+                    preview
+                }
+                price {
+                    ... on PriceRange {
+                        min
+                        max
+                    }
+                    ... on SinglePrice {
+                        value
+                    }
+                }
+                priceWithTax {
+                    ... on PriceRange {
+                        min
+                        max
+                    }
+                    ... on SinglePrice {
+                        value
+                    }
+                }
+                currencyCode
+                productAsset {
+                    preview
+                }
+            }
+        }
+    }
+`;
+
 function mapSearchProduct(item: SearchProductItem): Product {
     return {
         id: item.productId,
@@ -353,49 +337,16 @@ function productMatchesCollectionOrFacet(product: Product, collectionSlug: strin
     );
 }
 
-async function enrichProductsWithBadges(products: Product[]): Promise<Product[]> {
-    const productIds = Array.from(new Set(products.map((product) => product.id).filter(Boolean)));
-
-    if (productIds.length === 0) {
-        return products;
-    }
-
-    try {
-        const data = await fetchVendure<{ products: ProductBadgeLookupResult }>(GET_PRODUCTS_BADGES_BY_IDS_QUERY, {
-            ids: productIds,
-            take: productIds.length,
-        });
-        const productDataMap = new Map(
-            data.products.items.map((product) => [product.id, product]),
-        );
-
-        return products.map((product) => {
-            const enriched = productDataMap.get(product.id);
-
-            if (!enriched) {
-                return product;
-            }
-
-            return {
-                ...product,
-                customFields: {
-                    ...(product.customFields ?? {}),
-                    badges: enriched.customFields?.badges ?? [],
-                },
-                collections: enriched.collections,
-                facetValues: enriched.facetValues ?? product.facetValues,
-            };
-        });
-    } catch (error) {
-        console.warn('No se pudieron enriquecer badges para resultados provenientes de search.', error);
-        return products;
-    }
-}
-
 export async function listProducts(options: PaginationOptions = {}): Promise<Product[]> {
     const { take = 24, skip = 0 } = options;
-    const data = await fetchVendure<{ products: ProductsResult }>(GET_PRODUCTS_QUERY, { take, skip });
-    return data.products.items;
+    const data = await fetchVendure<{ search: SearchResult }>(LIST_PRODUCTS_SEARCH_QUERY, {
+        input: {
+            groupByProduct: true,
+            take,
+            skip,
+        },
+    });
+    return data.search.items.map(mapSearchProduct);
 }
 
 export async function listCollections(): Promise<CollectionItem[]> {
@@ -413,7 +364,7 @@ export async function listProductsByCollection(collectionSlug: string, options: 
             take: Math.max(take + skip, take),
             skip: 0,
         });
-        const products = await enrichProductsWithBadges(data.search.items.map(mapSearchProduct));
+        const products = data.search.items.map(mapSearchProduct);
         const filtered = products.filter((product) => productMatchesCollectionOrFacet(product, normalizedSlug));
 
         if (filtered.length > 0) {
@@ -438,7 +389,7 @@ export async function listProductsByCollection(collectionSlug: string, options: 
                     skip: 0,
                 },
             });
-            const products = await enrichProductsWithBadges(searchData.search.items.map(mapSearchProduct));
+            const products = searchData.search.items.map(mapSearchProduct);
             const filtered = products.filter((product) => productMatchesCollectionOrFacet(product, normalizedSlug));
 
             if (filtered.length > 0) {
@@ -449,31 +400,7 @@ export async function listProductsByCollection(collectionSlug: string, options: 
         console.warn('listProductsByCollection: facet fallback failed', error);
     }
 
-    const pageSize = 100;
-    const maxProductsToInspect = 2000;
-    const matched: Product[] = [];
-    let fetched = 0;
-
-    while (fetched < maxProductsToInspect && matched.length < skip + take) {
-        const data = await fetchVendure<{ products: ProductsResult }>(GET_PRODUCTS_QUERY, {
-            take: pageSize,
-            skip: fetched,
-        });
-        const items = data.products.items;
-
-        if (items.length === 0) {
-            break;
-        }
-
-        matched.push(...items.filter((product) => productMatchesCollectionOrFacet(product, normalizedSlug)));
-        fetched += items.length;
-
-        if (fetched >= data.products.totalItems) {
-            break;
-        }
-    }
-
-    return matched.slice(skip, skip + take);
+    return [];
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -516,27 +443,12 @@ export async function getFeaturedProducts(options: PaginationOptions = {}): Prom
             },
         });
 
-        const featuredProducts = await enrichProductsWithBadges(searchData.search.items.map(mapSearchProduct));
+        const featuredProducts = searchData.search.items.map(mapSearchProduct);
         if (featuredProducts.length > 0) {
             return featuredProducts;
         }
 
-        const fallbackTake = Math.max(skip + take + 24, 48);
-        const productsData = await fetchVendure<{ products: ProductsResult }>(GET_PRODUCTS_QUERY, {
-            take: fallbackTake,
-            skip: 0,
-        });
-
-        return productsData.products.items
-            .filter((product) =>
-                product.facetValues?.some(
-                    (facetValue) =>
-                        facetValue.id === destacadoFacetValueId ||
-                        facetValue.code === 'destacado' ||
-                        facetValue.name.toLowerCase() === 'destacado',
-                ),
-            )
-            .slice(skip, skip + take);
+        return [];
     } catch (error) {
         console.warn('getFeaturedProducts: no se pudieron obtener productos destacados:', getErrorMessage(error));
         return [];

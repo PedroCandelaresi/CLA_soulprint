@@ -1,13 +1,20 @@
 import 'server-only';
 
+import { cookies } from 'next/headers';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getErrorMessage } from '@/lib/network/timeoutFetch';
+import { STOREFRONT_VENDURE_SESSION_COOKIE } from '@/lib/auth/storefrontVendureSession';
 import { GET_STOREFRONT_STATE_QUERY, type StorefrontStateResponse } from '@/lib/vendure/shop';
 import { fetchServerShopApi } from '@/lib/vendure/server';
 import { buildLoginRedirectHref, resolveRedirectTarget } from './redirects';
 
 export async function getServerStorefrontState(): Promise<StorefrontStateResponse | null> {
+    const cookieStore = await cookies();
+    if (!cookieStore.get(STOREFRONT_VENDURE_SESSION_COOKIE)?.value) {
+        return null;
+    }
+
     try {
         return await fetchServerShopApi<StorefrontStateResponse>(GET_STOREFRONT_STATE_QUERY);
     } catch (error) {

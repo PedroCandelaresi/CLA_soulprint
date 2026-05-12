@@ -129,7 +129,7 @@ export function StorefrontProvider({ children, initialState }: StorefrontProvide
     const [activeOrder, setActiveOrder] = useState<ActiveOrder | null>(
         initialState?.activeOrder ?? null,
     );
-    const [initialized, setInitialized] = useState(Boolean(initialState));
+    const [initialized, setInitialized] = useState(true);
     const [authLoading, setAuthLoading] = useState(false);
     const [cartLoading, setCartLoading] = useState(false);
 
@@ -144,12 +144,6 @@ export function StorefrontProvider({ children, initialState }: StorefrontProvide
             setInitialized(true);
         }
     }, []);
-
-    useEffect(() => {
-        if (!initialState) {
-            void refreshState();
-        }
-    }, [initialState, refreshState]);
 
     useEffect(() => {
         if (typeof window === 'undefined') {

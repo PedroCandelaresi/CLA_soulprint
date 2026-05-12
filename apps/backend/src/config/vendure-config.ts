@@ -120,6 +120,8 @@ const SMTP_REQUIRED_ENV_VARS = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP
 const HAS_ANY_SMTP_ENV = SMTP_REQUIRED_ENV_VARS.some(name => Boolean(process.env[name]));
 const HAS_COMPLETE_SMTP_CONFIG = SMTP_REQUIRED_ENV_VARS.every(name => Boolean(process.env[name]));
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
+const DB_CONNECTION_LIMIT = Number(process.env.DB_CONNECTION_LIMIT || 20);
+const DB_CONNECT_TIMEOUT_MS = Number(process.env.DB_CONNECT_TIMEOUT_MS || 10000);
 const EMAIL_TEMPLATE_PATH = path.join(path.dirname(require.resolve('@vendure/email-plugin/package.json')), 'templates');
 const EMAIL_TEMPLATE_LOADER = createEmailTemplateLoader(EMAIL_TEMPLATE_PATH);
 const BRAND_NAME = 'CLA Soulprint';
@@ -296,6 +298,14 @@ export const config: VendureConfig = {
         type: 'mysql',
         synchronize: DB_SYNCHRONIZE && !IS_MIGRATION_COMMAND,
         logging: false,
+        extra: {
+            connectionLimit: Number.isFinite(DB_CONNECTION_LIMIT) && DB_CONNECTION_LIMIT > 0
+                ? DB_CONNECTION_LIMIT
+                : 20,
+            connectTimeout: Number.isFinite(DB_CONNECT_TIMEOUT_MS) && DB_CONNECT_TIMEOUT_MS > 0
+                ? DB_CONNECT_TIMEOUT_MS
+                : 10000,
+        },
         database: process.env.DB_NAME || 'vendure',
         host: process.env.DB_HOST || 'localhost',
         port: Number(process.env.DB_PORT) || 3306,

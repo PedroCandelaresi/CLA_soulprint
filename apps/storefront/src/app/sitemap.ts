@@ -8,12 +8,12 @@ const PRODUCTS_PAGE_SIZE = 100;
 const MAX_PRODUCTS_FOR_SITEMAP = 5000;
 const MAX_SITEMAP_PRODUCT_PAGES = Math.ceil(MAX_PRODUCTS_FOR_SITEMAP / PRODUCTS_PAGE_SIZE);
 const PRODUCTS_SITEMAP_QUERY = `
-  query SitemapProducts($take: Int!, $skip: Int!) {
-    products(options: { take: $take, skip: $skip }) {
+  query SitemapProducts($input: SearchInput!) {
+    search(input: $input) {
       totalItems
       items {
-        id
-        name
+        productId
+        productName
         slug
       }
     }
@@ -21,14 +21,18 @@ const PRODUCTS_SITEMAP_QUERY = `
 `;
 
 type VendureProduct = {
-    id: string;
-    name: string;
+    productId: string;
+    productName: string;
     slug: string;
 };
 
 type VendureProductsResponse = {
     data?: {
         products?: {
+            totalItems?: number;
+            items?: VendureProduct[];
+        };
+        search?: {
             totalItems?: number;
             items?: VendureProduct[];
         };
@@ -68,8 +72,11 @@ async function getSitemapProducts(): Promise<VendureProduct[]> {
                 body: JSON.stringify({
                     query: PRODUCTS_SITEMAP_QUERY,
                     variables: {
-                        take: PRODUCTS_PAGE_SIZE,
-                        skip,
+                        input: {
+                            groupByProduct: true,
+                            take: PRODUCTS_PAGE_SIZE,
+                            skip,
+                        },
                     },
                 }),
             });
@@ -86,8 +93,8 @@ async function getSitemapProducts(): Promise<VendureProduct[]> {
                 return [];
             }
 
-            const pageProducts = json.data?.products?.items ?? [];
-            totalItems = json.data?.products?.totalItems ?? totalItems;
+            const pageProducts = json.data?.search?.items ?? [];
+            totalItems = json.data?.search?.totalItems ?? totalItems;
             console.log(
                 `[sitemap] page ${page + 1}: skip=${skip}, received=${pageProducts.length}, totalItems=${totalItems ?? 'unknown'}`,
             );
