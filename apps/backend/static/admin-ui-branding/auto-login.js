@@ -21,19 +21,52 @@
     const scriptUrl = document.currentScript?.src || `${window.location.origin}/admin/auto-login.js`;
     const configUrl = new URL('auto-login-config.json', scriptUrl).toString();
     const isLoginRoute = /\/admin\/login(?:[/?#]|$)|\/login(?:[/?#]|$)/.test(window.location.pathname);
+    const vendureAuthTokenKey = 'vnd__authToken';
+    const vendureChannelTokenKey = 'vnd__activeChannelToken';
 
-    localStorage.removeItem('vendure_auth_token');
-    sessionStorage.removeItem('vendure_auth_token');
+    function removeStorageKeys(keys) {
+        for (const key of keys) {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        }
+    }
+
+    function readStorageToken(keys) {
+        for (const storage of [sessionStorage, localStorage]) {
+            for (const key of keys) {
+                const value = storage.getItem(key);
+                if (!value) {
+                    continue;
+                }
+                try {
+                    return JSON.parse(value);
+                } catch {
+                    return value;
+                }
+            }
+        }
+        return null;
+    }
+
+    function writeVendureStorage(key, value) {
+        const serialized = JSON.stringify(value);
+        localStorage.setItem(key, serialized);
+        sessionStorage.setItem(key, serialized);
+    }
+
+    function writeLegacyStorage(key, value) {
+        localStorage.setItem(key, value);
+        sessionStorage.setItem(key, value);
+    }
+
+    removeStorageKeys(['vendure_auth_token']);
 
     if (isLoginRoute) {
-        localStorage.removeItem('authToken');
-        sessionStorage.removeItem('authToken');
-        localStorage.removeItem('activeChannelToken');
-        sessionStorage.removeItem('activeChannelToken');
+        removeStorageKeys(['authToken', vendureAuthTokenKey, 'activeChannelToken', vendureChannelTokenKey]);
     }
 
     // Verificar si ya hay un token válido fuera de la pantalla de login.
-    const existingToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    const existingToken = readStorageToken([vendureAuthTokenKey, 'authToken']);
     if (existingToken && !isLoginRoute) {
         console.log('[AutoLogin] Token already exists, skipping auto-login');
         return;
@@ -165,14 +198,14 @@
             if (loginResult.__typename === 'CurrentUser') {
                 const authToken = response.headers.get('vendure-auth-token');
                 if (authToken) {
-                    localStorage.setItem('authToken', authToken);
-                    sessionStorage.setItem('authToken', authToken);
+                    writeVendureStorage(vendureAuthTokenKey, authToken);
+                    writeLegacyStorage('authToken', authToken);
                 }
 
                 const channel = loginResult.channels?.[0];
                 if (channel?.token) {
-                    localStorage.setItem('activeChannelToken', channel.token);
-                    sessionStorage.setItem('activeChannelToken', channel.token);
+                    writeVendureStorage(vendureChannelTokenKey, channel.token);
+                    writeLegacyStorage('activeChannelToken', channel.token);
                 }
 
                 if (authToken || channel?.token) {
