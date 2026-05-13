@@ -444,22 +444,41 @@
 `;
 
     const FALLBACK_NAV_LINKS = [
-        { id: 'home-carousel', sectionId: 'marketing', label: 'Carrusel', route: '/extensions/home-carousel', icon: 'image' },
+        { id: 'home-carousel', sectionId: 'marketing', label: 'Carrusel', route: '/extensions/home-carousel', icon: 'carousel' },
     ];
 
+    const SOLAR_ICONS = {
+        catalog: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="m15.578 3.382l2 1.05c2.151 1.129 3.227 1.693 3.825 2.708C22 8.154 22 9.417 22 11.942v.117c0 2.524 0 3.787-.597 4.801c-.598 1.015-1.674 1.58-3.825 2.709l-2 1.049C13.822 21.539 12.944 22 12 22s-1.822-.46-3.578-1.382l-2-1.05c-2.151-1.129-3.227-1.693-3.825-2.708C2 15.846 2 14.583 2 12.06v-.117c0-2.525 0-3.788.597-4.802c.598-1.015 1.674-1.58 3.825-2.708l2-1.05C10.178 2.461 11.056 2 12 2s1.822.46 3.578 1.382ZM21 7.5l-4 2M12 12L3 7.5m9 4.5v9.5m0-9.5l4.5-2.25l.5-.25m0 0V13m0-3.5l-9.5-5"/></svg>',
+        sales: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.864 16.455c-.858-3.432-1.287-5.147-.386-6.301S6.148 9 9.685 9h4.63c3.538 0 5.306 0 6.207 1.154s.472 2.87-.386 6.301c-.546 2.183-.818 3.274-1.632 3.91c-.814.635-1.939.635-4.189.635h-4.63c-2.25 0-3.375 0-4.189-.635c-.814-.636-1.087-1.727-1.632-3.91Z"/><path d="m19.5 9.5l-.71-2.605c-.274-1.005-.411-1.507-.692-1.886A2.5 2.5 0 0 0 17 4.172C16.56 4 16.04 4 15 4M4.5 9.5l.71-2.605c.274-1.005.411-1.507.692-1.886A2.5 2.5 0 0 1 7 4.172C7.44 4 7.96 4 9 4"/><path d="M9 4a1 1 0 0 1 1-1h4a1 1 0 1 1 0 2h-4a1 1 0 0 1-1-1Z"/></g></svg>',
+        customers: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="6" r="4"/><path stroke-linecap="round" d="M15 9a3 3 0 1 0 0-6"/><ellipse cx="9" cy="17" rx="7" ry="4"/><path stroke-linecap="round" d="M18 14c1.754.385 3 1.359 3 2.5c0 1.03-1.014 1.923-2.5 2.37"/></g></svg>',
+        marketing: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.728 16.137c-1.545-1.546-2.318-2.318-2.605-3.321c-.288-1.003-.042-2.068.45-4.197l.283-1.228c.413-1.792.62-2.688 1.233-3.302s1.51-.82 3.302-1.233l1.228-.284c2.13-.491 3.194-.737 4.197-.45c1.003.288 1.775 1.061 3.32 2.606l1.83 1.83C20.657 9.248 22 10.592 22 12.262c0 1.671-1.344 3.015-4.033 5.704c-2.69 2.69-4.034 4.034-5.705 4.034c-1.67 0-3.015-1.344-5.704-4.033z"/><path stroke-linecap="round" d="M15.39 15.39c.585-.587.664-1.457.176-1.946s-1.359-.409-1.945.177c-.585.586-1.456.665-1.944.177s-.409-1.359.177-1.944m3.535 3.535l.354.354m-.354-.354c-.4.401-.935.565-1.389.471m-2.5-4.36l.354.354m0 0c.331-.332.753-.5 1.146-.497"/><circle cx="8.607" cy="8.879" r="2" transform="rotate(-45 8.607 8.879)"/></g></svg>',
+        settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M13.765 2.152C13.398 2 12.932 2 12 2s-1.398 0-1.765.152a2 2 0 0 0-1.083 1.083c-.092.223-.129.484-.143.863a1.62 1.62 0 0 1-.79 1.353a1.62 1.62 0 0 1-1.567.008c-.336-.178-.579-.276-.82-.308a2 2 0 0 0-1.478.396C4.04 5.79 3.806 6.193 3.34 7s-.7 1.21-.751 1.605a2 2 0 0 0 .396 1.479c.148.192.355.353.676.555c.473.297.777.803.777 1.361s-.304 1.064-.777 1.36c-.321.203-.529.364-.676.556a2 2 0 0 0-.396 1.479c.052.394.285.798.75 1.605c.467.807.7 1.21 1.015 1.453a2 2 0 0 0 1.479.396c.24-.032.483-.13.819-.308a1.62 1.62 0 0 1 1.567.008c.483.28.77.795.79 1.353c.014.38.05.64.143.863a2 2 0 0 0 1.083 1.083C10.602 22 11.068 22 12 22s1.398 0 1.765-.152a2 2 0 0 0 1.083-1.083c.092-.223.129-.483.143-.863c.02-.558.307-1.074.79-1.353a1.62 1.62 0 0 1 1.567-.008c.336.178.579.276.819.308a2 2 0 0 0 1.479-.396c.315-.242.548-.646 1.014-1.453s.7-1.21.751-1.605a2 2 0 0 0-.396-1.479c-.148-.192-.355-.353-.676-.555A1.62 1.62 0 0 1 19.562 12c0-.558.304-1.064.777-1.36c.321-.203.529-.364.676-.556a2 2 0 0 0 .396-1.479c-.052-.394-.285-.798-.75-1.605c-.467-.807-.7-1.21-1.015-1.453a2 2 0 0 0-1.479-.396c-.24.032-.483.13-.82.308a1.62 1.62 0 0 1-1.566-.008a1.62 1.62 0 0 1-.79-1.353c-.014-.38-.05-.64-.143-.863a2 2 0 0 0-1.083-1.083Z"/></g></svg>',
+        system: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 11c0-3.771 0-5.657 1.172-6.828S6.229 3 10 3h4c3.771 0 5.657 0 6.828 1.172S22 7.229 22 11v2c0 3.771 0 5.657-1.172 6.828S17.771 21 14 21h-4c-3.771 0-5.657 0-6.828-1.172S2 16.771 2 13zm0 1h20"/><path stroke-linecap="round" d="M13.5 16.5H18m-4.5-9H18m-12 10v-2m0-7v-2m3 11v-2m0-7v-2"/></g></svg>',
+        products: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="m15.578 3.382l2 1.05c2.151 1.129 3.227 1.693 3.825 2.708C22 8.154 22 9.417 22 11.942v.117c0 2.524 0 3.787-.597 4.801c-.598 1.015-1.674 1.58-3.825 2.709l-2 1.049C13.822 21.539 12.944 22 12 22s-1.822-.46-3.578-1.382l-2-1.05c-2.151-1.129-3.227-1.693-3.825-2.708C2 15.846 2 14.583 2 12.06v-.117c0-2.525 0-3.788.597-4.802c.598-1.015 1.674-1.58 3.825-2.708l2-1.05C10.178 2.461 11.056 2 12 2s1.822.46 3.578 1.382ZM21 7.5L12 12m0 0L3 7.5m9 4.5v9.5"/></svg>',
+        tags: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.728 16.137c-1.545-1.546-2.318-2.318-2.605-3.321c-.288-1.003-.042-2.068.45-4.197l.283-1.228c.413-1.792.62-2.688 1.233-3.302s1.51-.82 3.302-1.233l1.228-.284c2.13-.491 3.194-.737 4.197-.45c1.003.288 1.775 1.061 3.32 2.606l1.83 1.83C20.657 9.248 22 10.592 22 12.262c0 1.671-1.344 3.015-4.033 5.704c-2.69 2.69-4.034 4.034-5.705 4.034c-1.67 0-3.015-1.344-5.704-4.033z"/><circle cx="8.607" cy="8.879" r="2" transform="rotate(-45 8.607 8.879)"/><path stroke-linecap="round" d="m11.542 18.5l6.979-6.98"/></g></svg>',
+        collections: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M18 10h-5"/><path d="M10 3h6.5c.464 0 .697 0 .892.026a3 3 0 0 1 2.582 2.582c.026.195.026.428.026.892"/><path d="M2 6.95c0-.883 0-1.324.07-1.692A4 4 0 0 1 5.257 2.07C5.626 2 6.068 2 6.95 2c.386 0 .58 0 .766.017a4 4 0 0 1 2.18.904c.144.119.28.255.554.529L11 4c.816.816 1.224 1.224 1.712 1.495a4 4 0 0 0 .848.352C14.098 6 14.675 6 15.828 6h.374c2.632 0 3.949 0 4.804.77q.119.105.224.224c.77.855.77 2.172.77 4.804V14c0 3.771 0 5.657-1.172 6.828S17.771 22 14 22h-4c-3.771 0-5.657 0-6.828-1.172S2 17.771 2 14z"/></g></svg>',
+        assets: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12c0-4.714 0-7.071 1.464-8.536C4.93 2 7.286 2 12 2s7.071 0 8.535 1.464C22 4.93 22 7.286 22 12s0 7.071-1.465 8.535C19.072 22 16.714 22 12 22s-7.071 0-8.536-1.465C2 19.072 2 16.714 2 12Z"/><circle cx="16" cy="8" r="2"/><path stroke-linecap="round" d="m2 12.5l1.752-1.533a2.3 2.3 0 0 1 3.14.105l4.29 4.29a2 2 0 0 0 2.564.222l.299-.21a3 3 0 0 1 3.731.225L21 18.5"/></g></svg>',
+        visualTags: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.728 16.137c-1.545-1.546-2.318-2.318-2.605-3.321c-.288-1.003-.042-2.068.45-4.197l.283-1.228c.413-1.792.62-2.688 1.233-3.302s1.51-.82 3.302-1.233l1.228-.284c2.13-.491 3.194-.737 4.197-.45c1.003.288 1.775 1.061 3.32 2.606l1.83 1.83C20.657 9.248 22 10.592 22 12.262c0 1.671-1.344 3.015-4.033 5.704c-2.69 2.69-4.034 4.034-5.705 4.034c-1.67 0-3.015-1.344-5.704-4.033z"/><path stroke-linecap="round" d="M15.39 15.39c.585-.587.664-1.457.176-1.946s-1.359-.409-1.945.177c-.585.586-1.456.665-1.944.177s-.409-1.359.177-1.944m3.535 3.535l.354.354m-.354-.354c-.4.401-.935.565-1.389.471m-2.5-4.36l.354.354m0 0c.331-.332.753-.5 1.146-.497"/><circle cx="8.607" cy="8.879" r="2" transform="rotate(-45 8.607 8.879)"/></g></svg>',
+        orders: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.742 20.555C4.942 22 7.174 22 11.64 22h.72c4.466 0 6.699 0 7.899-1.445m-16.517 0c-1.2-1.446-.788-3.64.035-8.03c.585-3.12.877-4.681 1.988-5.603M3.742 20.555Zm16.517 0c1.2-1.446.788-3.64-.035-8.03c-.585-3.12-.878-4.681-1.989-5.603m2.024 13.633ZM18.235 6.922C17.125 6 15.536 6 12.361 6h-.722c-3.175 0-4.763 0-5.874.922m12.47 0Zm-12.47 0Z"/><path stroke-linecap="round" stroke-linejoin="round" d="m10 14.3l1.333 1.2l2.667-3"/><path stroke-linecap="round" d="M9 6V5a3 3 0 1 1 6 0v1"/></g></svg>',
+        customer: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="6" r="4"/><path d="M20 17.5c0 2.485 0 4.5-8 4.5s-8-2.015-8-4.5S7.582 13 12 13s8 2.015 8 4.5Z"/></g></svg>',
+        customerGroups: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="6" r="4"/><path stroke-linecap="round" d="M18 9c1.657 0 3-1.12 3-2.5S19.657 4 18 4M6 9C4.343 9 3 7.88 3 6.5S4.343 4 6 4"/><ellipse cx="12" cy="17" rx="6" ry="4"/><path stroke-linecap="round" d="M20 19c1.754-.385 3-1.359 3-2.5s-1.246-2.115-3-2.5M4 19c-1.754-.385-3-1.359-3-2.5s1.246-2.115 3-2.5"/></g></svg>',
+        promotions: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="m9 15l6-6"/><path fill="currentColor" d="M15.5 14.5a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5-5a1 1 0 1 1-2 0a1 1 0 0 1 2 0"/><path stroke="currentColor" stroke-width="1.5" d="M2 12c0-4.714 0-7.071 1.464-8.536C4.93 2 7.286 2 12 2s7.071 0 8.535 1.464C22 4.93 22 7.286 22 12s0 7.071-1.465 8.535C19.072 22 16.714 22 12 22s-7.071 0-8.536-1.465C2 19.072 2 16.714 2 12Z"/></g></svg>',
+        carousel: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.5" d="M8 18c-2.828 0-4.243 0-5.121-.879C2 16.243 2 14.828 2 12s0-4.243.879-5.121C3.757 6 5.172 6 8 6h8c2.828 0 4.243 0 5.121.879C22 7.757 22 9.172 22 12s0 4.243-.879 5.121C20.243 18 18.828 18 16 18zM19.5 6c0-1.4 0-2.1-.273-2.635a2.5 2.5 0 0 0-1.092-1.093C17.6 2 16.9 2 15.5 2h-7c-1.4 0-2.1 0-2.635.272a2.5 2.5 0 0 0-1.093 1.093C4.5 3.9 4.5 4.6 4.5 6m15 12c0 1.4 0 2.1-.273 2.635a2.5 2.5 0 0 1-1.092 1.092C17.6 22 16.9 22 15.5 22h-7c-1.4 0-2.1 0-2.635-.273a2.5 2.5 0 0 1-1.093-1.092C4.5 20.1 4.5 19.4 4.5 18"/></svg>',
+    };
+
     const SIDEBAR_SECTION_ICONS = {
-        catalog: 'folder',
-        catalogo: 'folder',
-        sales: 'shopping-cart',
-        ventas: 'shopping-cart',
-        customer: 'users',
-        customers: 'users',
-        clientes: 'users',
-        marketing: 'image',
-        settings: 'cog',
-        ajustes: 'cog',
-        system: 'blocks-group',
-        sistema: 'blocks-group',
+        catalog: 'catalog',
+        catalogo: 'catalog',
+        sales: 'sales',
+        ventas: 'sales',
+        customer: 'customers',
+        customers: 'customers',
+        clientes: 'customers',
+        marketing: 'marketing',
+        settings: 'settings',
+        ajustes: 'settings',
+        system: 'system',
+        sistema: 'system',
     };
 
     const SIDEBAR_GROUP_LABELS = {
@@ -480,6 +499,50 @@
     const SIDEBAR_ITEM_LABELS = {
         badges: 'Etiquetas visuales',
         badge: 'Etiqueta visual',
+    };
+
+    const SIDEBAR_ITEM_ICONS = {
+        product: 'products',
+        products: 'products',
+        producto: 'products',
+        productos: 'products',
+        facet: 'tags',
+        facets: 'tags',
+        tag: 'tags',
+        tags: 'tags',
+        etiqueta: 'tags',
+        etiquetas: 'tags',
+        collection: 'collections',
+        collections: 'collections',
+        coleccion: 'collections',
+        colecciones: 'collections',
+        asset: 'assets',
+        assets: 'assets',
+        recurso: 'assets',
+        recursos: 'assets',
+        badge: 'visualTags',
+        badges: 'visualTags',
+        etiqueta_visual: 'visualTags',
+        etiquetas_visuales: 'visualTags',
+        order: 'orders',
+        orders: 'orders',
+        pedido: 'orders',
+        pedidos: 'orders',
+        customer: 'customer',
+        customers: 'customer',
+        cliente: 'customer',
+        clientes: 'customer',
+        customer_group: 'customerGroups',
+        customer_groups: 'customerGroups',
+        grupo_de_clientes: 'customerGroups',
+        grupos_de_clientes: 'customerGroups',
+        promotion: 'promotions',
+        promotions: 'promotions',
+        promocion: 'promotions',
+        promociones: 'promotions',
+        carousel: 'carousel',
+        carrusel: 'carousel',
+        home_carousel: 'carousel',
     };
 
     let lastPath = '';
@@ -508,6 +571,49 @@
         }
     }
 
+    function sidebarKey(value) {
+        return normalizeText(value)
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+    }
+
+    function createSolarIcon(iconKey) {
+        const span = document.createElement('span');
+        span.className = 'cla-solar-icon';
+        span.setAttribute('aria-hidden', 'true');
+        span.setAttribute('data-cla-solar-icon', iconKey);
+        span.innerHTML = SOLAR_ICONS[iconKey] || SOLAR_ICONS.catalog;
+
+        const svg = span.querySelector('svg');
+        if (svg) {
+            svg.setAttribute('focusable', 'false');
+            svg.setAttribute('aria-hidden', 'true');
+        }
+
+        return span;
+    }
+
+    function ensureSolarIcon(host, iconKey, referenceNode) {
+        if (!host || !SOLAR_ICONS[iconKey]) {
+            return;
+        }
+
+        const directIcon = Array.from(host.children).find(function (child) {
+            return child.classList && child.classList.contains('cla-solar-icon');
+        });
+
+        if (directIcon && directIcon.getAttribute('data-cla-solar-icon') === iconKey) {
+            return;
+        }
+
+        if (directIcon) {
+            directIcon.remove();
+        }
+
+        const icon = createSolarIcon(iconKey);
+        host.insertBefore(icon, referenceNode || host.firstChild);
+    }
+
     function findNavGroup(sectionId, label) {
         const nav = document.querySelector('.left-nav vdr-main-nav nav.main-nav');
         if (!nav) {
@@ -534,8 +640,12 @@
         group.setAttribute('data-section-id', sectionId);
 
         const header = document.createElement('div');
-        header.className = 'section-header nav-group-header';
-        header.textContent = label;
+        header.className = 'section-header';
+
+        const headerLabel = document.createElement('span');
+        headerLabel.className = 'nav-group-header';
+        headerLabel.textContent = label;
+        header.appendChild(headerLabel);
 
         const list = document.createElement('div');
         list.className = 'nav-list';
@@ -587,14 +697,10 @@
         link.href = href;
         link.setAttribute('data-item-id', item.id);
 
-        const icon = document.createElement('clr-icon');
-        icon.setAttribute('shape', item.icon);
-        icon.setAttribute('size', '16');
-
         const span = document.createElement('span');
         span.textContent = item.label;
 
-        link.appendChild(icon);
+        link.appendChild(createSolarIcon(item.icon));
         link.appendChild(span);
         wrapper.appendChild(link);
         navList.appendChild(wrapper);
@@ -651,12 +757,74 @@
 
     function getSidebarGroupIconShape(group, key) {
         const labelKey = normalizeText(getSidebarGroupLabel(group));
-        return SIDEBAR_SECTION_ICONS[key] || SIDEBAR_SECTION_ICONS[labelKey] || 'folder';
+        return SIDEBAR_SECTION_ICONS[key] || SIDEBAR_SECTION_ICONS[labelKey] || 'catalog';
     }
 
     function ensureSidebarGroupIcon(group, key) {
         group.querySelectorAll('.cla-nav-accordion-title-icon').forEach(function (icon) {
             icon.remove();
+        });
+    }
+
+    function getSidebarItemIconKey(link) {
+        const attrCandidates = [
+            link.getAttribute('data-item-id'),
+            link.getAttribute('data-extension-id'),
+            link.getAttribute('routerlink'),
+            link.getAttribute('ng-reflect-router-link'),
+            link.getAttribute('href'),
+        ].filter(Boolean);
+
+        const route = attrCandidates.join(' ').toLowerCase();
+        const routeMatches = [
+            ['home-carousel', 'carousel'],
+            ['badges', 'visualTags'],
+            ['badge', 'visualTags'],
+            ['products', 'products'],
+            ['facets', 'tags'],
+            ['collections', 'collections'],
+            ['assets', 'assets'],
+            ['orders', 'orders'],
+            ['customer-groups', 'customerGroups'],
+            ['customers/groups', 'customerGroups'],
+            ['customers', 'customer'],
+            ['promotions', 'promotions'],
+            ['marketing', 'promotions'],
+        ];
+
+        const matchedRoute = routeMatches.find(function (entry) {
+            return route.indexOf(entry[0]) !== -1;
+        });
+        if (matchedRoute) {
+            return matchedRoute[1];
+        }
+
+        const textKey = sidebarKey(link.textContent);
+        return SIDEBAR_ITEM_ICONS[textKey] || SIDEBAR_ITEM_ICONS[normalizeText(link.textContent)] || null;
+    }
+
+    function ensureSidebarSolarIcons() {
+        getSidebarGroups().forEach(function (group, index) {
+            const key = getSidebarGroupKey(group, index);
+            const header = group.querySelector(':scope > vdr-ui-extension-point > .section-header, :scope > .section-header, .section-header');
+            if (!header) {
+                return;
+            }
+
+            const title = header.querySelector('.nav-group-header') || Array.from(header.children).find(function (child) {
+                return !child.matches('button, .cla-nav-accordion-button, .cla-solar-icon');
+            });
+            ensureSolarIcon(header, getSidebarGroupIconShape(group, key), title || header.firstChild);
+        });
+
+        document.querySelectorAll('.left-nav vdr-main-nav nav.main-nav .nav-link > a, .left-nav .settings-nav-container .nav-link > a').forEach(function (link) {
+            const iconKey = getSidebarItemIconKey(link);
+            const labelNode = Array.from(link.children).find(function (child) {
+                return !child.matches('clr-icon, cds-icon, .cla-solar-icon');
+            });
+            if (iconKey) {
+                ensureSolarIcon(link, iconKey, labelNode || link.firstChild);
+            }
         });
     }
 
@@ -1073,6 +1241,7 @@
             ensureCarouselNavLinks();
             ensureSidebarAccordions();
             polishSidebarCopy();
+            ensureSidebarSolarIcons();
             applyIconTooltips(document);
             applyActionTooltips(document);
             injectHelpBanner();

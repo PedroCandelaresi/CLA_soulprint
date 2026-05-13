@@ -3817,3 +3817,130 @@ table tbody tr:hover td,
 .datagrid-table tbody tr:hover td {
     background: rgba(0, 72, 37, 0.035) !important;
 }
+
+/* CLA sidebar readability + Solar icon pass */
+.left-nav .cla-solar-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 1.08rem !important;
+    height: 1.08rem !important;
+    min-width: 1.08rem !important;
+    color: currentColor !important;
+    opacity: 0.82 !important;
+    line-height: 0 !important;
+    pointer-events: none !important;
+}
+
+.left-nav .cla-solar-icon svg {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group .section-header,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header,
+.left-nav .settings-nav-container .nav-group .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header {
+    grid-template-columns: 1.12rem minmax(0, 1fr) 1.55rem !important;
+    column-gap: 0.58rem !important;
+    padding-left: 0.82rem !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group .section-header > .cla-solar-icon,
+.left-nav .settings-nav-container .nav-group .section-header > .cla-solar-icon {
+    grid-column: 1 !important;
+    color: rgba(245, 235, 217, 0.82) !important;
+    opacity: 0.9 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group-header,
+.left-nav .settings-nav-container .nav-group-header {
+    grid-column: 2 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .section-header button,
+.left-nav vdr-main-nav nav.main-nav .cla-nav-accordion-button,
+.left-nav .settings-nav-container .section-header button,
+.left-nav .settings-nav-container .cla-nav-accordion-button {
+    grid-column: 3 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a:link,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a:visited,
+.left-nav .settings-nav-container .nav-link > a,
+.left-nav .settings-nav-container .nav-link > a:link,
+.left-nav .settings-nav-container .nav-link > a:visited {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.62rem !important;
+    border: 1px solid transparent !important;
+    color: rgba(245, 235, 217, 0.78) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link > a clr-icon,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a cds-icon,
+.left-nav .settings-nav-container .nav-link > a clr-icon,
+.left-nav .settings-nav-container .nav-link > a cds-icon {
+    display: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link > a > .cla-solar-icon,
+.left-nav .settings-nav-container .nav-link > a > .cla-solar-icon {
+    color: rgba(245, 235, 217, 0.72) !important;
+    opacity: 0.86 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link:hover > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a:hover,
+.left-nav .settings-nav-container .nav-link:hover > a,
+.left-nav .settings-nav-container .nav-link > a:hover {
+    border-color: rgba(226, 207, 170, 0.22) !important;
+    background: rgba(255, 253, 248, 0.09) !important;
+    color: #fffdf8 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link.active > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a.active,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a[aria-current='page'],
+.left-nav vdr-main-nav nav.main-nav .nav-link:has(> a.active) > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link:has(> a[aria-current='page']) > a,
+.left-nav .settings-nav-container .nav-link.active > a,
+.left-nav .settings-nav-container .nav-link > a.active,
+.left-nav .settings-nav-container .nav-link > a[aria-current='page'],
+.left-nav .settings-nav-container .nav-link:has(> a.active) > a,
+.left-nav .settings-nav-container .nav-link:has(> a[aria-current='page']) > a {
+    border-color: rgba(226, 207, 170, 0.34) !important;
+    background:
+        linear-gradient(90deg, rgba(199, 164, 107, 0.34), rgba(255, 253, 248, 0.1)) !important;
+    color: #fffdf8 !important;
+    box-shadow:
+        inset 2px 0 0 var(--cla-gold),
+        0 12px 24px rgba(0, 28, 15, 0.18) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link.active > a span,
+.left-nav vdr-main-nav nav.main-nav .nav-link.active > a div,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a.active span,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a.active div,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a[aria-current='page'] span,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a[aria-current='page'] div,
+.left-nav .settings-nav-container .nav-link.active > a span,
+.left-nav .settings-nav-container .nav-link.active > a div,
+.left-nav .settings-nav-container .nav-link > a.active span,
+.left-nav .settings-nav-container .nav-link > a.active div,
+.left-nav .settings-nav-container .nav-link > a[aria-current='page'] span,
+.left-nav .settings-nav-container .nav-link > a[aria-current='page'] div {
+    color: #fffdf8 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link.active > a > .cla-solar-icon,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a.active > .cla-solar-icon,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a[aria-current='page'] > .cla-solar-icon,
+.left-nav .settings-nav-container .nav-link.active > a > .cla-solar-icon,
+.left-nav .settings-nav-container .nav-link > a.active > .cla-solar-icon,
+.left-nav .settings-nav-container .nav-link > a[aria-current='page'] > .cla-solar-icon {
+    color: #fffdf8 !important;
+    opacity: 1 !important;
+}
