@@ -3944,3 +3944,189 @@ table tbody tr:hover td,
     color: #fffdf8 !important;
     opacity: 1 !important;
 }
+
+/* CLA sidebar notebook proportion pass */
+.left-nav {
+    --cla-sidebar-width: 276px !important;
+    width: var(--cla-sidebar-width) !important;
+    min-width: var(--cla-sidebar-width) !important;
+    flex-basis: var(--cla-sidebar-width) !important;
+}
+
+.left-nav .branding {
+    min-height: 76px !important;
+    padding: 0.88rem 1.05rem 0.78rem !important;
+}
+
+.left-nav .branding::before,
+.left-nav .branding:before {
+    width: 12rem !important;
+    height: 2.55rem !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav {
+    padding: 0.72rem 0.82rem 1.15rem !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group,
+.left-nav .settings-nav-container .nav-group,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group {
+    margin-bottom: 0.36rem !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed),
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) {
+    border: 1px solid rgba(226, 207, 170, 0.16) !important;
+    background: rgba(255, 253, 248, 0.035) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 253, 248, 0.06) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group .section-header,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header,
+.left-nav .settings-nav-container .nav-group .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header {
+    grid-template-columns: 1.05rem minmax(0, 1fr) 1.42rem !important;
+    min-height: 2.36rem !important;
+    column-gap: 0.52rem !important;
+    padding: 0 0.38rem 0 0.7rem !important;
+    border-radius: 8px !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.active .section-header,
+.left-nav .settings-nav-container .nav-group.active .section-header,
+.left-nav vdr-main-nav nav.main-nav .nav-group:has(.nav-link.active) .section-header,
+.left-nav .settings-nav-container .nav-group:has(.nav-link.active) .section-header {
+    padding-left: 0.7rem !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) .section-header {
+    border: 0 !important;
+    border-bottom: 1px solid rgba(226, 207, 170, 0.16) !important;
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group-header,
+.left-nav .settings-nav-container .nav-group-header {
+    font-size: 0.84rem !important;
+    font-weight: 730 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .section-header button,
+.left-nav vdr-main-nav nav.main-nav .cla-nav-accordion-button,
+.left-nav .settings-nav-container .section-header button,
+.left-nav .settings-nav-container .cla-nav-accordion-button {
+    width: 1.42rem !important;
+    height: 1.42rem !important;
+    min-width: 1.42rem !important;
+    border-radius: 999px !important;
+}
+
+.left-nav .cla-solar-icon {
+    width: 1.02rem !important;
+    height: 1.02rem !important;
+    min-width: 1.02rem !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group .nav-list,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-list,
+.left-nav .settings-nav-container .nav-group .nav-list,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-list {
+    margin: 0 !important;
+    padding: 0.18rem 0.24rem 0.28rem !important;
+    background: transparent !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link,
+.left-nav .settings-nav-container .nav-link {
+    display: block !important;
+    width: 100% !important;
+    min-height: 2.02rem !important;
+    margin: 0 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a:link,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a:visited,
+.left-nav .settings-nav-container .nav-link > a,
+.left-nav .settings-nav-container .nav-link > a:link,
+.left-nav .settings-nav-container .nav-link > a:visited {
+    width: 100% !important;
+    min-height: 2.02rem !important;
+    box-sizing: border-box !important;
+    gap: 0.56rem !important;
+    padding: 0.42rem 0.62rem !important;
+    border-radius: 7px !important;
+    font-size: 0.85rem !important;
+    line-height: 1.12 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link.active > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a.active,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a[aria-current='page'],
+.left-nav vdr-main-nav nav.main-nav .nav-link:has(> a.active) > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link:has(> a[aria-current='page']) > a,
+.left-nav .settings-nav-container .nav-link.active > a,
+.left-nav .settings-nav-container .nav-link > a.active,
+.left-nav .settings-nav-container .nav-link > a[aria-current='page'],
+.left-nav .settings-nav-container .nav-link:has(> a.active) > a,
+.left-nav .settings-nav-container .nav-link:has(> a[aria-current='page']) > a {
+    border-color: rgba(226, 207, 170, 0.38) !important;
+    background:
+        linear-gradient(90deg, rgba(255, 253, 248, 0.13), rgba(199, 164, 107, 0.19)) !important;
+    color: #fffdf8 !important;
+    box-shadow:
+        inset 3px 0 0 var(--cla-gold),
+        inset 0 0 0 1px rgba(255, 253, 248, 0.035) !important;
+}
+
+@media (max-width: 1536px) {
+    .left-nav {
+        --cla-sidebar-width: 268px !important;
+    }
+
+    .left-nav .branding::before,
+    .left-nav .branding:before {
+        width: 11.4rem !important;
+        height: 2.42rem !important;
+    }
+
+    .left-nav vdr-main-nav nav.main-nav {
+        padding-right: 0.72rem !important;
+        padding-left: 0.72rem !important;
+    }
+}
+
+@media (max-width: 1368px) {
+    .left-nav {
+        --cla-sidebar-width: 260px !important;
+    }
+
+    .left-nav .branding {
+        min-height: 72px !important;
+        padding-right: 0.95rem !important;
+        padding-left: 0.95rem !important;
+    }
+
+    .left-nav .branding::before,
+    .left-nav .branding:before {
+        width: 10.9rem !important;
+        height: 2.32rem !important;
+    }
+
+    .left-nav vdr-main-nav nav.main-nav {
+        padding: 0.64rem 0.66rem 1rem !important;
+    }
+
+    .left-nav vdr-main-nav nav.main-nav .nav-link > a,
+    .left-nav vdr-main-nav nav.main-nav .nav-link > a:link,
+    .left-nav vdr-main-nav nav.main-nav .nav-link > a:visited,
+    .left-nav .settings-nav-container .nav-link > a,
+    .left-nav .settings-nav-container .nav-link > a:link,
+    .left-nav .settings-nav-container .nav-link > a:visited {
+        font-size: 0.83rem !important;
+    }
+}
