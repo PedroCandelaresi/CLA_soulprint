@@ -582,61 +582,6 @@
         FALLBACK_NAV_LINKS.forEach(ensureFallbackNavLink);
     }
 
-    function resetLegacySidebarAccordions() {
-        const runtimeStyle = document.getElementById('cla-sidebar-runtime-fix');
-        if (runtimeStyle) {
-            runtimeStyle.remove();
-        }
-
-        document.querySelectorAll('.left-nav .cla-nav-accordion-title-icon').forEach(function (icon) {
-            icon.remove();
-        });
-
-        document.querySelectorAll('.left-nav .cla-nav-accordion-button').forEach(function (button) {
-            button.classList.remove('cla-nav-accordion-button');
-            button.removeAttribute('data-cla-accordion-bound');
-            button.removeAttribute('aria-expanded');
-            button.removeAttribute('aria-label');
-            if (!button.children.length && !(button.textContent || '').trim()) {
-                button.remove();
-            }
-        });
-
-        document.querySelectorAll(
-            '.left-nav .cla-nav-accordion-group, .left-nav [data-cla-accordion-key], .left-nav .cla-nav-group-collapsed',
-        ).forEach(function (group) {
-            const wasManagedByCla = group.hasAttribute('data-cla-accordion-ready')
-                || group.hasAttribute('data-cla-accordion-key')
-                || group.classList.contains('cla-nav-accordion-group')
-                || group.classList.contains('cla-nav-group-collapsed');
-
-            group.classList.remove('cla-nav-accordion-group', 'cla-nav-group-collapsed');
-            if (wasManagedByCla) {
-                group.classList.remove('collapsed', 'collapsible');
-            }
-            group.removeAttribute('data-cla-accordion-key');
-            group.removeAttribute('data-cla-accordion-ready');
-
-            const navList = getSidebarGroupNavList(group);
-            if (!navList) {
-                return;
-            }
-            ['display', 'max-height', 'overflow', 'opacity', 'visibility', 'margin-top', 'pointer-events'].forEach(function (prop) {
-                navList.style.removeProperty(prop);
-            });
-        });
-
-        try {
-            Object.keys(window.localStorage).forEach(function (key) {
-                if (key.indexOf('cla-sidebar-accordion-v2:') === 0) {
-                    window.localStorage.removeItem(key);
-                }
-            });
-        } catch (error) {
-            // Local storage can be disabled; the sidebar reset is still best-effort.
-        }
-    }
-
     function getSidebarGroups() {
         return Array.from(new Set(Array.from(document.querySelectorAll(
             '.left-nav vdr-main-nav nav.main-nav .nav-group, .left-nav .settings-nav-container .nav-group'
@@ -664,19 +609,9 @@
     }
 
     function ensureSidebarGroupIcon(group, key) {
-        const header = group.querySelector('.section-header');
-        const label = header ? header.querySelector('.nav-group-header') : null;
-        if (!header || !label) {
-            return;
-        }
-        let icon = header.querySelector('.cla-nav-accordion-title-icon');
-        if (!icon) {
-            icon = document.createElement('clr-icon');
-            icon.className = 'cla-nav-accordion-title-icon';
-            icon.setAttribute('size', '14');
-            header.insertBefore(icon, label);
-        }
-        icon.setAttribute('shape', getSidebarGroupIconShape(group, key));
+        group.querySelectorAll('.cla-nav-accordion-title-icon').forEach(function (icon) {
+            icon.remove();
+        });
     }
 
     function sidebarGroupIsActive(group) {
@@ -1089,8 +1024,8 @@
         lastRunTime = now;
 
         try {
-            resetLegacySidebarAccordions();
             ensureCarouselNavLinks();
+            ensureSidebarAccordions();
             applyIconTooltips(document);
             applyActionTooltips(document);
             injectHelpBanner();

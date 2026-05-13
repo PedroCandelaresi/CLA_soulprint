@@ -2358,6 +2358,170 @@ body.cla-tooltips-ready [data-cla-tip]::after {
     display: none !important;
 }
 
+/* ======================================================================
+   SIDEBAR CLA ACCORDION RESTORE
+   Acordeones compactos, oscuros y legibles sobre el verde de marca.
+   ====================================================================== */
+.left-nav vdr-main-nav nav.main-nav {
+    padding: 0.45rem 0.55rem 1.25rem !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group {
+    margin: 0.48rem 0.15rem !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(226, 207, 170, 0.2) !important;
+    border-radius: 8px !important;
+    background:
+        linear-gradient(180deg, rgba(245, 235, 217, 0.075), rgba(3, 25, 15, 0.16)),
+        rgba(3, 25, 15, 0.16) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 250, 242, 0.06),
+        0 10px 22px rgba(2, 44, 24, 0.16) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.active:not(.collapsed),
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.active:not(.collapsed) {
+    border-color: rgba(226, 207, 170, 0.3) !important;
+    background:
+        linear-gradient(180deg, rgba(226, 207, 170, 0.12), rgba(3, 25, 15, 0.18)),
+        rgba(0, 72, 37, 0.28) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 1.45rem !important;
+    align-items: center !important;
+    column-gap: 0.5rem !important;
+    min-height: 2.05rem !important;
+    padding: 0 0.4rem 0 0.65rem !important;
+    border-radius: 0 !important;
+    border-bottom: 1px solid rgba(226, 207, 170, 0.16) !important;
+    background: rgba(245, 235, 217, 0.07) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.collapsed .section-header,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.cla-nav-group-collapsed .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.collapsed .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.cla-nav-group-collapsed .section-header {
+    border-bottom-color: transparent !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header:hover {
+    background: rgba(245, 235, 217, 0.105) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-group-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-group-header {
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: var(--cla-gold-soft) !important;
+    font-size: 0.72rem !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0 !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    transform: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-title-icon,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-title-icon {
+    display: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header button,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header button,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button {
+    width: 1.45rem !important;
+    height: 1.45rem !important;
+    min-width: 1.45rem !important;
+    justify-self: end !important;
+    border: 1px solid rgba(226, 207, 170, 0.22) !important;
+    border-radius: 6px !important;
+    background: rgba(245, 235, 217, 0.075) !important;
+    color: rgba(245, 235, 217, 0.8) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header button:hover,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header button:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button:hover {
+    background: rgba(199, 164, 107, 0.2) !important;
+    color: #fffaf2 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-list,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-list {
+    margin: 0 !important;
+    padding: 0.28rem 0.34rem 0.42rem !important;
+    background: rgba(3, 25, 15, 0.22) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link {
+    min-height: 1.88rem !important;
+    margin: 0.08rem 0 !important;
+    padding: 0 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a:link,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a:visited,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a:link,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a:visited {
+    min-height: 1.86rem !important;
+    padding: 0.36rem 0.55rem !important;
+    border-radius: 6px !important;
+    color: rgba(245, 235, 217, 0.78) !important;
+    font-size: 0.82rem !important;
+    font-weight: 650 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link:hover > a,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link:hover > a,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a:hover {
+    background: rgba(245, 235, 217, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link.active,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link.active > a,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link.active > a:link,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link.active > a:visited,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link.active,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link.active > a,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link.active > a:link,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link.active > a:visited {
+    background: transparent !important;
+    color: var(--cla-green-dk) !important;
+    box-shadow: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link.active > a,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link.active > a {
+    background:
+        linear-gradient(90deg, rgba(226, 207, 170, 0.98), rgba(199, 164, 107, 0.82)) !important;
+    color: var(--cla-green-dk) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 250, 242, 0.34),
+        0 6px 14px rgba(2, 44, 24, 0.18) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a clr-icon,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a cds-icon,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a clr-icon,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a cds-icon {
+    color: currentColor !important;
+    opacity: 0.62 !important;
+}
+
 @media (max-width: 1024px) {
     .content-area {
         padding: 1rem 1rem 1.5rem;
