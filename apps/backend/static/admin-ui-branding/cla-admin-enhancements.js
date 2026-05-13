@@ -975,6 +975,9 @@
 
     function setTooltip(host, tip) {
         const cleanTip = (tip || '').replace(/\s+/g, ' ').trim();
+        if (host && host.closest && host.closest('.left-nav')) {
+            return;
+        }
         if (!cleanTip || host.hasAttribute('data-cla-tip')) {
             return;
         }
@@ -983,6 +986,13 @@
             host.setAttribute('data-cla-tip-wrap', '');
         }
         rememberTitleForAccessibility(host);
+    }
+
+    function clearSidebarTooltips() {
+        document.querySelectorAll('.left-nav [data-cla-tip], .left-nav [data-cla-tip-wrap]').forEach(function (host) {
+            host.removeAttribute('data-cla-tip');
+            host.removeAttribute('data-cla-tip-wrap');
+        });
     }
 
     function inferActionTooltip(host) {
@@ -1242,8 +1252,10 @@
             ensureSidebarAccordions();
             polishSidebarCopy();
             ensureSidebarSolarIcons();
+            clearSidebarTooltips();
             applyIconTooltips(document);
             applyActionTooltips(document);
+            clearSidebarTooltips();
             injectHelpBanner();
             if (activeTooltipHost) {
                 positionTooltip(activeTooltipHost);

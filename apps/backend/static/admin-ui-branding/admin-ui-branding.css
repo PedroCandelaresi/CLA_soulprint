@@ -4130,3 +4130,212 @@ table tbody tr:hover td,
         font-size: 0.83rem !important;
     }
 }
+
+/* CLA sidebar final elegance pass */
+.left-nav {
+    --cla-sidebar-width: 258px !important;
+}
+
+.left-nav .branding {
+    min-height: 68px !important;
+    padding: 0.78rem 0.9rem 0.62rem !important;
+}
+
+.left-nav .branding::before,
+.left-nav .branding:before {
+    width: 10.9rem !important;
+    height: 2.28rem !important;
+}
+
+.left-nav .settings-nav-container {
+    margin-top: 0.86rem !important;
+    padding-right: 0.62rem !important;
+    padding-left: 0.62rem !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav {
+    padding: 0.58rem 0.62rem 0.95rem !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group,
+.left-nav .settings-nav-container .nav-group,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group {
+    margin-bottom: 0.34rem !important;
+    border-radius: 7px !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed),
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) {
+    border-color: rgba(226, 207, 170, 0.14) !important;
+    background: rgba(255, 253, 248, 0.026) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group .section-header,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header,
+.left-nav .settings-nav-container .nav-group .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header {
+    grid-template-columns: 0.96rem minmax(0, 1fr) 1.28rem !important;
+    min-height: 2.12rem !important;
+    column-gap: 0.48rem !important;
+    padding: 0 0.34rem 0 0.58rem !important;
+    border-radius: 7px !important;
+    background: rgba(255, 253, 248, 0.052) !important;
+    border-color: rgba(244, 234, 213, 0.105) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group:not(.collapsed):not(.cla-nav-group-collapsed) .section-header,
+.left-nav .settings-nav-container .nav-group:not(.collapsed):not(.cla-nav-group-collapsed) .section-header {
+    background:
+        linear-gradient(90deg, rgba(199, 164, 107, 0.14), rgba(255, 253, 248, 0.052)) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.active .section-header,
+.left-nav .settings-nav-container .nav-group.active .section-header,
+.left-nav vdr-main-nav nav.main-nav .nav-group:has(.nav-link.active) .section-header,
+.left-nav .settings-nav-container .nav-group:has(.nav-link.active) .section-header {
+    padding-left: 0.58rem !important;
+    border-left: 1px solid rgba(226, 207, 170, 0.38) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) .section-header {
+    border-bottom-color: rgba(226, 207, 170, 0.13) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group-header,
+.left-nav .settings-nav-container .nav-group-header {
+    color: rgba(245, 235, 217, 0.78) !important;
+    font-size: 0.72rem !important;
+    font-weight: 720 !important;
+    line-height: 1 !important;
+    letter-spacing: 0.018em !important;
+    text-transform: uppercase !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .section-header button,
+.left-nav vdr-main-nav nav.main-nav .cla-nav-accordion-button,
+.left-nav .settings-nav-container .section-header button,
+.left-nav .settings-nav-container .cla-nav-accordion-button {
+    width: 1.28rem !important;
+    height: 1.28rem !important;
+    min-width: 1.28rem !important;
+    background: rgba(255, 253, 248, 0.055) !important;
+}
+
+.left-nav .cla-solar-icon {
+    width: 0.94rem !important;
+    height: 0.94rem !important;
+    min-width: 0.94rem !important;
+    opacity: 0.76 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group .section-header > .cla-solar-icon,
+.left-nav .settings-nav-container .nav-group .section-header > .cla-solar-icon {
+    opacity: 0.78 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group .nav-list,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-list,
+.left-nav .settings-nav-container .nav-group .nav-list,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-list {
+    padding: 0.16rem 0.18rem 0.22rem !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link,
+.left-nav .settings-nav-container .nav-link {
+    min-height: 1.78rem !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a:link,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a:visited,
+.left-nav .settings-nav-container .nav-link > a,
+.left-nav .settings-nav-container .nav-link > a:link,
+.left-nav .settings-nav-container .nav-link > a:visited {
+    min-height: 1.78rem !important;
+    gap: 0.5rem !important;
+    padding: 0.34rem 0.52rem !important;
+    border-radius: 6px !important;
+    color: rgba(245, 235, 217, 0.68) !important;
+    font-size: 0.77rem !important;
+    font-weight: 610 !important;
+    line-height: 1.08 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link:hover > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a:hover,
+.left-nav .settings-nav-container .nav-link:hover > a,
+.left-nav .settings-nav-container .nav-link > a:hover {
+    border-color: rgba(226, 207, 170, 0.18) !important;
+    background: rgba(255, 253, 248, 0.055) !important;
+    color: rgba(255, 253, 248, 0.92) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link.active > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a.active,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a[aria-current='page'],
+.left-nav vdr-main-nav nav.main-nav .nav-link:has(> a.active) > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link:has(> a[aria-current='page']) > a,
+.left-nav .settings-nav-container .nav-link.active > a,
+.left-nav .settings-nav-container .nav-link > a.active,
+.left-nav .settings-nav-container .nav-link > a[aria-current='page'],
+.left-nav .settings-nav-container .nav-link:has(> a.active) > a,
+.left-nav .settings-nav-container .nav-link:has(> a[aria-current='page']) > a {
+    border-color: rgba(226, 207, 170, 0.26) !important;
+    background:
+        linear-gradient(90deg, rgba(199, 164, 107, 0.2), rgba(255, 253, 248, 0.072)) !important;
+    color: #fffdf8 !important;
+    font-weight: 720 !important;
+    box-shadow:
+        inset 2px 0 0 var(--cla-gold),
+        inset 0 0 0 1px rgba(255, 253, 248, 0.025) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link.active > a > .cla-solar-icon,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a.active > .cla-solar-icon,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a[aria-current='page'] > .cla-solar-icon,
+.left-nav .settings-nav-container .nav-link.active > a > .cla-solar-icon,
+.left-nav .settings-nav-container .nav-link > a.active > .cla-solar-icon,
+.left-nav .settings-nav-container .nav-link > a[aria-current='page'] > .cla-solar-icon {
+    opacity: 0.96 !important;
+}
+
+@media (max-width: 1536px) {
+    .left-nav {
+        --cla-sidebar-width: 248px !important;
+    }
+
+    .left-nav .branding::before,
+    .left-nav .branding:before {
+        width: 10.35rem !important;
+        height: 2.16rem !important;
+    }
+}
+
+@media (max-width: 1368px) {
+    .left-nav {
+        --cla-sidebar-width: 242px !important;
+    }
+
+    .left-nav .branding {
+        min-height: 64px !important;
+        padding: 0.72rem 0.82rem 0.56rem !important;
+    }
+
+    .left-nav .branding::before,
+    .left-nav .branding:before {
+        width: 9.95rem !important;
+        height: 2.08rem !important;
+    }
+
+    .left-nav vdr-main-nav nav.main-nav {
+        padding-right: 0.52rem !important;
+        padding-left: 0.52rem !important;
+    }
+
+    .left-nav .settings-nav-container {
+        padding-right: 0.52rem !important;
+        padding-left: 0.52rem !important;
+    }
+}
