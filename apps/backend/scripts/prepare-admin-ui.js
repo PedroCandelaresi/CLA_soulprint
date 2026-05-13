@@ -184,23 +184,13 @@ async function finalizeBuild() {
 /**
  * CLA Soulprint post-build:
  *  - copia cla-admin-enhancements.js al output
- *  - copia auto-login.js si está habilitado
- *  - genera config JSON para auto-login (para Docker/CI)
- *  - parchea index.html: título, favicon, scripts, credenciales
+ *  - parchea index.html: título, favicon y scripts de branding
  */
 async function applyClaBrandingPostBuild() {
     const enhancementsSrc = path.join(brandingDir, 'cla-admin-enhancements.js');
     const enhancementsDst = path.join(outputPath, 'cla-admin-enhancements.js');
     if (fs.existsSync(enhancementsSrc)) {
         await fsp.copyFile(enhancementsSrc, enhancementsDst);
-    }
-
-    const autoLoginSrc = path.join(brandingDir, 'auto-login.js');
-    const autoLoginDst = path.join(outputPath, 'auto-login.js');
-
-    if (fs.existsSync(autoLoginSrc)) {
-        await fsp.copyFile(autoLoginSrc, autoLoginDst);
-        process.stdout.write('[cla] Auto-login runtime hook available\n');
     }
 
     const indexHtmlPath = path.join(outputPath, 'index.html');
@@ -225,7 +215,6 @@ async function applyClaBrandingPostBuild() {
 
     const scriptsToInject = [
         '    <script src="/admin/cla-admin-enhancements.js" defer></script>',
-        '    <script src="/admin/auto-login.js" defer></script>',
     ].join('\n') + '\n';
 
     html = html.replace(/<\/body>/i, scriptsToInject + '</body>');

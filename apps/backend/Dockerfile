@@ -13,14 +13,6 @@ COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml turbo.json ./
 # Cache bust for backend copy
 ARG CACHEBUST=1
 
-# Build-time admin testing mode configuration
-ARG ADMIN_TESTING_MODE=false
-ARG ENABLE_ADMIN_TESTING=false
-ARG TESTING_MODE=false
-ENV ADMIN_TESTING_MODE=${ADMIN_TESTING_MODE}
-ENV ENABLE_ADMIN_TESTING=${ENABLE_ADMIN_TESTING}
-ENV TESTING_MODE=${TESTING_MODE}
-
 COPY apps/backend ./apps/backend
 # Copy other apps package.json if needed for workspace resolution, 
 # but mostly we just need the root and backend context.

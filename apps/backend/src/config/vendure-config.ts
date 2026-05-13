@@ -76,19 +76,6 @@ function parseMercadoPagoEnv(value: string | undefined): 'testing' | 'production
     throw new Error('MERCADOPAGO_ENV must be "testing" or "production".');
 }
 
-function isLocalUrl(value: string | undefined): boolean {
-    if (!value) {
-        return true;
-    }
-
-    try {
-        const parsed = new URL(value);
-        return ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname);
-    } catch {
-        return false;
-    }
-}
-
 const APP_ENV = process.env.APP_ENV || 'local';
 const IS_DEV = APP_ENV === 'local' || APP_ENV === 'dev';
 const IS_PERSISTENT_ENV = APP_ENV === 'testing' || APP_ENV === 'production';
@@ -126,15 +113,6 @@ const EMAIL_TEMPLATE_PATH = path.join(path.dirname(require.resolve('@vendure/ema
 const EMAIL_TEMPLATE_LOADER = createEmailTemplateLoader(EMAIL_TEMPLATE_PATH);
 const BRAND_NAME = 'CLA Soulprint';
 const ALLOW_DESTRUCTIVE_SYNC = parseBooleanEnv('ALLOW_DESTRUCTIVE_SYNC', false);
-const ADMIN_TESTING_MODE = parseBooleanEnv('ADMIN_TESTING_MODE', false);
-const ENABLE_ADMIN_TESTING = parseBooleanEnv('ENABLE_ADMIN_TESTING', false);
-const TESTING_MODE = parseBooleanEnv('TESTING_MODE', false);
-const ALLOW_PUBLIC_ADMIN_TESTING_MODE = parseBooleanEnv('ALLOW_PUBLIC_ADMIN_TESTING_MODE', false);
-const ADMIN_AUTO_LOGIN_ENABLED = ADMIN_TESTING_MODE || ENABLE_ADMIN_TESTING || TESTING_MODE;
-const HAS_PUBLIC_RUNTIME_SURFACE =
-    !isLocalUrl(SHOP_PUBLIC_URL) ||
-    !isLocalUrl(process.env.MERCADOPAGO_PUBLIC_BASE_URL) ||
-    CORS_ORIGINS.some(origin => !isLocalUrl(origin));
 const MIGRATIONS = [
     path.join(__dirname, '../migrations/history/*.js'),
     path.join(__dirname, '../migrations/history/*.ts'),
@@ -186,20 +164,6 @@ const promotionBadgeCustomField = {
     ],
 };
 
-if (APP_ENV === 'production' && ADMIN_AUTO_LOGIN_ENABLED) {
-    console.error('');
-    console.error('❌ CRITICAL ERROR: admin auto-login cannot be enabled in production!');
-    console.error('   This is a security risk. Only use in local/testing demos.');
-    console.error('');
-    throw new Error('Admin auto-login is not allowed in production environments');
-}
-if (ADMIN_AUTO_LOGIN_ENABLED && HAS_PUBLIC_RUNTIME_SURFACE && !ALLOW_PUBLIC_ADMIN_TESTING_MODE) {
-    throw new Error(
-        'Admin auto-login cannot be enabled while public URLs/origins are configured. ' +
-            'Disable ADMIN_TESTING_MODE/ENABLE_ADMIN_TESTING/TESTING_MODE, or set ' +
-            'ALLOW_PUBLIC_ADMIN_TESTING_MODE=true only for an isolated throwaway environment.',
-    );
-}
 if (IS_PERSISTENT_ENV && DB_SYNCHRONIZE && !ALLOW_DESTRUCTIVE_SYNC) {
     throw new Error(
         'DB_SYNCHRONIZE=true is not allowed in testing/production. Generate and run migrations instead, ' +
@@ -256,14 +220,6 @@ if (!IS_MIGRATION_COMMAND) {
         console.log(`[email]   smtpUser=${process.env.SMTP_USER || '(unset)'}`);
         console.log(`[email]   smtpFrom=${process.env.SMTP_FROM || '(unset)'}`);
         console.log(`[email]   smtpSecure=${String(parseBooleanEnv('SMTP_SECURE', SMTP_PORT === 465))}`);
-    }
-
-    if (ADMIN_AUTO_LOGIN_ENABLED) {
-        console.warn('');
-        console.warn('⚠️  ⚠️  ⚠️  ADMIN AUTO-LOGIN ENABLED ⚠️  ⚠️  ⚠️');
-        console.warn('  Admin UI will auto-login at http://localhost:3001/admin');
-        console.warn('  NEVER enable this in production!');
-        console.warn('');
     }
 }
 

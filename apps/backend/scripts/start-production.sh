@@ -5,28 +5,29 @@ node <<'NODE'
 const fs = require('fs');
 const path = require('path');
 
-const enabled = ['ADMIN_TESTING_MODE', 'ENABLE_ADMIN_TESTING', 'TESTING_MODE']
-    .some(name => process.env[name] === 'true');
 const adminUiPath = path.join(process.cwd(), 'static/admin-ui');
 const brandingPath = path.join(process.cwd(), 'static/admin-ui-branding');
-const configPath = path.join(adminUiPath, 'auto-login-config.json');
 const managedScripts = [
     {
         source: path.join(brandingPath, 'cla-admin-enhancements.js'),
         target: path.join(adminUiPath, 'cla-admin-enhancements.js'),
         src: '/admin/cla-admin-enhancements.js',
     },
-    {
-        source: path.join(brandingPath, 'auto-login.js'),
-        target: path.join(adminUiPath, 'auto-login.js'),
-        src: '/admin/auto-login.js',
-    },
+];
+const removedLegacyPublicFiles = [
+    path.join(adminUiPath, 'auto-login.js'),
+    path.join(adminUiPath, 'auto-login-config.json'),
+    path.join(adminUiPath, 'manual-admin-cla.md'),
 ];
 
-for (const script of managedScripts) {
-    if (fs.existsSync(script.source)) {
-        fs.mkdirSync(path.dirname(script.target), { recursive: true });
-        fs.copyFileSync(script.source, script.target);
+for (const filePath of removedLegacyPublicFiles) {
+    fs.rmSync(filePath, { force: true });
+}
+
+for (const file of managedScripts) {
+    if (fs.existsSync(file.source)) {
+        fs.mkdirSync(path.dirname(file.target), { recursive: true });
+        fs.copyFileSync(file.source, file.target);
     }
 }
 
@@ -44,25 +45,6 @@ if (fs.existsSync(indexPath)) {
     html = html.replace(/<\/body>/i, scriptsToInject + '</body>');
     fs.writeFileSync(indexPath, html, 'utf8');
     console.log('[cla] Runtime admin UI hooks ensured');
-}
-
-if (enabled) {
-    fs.mkdirSync(path.dirname(configPath), { recursive: true });
-    fs.writeFileSync(
-        configPath,
-        JSON.stringify({
-            enabled: true,
-            username: process.env.SUPERADMIN_USERNAME || 'superadmin',
-            password: process.env.SUPERADMIN_PASSWORD || 'superadmin',
-            timeoutMs: Number(process.env.ADMIN_AUTO_LOGIN_TIMEOUT_MS || 15000),
-            timestamp: new Date().toISOString(),
-        }, null, 2),
-        'utf8',
-    );
-    console.log('[cla] Runtime auto-login config generated');
-} else {
-    fs.rmSync(configPath, { force: true });
-    console.log('[cla] Runtime auto-login disabled');
 }
 NODE
 
