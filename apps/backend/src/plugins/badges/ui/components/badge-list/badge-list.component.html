@@ -3,9 +3,9 @@
         <div class="cla-page-head">
             <div>
                 <p class="cla-page-eyebrow">CLA Visual</p>
-                <h2>Badges</h2>
+                <h2>Etiquetas visuales</h2>
                 <p class="cla-page-copy">
-                Gestiona badges visuales reutilizables para productos y variantes.
+                Crea sellos visibles para destacar productos y variantes en la tienda.
                 </p>
             </div>
 
@@ -13,11 +13,11 @@
                 <button
                     class="btn btn-primary cla-button-with-icon"
                     type="button"
-                    data-cla-tip="Crear un badge reusable para destacar productos o variantes."
+                    data-cla-tip="Crear una etiqueta visual reusable para destacar productos o variantes."
                     (click)="navigateToCreate()"
                 >
                     <clr-icon shape="plus"></clr-icon>
-                    Nuevo badge
+                    Nueva etiqueta
                 </button>
             </div>
         </div>
@@ -97,8 +97,8 @@
                                 <div class="cla-inline-actions">
                                     <button
                                         class="btn btn-icon btn-sm"
-                                        aria-label="Editar badge"
-                                        data-cla-tip="Abrir este badge para editarlo."
+                                        aria-label="Editar etiqueta visual"
+                                        data-cla-tip="Abrir esta etiqueta visual para editarla."
                                         type="button"
                                         (click)="navigateToEdit(badge.id)"
                                     >
@@ -106,8 +106,8 @@
                                     </button>
                                     <button
                                         class="btn btn-icon btn-sm btn-danger-outline"
-                                        aria-label="Eliminar badge"
-                                        data-cla-tip="Eliminar este badge de forma permanente."
+                                        aria-label="Eliminar etiqueta visual"
+                                        data-cla-tip="Eliminar esta etiqueta visual de forma permanente."
                                         type="button"
                                         (click)="deleteBadge(badge)"
                                     >
@@ -119,11 +119,11 @@
                         <tr *ngIf="badges.length === 0">
                             <td colspan="7">
                                 <div class="cla-empty-state">
-                                    <p>No hay badges creados todavía.</p>
+                                    <p>Todavía no hay etiquetas visuales creadas.</p>
                                     <button
                                         class="btn btn-link"
                                         type="button"
-                                        data-cla-tip="Crear el primer badge disponible para la tienda."
+                                        data-cla-tip="Crear la primera etiqueta visual disponible para la tienda."
                                         (click)="navigateToCreate()"
                                     >
                                         Crear el primero
@@ -136,7 +136,7 @@
             </div>
 
             <div class="cla-total-note" *ngIf="badges.length > 0">
-                {{ totalItems }} {{ totalItems === 1 ? 'badge' : 'badges' }} en total
+                {{ totalItems }} {{ totalItems === 1 ? 'etiqueta visual' : 'etiquetas visuales' }} en total
             </div>
         </ng-container>
     </section>

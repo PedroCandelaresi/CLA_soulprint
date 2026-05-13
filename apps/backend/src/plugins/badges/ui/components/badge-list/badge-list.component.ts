@@ -98,7 +98,7 @@ export class BadgeListComponent implements OnInit, OnDestroy {
                     this.loading = false;
                 },
                 error: () => {
-                    this.notificationService.error('No se pudo cargar la lista de badges');
+                    this.notificationService.error('No se pudo cargar la lista de etiquetas visuales');
                     this.loading = false;
                 },
             });
@@ -120,11 +120,11 @@ export class BadgeListComponent implements OnInit, OnDestroy {
                 next: () => {
                     badge.enabled = nextEnabled;
                     this.notificationService.success(
-                        nextEnabled ? 'Badge activado' : 'Badge desactivado',
+                        nextEnabled ? 'Etiqueta visual activada' : 'Etiqueta visual desactivada',
                     );
                 },
                 error: () => {
-                    this.notificationService.error('No se pudo actualizar el badge');
+                    this.notificationService.error('No se pudo actualizar la etiqueta visual');
                 },
             });
     }
@@ -132,8 +132,8 @@ export class BadgeListComponent implements OnInit, OnDestroy {
     deleteBadge(badge: BadgeItem): void {
         this.modalService
             .dialog({
-                title: `Eliminar badge "${badge.name}"`,
-                body: 'Esta acción no se puede deshacer. Los productos que tengan este badge asignado lo perderán automáticamente.',
+                title: `Eliminar etiqueta visual "${badge.name}"`,
+                body: 'Esta acción no se puede deshacer. Los productos que tengan esta etiqueta asignada la perderán automáticamente.',
                 buttons: [
                     { type: 'secondary', label: 'Cancelar' },
                     { type: 'danger', label: 'Eliminar', returnValue: true },
@@ -147,17 +147,17 @@ export class BadgeListComponent implements OnInit, OnDestroy {
                     next: (data: any) => {
                         const res = data.deleteBadge;
                         if (res.result === 'DELETED') {
-                            this.notificationService.success('Badge eliminado');
+                            this.notificationService.success('Etiqueta visual eliminada');
                             this.badges = this.badges.filter((b) => b.id !== badge.id);
                             this.totalItems -= 1;
                         } else {
                             this.notificationService.error(
-                                res.message || 'No se pudo eliminar el badge',
+                                res.message || 'No se pudo eliminar la etiqueta visual',
                             );
                         }
                     },
                     error: () => {
-                        this.notificationService.error('Error al eliminar el badge');
+                        this.notificationService.error('Error al eliminar la etiqueta visual');
                     },
                 });
             });

@@ -80,8 +80,10 @@
     };
 
     const ACTION_TIPS = {
-        'nuevo badge': 'Crear un badge reusable para destacar productos o variantes.',
-        'crear badge': 'Guardar este badge y dejarlo disponible en la tienda.',
+        'nuevo badge': 'Crear una etiqueta visual reusable para destacar productos o variantes.',
+        'crear badge': 'Guardar esta etiqueta visual y dejarla disponible en la tienda.',
+        'nueva etiqueta': 'Crear una etiqueta visual reusable para destacar productos o variantes.',
+        'crear etiqueta': 'Guardar esta etiqueta visual y dejarla disponible en la tienda.',
         'nuevo slide': 'Crear un slide completo para el carrusel de la home.',
         'crear slide': 'Guardar este slide con textos, layout, estado e imágenes.',
         'ajustes del carrusel': 'Configurar autoplay, transición, flechas y dots del carrusel.',
@@ -126,7 +128,7 @@
         { match: /^\/admin\/settings\/countries/, text: '<strong>Países.</strong> Marcá qué países están habilitados para envío y facturación.' },
         { match: /^\/admin\/settings\/administrators/, text: '<strong>Administradores.</strong> Usuarios que pueden entrar a este panel. Dales roles según lo que puedan tocar.' },
         { match: /^\/admin\/settings\/roles/, text: '<strong>Roles.</strong> Definen qué puede hacer cada administrador.' },
-        { match: /^\/admin\/extensions\/badges/, text: '<strong>Badges.</strong> Etiquetas visuales que se superponen a las fotos de los productos, con imagen o color de fallback.' },
+        { match: /^\/admin\/extensions\/badges/, text: '<strong>Etiquetas visuales.</strong> Sellos que se superponen a las fotos de los productos, con imagen o color de respaldo.' },
         { match: /^\/admin\/extensions\/home-carousel\/settings/, text: '<strong>Ajustes del carrusel.</strong> Controlás autoplay, transición y controles visibles para todos los slides activos.' },
         { match: /^\/admin\/extensions\/home-carousel/, text: '<strong>Carrusel.</strong> Armá los slides de la home con imagen desktop/mobile, textos, botones, orden y estado desde una sola pantalla.' },
         { match: /^\/admin\/dashboard|^\/admin\/?$/, text: '<strong>Bienvenido/a al panel CLA Soulprint.</strong> Desde acá manejás productos, pedidos, clientes y configuraciones de la tienda.' },
@@ -460,6 +462,26 @@
         sistema: 'blocks-group',
     };
 
+    const SIDEBAR_GROUP_LABELS = {
+        catalog: 'Catálogo',
+        catalogo: 'Catálogo',
+        sales: 'Ventas',
+        ventas: 'Ventas',
+        customer: 'Clientes',
+        customers: 'Clientes',
+        clientes: 'Clientes',
+        marketing: 'Marketing',
+        settings: 'Ajustes',
+        ajustes: 'Ajustes',
+        system: 'Sistema',
+        sistema: 'Sistema',
+    };
+
+    const SIDEBAR_ITEM_LABELS = {
+        badges: 'Etiquetas visuales',
+        badge: 'Etiqueta visual',
+    };
+
     let lastPath = '';
     let lastSidebarPath = '';
     let tooltipEl = null;
@@ -580,6 +602,30 @@
 
     function ensureCarouselNavLinks() {
         FALLBACK_NAV_LINKS.forEach(ensureFallbackNavLink);
+    }
+
+    function updateLeafLabel(host, label) {
+        const spans = Array.from(host.querySelectorAll('span')).filter(function (span) {
+            return normalizeText(span.textContent) !== '';
+        });
+        const target = spans.length > 0 ? spans[spans.length - 1] : host;
+        target.textContent = label;
+    }
+
+    function polishSidebarCopy() {
+        document.querySelectorAll('.left-nav .nav-group-header').forEach(function (header) {
+            const label = SIDEBAR_GROUP_LABELS[normalizeText(header.textContent)];
+            if (label) {
+                header.textContent = label;
+            }
+        });
+
+        document.querySelectorAll('.left-nav vdr-main-nav nav.main-nav .nav-link > a, .left-nav .settings-nav-container .nav-link > a').forEach(function (link) {
+            const label = SIDEBAR_ITEM_LABELS[normalizeText(link.textContent)];
+            if (label) {
+                updateLeafLabel(link, label);
+            }
+        });
     }
 
     function getSidebarGroups() {
@@ -1026,6 +1072,7 @@
         try {
             ensureCarouselNavLinks();
             ensureSidebarAccordions();
+            polishSidebarCopy();
             applyIconTooltips(document);
             applyActionTooltips(document);
             injectHelpBanner();

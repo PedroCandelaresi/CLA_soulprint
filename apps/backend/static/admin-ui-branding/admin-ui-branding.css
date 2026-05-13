@@ -3443,3 +3443,377 @@ nav a:hover::after,
         scroll-behavior: auto !important;
     }
 }
+
+/* ======================================================================
+   STOREFRONT TRANSLATION PASS
+   El Admin toma la estetica del storefront: verde profundo, paper calido,
+   bordes de 8px, tipografia sin ruido y navegacion comprensible.
+   ====================================================================== */
+:root {
+    --cla-admin-bg:
+        linear-gradient(120deg, rgba(255, 253, 248, 0.98) 0%, rgba(240, 246, 239, 0.92) 46%, rgba(248, 239, 224, 0.96) 100%),
+        linear-gradient(180deg, #fffdf8 0%, #f6eee3 100%);
+    --cla-admin-surface: #fffdf8;
+    --cla-admin-surface-soft: rgba(255, 253, 248, 0.78);
+    --cla-admin-border: rgba(0, 72, 37, 0.09);
+    --cla-admin-border-strong: rgba(0, 72, 37, 0.16);
+    --cla-admin-shadow: 0 18px 38px rgba(7, 35, 24, 0.08);
+}
+
+html,
+body,
+.main-container,
+.content-container,
+.content-area {
+    background: var(--cla-admin-bg) !important;
+    color: var(--cla-ink) !important;
+    letter-spacing: 0 !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+.page-title,
+.card-header,
+.datagrid-column-title,
+table thead th {
+    letter-spacing: 0 !important;
+}
+
+.content-area {
+    padding: 1.45rem 1.65rem 2.25rem !important;
+}
+
+.top-bar {
+    min-height: 5rem !important;
+    background: rgba(255, 253, 248, 0.88) !important;
+    backdrop-filter: blur(14px) !important;
+    border-bottom: 1px solid rgba(0, 72, 37, 0.1) !important;
+    box-shadow: 0 10px 28px rgba(7, 35, 24, 0.06) !important;
+}
+
+.top-bar .breadcrumb,
+.top-bar vdr-breadcrumb {
+    border-radius: 8px !important;
+    background: rgba(255, 253, 248, 0.82) !important;
+    border: 1px solid rgba(0, 72, 37, 0.08) !important;
+    box-shadow: 0 10px 24px rgba(7, 35, 24, 0.06) !important;
+}
+
+.left-nav {
+    --cla-sidebar-width: 292px;
+    width: var(--cla-sidebar-width) !important;
+    min-width: var(--cla-sidebar-width) !important;
+    flex: 0 0 var(--cla-sidebar-width) !important;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(245, 235, 217, 0.09), transparent 26%),
+        linear-gradient(180deg, rgba(3, 25, 15, 0.99) 0%, rgba(0, 72, 37, 0.98) 100%) !important;
+    box-shadow:
+        inset -1px 0 0 rgba(244, 234, 213, 0.16),
+        18px 0 38px rgba(7, 35, 24, 0.12) !important;
+}
+
+.left-nav .branding {
+    min-height: 82px !important;
+    padding: 1rem 1.25rem 0.9rem !important;
+    justify-content: flex-start !important;
+    border-bottom: 1px solid rgba(244, 234, 213, 0.18) !important;
+    background: transparent !important;
+}
+
+.left-nav .branding::before {
+    width: 12.6rem !important;
+    height: 2.8rem !important;
+    background-position: left center !important;
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.98 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav {
+    padding: 0.85rem 1rem 1.5rem !important;
+}
+
+.left-nav .main-nav-container,
+.left-nav .settings-nav-container {
+    background: transparent !important;
+    border: 0 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group,
+.left-nav .settings-nav-container .nav-group,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group {
+    position: relative !important;
+    margin: 0 0 0.42rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group::before,
+.left-nav .settings-nav-container .nav-group::before {
+    content: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group .section-header,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header,
+.left-nav .settings-nav-container .nav-group .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 1.55rem !important;
+    align-items: center !important;
+    min-height: 2.55rem !important;
+    padding: 0 0.42rem 0 0.78rem !important;
+    border: 1px solid rgba(244, 234, 213, 0.13) !important;
+    border-radius: 8px !important;
+    background: rgba(255, 253, 248, 0.075) !important;
+    box-shadow: none !important;
+    transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group .section-header:hover,
+.left-nav .settings-nav-container .nav-group .section-header:hover {
+    background: rgba(255, 253, 248, 0.12) !important;
+    border-color: rgba(244, 234, 213, 0.22) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group:not(.collapsed):not(.cla-nav-group-collapsed) .section-header,
+.left-nav .settings-nav-container .nav-group:not(.collapsed):not(.cla-nav-group-collapsed) .section-header {
+    background:
+        linear-gradient(90deg, rgba(199, 164, 107, 0.16), rgba(255, 253, 248, 0.08)) !important;
+    border-color: rgba(226, 207, 170, 0.24) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.active .section-header,
+.left-nav .settings-nav-container .nav-group.active .section-header,
+.left-nav vdr-main-nav nav.main-nav .nav-group:has(.nav-link.active) .section-header,
+.left-nav .settings-nav-container .nav-group:has(.nav-link.active) .section-header {
+    border-left: 2px solid var(--cla-gold) !important;
+    padding-left: calc(0.78rem - 1px) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group-header,
+.left-nav .settings-nav-container .nav-group-header {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: rgba(245, 235, 217, 0.86) !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    transform: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.active .nav-group-header,
+.left-nav .settings-nav-container .nav-group.active .nav-group-header,
+.left-nav vdr-main-nav nav.main-nav .nav-group:has(.nav-link.active) .nav-group-header,
+.left-nav .settings-nav-container .nav-group:has(.nav-link.active) .nav-group-header {
+    color: var(--cla-gold-soft) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .section-header button,
+.left-nav vdr-main-nav nav.main-nav .cla-nav-accordion-button,
+.left-nav .settings-nav-container .section-header button,
+.left-nav .settings-nav-container .cla-nav-accordion-button {
+    width: 1.55rem !important;
+    height: 1.55rem !important;
+    min-width: 1.55rem !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: rgba(255, 253, 248, 0.08) !important;
+    color: rgba(245, 235, 217, 0.74) !important;
+    box-shadow: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .section-header button:hover,
+.left-nav vdr-main-nav nav.main-nav .cla-nav-accordion-button:hover,
+.left-nav .settings-nav-container .section-header button:hover,
+.left-nav .settings-nav-container .cla-nav-accordion-button:hover {
+    background: rgba(199, 164, 107, 0.2) !important;
+    color: #fffdf8 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group .nav-list,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-list,
+.left-nav .settings-nav-container .nav-group .nav-list,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-list {
+    margin: 0.18rem 0 0.56rem !important;
+    padding: 0.22rem 0 0.22rem 0.32rem !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link,
+.left-nav .settings-nav-container .nav-link {
+    min-height: 2.08rem !important;
+    margin: 0.04rem 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a:link,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a:visited,
+.left-nav .settings-nav-container .nav-link > a,
+.left-nav .settings-nav-container .nav-link > a:link,
+.left-nav .settings-nav-container .nav-link > a:visited {
+    min-height: 2.08rem !important;
+    padding: 0.48rem 0.66rem !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    color: rgba(245, 235, 217, 0.72) !important;
+    font-size: 0.88rem !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0 !important;
+    box-shadow: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link > a span,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a div,
+.left-nav .settings-nav-container .nav-link > a span,
+.left-nav .settings-nav-container .nav-link > a div {
+    color: inherit !important;
+    letter-spacing: 0 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link > a clr-icon,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a cds-icon,
+.left-nav .settings-nav-container .nav-link > a clr-icon,
+.left-nav .settings-nav-container .nav-link > a cds-icon {
+    color: currentColor !important;
+    opacity: 0.6 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link:hover > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a:hover,
+.left-nav .settings-nav-container .nav-link:hover > a,
+.left-nav .settings-nav-container .nav-link > a:hover {
+    background: rgba(255, 253, 248, 0.08) !important;
+    color: #fffdf8 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link.active,
+.left-nav vdr-main-nav nav.main-nav .nav-link:has(> a.active),
+.left-nav vdr-main-nav nav.main-nav .nav-link:has(> a[aria-current='page']),
+.left-nav .settings-nav-container .nav-link.active,
+.left-nav .settings-nav-container .nav-link:has(> a.active),
+.left-nav .settings-nav-container .nav-link:has(> a[aria-current='page']) {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-link.active > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a.active,
+.left-nav vdr-main-nav nav.main-nav .nav-link > a[aria-current='page'],
+.left-nav vdr-main-nav nav.main-nav .nav-link:has(> a.active) > a,
+.left-nav vdr-main-nav nav.main-nav .nav-link:has(> a[aria-current='page']) > a,
+.left-nav .settings-nav-container .nav-link.active > a,
+.left-nav .settings-nav-container .nav-link > a.active,
+.left-nav .settings-nav-container .nav-link > a[aria-current='page'],
+.left-nav .settings-nav-container .nav-link:has(> a.active) > a,
+.left-nav .settings-nav-container .nav-link:has(> a[aria-current='page']) > a {
+    background:
+        linear-gradient(90deg, rgba(255, 253, 248, 0.98), rgba(226, 207, 170, 0.9)) !important;
+    color: var(--cla-green-dk) !important;
+    box-shadow: 0 10px 22px rgba(2, 44, 24, 0.16) !important;
+}
+
+.card,
+clr-card,
+.details-card,
+.form-grid-list,
+vdr-data-table-2,
+vdr-data-table,
+.cla-table-shell,
+.cla-admin-card {
+    border-radius: 8px !important;
+    border: 1px solid var(--cla-admin-border) !important;
+    background:
+        linear-gradient(180deg, rgba(255, 253, 248, 1) 0%, rgba(246, 244, 237, 0.98) 100%) !important;
+    box-shadow: var(--cla-admin-shadow) !important;
+}
+
+.cla-page-head,
+.page-header,
+.page-block,
+.dashboard-widget {
+    border-radius: 8px !important;
+    border: 1px solid var(--cla-admin-border) !important;
+    background:
+        radial-gradient(circle at top right, rgba(199, 164, 107, 0.16), transparent 34%),
+        linear-gradient(135deg, rgba(255, 253, 248, 0.98), rgba(240, 246, 239, 0.86)) !important;
+    box-shadow: var(--cla-admin-shadow) !important;
+}
+
+.cla-page-head h2,
+.page-title,
+h1 {
+    color: var(--cla-green-dk) !important;
+    font-size: clamp(1.7rem, 2.6vw, 2.45rem) !important;
+    line-height: 1.12 !important;
+}
+
+.cla-page-eyebrow,
+table thead th,
+.datagrid-column-title {
+    color: rgba(23, 52, 40, 0.68) !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+}
+
+.btn.btn-primary,
+.btn-primary,
+button.btn-primary {
+    border-radius: 8px !important;
+    border-color: #073a23 !important;
+    background: linear-gradient(180deg, #0e5a34 0%, #073a23 100%) !important;
+    color: #fffdf8 !important;
+    box-shadow: 0 14px 24px rgba(6, 38, 22, 0.16) !important;
+}
+
+.btn.btn-primary:hover,
+.btn-primary:hover,
+button.btn-primary:hover {
+    background: linear-gradient(180deg, #12663b 0%, #084428 100%) !important;
+    box-shadow: 0 16px 26px rgba(6, 38, 22, 0.2) !important;
+}
+
+.btn,
+.btn.btn-secondary,
+.btn-outline,
+.btn-icon {
+    border-radius: 8px !important;
+    letter-spacing: 0 !important;
+}
+
+table thead th,
+.table thead th,
+.datagrid-table thead th {
+    background: rgba(245, 235, 217, 0.62) !important;
+    border-bottom: 1px solid rgba(0, 72, 37, 0.1) !important;
+}
+
+table tbody td,
+.table tbody td,
+.datagrid-table tbody td {
+    border-bottom: 1px solid rgba(0, 72, 37, 0.065) !important;
+}
+
+table tbody tr:hover td,
+.table tbody tr:hover td,
+.datagrid-table tbody tr:hover td {
+    background: rgba(0, 72, 37, 0.035) !important;
+}

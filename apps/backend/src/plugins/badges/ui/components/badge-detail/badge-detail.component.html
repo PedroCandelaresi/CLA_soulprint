@@ -2,10 +2,10 @@
     <section class="cla-admin-page cla-admin-page--detail cla-admin-page--visual">
         <div class="cla-page-head">
             <div>
-                <p class="cla-page-eyebrow">CLA Visual · Badges</p>
-                <h2>{{ isNew ? 'Nuevo badge' : 'Editar badge' }}</h2>
+                <p class="cla-page-eyebrow">CLA Visual · Etiquetas visuales</p>
+                <h2>{{ isNew ? 'Nueva etiqueta visual' : 'Editar etiqueta visual' }}</h2>
                 <p class="cla-page-copy">
-                Configura el asset visual, prioridad, vigencia y fallback de color del badge.
+                Configura la imagen, prioridad, vigencia y color de respaldo de la etiqueta.
                 </p>
             </div>
 
@@ -21,12 +21,12 @@
                 <button
                     class="btn btn-primary"
                     type="button"
-                    data-cla-tip="Guardar este badge y dejarlo listo para usar en la tienda."
+                    data-cla-tip="Guardar esta etiqueta visual y dejarla lista para usar en la tienda."
                     (click)="save()"
                     [disabled]="form.invalid || saving"
                 >
                     <span *ngIf="saving" class="spinner spinner-inline"></span>
-                    {{ isNew ? 'Crear badge' : 'Guardar cambios' }}
+                    {{ isNew ? 'Crear etiqueta' : 'Guardar cambios' }}
                 </button>
             </div>
         </div>
@@ -40,7 +40,7 @@
 
                 <div class="clr-col-8">
                     <div class="card cla-admin-card">
-                        <div class="card-header">Datos del badge</div>
+                        <div class="card-header">Datos de la etiqueta</div>
                         <div class="card-block">
                             <form [formGroup]="form" clrForm clrLayout="vertical">
 
@@ -97,7 +97,7 @@
                                         style="width: 220px;"
                                     />
                                     <clr-control-helper>
-                                        Dejar vacío para que el badge no expire nunca.
+                                        Dejar vacío para que la etiqueta no expire nunca.
                                     </clr-control-helper>
                                 </clr-input-container>
 
@@ -126,7 +126,7 @@
                 <div class="clr-col-4">
                     <div class="cla-card-stack">
                         <div class="card cla-admin-card">
-                            <div class="card-header">Imagen del badge</div>
+                            <div class="card-header">Imagen de la etiqueta</div>
                             <div class="card-block">
                                 <div *ngIf="selectedAsset" class="cla-asset-preview">
                                     <div>
@@ -177,7 +177,7 @@
                             <div class="card-header">Colores (sin imagen)</div>
                             <div class="card-block">
                                 <p class="cla-form-note" style="margin-top: 0; margin-bottom: 1rem;">
-                                    Si el badge no tiene imagen, se muestra como etiqueta de color.
+                                    Si la etiqueta no tiene imagen, se muestra como etiqueta de color.
                                 </p>
 
                                 <div class="cla-color-editor">

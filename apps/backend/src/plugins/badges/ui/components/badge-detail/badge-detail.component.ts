@@ -183,7 +183,7 @@ export class BadgeDetailComponent implements OnInit, OnDestroy {
                     this.loading = false;
                 },
                 error: () => {
-                    this.notificationService.error('No se pudo cargar el badge');
+                    this.notificationService.error('No se pudo cargar la etiqueta visual');
                     this.loading = false;
                 },
             });
@@ -252,7 +252,7 @@ export class BadgeDetailComponent implements OnInit, OnDestroy {
             this.dataService.mutate(CREATE_BADGE, { input }).subscribe({
                 next: (data: any) => {
                     this.saving = false;
-                    this.notificationService.success('Badge creado correctamente');
+                    this.notificationService.success('Etiqueta visual creada correctamente');
                     this.router.navigate(['../', data.createBadge.id], {
                         relativeTo: this.route,
                     });
@@ -260,7 +260,7 @@ export class BadgeDetailComponent implements OnInit, OnDestroy {
                 error: (err: any) => {
                     this.saving = false;
                     const message =
-                        err?.graphQLErrors?.[0]?.message || 'No se pudo crear el badge';
+                        err?.graphQLErrors?.[0]?.message || 'No se pudo crear la etiqueta visual';
                     this.notificationService.error(message);
                 },
             });
@@ -279,12 +279,12 @@ export class BadgeDetailComponent implements OnInit, OnDestroy {
             this.dataService.mutate(UPDATE_BADGE, { input }).subscribe({
                 next: () => {
                     this.saving = false;
-                    this.notificationService.success('Badge guardado correctamente');
+                    this.notificationService.success('Etiqueta visual guardada correctamente');
                 },
                 error: (err: any) => {
                     this.saving = false;
                     const message =
-                        err?.graphQLErrors?.[0]?.message || 'No se pudo guardar el badge';
+                        err?.graphQLErrors?.[0]?.message || 'No se pudo guardar la etiqueta visual';
                     this.notificationService.error(message);
                 },
             });

@@ -4,7 +4,7 @@ export default [
     addNavMenuItem(
         {
             id: 'badges',
-            label: 'Badges',
+            label: 'Etiquetas visuales',
             routerLink: ['/extensions/badges'],
             icon: 'tag',
             requiresPermission: 'ReadCatalog',
