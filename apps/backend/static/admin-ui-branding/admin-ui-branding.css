@@ -2522,6 +2522,211 @@ body.cla-tooltips-ready [data-cla-tip]::after {
     opacity: 0.62 !important;
 }
 
+/* ======================================================================
+   SIDEBAR CLA ELEGANCE PASS
+   Navegacion integrada: menos caja, mas marca, mejor contraste.
+   ====================================================================== */
+.left-nav {
+    background:
+        radial-gradient(circle at 8% 3%, rgba(245, 235, 217, 0.08), transparent 24%),
+        linear-gradient(180deg, #062616 0%, #003d22 48%, #004825 100%) !important;
+    box-shadow:
+        inset -1px 0 0 rgba(226, 207, 170, 0.18),
+        18px 0 44px rgba(2, 44, 24, 0.12) !important;
+}
+
+.left-nav .branding {
+    min-height: 80px !important;
+    border-bottom: 1px solid rgba(226, 207, 170, 0.13) !important;
+    background:
+        linear-gradient(180deg, rgba(255, 250, 242, 0.045), rgba(255, 250, 242, 0)) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav {
+    padding: 0.75rem 0.85rem 1.35rem !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group {
+    position: relative !important;
+    margin: 0.3rem 0 0.58rem !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 7px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group::before,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.45rem;
+    bottom: 0.45rem;
+    width: 2px;
+    border-radius: 99px;
+    background: rgba(199, 164, 107, 0);
+    transition: background-color 160ms ease;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.active::before,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.active::before {
+    background: rgba(199, 164, 107, 0.72);
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 1.35rem !important;
+    column-gap: 0.45rem !important;
+    min-height: 2.25rem !important;
+    padding: 0 0.34rem 0 0.72rem !important;
+    border: 1px solid rgba(226, 207, 170, 0.12) !important;
+    border-radius: 7px !important;
+    background:
+        linear-gradient(90deg, rgba(245, 235, 217, 0.105), rgba(245, 235, 217, 0.035)) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 250, 242, 0.06) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) .section-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group:not(.collapsed):not(.cla-nav-group-collapsed) .section-header {
+    border-color: rgba(226, 207, 170, 0.2) !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    background:
+        linear-gradient(90deg, rgba(226, 207, 170, 0.16), rgba(245, 235, 217, 0.055)) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header:hover {
+    border-color: rgba(226, 207, 170, 0.26) !important;
+    background:
+        linear-gradient(90deg, rgba(226, 207, 170, 0.18), rgba(245, 235, 217, 0.07)) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-group-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-group-header {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    color: rgba(245, 235, 217, 0.86) !important;
+    box-shadow: none !important;
+    font-size: 0.73rem !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    letter-spacing: 0.02em !important;
+    text-transform: uppercase !important;
+    transform: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group.active .nav-group-header,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group.active .nav-group-header {
+    color: var(--cla-gold-soft) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header button,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header button,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button {
+    width: 1.35rem !important;
+    height: 1.35rem !important;
+    min-width: 1.35rem !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: rgba(245, 235, 217, 0.08) !important;
+    color: rgba(245, 235, 217, 0.72) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .section-header button:hover,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .section-header button:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button:hover {
+    background: rgba(199, 164, 107, 0.2) !important;
+    color: #fffaf2 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .cla-nav-accordion-button::before,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .cla-nav-accordion-button::before {
+    width: 0.36rem !important;
+    height: 0.36rem !important;
+    border-right-width: 1.5px !important;
+    border-bottom-width: 1.5px !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-list,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-list {
+    margin: 0 !important;
+    padding: 0.38rem 0.35rem 0.5rem !important;
+    border: 1px solid rgba(226, 207, 170, 0.13) !important;
+    border-top: 0 !important;
+    border-bottom-left-radius: 7px !important;
+    border-bottom-right-radius: 7px !important;
+    background: rgba(3, 25, 15, 0.26) !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link {
+    min-height: 1.95rem !important;
+    margin: 0.04rem 0 !important;
+    padding: 0 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a:link,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a:visited,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a:link,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a:visited {
+    min-height: 1.9rem !important;
+    padding: 0.38rem 0.58rem !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    color: rgba(245, 235, 217, 0.72) !important;
+    font-size: 0.83rem !important;
+    font-weight: 650 !important;
+    box-shadow: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link:hover > a,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a:hover,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link:hover > a,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a:hover {
+    background: rgba(245, 235, 217, 0.08) !important;
+    color: #fffaf2 !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link.active,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link:has(> a.active),
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link:has(> a[aria-current='page']),
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link.active,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link:has(> a.active),
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link:has(> a[aria-current='page']) {
+    background: transparent !important;
+    color: var(--cla-green-dk) !important;
+    box-shadow: none !important;
+}
+
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link.active > a,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a.active,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link > a[aria-current='page'],
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link:has(> a.active) > a,
+.left-nav vdr-main-nav nav.main-nav .nav-group.cla-nav-accordion-group .nav-link:has(> a[aria-current='page']) > a,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link.active > a,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a.active,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link > a[aria-current='page'],
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link:has(> a.active) > a,
+.left-nav .settings-nav-container .nav-group.cla-nav-accordion-group .nav-link:has(> a[aria-current='page']) > a {
+    background:
+        linear-gradient(90deg, rgba(245, 235, 217, 0.95), rgba(226, 207, 170, 0.86)) !important;
+    color: var(--cla-green-dk) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 250, 242, 0.45),
+        0 8px 18px rgba(2, 44, 24, 0.18) !important;
+}
+
 @media (max-width: 1024px) {
     .content-area {
         padding: 1rem 1rem 1.5rem;
