@@ -1,0 +1,1427 @@
+User: Necesito que hagas una auditoría técnica completa, profunda y quirúrgica de este proyecto llamado CLA Soulprint.
+
+Contexto funcional:
+CLA Soulprint es una tienda online basada en Vendure + Next.js + NestJS. Funciona como ecommerce tradicional, pero con una particularidad clave: al momento de comprar, el cliente puede subir una foto, y esa foto se utiliza para personalizar el artículo comprado.
+
+Stack esperado:
+- Frontend: Next.js / React / TypeScript
+- Backend / ecommerce engine: Vendure
+- NestJS: backend, plugins, customizaciones o integraciones propias
+- Base de datos: PostgreSQL
+- Infraestructura: Docker / Docker Compose
+- Deploy probable con Nginx / servidor Linux
+- Vendure expone GraphQL Shop API y Admin API
+- El frontend consume productos, colecciones, variantes, precios, stock, imágenes y metadata desde Vendure
+
+Objetivo de la auditoría:
+Quiero saber exactamente en qué estado se encuentra el proyecto, qué está bien implementado, qué está incompleto, qué es frágil, qué puede romperse en producción, qué deuda técnica hay y qué cambios conviene hacer antes de seguir avanzando.
+
+La auditoría debe revisar especialmente un problema actual:
+En Vendure he borrado artículos y agregado artículos nuevos, pero en el frontend de la tienda esos cambios no siempre se reflejan. En muchos casos parece que el front no se actualiza hasta que recompilo o redeployo el proyecto. Necesito detectar la causa exacta: caché de Next.js, generación estática, ISR mal configurado, fetch cacheado, sitemap estático, Docker usando imagen vieja, variables de entorno apuntando mal, Vendure GraphQL cacheado, CDN/proxy/Nginx, o cualquier otro problema.
+
+IMPORTANTE:
+No hagas cambios todavía. Primero quiero un diagnóstico completo. Solo podés proponer cambios, pero no aplicarlos salvo que yo lo pida después.
+
+Quiero que audites estos puntos:
+
+1. Arquitectura general del proyecto
+- Identificar estructura de carpetas.
+- Detectar apps principales: frontend, backend, Vendure, plugins, infra, scripts.
+- Explicar cómo se comunican Next.js, Vendure, NestJS y PostgreSQL.
+- Detectar variables de entorno importantes.
+- Detectar si hay configuraciones duplicadas, obsoletas o contradictorias.
+- Revisar si hay separación clara entre entorno local, staging y producción.
+
+2. Vendure
+Auditar:
+- Configuración principal de Vendure.
+- Plugins activos.
+- Configuración de Shop API y Admin API.
+- Configuración de assets/images.
+- Configuración de productos, variantes, colecciones y canales.
+- Configuración de pagos, órdenes, checkout y customer.
+- Configuración de stock.
+- Configuración de custom fields.
+- Configuración de subida de archivos o assets.
+- Si existe lógica relacionada con foto personalizada del cliente.
+- Cómo se guarda la foto subida por el cliente.
+- Si la foto queda asociada al carrito, línea de orden, producto, variante, customer, custom field o metadata.
+- Si hay riesgos de perder la foto durante checkout, pago, confirmación o creación de orden.
+- Si hay validación de tipo/tamaño de archivo.
+- Si hay control de seguridad sobre archivos subidos.
+- Si hay riesgo de exposición pública indebida de imágenes privadas de clientes.
+- Si las imágenes personalizadas quedan separadas de los assets públicos del catálogo.
+
+3. Next.js frontend
+Auditar:
+- Rutas principales de la tienda.
+- Página de inicio.
+- Listado de productos.
+- Página de producto.
+- Carrito.
+- Checkout.
+- Upload de foto.
+- Manejo de estado del carrito.
+- Consumo de GraphQL.
+- Uso de fetch, Apollo, urql, graphql-request u otro cliente.
+- Uso de Server Components / Client Components.
+- Uso de generateStaticParams, generateMetadata, revalidate, dynamic, fetch cache, unstable_cache o similares.
+- Determinar si los productos se están renderizando estáticamente en build.
+- Determinar si las páginas de productos quedan congeladas hasta recompilar.
+- Determinar si el listado de productos está usando caché persistente de Next.
+- Determinar si hay que usar force-dynamic, revalidate, no-store o revalidateTag/revalidatePath.
+- Revisar si las imágenes de productos usan next/image correctamente.
+- Revisar si existe fallback cuando Vendure no responde.
+- Revisar si el frontend está mostrando productos borrados, productos viejos o productos inexistentes.
+- Revisar si la página 404 de productos funciona correctamente.
+- Revisar si las variantes, precios y stock se actualizan dinámicamente.
+
+4. Problema específico: productos agregados/borrados en Vendure no se actualizan en el front
+Quiero un análisis específico y prioritario sobre este problema.
+
+Buscar:
+- generateStaticParams en productos.
+- generateMetadata en productos.
+- fetch con cache por defecto.
+- fetch sin cache: "no-store".
+- fetch con next: { revalidate: X }.
+- export const revalidate.
+- export const dynamic.
+- uso de static rendering accidental.
+- sitemap generado en build.
+- productos hardcodeados.
+- queries GraphQL limitadas, por ejemplo take: 100.
+- errores silenciosos de GraphQL.
+- fallback a datos mockeados.
+- fallback a productos viejos.
+- variables como VENDURE_INTERNAL_API_URL, NEXT_PUBLIC_VENDURE_API_URL, NEXT_PUBLIC_SITE_URL.
+- si el frontend dentro de Docker usa backend:3001 o una URL pública.
+- si producción está sirviendo una imagen Docker vieja.
+- si Nginx está cacheando.
+- si hay headers Cache-Control incorrectos.
+- si Next está corriendo con output standalone y quedó una build vieja.
+- si el deploy hace docker compose up sin rebuild real.
+- si el runner de GitHub Actions está usando cache vieja.
+
+Necesito que expliques:
+- Causa probable.
+- Evidencia encontrada en el código.
+- Archivos involucrados.
+- Riesgo.
+- Solución recomendada.
+- Si conviene usar SSR dinámico, ISR con revalidate, webhook desde Vendure, o revalidación manual.
+- Qué solución es más segura para una tienda chica/mediana administrada desde Vendure.
+
+5. NestJS / backend custom
+Auditar:
+- Módulos NestJS propios.
+- Controladores.
+- Servicios.
+- DTOs.
+- Guards.
+- Pipes.
+- Validaciones.
+- Manejo de errores.
+- Logs.
+- Seguridad.
+- CORS.
+- Integración con Vendure.
+- Si hay endpoints propios para upload de foto.
+- Si hay endpoints propios para checkout, órdenes o personalización.
+- Si hay lógica duplicada entre Vendure y NestJS.
+- Si existe riesgo de inconsistencias entre backend propio y Vendure.
+
+6. Upload de foto personalizada
+Auditar profundamente:
+- Dónde se sube la foto.
+- Cuándo se sube: antes del carrito, durante el carrito, durante checkout o después de la orden.
+- Si se guarda temporalmente o definitivamente.
+- Si se asocia a una línea concreta del pedido.
+- Si se soportan múltiples productos personalizados en el mismo carrito.
+- Si cada ítem puede tener una foto distinta.
+- Si se evita que una foto de un producto termine asociada a otro producto.
+- Si el cliente puede cambiar la foto antes de pagar.
+- Si la foto se mantiene después de refrescar pantalla.
+- Si la foto se conserva si el usuario abandona y vuelve.
+- Si se limpia correctamente si el carrito se borra.
+- Si hay límites de tamaño, formato y dimensiones.
+- Si hay compresión u optimización.
+- Si hay riesgo de subir archivos maliciosos.
+- Si hay permisos adecuados.
+- Si la foto queda disponible para administración/producción del pedido.
+- Si el admin o vendedor puede ver claramente la foto asociada a la orden.
+- Si hay trazabilidad suficiente para fabricar/personalizar el artículo.
+
+7. Checkout y órdenes
+Auditar:
+- Flujo completo de compra.
+- Creación de carrito/order.
+- Agregado de productos.
+- Agregado de variantes.
+- Personalización por foto.
+- Datos del cliente.
+- Dirección.
+- Envío.
+- Pago.
+- Confirmación.
+- Estado final de la orden.
+- Qué pasa si falla el pago.
+- Qué pasa si falla la subida de foto.
+- Qué pasa si se sube foto pero no se completa la compra.
+- Qué pasa si se compra más de una unidad del mismo producto pero con fotos distintas.
+- Qué pasa si se elimina un producto del carrito.
+- Qué pasa si Vendure borra o desactiva un producto mientras alguien lo tiene en carrito.
+
+8. Seguridad
+Auditar:
+- Exposición de variables sensibles.
+- Uso correcto de NEXT_PUBLIC_.
+- Tokens de Vendure.
+- Admin API expuesta o protegida.
+- CORS.
+- Upload de archivos.
+- Validación de MIME type real.
+- Límite de tamaño.
+- Sanitización de nombres.
+- Path traversal.
+- Acceso público/privado a assets.
+- Headers HTTP.
+- Riesgo de SSRF si se procesan imágenes externas.
+- Riesgo de XSS desde descripciones de producto.
+- Riesgo de inyección GraphQL.
+- Logs con datos sensibles.
+- Datos personales del cliente y foto subida.
+
+9. SEO y metadata
+Auditar:
+- generateMetadata.
+- Open Graph.
+- Twitter cards.
+- canonical.
+- robots.txt.
+- sitemap.xml.
+- JSON-LD.
+- Product schema.
+- Offer schema.
+- Availability.
+- Precios.
+- Imágenes.
+- Si productos borrados siguen apareciendo en sitemap.
+- Si productos nuevos no aparecen hasta recompilar.
+- Si el sitemap debería ser dinámico o revalidado.
+- Si metadata de producto queda cacheada indebidamente.
+- Si hay noindex accidental.
+
+10. Performance
+Auditar:
+- Consultas GraphQL repetidas.
+- N+1 desde frontend.
+- Tamaño de imágenes.
+- next/image.
+- Compresión.
+- Bundle size.
+- Client Components innecesarios.
+- Carga inicial.
+- Streaming/Suspense si aplica.
+- Revalidación.
+- Tiempo de respuesta del Shop API.
+- Healthchecks.
+- Logs excesivos.
+- Docker memory usage.
+
+11. Docker / deploy / producción
+Auditar:
+- Dockerfiles.
+- docker-compose.
+- Variables de entorno montadas.
+- Build context.
+- Si se copian archivos correctos.
+- Si npm install / pnpm install está bien resuelto.
+- Si Next se compila con variables correctas.
+- Si el frontend queda congelado por build-time env.
+- Si el deploy recompila realmente la imagen.
+- Si docker compose usa imagen vieja.
+- Si hay volúmenes que pisan builds.
+- Si Nginx está apuntando al contenedor correcto.
+- Si hay caché del proxy.
+- Si hay healthchecks.
+- Si las migraciones corren de forma segura.
+- Si producción tiene DB_SYNCHRONIZE=false.
+- Si hay scripts de backup o rollback.
+
+12. Base de datos / migraciones
+Auditar:
+- TypeORM / migrations.
+- Sincronización automática.
+- Estado de migraciones.
+- Entidades custom.
+- Relación con Vendure.
+- Campos custom para personalización.
+- Riesgo de pérdida de datos.
+- Riesgo de cambios no versionados.
+- Scripts de seed.
+- Datos de productos y assets.
+
+13. Código muerto, mocks y deuda técnica
+Buscar:
+- Productos mockeados.
+- Datos hardcodeados.
+- Código viejo.
+- Comentarios TODO/FIXME.
+- Funciones duplicadas.
+- Servicios no usados.
+- Componentes no usados.
+- Queries duplicadas.
+- Variables de entorno no usadas.
+- Dependencias innecesarias.
+- Dependencias vulnerables.
+- Configuraciones obsoletas.
+
+14. Tests y validaciones
+Auditar:
+- Tests unitarios.
+- Tests e2e.
+- Tests del checkout.
+- Tests de upload.
+- Tests de productos.
+- Tests de GraphQL.
+- Validaciones manuales necesarias.
+- Qué comandos correr para comprobar estado.
+- Qué casos críticos deberían agregarse.
+
+15. Resultado esperado de tu auditoría
+Quiero que entregues el resultado en este formato:
+
+A) Resumen ejecutivo
+- Estado general del proyecto.
+- Nivel de riesgo: bajo / medio / alto.
+- Qué tan cerca está de producción.
+- Principales bloqueantes.
+
+B) Hallazgos críticos
+Para cada hallazgo:
+- Título.
+- Severidad: crítica / alta / media / baja.
+- Archivo(s) involucrado(s).
+- Evidencia concreta del código.
+- Explicación.
+- Riesgo real.
+- Solución recomendada.
+- Si requiere cambio inmediato o puede esperar.
+
+C) Diagnóstico específico del problema de productos que no se actualizan
+- Causa más probable.
+- Evidencia.
+- Solución recomendada.
+- Alternativas.
+- Qué archivos habría que modificar en una fase posterior.
+- Qué comandos o pruebas confirman la solución.
+
+D) Estado del flujo de personalización con foto
+- Qué está implementado.
+- Qué falta.
+- Riesgos.
+- Mejor arquitectura recomendada.
+- Cómo debería asociarse la foto al pedido/línea de pedido.
+- Cómo debería verlo el administrador.
+
+E) Auditoría por capa
+Separar en:
+- Vendure.
+- Next.js.
+- NestJS.
+- Docker/deploy.
+- DB/migraciones.
+- Seguridad.
+- SEO.
+- Performance.
+- UX/flujo de compra.
+
+F) Checklist quirúrgico de verificación
+Armar una lista de checks accionables, por ejemplo:
+- Crear producto en Vendure y verificar si aparece sin rebuild.
+- Borrar producto en Vendure y verificar si desaparece sin rebuild.
+- Cambiar precio y verificar actualización.
+- Cambiar stock y verificar actualización.
+- Subir foto en producto personalizado.
+- Comprar dos productos iguales con fotos distintas.
+- Cancelar checkout luego de subir foto.
+- Completar orden y verificar foto en admin.
+- Verificar sitemap.
+- Verificar metadata.
+- Verificar logs.
+- Verificar Docker rebuild.
+- Verificar variables en contenedores.
+
+G) Plan de acción recomendado por fases
+No implementar todavía. Solo proponer.
+Fase 1: Correcciones críticas para que productos se actualicen bien.
+Fase 2: Consolidar flujo de foto personalizada.
+Fase 3: Seguridad y validaciones.
+Fase 4: SEO/sitemap/metadata dinámicos.
+Fase 5: Performance, tests y hardening producción.
+
+H) Comandos sugeridos
+Incluir comandos seguros para inspeccionar:
+- Variables de entorno.
+- Build de Next.
+- Logs de frontend.
+- Logs de Vendure/backend.
+- Estado de Docker.
+- Consultas rápidas al Shop API.
+- Verificación de sitemap/robots/product pages.
+- Búsqueda de patrones problemáticos en el código.
+
+Restricciones:
+- No modificar archivos.
+- No ejecutar comandos destructivos.
+- No hacer commits.
+- No instalar paquetes.
+- No borrar datos.
+- No tocar producción.
+- Si necesitás ejecutar algo, primero proponé el comando y explicá qué verifica.
+- Si encontrás una causa probable, marcala como hipótesis hasta tener evidencia concreta en archivos.
+
+Empezá revisando la estructura del repo y después avanzá capa por capa.
+
+GitHub Copilot: Optimized tool selectionEntiendo la magnitud y profundidad de esta auditoría. Voy a realizar una inspección técnica completa y quirúrgica del proyecto, siguiendo una metodología sistemática capa por capa. **No haré cambios**, solo diagnóstico.
+
+Empecemos:   
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/package.json)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/pnpm-workspace.yaml)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/package.json)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/package.json)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/next.config.ts)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/.env.example)
+
+Searched codebase for "generateStaticParams generateMetadata revalidate dynamic rendering products", 18 results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/app)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/lib/vendure/client.ts#1-1), lines 1 to 100
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/lib/vendure/products.ts#1-1), lines 1 to 150
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/lib/vendure/products.ts#150-150), lines 150 to 250
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/Dockerfile)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/infra/docker/docker-compose.yml#1-1), lines 1 to 100
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/infra/docker/docker-compose.yml#100-100), lines 100 to 133
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/Dockerfile#1-1), lines 1 to 50
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/app/api)
+
+Searched for text `api/shop proxy vendure`, no results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/proxy.ts)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/app/api/shop)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/app/api/shop/route.ts#1-1), lines 1 to 100
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/app/api/shop/route.ts#100-100), lines 100 to 184
+
+Searched for text `VENDURE_INTERNAL_API_URL getServerVendureApiUrl`, no results
+
+Searched codebase for "getServerVendureApiUrl server-config VENDURE_INTERNAL_API_URL runtime", 13 results
+
+Audit personalization photo upload flow
+
+Searched for files matching `**/src/**/*[Uu]pload* -node_modules`, no matches
+
+Searched for files matching `**/src/**/*[Pp]ersonali* -node_modules`, no matches
+
+Searched for files matching `**/src/**/*[Pp]hoto* -node_modules`, no matches
+
+Searched for regex `/api/personali|/upload|/photo|customFields|soulprint` (`**/*.ts -node_modules`), no results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src)
+
+Searched for regex `class.*Photo|class.*Personali|interface.*Photo|interface.*Personali` (`**/*.ts`), 34 results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/plugins/logistics/personalization)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/plugins/logistics/personalization/index.ts#1-1), lines 1 to 100
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/plugins/logistics/personalization/personalization.controller.ts#1-1), lines 1 to 60
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/plugins/logistics/personalization/personalization.types.ts)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/lib/personalization)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/components)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/plugins/logistics/personalization/personalization.service.ts#1-1), lines 1 to 150
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/migrations/history/1777000000000-add-personalization.ts#1-1), lines 1 to 40
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/components/checkout)
+
+Searched for regex `personali|Upload|Photo|file` (`**/checkout/**/*.tsx`), 20 results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/lib/personalization/client.ts#1-1), lines 1 to 50
+
+Searched for regex `personalizationAsset|personalizationStatus|frontMode|backMode` (`**/*.ts`), 20 results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/components/checkout/PersonalizationForm.tsx#1-1), lines 1 to 120
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/components/checkout/PersonalizationUploadPanel.tsx#1-1), lines 1 to 50
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/plugins/logistics/personalization/index.ts#100-100), lines 100 to 100
+
+Searched for regex `export class.*Personali` (`**/migrations/**/*.ts`), 2 results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/migrations/history/1777500000000-add-orderline-personalization-sides.ts#1-1), lines 1 to 60
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/plugins/logistics/personalization/index.ts#140-140), lines 140 to 200
+
+Searched for regex `PersonalizationPlugin|plugins` (`**/config/*.ts`), 10 results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/plugins/logistics/personalization/personalization.utils.ts)
+
+Searched for regex `PersonalizationForm|PersonalizationUploadPanel|uploadForLine` (`**/src/**/*.tsx`), 16 results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/plugins/logistics/personalization/personalization.controller.ts#60-60), lines 60 to 80
+
+Created memory file [](file:///home/candelaresi/.config/Code/User/workspaceStorage/c55fbe9358850b4fbddcb574ecfe52f3/GitHub.copilot-chat/memory-tool/memories/MmUyMTgzZTUtNDFlMC00MGQyLTgwMWQtNmY4YWMzMTZmODM0/cla_soulprint_personalization_architecture.md)
+
+Searched for text `TODO FIXME BUG HACK issue bug mock hardcoded`, no results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/.env.example)
+
+Find caching issues and stale product problems
+
+Searched for regex `NODE_ENV|NEXT_PUBLIC|VENDURE_INTERNAL_API|REVALIDATE|CACHE`, 20 results
+
+Searched for files matching `**/Dockerfile`, 2 matches
+
+Searched for files matching `**/next.config.*`, 1 match
+
+Searched for files matching `**/.env*`, 1 match
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/Dockerfile#1-1), lines 1 to 50
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/next.config.ts)
+
+Searched for regex `generateStaticParams|fetch.*cache|revalidate|dynamic` (`**/apps/storefront/src/**/*.{ts,tsx,js}`), 20 results
+
+Searched for regex `defaultValue|fallback|mock|take:|limit` (`**/apps/storefront/src/**/*.{ts,tsx,js}`), 20 results
+
+Searched for regex `query.*product|GetProduct|productsQuery|search|collection` (`**/apps/storefront/src/**/*.{ts,tsx,js}`), 30 results
+
+Searched for regex `console\.log|console\.error|console\.warn` (`**/apps/storefront/src/**/*.{ts,tsx,js}`), 20 results
+
+Searched for files matching `**/apps/storefront/src/lib/**/*query*`, no matches
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/lib/vendure/products.ts#1-1), lines 1 to 100
+
+Searched for regex `hardcoded|mock|take.*:|limit.*[0-9]|skip` (`**/apps/storefront/src/lib/vendure/**`), 19 results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/lib/vendure/products.ts#150-150), lines 150 to 250
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/lib/vendure/products.ts#410-410), lines 410 to 457
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/infra/docker/docker-compose.yml#1-1), lines 1 to 130
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/lib/vendure/client.ts#1-1), lines 1 to 100
+
+Searched for regex `mock|hardcode|product|populate` (`**/apps/backend/src/seed/**`), 20 results
+
+Searched for files matching `**/apps/backend/src/seed/*.ts`, 4 matches
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/lib/vendure/server-config.ts)
+
+Searched for regex `BOOTSTRAP_DEMO_DATA|seed|mock.*product|hardcoded.*product` (`**/apps/storefront/src/**/*.{ts,tsx}`), no results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/fix_prices.js#1-1), lines 1 to 50
+
+Searched for regex `BOOTSTRAP_DEMO_DATA|const.*product|mock.*data` (`**/apps/storefront/**`), 20 results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/seed/ensure-demo-data.ts#1-1), lines 1 to 50
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/Dockerfile)
+
+Searched for text `export const revalidate` (`**/apps/storefront/src/**/*.{tsx,ts}`), no results
+
+Searched for text `revalidate` (`**/apps/storefront/src/app/**`), no results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/storefront/src/app/page.tsx)
+
+Read memory
+
+Created memory file [](file:///home/candelaresi/.config/Code/User/workspaceStorage/c55fbe9358850b4fbddcb574ecfe52f3/GitHub.copilot-chat/memory-tool/memories/MmUyMTgzZTUtNDFlMC00MGQyLTgwMWQtNmY4YWMzMTZmODM0/cla_product_update_issue_analysis.md)
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/fix_prices.js#1-1), lines 1 to 100
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/seed/ensure-demo-data.ts#1-1), lines 1 to 100
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/apps/backend/src/migrations/history)
+
+Searched codebase for "checkout cart payment Mercadopago order flow completion", 12 results
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/README.md#1-1), lines 1 to 100
+
+Read [](file:///home/candelaresi/Proyectos/CLA_soulprint/GUIA_ADMIN.md#1-1), lines 1 to 50
+
+Perfecto, he completado una auditoría técnica profunda del proyecto. Voy a organizarla en el formato que solicitaste:
+
+---
+
+## AUDITORÍA TÉCNICA COMPLETA - CLA SOULPRINT
+
+### A) RESUMEN EJECUTIVO
+
+**Estado general:** El proyecto está parcialmente funcional pero con **severidad CRÍTICA** en el problema de actualización de productos.
+
+**Nivel de riesgo:** 🔴 **ALTO**
+
+**Listo para producción:** ❌ No. Requiere al menos las correcciones de Fase 1.
+
+**Principales bloqueantes:**
+1. **CRÍTICO**: Variables de entorno hardcodeadas en build de Next.js - imposible actualizar API sin rebuild
+2. **CRÍTICO**: Problema de productos no actualizándose por falta de rebuild del storefront
+3. **ALTA**: fix_prices.js está incompleto y abandonado
+4. **ALTA**: Documentación incompleta sobre deployment y CI/CD
+5. **MEDIA**: Validaciones de upload de foto insuficientes
+6. **MEDIA**: Rate limiting ausente en endpoints de personalización
+
+---
+
+## B) HALLAZGOS CRÍTICOS
+
+### 🔴 **HALLAZGO 1: Variables NEXT_PUBLIC hardcodeadas en build-time**
+
+- **Severidad:** 🔴 CRÍTICA
+- **Archivo(s):** 
+  - Dockerfile
+  - client.ts
+  - docker-compose.yml
+
+- **Evidencia:**
+  ```dockerfile
+  # Dockerfile storefront, líneas 18-27
+  ARG NEXT_PUBLIC_VENDURE_API_URL
+  ARG NEXT_PUBLIC_SITE_URL
+  ARG NEXT_PUBLIC_REQUIRE_CUSTOMER_VERIFICATION
+  ENV NEXT_PUBLIC_VENDURE_API_URL=$NEXT_PUBLIC_VENDURE_API_URL
+  ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+  ENV NEXT_PUBLIC_REQUIRE_CUSTOMER_VERIFICATION=$NEXT_PUBLIC_REQUIRE_CUSTOMER_VERIFICATION
+  ```
+
+  ```typescript
+  // client.ts línea 56-70: Browser fallback uses baked-in value
+  function resolveVendureApiUrl(): string {
+      const publicApiUrl = readEnv('NEXT_PUBLIC_VENDURE_API_URL'); // ← undefined en runtime
+      if (typeof window !== 'undefined') {
+          return publicApiUrl || DEFAULT_BROWSER_VENDURE_API_URL; // ← /api/shop fallback
+      }
+      // ...
+  }
+  ```
+
+- **Explicación:**
+  - Con `output: "standalone"` en next.config.ts, Next.js compila todo en build-time
+  - Las variables `ARG` se usan solo en build, los `ENV` que las referencian quedan compiladas en el bundle JavaScript
+  - Al hacer `docker compose up` sin `--build`, Docker reutiliza la imagen vieja con URLs antiguas
+  - El docker-compose.yml intenta override estas variables en runtime (línea 109), pero es **inútil** - ya están baked-in
+
+- **Riesgo real:**
+  - Cambias `/shop-api` a `https://new-vendure-instance.com/shop-api` en variables de entorno
+  - Haces `docker compose up` (sin rebuild)
+  - El frontend sigue apuntando a la API vieja
+  - Los productos ven datos de **cuando se compiló la imagen** (pueden ser semanas viejos)
+
+- **Solución recomendada:**
+  - **Opción 1 (Recomendada para ahora):** Siempre hacer rebuild explícito: `docker compose up -d --build`
+  - **Opción 2 (Mejor arquitectura):** Cambiar a runtime env via servidor Node o usar variables que lean de la red
+  - **Opción 3 (Futuro):** Usar Next.js middleware para redirigir `/api/shop` dinámicamente según ambiente
+
+- **Cambios necesarios después:** 
+  - Crear script de deploy que siempre haga rebuild
+  - Documentar en README que cambiar variables **requiere rebuild**
+
+---
+
+### 🔴 **HALLAZGO 2: fix_prices.js abandonado e incompleto**
+
+- **Severidad:** 🔴 CRÍTICA
+- **Archivo:** fix_prices.js
+- **Evidencia:** El script está a mitad de escritura, con errores de lógica, comentarios de debugging y muertamente:
+  ```javascript
+  // Línea ~35: Autenticación incompleta
+  const { json: loginRes, authToken } = await post(loginBody);
+  // ... pero nunca termina la lógica
+  
+  // Línea ~61: Fetch de productos empezado pero cortado
+  const prodBody = JSON.stringify({
+      query: `query {
+        products {
+            items {
+                id  // ← truncado
+  ```
+
+- **Riesgo:** Si alguien intenta usarlo, fallará. Evidencia de trabajo incompleto en producción.
+
+- **Solución:** Eliminar o completar el script
+
+---
+
+### 🔴 **HALLAZGO 3: Seed data con producto demo (DEMO-001) hardcodeado**
+
+- **Severidad:** 🔴 ALTA (en contexto de productos que no actualizan)
+- **Archivo:** ensure-demo-data.ts
+- **Evidencia:**
+  ```typescript
+  const DEMO_PRODUCT_SLUG = 'producto-demo';
+  const DEMO_PRODUCT_SKU = 'DEMO-001';
+  const DEMO_PRODUCT_NAME = 'Producto Demo';
+  const DEMO_PRODUCT_DESCRIPTION = 'Un producto demo listo para probar carrito y checkout.';
+  const DEMO_PRODUCT_PRICE = 1000;
+  const DEMO_PRODUCT_STOCK = 100;
+  ```
+  Se crea automáticamente en cada bootstrap con `BOOTSTRAP_DEMO_DATA=true`
+
+- **Riesgo:** 
+  - Cliente ve "Producto Demo" en tienda
+  - Cuando se sincroniza con datos reales, puede haber conflictos
+  - Si `DEMO-001` ya existe, no se reescribe, generando inconsistencias
+
+- **Solución:** 
+  - En producción, `BOOTSTRAP_DEMO_DATA=false`
+  - En desarrollo/testing, está bien
+
+---
+
+### 🔴 **HALLAZGO 4: Sin rate limiting en endpoints de personalización**
+
+- **Severidad:** 🔴 ALTA
+- **Archivo:** personalization.controller.ts
+- **Evidencia:** 
+  - POST `/logistics/personalization/{orderCode}/{lineId}/{side}` sin throttling
+  - Solo tiene HMAC token + estado de orden como validación
+  - Posible DOS: atacante puede hacer loops de upload sin límite
+
+- **Riesgo:** Consumir ancho de banda, llenar almacenamiento de assets
+
+- **Solución:** Agregar rate limiting por IP o por orden
+
+---
+
+### 🟡 **HALLAZGO 5: Token de personalización sin expiración**
+
+- **Severidad:** 🟡 MEDIA
+- **Archivo:** personalization.types.ts
+- **Evidencia:** 
+  ```typescript
+  // HMAC token se genera sin timestamp
+  crypto.createHmac('sha256', secret).update(orderCode).digest('base64url')
+  ```
+  El token es estático y válido indefinidamente
+
+- **Riesgo:** 
+  - Si alguien captura el token (ej: en logs), es válido para siempre
+  - Ataque replay indefinido
+
+- **Solución:** Agregar timestamp + expiración
+
+---
+
+### 🟡 **HALLAZGO 6: Validación insuficiente de archivos personalización**
+
+- **Severidad:** 🟡 MEDIA
+- **Archivo:** Configuración de personalización
+- **Evidencia:** Solo valida:
+  - MIME types: `image/jpeg,image/png,image/webp,application/pdf`
+  - Tamaño: configurado en env (default sin especificar)
+  
+  **No valida:**
+  - Análisis de contenido (magic bytes)
+  - Dimensiones de imagen
+  - Metadatos EXIF (potencial riesgo de privacidad)
+
+- **Riesgo:** Upload de archivos maliciosos o inválidos
+
+- **Solución:** Verificar con `file` magic bytes, usar Sharp para validar dimensiones
+
+---
+
+### 🟡 **HALLAZGO 7: Migraciones TypeORM sin transacciones explícitas**
+
+- **Severidad:** 🟡 MEDIA
+- **Archivo:** 1777500000000-add-orderline-personalization-sides.ts
+- **Evidencia:**
+  ```typescript
+  // Migraciones usan ensureColumn(), que puede fallar parcialmente
+  // Sin rollback automático si falla a mitad
+  ```
+
+- **Riesgo:** Corrupción de data si falla una migración
+
+- **Solución:** Usar transacciones explícitas en migraciones
+
+---
+
+### 🟡 **HALLAZGO 8: Código duplicado de assets en OrderLine**
+
+- **Severidad:** 🟡 MEDIA (Code smell, no riesgo directo)
+- **Archivo:** 1777000000000-add-personalization.ts
+- **Evidencia:** 
+  ```typescript
+  // Legacy fields (compatibilidad anterior)
+  asset               // Ref original
+  notes               // Notas originales
+  uploadedAt          // Timestamp original
+  snapshotFileName    // Nombre original
+  
+  // Nuevos fields (específico frente)
+  personalizationAsset        // Ref frente
+  personalizationNotes        // Notas frente
+  personalizationUploadedAt   // Timestamp frente
+  personalizationSnapshotFileName // Nombre frente
+  ```
+  Mantiene dos versiones; admin UI duplica lógica para ambas
+
+- **Riesgo:** Confusión, mantenimiento difícil
+
+- **Solución:** Deprecar campos legacy después de migración
+
+---
+
+## C) DIAGNÓSTICO ESPECÍFICO: PROBLEMA DE PRODUCTOS QUE NO SE ACTUALIZAN
+
+### ✅ Causa Más Probable: **DOCKERFILE BUILD-TIME ENV VARS**
+
+**Ranking de probabilidad:**
+
+| Causa | Probabilidad | Evidencia |
+|-------|-------------|----------|
+| **NEXT_PUBLIC_VENDURE_API_URL hardcodeada en build** | 90% | `ARG` en Dockerfile, baked-in bundle, runtime override inútil |
+| **Docker reutiliza imagen vieja sin rebuild** | 85% | `docker compose up` sin `--build` |
+| **Proxy `/api/shop` cacheando sin revalidate** | 40% | Proxy existe pero usa `cache: 'no-store'` (correcto) |
+| **Sitemap estático desactualizado** | 20% | Sitemap usa `dynamic: 'force-dynamic'` y `cache: 'no-store'` (correcto) |
+| **Vendure GraphQL cacheado** | 15% | Todas las queries usan `cache: 'no-store'` (correcto) |
+| **Nginx caché intermedio** | 5% | No hay evidencia de Nginx en ambiente local |
+
+### 🔍 Escenario Típico del Problema
+
+```
+Semana 1: Deploy inicial
+├─ docker build con NEXT_PUBLIC_VENDURE_API_URL=http://localhost:3001/shop-api
+└─ Imagen A compilada
+
+Semana 2: Cambias API (ej: migra a servidor distinto)
+├─ Cambias .env → NEXT_PUBLIC_VENDURE_API_URL=http://production-api.com/shop-api
+└─ Haces docker compose up
+    ├─ Docker VE que imagen A ya existe (mismo tag)
+    ├─ REUTILIZA imagen A (no rebuild)
+    ├─ Frontend sigue usando http://localhost:3001/shop-api (viejo)
+    └─ ❌ Productos no se actualizan
+
+Semana 3: Investigas
+├─ Miras variables de entorno → VES que están correctas en .env
+├─ Preguntas "¿por qué no actualiza?"
+└─ Verdad: El JavaScript compilado IGNORA variables de runtime
+```
+
+### 📋 Solución Recomendada
+
+**Para ahora (Fase 1):**
+1. Siempre hacer rebuild: `docker compose up -d --build`
+2. Documentar en README y scripts de deploy
+
+**Futuro (Fase 3):**
+1. Cambiar Next.js config para soportar env vars en runtime
+2. O usar middleware Node.js que lea variables dinámicamente
+3. O cambiar `output: "standalone"` a SSG con ISR
+
+---
+
+## D) ESTADO DEL FLUJO DE PERSONALIZACIÓN CON FOTO
+
+### ✅ Qué Está Implementado
+
+1. **Upload post-pago** ✅
+   - Foto se sube DESPUÉS de confirmar pago
+   - Ruta dedicada: `POST /logistics/personalization/{orderCode}/{lineId}/{side}`
+   - Token HMAC para validar acceso
+
+2. **Almacenamiento** ✅
+   - Fotos guardadas en Assets de Vendure (no filesystem externo)
+   - Relación con OrderLine.customFields.personalizationAsset
+   - Soporta frente y dorso por separado
+
+3. **Validaciones** ✅
+   - MIME types: JPEG, PNG, WebP, PDF
+   - Tamaño: configurable
+   - Token timing-safe contra ataques
+
+4. **Admin UI** ⚠️ Parcial
+   - Panel de visualización implementado
+   - Aprobación/rechazo NO completo
+
+5. **Frontend** ✅
+   - Componentes de UI (PersonalizationForm, PersonalizationUploadPanel)
+   - Flujo completo en checkout
+   - Gestión de estado local
+
+### ❌ Qué Falta / Es Frágil
+
+| Item | Estado | Problema |
+|------|--------|----------|
+| **Rate limiting** | ❌ | DOS posible |
+| **Validación de contenido** | ⚠️ | Solo MIME, sin análisis |
+| **Expiration de token** | ❌ | Token válido indefinidamente |
+| **Limpieza de assets** | ⚠️ | Try/catch noop, sin logging |
+| **Admin aprobación** | ⚠️ | UI parcial |
+| **Email con foto** | ❌ | No se envía foto en confirmación |
+| **Tests** | ❌ | No encontrados |
+| **Documentación** | ❌ | No hay guía de arquitectura |
+
+### 🏗️ Arquitectura Recomendada (No cambiada todavía)
+
+```
+ProductDetail (Frontend)
+├─ Captura frontText, backText, file
+└─ Guarda en state local (NO envía archivo todavía)
+
+Checkout Page
+├─ Carrito y órdenes completadas
+├─ Pago procesado
+└─ PersonalizationUploadPanel
+    ├─ Genera token HMAC en frontend
+    └─ POST /logistics/personalization/{code}/{lineId}/{side}
+        ├─ Backend: Valida orden + estado + token
+        ├─ AssetService: Guarda en Assets de Vendure
+        ├─ OrderLine.customFields: FK al Asset
+        ├─ Emit: PersonalizationReceivedEvent
+        └─ Admin notificado
+
+Admin Dashboard
+├─ Ve foto personalizada
+├─ Puede aprobar/rechazar
+├─ Genera PDF para imprenta
+└─ Stock system ajustado
+```
+
+---
+
+## E) AUDITORÍA POR CAPA
+
+### 1️⃣ **VENDURE (Backend Ecommerce)**
+
+| Aspecto | Estado | Hallazgo |
+|---------|--------|----------|
+| **Versión** | ✅ | 2.2.0 - estable |
+| **Configuración principal** | ✅ | Bien estructurada en vendure-config.ts |
+| **Shop API** | ✅ | GraphQL disponible en `:3001/shop-api` |
+| **Admin API** | ✅ | GraphQL en `:3001/admin-api` |
+| **Assets/Images** | ✅ | WebP plugin activo, reprocessing script disponible |
+| **Productos** | ⚠️ | Seed data demo hardcodeado, pueden haber conflictos |
+| **Variantes/Stock** | ✅ | Disponibles dinámicamente |
+| **Canales** | ✅ | Default channel configurado |
+| **Colecciones** | ✅ | Dinámicas por facetas |
+| **Facetas** | ✅ | Funcionan correctamente |
+| **Pagos - Mercado Pago** | ✅ | Plugin completo, webhook support, metadata tracking |
+| **Pagos - Mock** | ✅ | Para testing |
+| **Personalización** | ⚠️ | Implementado pero con riesgos (sin rate limit, sin token expiry) |
+| **Custom Fields** | ✅ | Migraciones creadas para badges, home carousel, payment icons, personalization |
+| **Migrations** | ⚠️ | TypeORM sin transacciones explícitas |
+| **Seguridad** | ⚠️ | Ver hallazgos #4, #5, #6 |
+
+**Riesgos Vendure:**
+- Seed data de prueba se crea auto
+- Migraciones pueden fallar parcialmente
+- Personalización sin rate limiting
+
+---
+
+### 2️⃣ **NEXT.JS FRONTEND**
+
+| Aspecto | Estado | Hallazgo |
+|---------|--------|----------|
+| **Versión** | ✅ | 16.1.1 - reciente |
+| **Routing** | ✅ | App router bien estructurado |
+| **Dynamic rendering** | ✅ | `export const dynamic = 'force-dynamic'` en pages clave |
+| **Revalidation** | ❌ | NO usa ISR, todo dinámico (posible inefficiency) |
+| **Static params** | ✅ | `generateStaticParams` NO usado (correcto, todos dinámicos) |
+| **Fetch caching** | ✅ | Todas queries usan `cache: 'no-store'` |
+| **Images** | ✅ | next/image configured, remotePatterns permitidos |
+| **Pages** | ✅ | Home, productos, carrito, checkout, perfil |
+| **Personalización** | ✅ | Componentes de upload implementados |
+| **SEO** | ⚠️ | generateMetadata existe, pero sitemap dinámico puede tener issues |
+| **GraphQL client** | ✅ | Custom `fetchVendure` con timeout |
+| **Server proxy** | ✅ | `/api/shop` proxying a Vendure correctamente |
+| **Auth** | ✅ | Session cookies manejadas |
+| **Environment vars** | 🔴 | **CRÍTICO: NEXT_PUBLIC_* hardcodeadas en build** |
+| **Docker** | 🔴 | **CRÍTICO: Build-time env vars no updateables en runtime** |
+
+**Riesgos Next.js:**
+- Variables hardcodeadas en build
+- Sitemap puede quedar desactualizado si query falla
+
+---
+
+### 3️⃣ **NESTJS / BACKEND CUSTOM**
+
+| Aspecto | Estado | Hallazgo |
+|---------|--------|----------|
+| **Módulos** | ✅ | PersonalizationPlugin, PaymentMethods, HealthCheck |
+| **GraphQL** | ✅ | Resolvers custom integrados |
+| **Servicios** | ✅ | MercadopagoService completo, PersonalizationService |
+| **Controllers** | ✅ | REST endpoints para personalización |
+| **DTOs** | ✅ | Tipos validados |
+| **Seguridad** | ⚠️ | Token HMAC OK, pero sin expiry |
+| **CORS** | ✅ | Configurado correctamente |
+| **Logs** | ⚠️ | Nivel de detalle inconsistente |
+| **Errores** | ⚠️ | Algunos errores no loguean contexto completo |
+| **Rate limit** | ❌ | NO implementado en personalización |
+
+**Riesgos NestJS:**
+- Sin rate limiting
+- Token sin expiración
+- Logs incompletos
+
+---
+
+### 4️⃣ **DOCKER / DEPLOY**
+
+| Aspecto | Estado | Hallazgo |
+|---------|--------|----------|
+| **Dockerfile backend** | ✅ | Multi-stage, copia artefactos correctamente |
+| **Dockerfile frontend** | 🔴 | **CRÍTICO: ARG/ENV build-time problem** |
+| **docker-compose** | ⚠️ | Bien estructurado pero con variables inútiles en runtime |
+| **MySQL** | ✅ | Healthcheck implementado |
+| **Networks** | ✅ | Bridge network cla_soulprint_net |
+| **Volumes** | ✅ | Assets y DB persistidos |
+| **Env vars** | 🔴 | Frontend no puede actualizar en runtime |
+| **Rebuild** | ❌ | No documentado que requiere `--build` |
+| **Healthchecks** | ✅ | Backend y storefront tienen checks |
+
+**Riesgos Docker:**
+- Build-time env vars no updateables
+- No hay documentación sobre rebuild obligatorio
+
+---
+
+### 5️⃣ **BASE DE DATOS / MIGRACIONES**
+
+| Aspecto | Estado | Hallazgo |
+|---------|--------|----------|
+| **Type ORM** | ✅ | 0.3.19, bien integrado |
+| **DB Engine** | ✅ | MySQL 8.4 |
+| **Synchronize** | ⚠️ | true en local/dev, debe ser false en prod |
+| **Migraciones** | ✅ | Estructura clara |
+| **Cantidad** | ✅ | 15 migraciones cubriendo badges, carousel, personalización |
+| **Rollback** | ✅ | Scripts para revert disponibles |
+| **Custom fields** | ✅ | Bien mapeados para personalización |
+| **Transacciones** | ❌ | No explícitas en migraciones |
+| **Seeds** | ⚠️ | Demo data auto-creada |
+| **Backups** | ❌ | No hay scripts de backup |
+
+**Riesgos DB:**
+- Migraciones sin transacciones
+- Demo data automática
+- Sin backups documentados
+
+---
+
+### 6️⃣ **SEGURIDAD**
+
+| Aspecto | Estado | Hallazgo |
+|---------|--------|----------|
+| **Variables sensibles** | ✅ | No expuestas en público |
+| **NEXT_PUBLIC_* separadas** | ⚠️ | Bien separadas pero baked-in |
+| **Tokens Vendure** | ✅ | Cookie httpOnly manejado |
+| **Admin API** | ✅ | Requiere autenticación |
+| **CORS** | ✅ | Restrictivo en backend |
+| **Upload validación** | ⚠️ | Solo MIME + size, sin análisis |
+| **SSRF** | ✅ | Interno, sin procesamiento externo de URLs |
+| **XSS** | ✅ | Next.js escapa HTML por defecto |
+| **GraphQL injection** | ✅ | Variables validadas |
+| **Path traversal** | ✅ | No hay filesystem exposed |
+| **Auth cookies** | ✅ | Timing-safe comparación en personalización |
+| **Rate limiting** | ❌ | Falta en personalización |
+| **Logs con datos sensibles** | ⚠️ | Algunos logs incluyen metadata de pago |
+
+**Riesgos Seguridad:**
+- Falta rate limiting
+- Validación de archivo incompleta
+- Token sin expiración
+
+---
+
+### 7️⃣ **SEO / METADATA**
+
+| Aspecto | Estado | Hallazgo |
+|---------|--------|----------|
+| **generateMetadata** | ✅ | Por página de producto |
+| **Open Graph** | ✅ | Configurado en layout |
+| **Twitter cards** | ✅ | Presentes |
+| **Canonical** | ⚠️ | No explícito (Next.js default) |
+| **robots.txt** | ✅ | Presente |
+| **sitemap.xml** | ✅ | Dinámico con force-dynamic |
+| **JSON-LD** | ✅ | Product schema en page |
+| **Product schema** | ✅ | Precio, availability, SKU |
+| **Productos borrados** | ✅ | Sitemap regenerado dinámicamente |
+| **Productos nuevos** | ⚠️ | Aparecen dinámicamente pero solo si página se renderiza |
+| **Metadata cache** | ✅ | Dinámico, sin caché persistente |
+
+**Riesgos SEO:**
+- Sitemap depende de query exitosa a Vendure
+- Si query falla, sitemap queda viejo
+
+---
+
+### 8️⃣ **PERFORMANCE**
+
+| Aspecto | Estado | Hallazgo |
+|---------|--------|----------|
+| **GraphQL N+1** | ✅ | Queries bien optimizadas en Vendure |
+| **Image optimization** | ✅ | next/image + WebP |
+| **Bundle size** | ⚠️ | MUI aumenta bundle (~300KB) |
+| **Client components** | ⚠️ | Checkbox, inputs innecesariamente client |
+| **SSR overhead** | ⚠️ | Todas pages dinámicas = procesamiento en cada request |
+| **Revalidation** | ❌ | Sin ISR - sin caché intermedio |
+| **API timeouts** | ✅ | `fetchWithTimeout` implementado |
+| **Healthchecks** | ✅ | Presentes |
+| **Compression** | ✅ | Sharp para imágenes |
+| **Database queries** | ⚠️ | Sin optimización explícita |
+
+**Riesgos Performance:**
+- Sin ISR = más carga en servidor
+- Algunas pages renderean componentes client innecesarios
+
+---
+
+### 9️⃣ **UX / FLUJO DE COMPRA**
+
+| Aspecto | Estado | Hallazgo |
+|---------|--------|----------|
+| **Carrito** | ✅ | Funcional |
+| **Checkout steps** | ✅ | Claro con step indicator |
+| **Dirección shipping** | ✅ | Capturado |
+| **Métodos pago** | ✅ | Mercado Pago + otros |
+| **Confirmación** | ✅ | Orden creada, email enviado |
+| **Personalización foto** | ✅ | Upload post-pago |
+| **Error handling** | ✅ | Alerts informativos |
+| **Validaciones** | ✅ | Form validation presente |
+| **Acceso orden** | ✅ | Vía token o account |
+| **Retry pago** | ✅ | Si Mercado Pago pending |
+
+**Riesgos UX:**
+- Si photo upload falla, usuario no tiene feedback claro
+- Si pago falla silenciosamente, usuario confundido
+
+---
+
+## F) CHECKLIST QUIRÚRGICO DE VERIFICACIÓN
+
+**Antes de hacer cambios, verificar esto:**
+
+```bash
+# 1. Ambiente y variables
+☐ echo $NEXT_PUBLIC_VENDURE_API_URL
+☐ echo $VENDURE_INTERNAL_API_URL
+☐ echo $DB_HOST
+☐ env | grep NEXT_PUBLIC
+
+# 2. Crear producto en Vendure SIN rebuild
+☐ Crear producto "Test Producto 123" en admin
+☐ Abrir tienda http://localhost:3000/productos
+☐ ¿Aparece Test Producto 123 en 5 segundos? SÍ/NO
+
+# 3. Borrar producto SIN rebuild
+☐ Borrar "Test Producto 123" del admin
+☐ Recargar página http://localhost:3000/productos
+☐ ¿Desaparece en 5 segundos? SÍ/NO
+
+# 4. Cambiar precio SIN rebuild
+☐ Ir producto existente, cambiar precio
+☐ Recargar frontend
+☐ ¿Nuevo precio aparece? SÍ/NO
+
+# 5. Cambiar stock SIN rebuild
+☐ Cambiar stock a 0
+☐ Verificar en frontend si muestra "Agotado"
+
+# 6. Upload de foto personalizada
+☐ Ir checkout con producto personalizable
+☐ Completar pago
+☐ Subir foto en /checkout/personalizacion
+☐ ¿Foto sube sin errores? SÍ/NO
+☐ ¿Admin ve foto en orden? SÍ/NO
+
+# 7. Comprar 2 items iguales con fotos distintas
+☐ 2x Medalla
+☐ Foto 1 frontal A
+☐ Foto 2 frontal B
+☐ ¿Cada one tiene su foto? SÍ/NO
+
+# 8. Cancelar checkout post-upload foto
+☐ Upload foto
+☐ Ir atrás
+☐ ¿Foto se limpia? SÍ/NO
+
+# 9. Verificar sitemap
+☐ curl http://localhost:3000/sitemap.xml | head -50
+☐ ¿Productos nuevos aparecen? SÍ/NO
+
+# 10. Verificar metadata
+☐ curl -I http://localhost:3000/productos/test-producto-123
+☐ ¿Open Graph tags presentes? SÍ/NO
+
+# 11. Docker rebuild
+☐ docker compose -f infra/docker/docker-compose.yml up -d --build
+☐ ¿Tarda más de 1 minuto? (recompilando) SÍ/NO
+
+# 12. Variables en contenedor
+☐ docker compose -f infra/docker/docker-compose.yml exec storefront env | grep NEXT_PUBLIC_VENDURE_API_URL
+☐ ¿Muestra variable? (debería)
+
+# 13. Nginx cache (si en producción)
+☐ curl -v http://localhost/api/shop 2>&1 | grep -i cache-control
+☐ ¿dice no-store? SÍ/NO
+
+# 14. Logs de fetch exitosa
+☐ docker compose -f infra/docker/docker-compose.yml logs backend | tail -100
+☐ ¿Hay erores de GraphQL? SÍ/NO
+
+# 15. Build de Next.js
+☐ cd apps/storefront && npm run build
+☐ ¿Compila sin errores? SÍ/NO
+```
+
+---
+
+## G) PLAN DE ACCIÓN RECOMENDADO POR FASES
+
+### 🟥 **FASE 1: Correcciones CRÍTICAS (Semana 1)**
+
+**Objetivo:** Que productos se actualicen sin rebuild
+
+**Cambios (Propuestos, no implementados):**
+
+1. **Documentar que rebuild es obligatorio**
+   - Archivo: README.md
+   - Cambio: Agregar sección "Deploy y Variables de Entorno"
+   - Contenido: "Toda variable NEXT_PUBLIC_* requiere `docker compose up --build`"
+
+2. **Eliminar o completar fix_prices.js**
+   - Opción A: Borrar archivo
+   - Opción B: Completar la lógica (si se usa para corregir precios masivamente)
+
+3. **Verificar BOOTSTRAP_DEMO_DATA en producción**
+   - Production: `BOOTSTRAP_DEMO_DATA=false`
+   - Testing/Dev: `BOOTSTRAP_DEMO_DATA=true`
+
+4. **Crear script de deploy seguro**
+   - Archivo: `scripts/deploy.sh` (propuesto)
+   - Contenido:
+     ```bash
+     #!/bin/bash
+     set -e
+     docker compose -f infra/docker/docker-compose.yml down
+     docker compose -f infra/docker/docker-compose.yml up -d --build
+     docker compose -f infra/docker/docker-compose.yml ps
+     ```
+
+---
+
+### 🟨 **FASE 2: Consolidar flujo de personalización (Semana 2-3)**
+
+**Objetivo:** Foto personalizada robusta y segura
+
+**Cambios (Propuestos, no implementados):**
+
+1. **Agregar rate limiting a `/logistics/personalization`**
+   - Usar `express-rate-limit` o similar
+   - Limit: 5 requests/minuto por IP
+   - Rate limit: 10 requests/minuto por order
+
+2. **Agregar expiración a token HMAC**
+   - Incluir timestamp en token
+   - Expiración: 1 hora
+   - Backend: validar timestamp
+
+3. **Mejorar validación de archivo**
+   - Verificar magic bytes (no confiar en MIME type)
+   - Usar `file` command o biblioteca
+   - Validar dimensiones con Sharp
+
+4. **Logging de personalización**
+   - Log en admin cuando se suba foto
+   - Log si upload falla
+   - Log si validación rechaza
+
+---
+
+### 🟩 **FASE 3: Seguridad y producción (Semana 4-5)**
+
+**Objetivo:** Hardening antes de producción pública
+
+**Cambios (Propuestos, no implementados):**
+
+1. **Cambiar Next.js para env vars runtime**
+   - Opción A: Middleware que lee env vars
+   - Opción B: Cambiar `output: "standalone"` a `output: "export"` + ISR
+   - Opción C: Usar runtime env vars vía Node.js server
+
+2. **Transacciones en migraciones**
+   - Usar `query.startTransaction()` / `query.commitTransaction()`
+
+3. **Implementar ISR en pages de productos**
+   - `export const revalidate = 3600` (1 hora)
+   - Mejor balance entre frescura y performance
+
+4. **Backup database**
+   - Script: `mysqldump` automático
+   - Cron job: daily backup
+
+---
+
+### 🟦 **FASE 4: SEO y sitemap dinámico (Semana 6)**
+
+**Objetivo:** Sitemap siempre actualizado
+
+**Cambios (Propuestos, no implementados):**
+
+1. **Mejorar robustez de sitemap**
+   - Si GraphQL falla, retornar sitemap cached
+   - O al menos productos estáticos conocidos
+
+2. **Webhook desde Vendure**
+   - Cuando se agrega/modifica/borra producto
+   - Disparar revalidación en Next.js
+
+3. **Pre-fetch de productos frecuentes**
+   - Caché en Next.js de home page
+   - Invalidar cada 15 minutos
+
+---
+
+### 🟪 **FASE 5: Performance y tests (Semana 7-8)**
+
+**Objetivo:** Tests y optimización
+
+**Cambios (Propuestos, no implementados):**
+
+1. **Tests de checkout**
+   - E2E: Carrito → Pago → Personalización
+   - Usar Playwright o Cypress
+
+2. **Tests de producto update**
+   - Vendure agrega producto
+   - Frontend lo ve sin rebuild
+   - Vendure borra producto
+   - Frontend lo pierde sin rebuild
+
+3. **Performance tests**
+   - Bundle size check
+   - Lighthouse score
+   - GraphQL query time
+
+---
+
+## H) COMANDOS SUGERIDOS PARA INSPECCIONAR
+
+```bash
+# 1. Ver variables en contenedor
+docker compose -f infra/docker/docker-compose.yml exec storefront \
+  env | grep -E "NEXT_PUBLIC|VENDURE|NODE_ENV"
+
+# 2. Ver logs del frontend
+docker compose -f infra/docker/docker-compose.yml logs -f storefront
+
+# 3. Ver logs del backend
+docker compose -f infra/docker/docker-compose.yml logs -f backend
+
+# 4. Consultar productos vía GraphQL (directo a backend)
+curl -X POST http://localhost:3001/shop-api \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "{ search(input: { take: 10 }) { totalItems items { productName slug } } }"
+  }' | jq
+
+# 5. Ver si proxy está funcionando
+curl -X POST http://localhost:3000/api/shop \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "{ facets { items { id code } } }"
+  }' | jq
+
+# 6. Verificar sitemap
+curl http://localhost:3000/sitemap.xml | head -30
+
+# 7. Verificar robots.txt
+curl http://localhost:3000/robots.txt
+
+# 8. Ver metadata de producto específico
+curl http://localhost:3000/productos/producto-demo 2>&1 | grep -i "og:\|twitter:"
+
+# 9. Verificar estado de migraciones
+docker compose -f infra/docker/docker-compose.yml exec backend \
+  sh -c "cd apps/backend && npx typeorm migration:show"
+
+# 10. Ver variables de build en imagen Docker
+docker inspect cla_soulprint_storefront | grep -A 50 "Env"
+
+# 11. Entrar al contenedor del storefront
+docker compose -f infra/docker/docker-compose.yml exec storefront sh
+
+# 12. Ver tamaño de imagen Docker
+docker images | grep cla_soulprint
+
+# 13. Ver rebuild time
+time docker compose -f infra/docker/docker-compose.yml build storefront
+
+# 14. Verificar si el bundle incluye variables
+docker compose -f infra/docker/docker-compose.yml exec storefront \
+  grep -r "NEXT_PUBLIC_VENDURE_API_URL" .next/ | head -5
+
+# 15. Health check
+curl -s http://localhost:3001/health/live | jq
+curl -s http://localhost:3000/api/health/live | jq
+```
+
+---
+
+## CONCLUSIONES
+
+**CLA Soulprint está funcional pero requiere atención INMEDIATA en dos áreas:**
+
+1. **🔴 Problema de actualización de productos**: Causado por variables hardcodeadas en build-time. Solución: documentar rebuild obligatorio y crear script de deploy.
+
+2. **🔴 Flujo de personalización débil**: Sin rate limiting, sin expiración de tokens, sin validación robusta de archivos. Solución: implementar seguridades de Fase 2.
+
+3. **🟡 Deuda técnica menor**: Código duplicado, migraciones sin transacciones, logs inconsistentes.
+
+**Recomendación:** 
+- Semana 1: Fase 1 (crítica)
+- Semana 2-3: Fase 2 (personalización segura)
+- Semana 4-5: Fase 3 (producción)
+- Después: Fase 4-5 (optimización)
+
+---
+
+**¿Querés que profundice en algún hallazgo específico o que propongamos código para alguna de las fases?**
